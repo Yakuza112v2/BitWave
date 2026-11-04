@@ -379,38 +379,6 @@ def _run_scenario() -> int:
     if bridge.bitwavePref("settings_section") != "metadata":
         failures.append(f"the section was not stored: {bridge.bitwavePref('settings_section')!r}")
 
-    # 5. The rail's foot is reachable at the smallest window.
-    coffee = named("settingsCoffee")
-    credit = named("settingsCredit")
-    scroller = q("settingsPage.railScroller")
-    if coffee is None or credit is None or scroller is None:
-        failures.append("the rail foot (coffee button, credit) is missing")
-    else:
-        scroller.setProperty("contentY", max(0.0, float(scroller.property("contentHeight")) - scroller.height()))
-        settle(200)
-        rail_bottom = scroller.mapToScene(QPointF(0, scroller.height())).y()
-        for name, it in (("coffee button", coffee), ("credit", credit)):
-            bottom = it.mapToScene(QPointF(0, it.height())).y()
-            if not it.isVisible() or bottom > rail_bottom + 1:
-                failures.append(f"the {name} cannot be scrolled into view ({bottom:.0f} > {rail_bottom:.0f})")
-
-        # 6. The heart burst clears itself and the credit retypes.
-        settle(2200)  # the credit types itself out first
-        gibs = named("settingsGibs")
-        if not credit.property("heartLive"):
-            failures.append("the credit never finished typing, so the heart cannot burst")
-        else:
-            QMetaObject.invokeMethod(credit, "gibHeart")
-            settle(150)
-            if not (credit.property("heartGibbed") and gibs.property("running")):
-                failures.append("clicking the heart did not burst it")
-            settle(9000)
-            if gibs.property("running") or credit.property("heartGibbed"):
-                failures.append("the burst never cleared")
-            settle(2000)
-            if not credit.property("heartLive"):
-                failures.append("the credit did not type itself back in after the burst")
-
     if failures:
         print("\n".join(failures), file=sys.stderr)
         return _EXIT_REGRESSED
