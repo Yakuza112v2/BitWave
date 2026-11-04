@@ -70,6 +70,7 @@ gui-waves: ## Build the BitWave QML app (standalone). On macOS this yields dist/
 		plutil -replace LSMinimumSystemVersion -string "$(WAVES_MACOS_MIN)" "$(app_path_dist)/waves.app/Contents/Info.plist"; \
 		echo "🔏 Re-sealing macOS bundle (trim + plist edit broke Nuitka's ad-hoc signature)"; \
 		codesign --force --deep --sign - "$(app_path_dist)/waves.app"; \
+		mv "$(app_path_dist)/waves.app" "$(app_path_dist)/BitWave.app"; \
 	elif [ -d "$(app_path_dist)/waves.dist" ]; then \
 		bash tools/trim_qt_bundle.sh "$(app_path_dist)/waves.dist"; \
 	fi

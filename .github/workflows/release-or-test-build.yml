@@ -229,7 +229,7 @@ jobs:
               source $VENV &&
               poetry run make gui-waves &&
               cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} waves.app -x "*.DS_Store" &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
               cd ..
           - os: "macos-14"
             TARGET: "macos-14 M1"
@@ -241,7 +241,7 @@ jobs:
               source $VENV &&
               poetry run make gui-waves &&
               cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} waves.app -x "*.DS_Store" &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
               cd ..
           # Legacy macOS flavor for macOS 12 through 14 (see the env note on the
           # _LEGACY names): the locked PySide6 is overlaid with 6.9.3, the newest
@@ -262,7 +262,7 @@ jobs:
               pyside6==6.9.3 pyside6-addons==6.9.3 pyside6-essentials==6.9.3 shiboken6==6.9.3 &&
               WAVES_MACOS_MIN=12.0 poetry run make gui-waves &&
               cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} waves.app -x "*.DS_Store" &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
               cd ..
           - os: "macos-14"
             TARGET: "macos-14 M1 legacy"
@@ -276,7 +276,7 @@ jobs:
               pyside6==6.9.3 pyside6-addons==6.9.3 pyside6-essentials==6.9.3 shiboken6==6.9.3 &&
               WAVES_MACOS_MIN=12.0 poetry run make gui-waves &&
               cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} waves.app -x "*.DS_Store" &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
               cd ..
           # Linux legs ship BOTH a zip of the standalone tree and a single-file
           # AppImage of the same tree (tools/build_appimage.sh); the in-app
@@ -383,7 +383,7 @@ jobs:
         run: |
           set -u
           case "${{ matrix.OS_ARCH }}" in
-            macos-*)   BIN="dist/waves.app/Contents/MacOS/BitWave" ;;
+            macos-*)   BIN="dist/BitWave.app/Contents/MacOS/BitWave" ;;
             windows-*) BIN="dist/BitWave/BitWave.exe" ;;
             *)         BIN="dist/BitWave/BitWave" ;;
           esac
@@ -472,7 +472,7 @@ jobs:
           set -eu
           MIN="${{ matrix.MACOS_FLOOR }}"
           [ -n "$MIN" ] || { echo "::error::floor-assert: this macOS leg declares no MACOS_FLOOR in the matrix"; exit 1; }
-          PLIST="dist/waves.app/Contents/Info.plist"
+          PLIST="dist/BitWave.app/Contents/Info.plist"
           DECLARED="$(plutil -extract LSMinimumSystemVersion raw "$PLIST" 2>/dev/null || true)"
           if [ "$DECLARED" != "$MIN" ]; then
             echo "::error::floor-assert: Info.plist LSMinimumSystemVersion is '${DECLARED:-missing}', expected '$MIN'"; exit 1
@@ -496,8 +496,8 @@ jobs:
             if [ "$(printf '%s\n%s\n' "$MIN" "$V" | sort -V | tail -1)" != "$MIN" ]; then
               echo "::error::floor-assert: $F demands macOS $V, above the declared floor $MIN"; FAIL=1
             fi
-          done < <(find dist/waves.app -type f)
-          [ "$SCANNED" -gt 0 ] || { echo "::error::floor-assert: no Mach-O files found under dist/waves.app"; exit 1; }
+          done < <(find dist/BitWave.app -type f)
+          [ "$SCANNED" -gt 0 ] || { echo "::error::floor-assert: no Mach-O files found under dist/BitWave.app"; exit 1; }
           [ "$FAIL" -eq 0 ] || exit 1
           echo "floor-assert: all $SCANNED Mach-O files honor the macOS $MIN floor."
       # The AppImage wraps AppRun + the runtime AROUND the already-smoked tree,
