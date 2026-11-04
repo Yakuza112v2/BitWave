@@ -79,6 +79,12 @@ jobs:
       && github.event.inputs.release_tag != '') }}
     runs-on: ubuntu-24.04
     steps:
+    - name: Ausgabestand dem aktuellen Quellcode zuordnen
+      if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag == 'v0.2.2' }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v0.2.2" -f sha="${{ github.sha }}" -F force=true
     - name: Create the Release (empty draft, assets attached by the matrix)
       uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
       env:
