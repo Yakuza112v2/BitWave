@@ -2,8 +2,6 @@
 
 BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen TIDAL-Konto. Betreuung: [Yakuza112v2](https://github.com/Yakuza112v2).
 
-Das Projekt basiert auf [Waves von iamprivacy](https://github.com/iamprivacy/Waves). Lizenz, Urheberhinweise und bisherige Entwicklungshistorie bleiben erhalten. Die ursprüngliche Projektbeschreibung steht als historischer Nachweis in [UPSTREAM_README.md](UPSTREAM_README.md).
-
 ## Downloads
 
 BitWave wird ausschließlich für **Windows** veröffentlicht.
