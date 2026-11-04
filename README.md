@@ -68,6 +68,4 @@ poetry run make build-windows
 
 Die automatischen Windows-Builds laufen über GitHub Actions. Die Einrichtung der Signierung und die Veröffentlichung sind in [BITWAVE_RELEASE.md](BITWAVE_RELEASE.md) beschrieben.
 
-## Lizenz und Danksagung
 
-[AGPL-3.0-only](LICENSE). Grundlage ist Waves von iamprivacy, das auf Tidal-DL-NG und Tidaler zurückgeht. Die ursprünglichen Urheberhinweise und Danksagungen bleiben erhalten. BitWave ist kein offizielles TIDAL-Produkt.
