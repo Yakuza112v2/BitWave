@@ -11,7 +11,6 @@ BitWave wird ausschließlich für **Windows** veröffentlicht.
 | Windows-System | Download |
 | --- | --- |
 | Intel/AMD, 64 Bit | `bitwave_windows-x64.zip` |
-| ARM, 64 Bit | `bitwave_windows-arm64.zip` |
 
 Die offiziellen Downloads findest du unter [Releases](https://github.com/Yakuza112v2/BitWave/releases). Entpacke das gesamte ZIP-Archiv und starte `BitWave.exe` im enthaltenen Ordner. Für die Anmeldung und Musikwiedergabe benötigst du ein kostenpflichtiges TIDAL-Konto. Speichere nur Inhalte, zu deren Nutzung du berechtigt bist.
 
