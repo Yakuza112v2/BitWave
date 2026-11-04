@@ -1,0 +1,77 @@
+name: Windows-Release abschließen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: v0.2.2
+      SOURCE_COMMIT: b8518b389b6bec72ebeb48407e65a22ca1ad9324
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b8518b389b6bec72ebeb48407e65a22ca1ad9324
+      - uses: ./.github/actions/setup-poetry-env
+        with:
+          python-version: '3.13'
+      - name: Gebaute Windows-Dateien prüfen
+        id: assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/433464406" > release.json
+          python - <<'PY'
+          import json, os
+          r=json.load(open('release.json'))
+          assert r['tag_name']==os.environ['RELEASE_TAG']
+          assert r['target_commitish']==os.environ['SOURCE_COMMIT']
+          names={a['name'] for a in r['assets']}
+          assert {'bitwave_windows-x64.zip','bitwave_windows-x64.zip.sha256'} <= names
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              f.write('needed='+str(bool(r['draft'])).lower()+'\n')
+          PY
+          gh release download "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --pattern 'bitwave_windows-*.zip*' --dir downloads
+          poetry run python - <<'PY'
+          import hashlib, pathlib, struct, zipfile
+          root=pathlib.Path('downloads')
+          for archive in root.glob('*.zip'):
+              checksum=pathlib.Path(str(archive)+'.sha256').read_text().split()[0]
+              assert hashlib.sha256(archive.read_bytes()).hexdigest()==checksum, archive.name
+              with zipfile.ZipFile(archive) as z:
+                  exe=z.read('BitWave/BitWave.exe')
+                  pe=struct.unpack_from('<I',exe,0x3c)[0]
+                  assert exe[pe:pe+4]==b'PE\0\0'
+                  expected=0xaa64 if 'arm64' in archive.name else 0x8664
+                  assert struct.unpack_from('<H',exe,pe+4)[0]==expected, archive.name
+                  assert 'BitWave/bitwave_ui/qml/Main.qml' in z.namelist()
+          print('Windows-Pakete und Zielarchitektur erfolgreich geprüft')
+          PY
+      - name: Prüfsummen signieren und Release veröffentlichen
+        if: steps.assets.outputs.needed == 'true'
+        shell: bash
+        env:
+          BITWAVE_SIGNING_KEY: ${{ secrets.BITWAVE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          { echo "# bitwave-version: $RELEASE_TAG"; cat downloads/*.sha256 | LC_ALL=C sort -k2; } > SHA256SUMS
+          poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
+          poetry run python - <<'PY'
+          from pathlib import Path
+          from bitwave.bitwave_ui.signing import verify
+          assert verify(Path('SHA256SUMS').read_bytes(),Path('SHA256SUMS.sig').read_text().strip())
+          print('BitWave-Signatur erfolgreich geprüft')
+          PY
+          awk -v tag="$RELEASE_TAG" '/^## / { on=0; for(i=2;i<=NF;i++) if($i==tag) on=1; next } on && (started || NF) { started=1; print }' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -f downloads/bitwave_windows-arm64.zip ]; then
+            printf '\nDie Windows-Version für Intel/AMD (x64) steht bereit. ARM64 wird separat ergänzt.\n' >> RELEASE_NOTES.md
+          fi
+          { echo; poetry run python tools/release_verify_notes.py SHA256SUMS; } >> RELEASE_NOTES.md
+          gh release upload "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" SHA256SUMS SHA256SUMS.sig --clobber
+          gh release edit "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --title 'BitWave v0.2.2' --notes-file RELEASE_NOTES.md --draft=false --latest
