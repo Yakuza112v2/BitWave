@@ -2841,7 +2841,7 @@ Item {
                                     implicitWidth: flacBrwTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacBrwTxt.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad; color: page.accentCont; border.color: page.accentDim
-                                    Text { id: flacBrwTxt; anchors.centerIn: parent; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacBrwTxt; anchors.centerIn: parent; text: I18n.t("Browse path").toUpperCase(); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea {
                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         onClicked: {
@@ -4258,7 +4258,7 @@ Item {
                                                     opacity: libraryCol.folderE !== "" ? 0.6 : 1
                                                     Behavior on opacity { NumberAnimation { duration: 160 } }
                                                     Layout.row: libFolderRow.roomy ? 0 : 1; Layout.column: 3
-                                                    Text { id: brwTxt; anchors.centerIn: parent; textFormat: Text.PlainText; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: brwTxt; anchors.centerIn: parent; textFormat: Text.PlainText; text: I18n.t("Browse path").toUpperCase(); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                                         onClicked: {
@@ -4651,7 +4651,7 @@ Item {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     color: page.accentCont
                                                     border.color: page.accentDim; border.width: 1
-                                                    Text { id: browseTxt; anchors.centerIn: parent; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: browseTxt; anchors.centerIn: parent; text: I18n.t("Browse path").toUpperCase(); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                                         onClicked: {

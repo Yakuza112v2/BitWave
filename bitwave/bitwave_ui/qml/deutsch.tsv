@@ -375,7 +375,7 @@ Choose a folder, then SAVE CHANGES.	Wähle einen Ordner und anschließend „Än
 Click away to leave it alone.	Klicke außerhalb, um nichts zu ändern.
 SAVE CHANGES applies this and starts the scan.	„Änderungen speichern“ übernimmt die Auswahl und startet die Prüfung.
 Open the TIDAL login in your browser and sign in.	Öffne die TIDAL-Anmeldung im Browser und melde dich an.
-Paste the URL you land on back here.	Füge die anschließend geöffnete Adresse hier wieder ein.
+Paste the URL you land on back here.	Nach der TIDAL-Anmeldung kann „Seite nicht gefunden“ erscheinen. Das ist normal. Kopiere die vollständige Adresse aus der Browser-Adressleiste und füge sie hier ein.
 Follow artists to see their new releases	Folge Künstlern, um ihre Neuerscheinungen zu sehen
 Search for an artist, album, or track to begin	Suche zum Einstieg nach einem Künstler, Album oder Titel
 Search TIDAL for an artist. Their new releases will show up in the feed.	Suche auf TIDAL nach einem Künstler. Seine Neuerscheinungen erscheinen dann in der Übersicht.
@@ -884,3 +884,4 @@ Where your music goes and how good it sounds.	Speicherort und Qualität deiner M
 Write cover.jpg for a single track downloaded on its own, not just full albums.	Speichert cover.jpg auch für einzeln heruntergeladene Titel, nicht nur für Alben.
 Not signed in	Nicht angemeldet
 Signed in	Angemeldet
+Browse path	Durchsuchen
