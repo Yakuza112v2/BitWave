@@ -1,6 +1,6 @@
-"""In-app self-updater for Waves.
+"""In-app self-updater for BitWave.
 
-Waves ships as a packaged single-file binary built by CI and published to a
+BitWave ships as a packaged single-file binary built by CI and published to a
 public GitHub repo's Releases. This module lets the app notice a newer release,
 download the build for the current OS/arch, verify it against its ``.sha256``
 sidecar, and swap it in atomically, the same shape as the FFmpeg manager
@@ -17,7 +17,7 @@ Design rules baked in here:
   runs on a schedule by itself.
 * **No-op until configured.** When :data:`REPO` is blank, every entry point
   degrades to a safe no-op (``status()`` reports ``not_configured`` and no
-  network call is made). It is now set to the public Waves repo, so a packaged
+  network call is made). It is now set to the public BitWave repo, so a packaged
   build can find its releases; the automatic check still stays gated behind the
   user preference (see above).
 * **Check anywhere, install only when frozen.** The version check works from a
@@ -64,13 +64,13 @@ logger = logging.getLogger("waves")
 
 _TIMEOUT = 30
 _CHUNK = 1 << 16  # 64 KiB streaming chunks
-_UA = "Waves-updater"
+_UA = "BitWave-updater"
 
-# The public GitHub repo that hosts Waves releases, as ``"owner/name"``. When
+# The public GitHub repo that hosts BitWave releases, as ``"owner/name"``. When
 # blank the updater is dormant (no network, ``status() -> "not_configured"``);
-# it is set here at release time to the public Waves repo. The value ships in
+# it is set here at release time to the public BitWave repo. The value ships in
 # the binary and is inherently public once released, so this is not a secret.
-REPO = "iamprivacy/Waves"
+REPO = "Yakuza112v2/BitWave"
 
 # Asset-name matching. CI names release assets per platform; rather than pin
 # exact names (which don't exist yet), match on OS/arch tokens so the updater
@@ -154,7 +154,7 @@ def user_facing_error(
     if isinstance(exc, requests.exceptions.ConnectionError | requests.exceptions.Timeout):
         return f"Could not reach {server}"
     if isinstance(exc, PermissionError):
-        return f"Waves could not write to {folder}"
+        return f"BitWave could not write to {folder}"
     if isinstance(exc, OSError) and exc.errno == errno.ENOSPC:
         return "Not enough disk space"
     if isinstance(exc, ValueError) and "checksum" in str(exc).lower():
@@ -221,12 +221,7 @@ _CHANNEL_LABELS = {
     "winget": "winget",
     "aur": "the AUR",
 }
-_CHANNEL_HINTS = {
-    "homebrew-cask": "brew upgrade --cask waves",
-    "homebrew": "brew upgrade --cask waves",
-    "scoop": "scoop update waves",
-    "winget": "winget upgrade waves",
-}
+_CHANNEL_HINTS: dict[str, str] = {}
 
 
 def channel_label(channel: str) -> str:
@@ -259,10 +254,7 @@ def managed_upgrade_command(channel: str) -> list[str] | None:
     The cask is named fully qualified (tap/name) so a same-named formula in
     another tap can never be upgraded by mistake.
     """
-    if channel in ("homebrew-cask", "homebrew"):
-        brew = _find_brew()
-        if brew:
-            return [brew, "upgrade", "--cask", "iamprivacy/waves/waves"]
+    # No BitWave tap exists yet; never invoke the upstream Waves cask.
     return None
 
 
@@ -332,7 +324,7 @@ def _current_exe() -> Path:
     next to the binary (it emulates a venv layout for child interpreters); the
     real launcher path is ``sys.argv[0]``. Prefer argv[0] when it names a real
     file, falling back to ``sys.executable``. Confirmed in the field: the
-    Windows helper relaunched ``C:\\Waves\\python.exe``, which does not exist.
+    Windows helper relaunched ``C:\\BitWave\\python.exe``, which does not exist.
     """
     try:
         cand = Path(sys.argv[0]).resolve()
@@ -468,9 +460,9 @@ def _running_appimage() -> str:
     into the mount and must never be an update target.
 
     The runtime exports both ``$APPIMAGE`` and ``$APPDIR`` to every descendant
-    process, so a non-AppImage Waves launched from an AppImage-parented shell
+    process, so a non-AppImage BitWave launched from an AppImage-parented shell
     inherits them. Trusting the variable alone would make the updater
-    os.replace the Waves payload over that unrelated application's .AppImage
+    os.replace the BitWave payload over that unrelated application's .AppImage
     file. Only claim the AppImage path when this process actually runs out of
     the advertised mount.
     """
@@ -567,7 +559,7 @@ def _exe_suffix(os_key: str) -> str:
 class _StagingLock:
     """An exclusive, OS-held lock over the staging directory.
 
-    Two copies of Waves share one config dir, so they share one ``updates/``
+    Two copies of BitWave share one config dir, so they share one ``updates/``
     folder, and nothing kept them apart: the second one's extraction rmtree'd
     the staged tree the first one's helper was about to swap in, and rewrote
     the helper script while cmd.exe was executing it (cmd re-reads a batch file
@@ -608,7 +600,7 @@ class _StagingLock:
 
     def acquire(self) -> None:
         if not self.try_acquire():
-            raise UpdaterError("Another copy of Waves is installing this update; restart Waves to finish it.")
+            raise UpdaterError("Another copy of BitWave is installing this update; restart BitWave to finish it.")
 
     def release(self) -> None:
         fd, self._fd = self._fd, None
@@ -624,7 +616,7 @@ class _StagingLock:
 # Manager
 # --------------------------------------------------------------------------- #
 class AppUpdater:
-    """Check for and install a newer Waves build from GitHub Releases."""
+    """Check for and install a newer BitWave build from GitHub Releases."""
 
     def __init__(
         self,
@@ -642,7 +634,7 @@ class AppUpdater:
         # mirror, nor spawn a second helper to race the first over the same
         # backup folder (either race ends with a copy of the app deleted).
         self._armed_result: dict | None = None
-        # ...and the staging lock that says so to the OTHER copies of Waves,
+        # ...and the staging lock that says so to the OTHER copies of BitWave,
         # held from the moment a helper is armed until this process exits.
         self._armed_lock: _StagingLock | None = None
         # The NAME (never the path) of a previous version this install kept
@@ -656,7 +648,7 @@ class AppUpdater:
         # ...and set when that folder could not be made unclaimable (see
         # _mark_kept). The user then has to move the files out themselves
         # before the next update, so the message must say so rather than
-        # promising a folder Waves cannot actually keep.
+        # promising a folder BitWave cannot actually keep.
         self.kept_unprotected: bool = False
         # Plain wording for a Windows swap the helper reported as failed at the
         # previous exit (the install folder was in use), found at this launch.
@@ -817,7 +809,7 @@ class AppUpdater:
             if cmd is None:
                 hint = channel_hint(channel)
                 raise UpdaterError(
-                    f"This copy of Waves is managed by {channel_label(channel)}; update it there"
+                    f"This copy of BitWave is managed by {channel_label(channel)}; update it there"
                     + (f" ({hint})" if hint else "")
                     + "."
                 )
@@ -825,7 +817,7 @@ class AppUpdater:
 
         self.staging_dir.mkdir(parents=True, exist_ok=True)
         # Everything from here to the armed helper is one exclusive stretch:
-        # two copies of Waves share this folder, and the second one's
+        # two copies of BitWave share this folder, and the second one's
         # extraction would otherwise delete the tree the first one's helper is
         # waiting to swap in. On Windows the lock is KEPT once a helper is
         # armed (released only when this process exits), so the other copy is
@@ -834,7 +826,7 @@ class AppUpdater:
         lock.acquire()
         keep_lock = False
         try:
-            # A swap staged by a copy of Waves that has since exited: nothing
+            # A swap staged by a copy of BitWave that has since exited: nothing
             # is waiting for anyone to quit any more, so take it over (arming a
             # helper against THIS process) rather than downloading it again on
             # top of the tree that helper is going to move.
@@ -852,7 +844,7 @@ class AppUpdater:
                 release = self.latest(sess)
             if release is None or not release.url:
                 kind = "AppImage build" if _running_appimage() else "build"
-                raise UpdaterError(f"No Waves {kind} is available for {self.os_key}/{self.arch}.")
+                raise UpdaterError(f"No BitWave {kind} is available for {self.os_key}/{self.arch}.")
             result = self._install_locked(release, progress_cb, _log, _check_abort, abort, sess)
             if self.os_key == "windows":
                 self._armed_result = dict(result)
@@ -944,7 +936,7 @@ class AppUpdater:
             # A whole previous copy of the app, kept because it held files the
             # build did not ship. Empty on every ordinary update.
             "kept_backup": self.kept_backup,
-            # ...and true when Waves could not reserve that folder against its
+            # ...and true when BitWave could not reserve that folder against its
             # own next update, the one case where the message must ask the user
             # to move those files out themselves rather than promise them.
             "kept_unprotected": self.kept_unprotected,
@@ -1051,7 +1043,7 @@ class AppUpdater:
             return None  # the common case: nothing staged, no lock taken
         lock = _StagingLock(self.staging_dir / self._LOCK_NAME)
         if not lock.try_acquire():
-            return None  # another copy of Waves owns this update; it will apply it
+            return None  # another copy of BitWave owns this update; it will apply it
         keep_lock = False
         try:
             result = self._resume_after_failed_swap() or self._take_over_staged_swap()
@@ -1143,7 +1135,7 @@ class AppUpdater:
         """Make sure a helper is waiting before the Restart button quits.
 
         The helper is armed when the update installs and gives up after
-        ``_HELPER_WAIT_TICKS``; a Restart clicked hours later closed Waves
+        ``_HELPER_WAIT_TICKS``; a Restart clicked hours later closed BitWave
         with nothing left to swap or relaunch. The helper deletes its own
         script when it exits, so a script still on disk means a live helper
         (never arm a second one for the same pid: both would wake on the same
@@ -1174,8 +1166,8 @@ class AppUpdater:
         result when a helper is now waiting on this process, None when there
         was nothing left to apply (in which case the marker and any leftover
         tree are cleared, so a fresh install is free to proceed). Both Windows
-        layouts are understood: the standalone tree staged at ``Waves.new`` and
-        the single exe staged at ``Waves.exe.new``.
+        layouts are understood: the standalone tree staged at ``BitWave.new`` and
+        the single exe staged at ``BitWave.exe.new``.
         """
         pending = self._read_armed_marker()
         if pending is None:
@@ -1544,7 +1536,7 @@ class AppUpdater:
         if low.endswith((".dmg", ".7z", ".pkg", ".rar", ".tar", ".tar.bz2", ".tar.xz", ".gz", ".bz2", ".xz")):
             raise UpdaterError(f"Refusing to install {Path(asset).name}: this build can't unpack that archive format.")
         # Raw binary asset (Linux/macOS single-file build): copy into staging.
-        dest = out / (Path(asset).name or "Waves")
+        dest = out / (Path(asset).name or "BitWave")
         dest.write_bytes(payload.read_bytes())
         return dest
 
@@ -1785,7 +1777,7 @@ class AppUpdater:
         The backup holds the whole OLD install folder, including anything the
         user kept in there that the build never shipped (a download folder
         pointed inside it, a zip extracted over a folder that already held
-        other files). Waves never deletes a user's files, so before the backup
+        other files). BitWave never deletes a user's files, so before the backup
         is discarded a robocopy moves back everything the new tree does not
         have (``/XC /XN /XO`` leave only the files missing from the swapped-in
         install), and a failure there keeps the backup folder rather than
@@ -1827,13 +1819,13 @@ class AppUpdater:
 
         Split out because a staged swap that never happened is re-armed at the
         next launch (see :meth:`resume_pending_apply`); the script is named per
-        pid so a re-arm can never overwrite a helper another copy of Waves is
+        pid so a re-arm can never overwrite a helper another copy of BitWave is
         already executing, which cmd.exe would resume at whatever byte offset
         it had reached.
         """
         pid = os.getpid()
         # The BACKUP is named per pid for the same reason the script is. Two
-        # copies of Waves can each have a helper waiting (one arms at install
+        # copies of BitWave can each have a helper waiting (one arms at install
         # time and exits, the other re-arms at its next launch), and a shared
         # ".old" made them collide on the one folder that must not be touched:
         # the loser wakes inside the window between the winner's
@@ -1880,7 +1872,7 @@ class AppUpdater:
             f'tasklist /FI "PID eq {pid}" 2>nul | find "{pid}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)\r\n'
             f'echo app exited after %tries% checks >> "%LOG%"\r\n'
             f'if not exist "%NEWTREE%" (echo already applied elsewhere, nothing to do >> "%LOG%" & goto done)\r\n'
-            f'if exist "%KEPT%" (echo backup holds files that were not part of Waves, applying nothing >> "%LOG%" & goto relaunch)\r\n'
+            f'if exist "%KEPT%" (echo backup holds files that were not part of BitWave, applying nothing >> "%LOG%" & goto relaunch)\r\n'
             f'if exist "%BACKUP%" rmdir /S /Q "%BACKUP%" >> "%LOG%" 2>&1\r\n'
             f"set mtries=0\r\n"
             f":swap\r\n"
@@ -1893,9 +1885,9 @@ class AppUpdater:
             f":swapin\r\n"
             f'move "%NEWTREE%" "%INSTALL%" >> "%LOG%" 2>&1 || (echo swap-in failed >> "%LOG%" & echo swap_failed swap_in> "%OUTCOME%" & goto restore)\r\n'
             f'if not exist "%TARGET%" (echo swap left no {target.name} >> "%LOG%" & echo swap_failed no_exe> "%OUTCOME%" & goto restore)\r\n'
-            f'echo swap ok, reclaiming anything that was not part of Waves >> "%LOG%"\r\n'
+            f'echo swap ok, reclaiming anything that was not part of BitWave >> "%LOG%"\r\n'
             f'robocopy "%BACKUP%" "%INSTALL%" /E /MOVE /XC /XN /XO /XJ /R:1 /W:1 /NFL /NDL /NJH /NJS /NP >> "%LOG%" 2>&1\r\n'
-            f'if %ERRORLEVEL% GEQ 8 (echo could not reclaim, keeping the backup folder >> "%LOG%" & echo Waves kept this folder because it holds files that were not part of the app.> "%KEPT%" & goto relaunch)\r\n'
+            f'if %ERRORLEVEL% GEQ 8 (echo could not reclaim, keeping the backup folder >> "%LOG%" & echo BitWave kept this folder because it holds files that were not part of the app.> "%KEPT%" & goto relaunch)\r\n'
             f'rmdir /S /Q "%BACKUP%" >nul 2>&1\r\n'
             f"goto relaunch\r\n"
             f":restore\r\n"
@@ -1911,7 +1903,7 @@ class AppUpdater:
             f'del "%~f0"\r\n'
         )
         helper = self.staging_dir / f"apply_update_{pid}.bat"
-        helper.write_text(cmd, encoding="ascii")
+        helper.write_text(cmd, encoding="ascii", newline="")
         self._spawn_helper(helper, install_root, backup, new_tree, target)
 
     # How long (in ~1 s ticks) a Windows helper waits for the app to exit before
@@ -1924,7 +1916,7 @@ class AppUpdater:
     def _apply_macos(self, staged: Path, target: Path, log) -> Path:
         """Replace the running ``.app`` bundle, or fall back to a single file."""
         if staged.suffix == ".app" or staged.is_dir():
-            # sys.executable is …/Waves.app/Contents/MacOS/Waves → bundle root.
+            # sys.executable is …/BitWave.app/Contents/MacOS/BitWave → bundle root.
             bundle = target
             for parent in target.parents:
                 if parent.suffix == ".app":
@@ -1984,9 +1976,9 @@ class AppUpdater:
                 # home and never goes on screen or into a log.
                 self.kept_backup = backup.name
                 self.kept_unprotected = not protected
-                log(f"kept files that were not part of Waves in {backup.name}")
+                log(f"kept files that were not part of BitWave in {backup.name}")
                 if not protected:
-                    log(f"move them out of {backup.name} before updating again; Waves could not reserve it")
+                    log(f"move them out of {backup.name} before updating again; BitWave could not reserve it")
             else:
                 _rmtree(backup)
             return bundle
@@ -2037,7 +2029,7 @@ class AppUpdater:
         """
         pid = os.getpid()
         # Per pid, like the tree helper's backup and for the same reason: two
-        # copies of Waves can each have a helper waiting, and a shared ".old"
+        # copies of BitWave can each have a helper waiting, and a shared ".old"
         # let the loser delete the winner's only copy of the old build.
         backup = target.with_suffix(target.suffix + f".old-{pid}")
         # Wait for our PID to vanish, back up the old exe, move the new one in,
@@ -2082,7 +2074,7 @@ class AppUpdater:
             f'del "%~f0"\r\n'
         )
         helper = self.staging_dir / f"apply_update_{pid}.bat"
-        helper.write_text(cmd, encoding="ascii")
+        helper.write_text(cmd, encoding="ascii", newline="")
         self._spawn_helper(helper, target, backup, new)
 
     #: Environment variable per helper path, read once at the top of the script
@@ -2212,8 +2204,8 @@ def _mark_kept(backup: Path) -> tuple[Path, bool]:
     """
     try:
         (backup / _KEPT_MARKER).write_text(
-            "Waves kept this folder because it holds files that were not part of the app.\n"
-            "Move anything you want out of it, then delete it; Waves will not touch it.\n",
+            "BitWave kept this folder because it holds files that were not part of the app.\n"
+            "Move anything you want out of it, then delete it; BitWave will not touch it.\n",
             encoding="utf-8",
         )
     except OSError:
@@ -2237,9 +2229,9 @@ def _mark_kept(backup: Path) -> tuple[Path, bool]:
 def _spare_sibling(base: Path, suffix: str, ours: str) -> Path:
     """A sibling of ``base`` named ``base.name + suffix`` that we may clear.
 
-    The swap stages the new tree at ``Waves.new`` and backs the live install up
-    to ``Waves.old``, wiping whatever sits at those names first. Waves never
-    deletes a user's files, and nothing says a folder called ``Waves.old`` next
+    The swap stages the new tree at ``BitWave.new`` and backs the live install up
+    to ``BitWave.old``, wiping whatever sits at those names first. BitWave never
+    deletes a user's files, and nothing says a folder called ``BitWave.old`` next
     to the install is ours, so a name is only taken when it is free or when it
     holds ``ours`` (the executable, so it is plainly a tree we staged or backed
     up on an earlier run). Otherwise the next spelling is tried.
@@ -2317,7 +2309,7 @@ def _reclaim_foreign(backup: Path, installed: Path, log, shipped: set[str] | Non
     The swap replaces the WHOLE install directory, so every file in there that
     the build did not ship (a download folder pointed inside it, a zip
     extracted over a folder that already held other things) is sitting in the
-    backup with a recursive delete pointed at it. Waves never deletes a user's
+    backup with a recursive delete pointed at it. BitWave never deletes a user's
     files, so they are moved into the new install first, and if even one of
     them cannot be moved the backup is KEPT instead of deleted: a stale folder
     is recoverable, a deleted music library is not.
@@ -2334,7 +2326,7 @@ def _reclaim_foreign(backup: Path, installed: Path, log, shipped: set[str] | Non
     if not leftovers:
         _rmtree(backup)
         return "", True
-    log(f"keeping {len(leftovers)} item(s) in the install folder that were not part of Waves")
+    log(f"keeping {len(leftovers)} item(s) in the install folder that were not part of BitWave")
     stuck = 0
     for rel in leftovers:
         dest = installed / rel
@@ -2359,7 +2351,7 @@ def _reclaim_foreign(backup: Path, installed: Path, log, shipped: set[str] | Non
         backup, protected = _mark_kept(backup)
         log(f"could not move {stuck} of them back; they are still in {backup.name}")
         if not protected:
-            log(f"move them out of {backup.name} before updating again; Waves could not reserve it")
+            log(f"move them out of {backup.name} before updating again; BitWave could not reserve it")
         return backup.name, protected
     _rmtree(backup)
     return "", True

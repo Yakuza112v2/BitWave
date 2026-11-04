@@ -3,7 +3,7 @@
 TIDAL's catalog carries no genre on a track or an album (tidalapi only knows
 the genre browse pages), so the Genre tag has always been left empty, and a
 user who wants one fills it in by hand or with a tagger. MusicBrainz knows
-genres for most releases (community voted, CC0 data), and Waves already reads
+genres for most releases (community voted, CC0 data), and BitWave already reads
 it for the Releases check and the library lookup, so a download can ask the
 same service the same way and write what it answers.
 

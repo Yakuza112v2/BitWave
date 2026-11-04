@@ -17,7 +17,7 @@ before Nuitka walks the tree.
 The rule is generic rather than a name match, so the next static-only module Qt
 adds is handled too: a directory qualifies only when it holds a static plugin
 library AND no shared one, which means Qt shipped nothing loadable there. A
-module Waves actually imports would carry a shared library and be kept.
+module BitWave actually imports would carry a shared library and be kept.
 
 Only the build virtualenv's PySide6 tree is touched. Run it with the same
 interpreter that will run Nuitka.

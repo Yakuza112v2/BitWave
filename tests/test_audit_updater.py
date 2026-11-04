@@ -59,20 +59,20 @@ def test_dmg_no_longer_preferred_over_zip(tmp_path):
     # so the updater picked an archive it couldn't unpack. A .zip in the same
     # release must now win.
     assets = [
-        {"name": "Waves-macos-arm64.dmg", "browser_download_url": "dmg"},
-        {"name": "Waves-macos-arm64.zip", "browser_download_url": "zip"},
+        {"name": "BitWave-macos-arm64.dmg", "browser_download_url": "dmg"},
+        {"name": "BitWave-macos-arm64.zip", "browser_download_url": "zip"},
     ]
     name, url, _ = u._select_asset(assets, "macos", "arm64")
-    assert (name, url) == ("Waves-macos-arm64.zip", "zip")
+    assert (name, url) == ("BitWave-macos-arm64.zip", "zip")
 
 
 def test_sevenz_no_longer_preferred_over_zip(tmp_path):
     assets = [
-        {"name": "Waves-windows-x64.7z", "browser_download_url": "7z"},
-        {"name": "Waves-windows-x64.zip", "browser_download_url": "zip"},
+        {"name": "BitWave-windows-x64.7z", "browser_download_url": "7z"},
+        {"name": "BitWave-windows-x64.zip", "browser_download_url": "zip"},
     ]
     name, url, _ = u._select_asset(assets, "windows", "amd64")
-    assert (name, url) == ("Waves-windows-x64.zip", "zip")
+    assert (name, url) == ("BitWave-windows-x64.zip", "zip")
 
 
 def test_dmg_and_7z_dropped_from_install_exts():
@@ -84,50 +84,50 @@ def test_dmg_and_7z_dropped_from_install_exts():
 
 
 def test_tar_gz_is_installable_and_selected(tmp_path):
-    assets = [{"name": "Waves-linux-x86_64.tar.gz", "browser_download_url": "tgz"}]
+    assets = [{"name": "BitWave-linux-x86_64.tar.gz", "browser_download_url": "tgz"}]
     name, url, _ = u._select_asset(assets, "linux", "amd64")
-    assert (name, url) == ("Waves-linux-x86_64.tar.gz", "tgz")
+    assert (name, url) == ("BitWave-linux-x86_64.tar.gz", "tgz")
 
 
 # ---- extraction: tar.gz payload extracts to the expected binary -------------
 def test_extract_tar_gz_payload_finds_binary(tmp_path, monkeypatch):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
-    monkeypatch.setattr(u.sys, "executable", str(tmp_path / "Waves"), raising=False)
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
+    monkeypatch.setattr(u.sys, "executable", str(tmp_path / "BitWave"), raising=False)
     up.os_key, up.arch = "linux", "amd64"
-    archive = tmp_path / "Waves-linux-x86_64.tar.gz"
+    archive = tmp_path / "BitWave-linux-x86_64.tar.gz"
     _tar_gz(
         archive,
         [
-            ("Waves.dist", None, "dir", 0o755),
-            ("Waves.dist/Waves", b"NEWBINARY", "file", 0o755),
-            ("Waves.dist/lib.so", b"newlib", "file", 0o644),
+            ("BitWave.dist", None, "dir", 0o755),
+            ("BitWave.dist/BitWave", b"NEWBINARY", "file", 0o755),
+            ("BitWave.dist/lib.so", b"newlib", "file", 0o644),
         ],
     )
-    staged = up._extract_payload(archive, "Waves-linux-x86_64.tar.gz", lambda *a, **k: None)
-    assert staged.name == "Waves"
+    staged = up._extract_payload(archive, "BitWave-linux-x86_64.tar.gz", lambda *a, **k: None)
+    assert staged.name == "BitWave"
     assert staged.read_bytes() == b"NEWBINARY"
     assert os.access(staged, os.X_OK)  # exec bit carried over
     assert (staged.parent / "lib.so").read_bytes() == b"newlib"
 
 
 def test_extract_tar_gz_preserves_symlink(tmp_path, monkeypatch):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key, up.arch = "macos", "arm64"
-    archive = tmp_path / "Waves-macos.tar.gz"
+    archive = tmp_path / "BitWave-macos.tar.gz"
     _tar_gz(
         archive,
         [
-            ("Waves.app", None, "dir", 0o755),
-            ("Waves.app/Contents", None, "dir", 0o755),
-            ("Waves.app/Contents/MacOS", None, "dir", 0o755),
-            ("Waves.app/Contents/MacOS/Waves", b"BIN", "file", 0o755),
-            ("Waves.app/Contents/Versions/Current", "A", "sym", 0o755),
+            ("BitWave.app", None, "dir", 0o755),
+            ("BitWave.app/Contents", None, "dir", 0o755),
+            ("BitWave.app/Contents/MacOS", None, "dir", 0o755),
+            ("BitWave.app/Contents/MacOS/BitWave", b"BIN", "file", 0o755),
+            ("BitWave.app/Contents/Versions/Current", "A", "sym", 0o755),
         ],
     )
     out = up.staging_dir / "staged"
     with tarfile.open(archive, "r:gz") as tf:
         AppUpdater._safe_extractall_tar(tf, out)
-    link = out / "Waves.app/Contents/Versions/Current"
+    link = out / "BitWave.app/Contents/Versions/Current"
     assert link.is_symlink() and os.readlink(link) == "A"
 
 
@@ -139,14 +139,14 @@ def test_extract_tar_gz_preserves_symlink(tmp_path, monkeypatch):
 # the app actually calls, wrote outside the staging directory. These two send an
 # escaping archive down the real path, one per format.
 def test_the_real_extract_path_refuses_an_escaping_tar(tmp_path, monkeypatch):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key, up.arch = "linux", "amd64"
-    archive = tmp_path / "Waves-linux.tar.gz"
+    archive = tmp_path / "BitWave-linux.tar.gz"
     _tar_gz(archive, [("../../escaped.txt", b"owned", "file", 0o644)])
     outside = tmp_path.parent / "escaped.txt"
 
     with pytest.raises(UpdaterError, match="unsafe archive member"):
-        up._extract_payload(archive, "Waves-linux.tar.gz", lambda *a, **k: None)
+        up._extract_payload(archive, "BitWave-linux.tar.gz", lambda *a, **k: None)
 
     assert not outside.exists(), "an escaping member reached the disk through the shipped call site"
 
@@ -154,15 +154,15 @@ def test_the_real_extract_path_refuses_an_escaping_tar(tmp_path, monkeypatch):
 def test_the_real_extract_path_refuses_an_escaping_zip(tmp_path):
     import zipfile
 
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key, up.arch = "linux", "amd64"
-    archive = tmp_path / "Waves-linux.zip"
+    archive = tmp_path / "BitWave-linux.zip"
     with zipfile.ZipFile(archive, "w") as zf:
         zf.writestr("../../escaped.txt", b"owned")
     outside = tmp_path.parent / "escaped.txt"
 
     with pytest.raises(UpdaterError, match="unsafe archive member"):
-        up._extract_payload(archive, "Waves-linux.zip", lambda *a, **k: None)
+        up._extract_payload(archive, "BitWave-linux.zip", lambda *a, **k: None)
 
     assert not outside.exists(), "an escaping member reached the disk through the shipped call site"
 
@@ -234,21 +234,21 @@ def test_tar_keeps_a_hard_link_that_stays_inside(tmp_path):
 
 # ---- extraction: raw single-file binary still works -------------------------
 def test_extract_raw_binary_still_used_as_is(tmp_path, monkeypatch):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key, up.arch = "linux", "amd64"
-    payload = tmp_path / "dl-Waves"
+    payload = tmp_path / "dl-BitWave"
     payload.write_bytes(b"RAWBINARY")
-    staged = up._extract_payload(payload, "Waves", lambda *a, **k: None)
-    assert staged.name == "Waves"
+    staged = up._extract_payload(payload, "BitWave", lambda *a, **k: None)
+    assert staged.name == "BitWave"
     assert staged.read_bytes() == b"RAWBINARY"
 
 
 def test_extract_appimage_raw_used_as_is(tmp_path):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key, up.arch = "linux", "amd64"
     payload = tmp_path / "dl.AppImage"
     payload.write_bytes(b"APPIMAGE")
-    staged = up._extract_payload(payload, "Waves-linux.AppImage", lambda *a, **k: None)
+    staged = up._extract_payload(payload, "BitWave-linux.AppImage", lambda *a, **k: None)
     assert staged.read_bytes() == b"APPIMAGE"
 
 
@@ -256,14 +256,14 @@ def test_extract_appimage_raw_used_as_is(tmp_path):
 def test_extract_zip_still_handled(tmp_path, monkeypatch):
     import zipfile
 
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
-    monkeypatch.setattr(u.sys, "executable", str(tmp_path / "Waves"), raising=False)
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
+    monkeypatch.setattr(u.sys, "executable", str(tmp_path / "BitWave"), raising=False)
     up.os_key, up.arch = "linux", "amd64"
-    archive = tmp_path / "Waves-linux.zip"
+    archive = tmp_path / "BitWave-linux.zip"
     with zipfile.ZipFile(archive, "w") as zf:
-        zi = zipfile.ZipInfo("Waves.dist/Waves")
+        zi = zipfile.ZipInfo("BitWave.dist/BitWave")
         zi.external_attr = 0o100755 << 16
         zf.writestr(zi, b"ZIPBIN")
-    staged = up._extract_payload(archive, "Waves-linux.zip", lambda *a, **k: None)
-    assert staged.name == "Waves"
+    staged = up._extract_payload(archive, "BitWave-linux.zip", lambda *a, **k: None)
+    assert staged.name == "BitWave"
     assert staged.read_bytes() == b"ZIPBIN"

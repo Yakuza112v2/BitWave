@@ -1,4 +1,4 @@
-"""Waves-owned DASH manifest arithmetic.
+"""BitWave-owned DASH manifest arithmetic.
 
 tidalapi's ``DashInfo.get_urls`` derives the segment URL count from the MPD
 SegmentTimeline as ``2 + sum(r if r else 1)``: one for the init segment, one

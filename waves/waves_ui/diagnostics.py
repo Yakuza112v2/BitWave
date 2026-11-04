@@ -1,4 +1,4 @@
-"""Privacy-guarded diagnostic logging for Waves.
+"""Privacy-guarded diagnostic logging for BitWave.
 
 This module turns "a user says the app is slow/frozen/crashed" into a log the
 maintainer can act on, without the log ever being unsafe to attach to a public
@@ -857,7 +857,7 @@ def export_bundle(redact_content: bool = False) -> str:
     sections: list[tuple[str, str]] = []
     header = "\n".join(
         [
-            f"Waves diagnostic bundle  ·  {datetime.now().isoformat(timespec='seconds')}",
+            f"BitWave diagnostic bundle  ·  {datetime.now().isoformat(timespec='seconds')}",
             f"app={_app_version()} qt={_qt_version()} python={platform.python_version()}",
             f"os={platform.system()} {platform.release()} ({platform.machine()})",
             f"session={SESSION_ID} verbose={_verbose} content_redacted={bool(redact_content)}",

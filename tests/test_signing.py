@@ -16,7 +16,7 @@ def test_keygen_roundtrip():
     pub, priv = signing.keygen()
     assert len(base64.b64decode(pub)) == 32  # raw Ed25519 public key
     assert priv.startswith("-----BEGIN")  # PKCS#8 PEM
-    msg = b"abc123  Waves-macos-arm64.zip\n"
+    msg = b"abc123  BitWave-macos-arm64.zip\n"
     assert signing.verify(msg, signing.sign(msg, priv), pub) is True
 
 
@@ -60,8 +60,8 @@ def test_shipped_key_is_configured_and_rejects_foreign_signatures():
 
 
 def test_parse_sha256sums():
-    text = "aa11  Waves-macos-arm64.zip\n# comment\n\nbb22 *Waves-windows-x64.zip\nmalformed\n"
+    text = "aa11  BitWave-macos-arm64.zip\n# comment\n\nbb22 *BitWave-windows-x64.zip\nmalformed\n"
     assert signing.parse_sha256sums(text) == {
-        "Waves-macos-arm64.zip": "aa11",
-        "Waves-windows-x64.zip": "bb22",
+        "BitWave-macos-arm64.zip": "aa11",
+        "BitWave-windows-x64.zip": "bb22",
     }

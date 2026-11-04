@@ -71,7 +71,7 @@ def test_templates_carry_the_shipped_default():
 
 
 def test_the_default_is_what_a_fresh_install_gets():
-    # A fresh install is the engine's dataclass with Waves' first-run overrides on
+    # A fresh install is the engine's dataclass with BitWave' first-run overrides on
     # top, which is also what "reset all settings" restores. Both halves matter:
     # the illegal-character table's shipped value lives in the overrides only
     # (the dataclass default stays empty so an upgrade changes nothing until

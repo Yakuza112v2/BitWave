@@ -220,12 +220,12 @@ def test_icon_debug_lines_before_diagnostics_reach_the_file(tmp_path, monkeypatc
     diagnostics = app_mod.diagnostics
     monkeypatch.setattr(app_mod, "_icon_debug_pending", [])
     monkeypatch.setattr(diagnostics, "log_path", lambda: None)
-    app_mod._icon_debug("WAVES icon: early line")
+    app_mod._icon_debug("BITWAVE icon: early line")
     assert not list(tmp_path.iterdir())
     monkeypatch.setattr(diagnostics, "log_path", lambda: tmp_path / "waves.log")
-    app_mod._icon_debug("WAVES window: late line")
+    app_mod._icon_debug("BITWAVE window: late line")
     text = (tmp_path / "waves-icon-debug.log").read_text(encoding="utf-8")
-    assert text == "WAVES icon: early line\nWAVES window: late line\n"
+    assert text == "BITWAVE icon: early line\nWAVES window: late line\n"
     assert app_mod._icon_debug_pending == []
 
 

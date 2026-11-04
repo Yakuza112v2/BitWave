@@ -1,4 +1,4 @@
-"""Release-signing primitives for the Waves self-updater.
+"""Release-signing primitives for the BitWave self-updater.
 
 The self-updater downloads and *executes* code, so before installing anything it
 must prove the bytes are both authentic (published by us) and intact. A checksum
@@ -27,9 +27,9 @@ from Crypto.Signature import eddsa
 # is empty :func:`verify` returns ``False`` for everything, so the updater stays
 # fail-closed and can never self-install. Fill this in at release time with the
 # value printed by ``tools/waves_release_keygen.py`` (and store the matching
-# private key as the CI secret ``WAVES_SIGNING_KEY``). Keep the two in lockstep:
+# private key as the CI secret ``BITWAVE_SIGNING_KEY``). Keep the two in lockstep:
 # a non-empty key here without a CI signing step makes every install refuse.
-UPDATE_PUBLIC_KEY = "cetggrhiqyMN5HsBCi/f2gJL75FVPOYGU/sd4dI5b+0="
+UPDATE_PUBLIC_KEY = "jQFMgwjIhp1dbcCAy31oUy4jX3E80+28Fb+MpQ+nZJA="
 
 _RAW_PUBKEY_LEN = 32  # an Ed25519 public key is exactly 32 bytes
 
@@ -57,7 +57,7 @@ def keygen() -> tuple[str, str]:
 
     Returns ``(public_key_b64, private_key_pem)``: the base64 public key to embed
     as :data:`UPDATE_PUBLIC_KEY`, and the PKCS#8 PEM private key to store as the
-    ``WAVES_SIGNING_KEY`` CI secret. Run this once, offline; never commit the PEM.
+    ``BITWAVE_SIGNING_KEY`` CI secret. Run this once, offline; never commit the PEM.
     """
     key = ECC.generate(curve="Ed25519")
     pub_b64 = base64.b64encode(key.public_key().export_key(format="raw")).decode("ascii")

@@ -1,4 +1,4 @@
-"""Lightweight development timing/diagnostics logger for the Waves UI.
+"""Lightweight development timing/diagnostics logger for the BitWave UI.
 
 This is a development aid. It records how long each user-facing operation takes
 (section switches, searches, artist/album/library loads, downloads, settings

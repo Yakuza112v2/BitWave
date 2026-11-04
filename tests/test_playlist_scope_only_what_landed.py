@@ -15,7 +15,7 @@ an album you already own still lists the whole album) but wrong for its scope.
 With skip-existing on, which is the default, re-downloading an owned album
 therefore handed the writer nothing but folders that pre-date this run, and it
 replaced a playlist file it had no business touching. The folder could pre-date
-Waves entirely.
+BitWave entirely.
 
 The feature is off by default (``playlist_create``), so this never became a
 field report; the docstring in the source claimed the scope was already bounded

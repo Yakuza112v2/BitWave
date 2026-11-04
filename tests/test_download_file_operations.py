@@ -421,7 +421,7 @@ def test_downsample_audio_real_ffmpeg_writes_a_sound_flac(
 ) -> None:
     """Downsampling works on a build without soxr and the result verifies.
 
-    The ffmpeg builds Waves ships with carry no libsoxr, where the soxr-only
+    The ffmpeg builds BitWave ships with carry no libsoxr, where the soxr-only
     filter failed every downsample. Whatever this host's ffmpeg has, the
     output must land at the target, with the MD5 of its own audio.
     """

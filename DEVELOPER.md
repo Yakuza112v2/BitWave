@@ -1,12 +1,12 @@
 # Developer guide
 
-A short orientation for anyone who wants to read or change the Waves code.
+A short orientation for anyone who wants to read or change the BitWave code.
 Ten minutes here saves an afternoon of reverse-engineering.
 
 ## Architecture at a glance
 
 ```
-┌─────────────────────────────  Waves (GUI)  ─────────────────────────────┐
+┌─────────────────────────────  BitWave (GUI)  ─────────────────────────────┐
 │                                                                         │
 │  qml/Main.qml ── the entire main window (views, cards, queue, player)   │
 │  qml/SettingsPage.qml ── schema-driven settings editor                  │
@@ -31,15 +31,15 @@ Python never builds UI.
 
 ## Package layout and the engine/UI seam
 
-Waves began as a fork of Tidaler and now maintains its own engine: the
+BitWave began as a fork of Tidaler and now maintains its own engine: the
 download engine modules at the top of the `waves` package descend from the
 upstream code (with many fixes of our own), and everything UI-specific lives
 in `waves/waves_ui/`. The engine/UI split is a hard seam: engine modules stay
 close to their inherited shape and UI-owned behavior lands in `waves_ui`
 subclasses and helpers, which keeps the engine easy to audit. User-facing
-state lives in its own `Waves` folder, independent of the package name
-(`~/.config/Waves` on Linux, `~/Library/Application Support/Waves` on macOS,
-`%APPDATA%\Waves` on Windows; see `__config_dirname__` in
+state lives in its own `BitWave` folder, independent of the package name
+(`~/.config/BitWave` on Linux, `~/Library/Application Support/BitWave` on macOS,
+`%APPDATA%\BitWave` on Windows; see `__config_dirname__` in
 `waves/__init__.py`).
 
 ## Threading model
@@ -111,7 +111,7 @@ Updating a checkout across the package rename (`tidaler/` to `waves/`)? Run
 `pip install -e ".[gui]"`). A stale editable install keeps `import tidaler`
 resolving against dead code, and without the `waves` distribution installed
 the app treats the run as a dev environment and opens against the separate
-`Waves-dev` config folder, which looks like being signed out.
+`BitWave-dev` config folder, which looks like being signed out.
 
 The QML plain-text guard test fails if any dynamic `Text` in Main.qml can
 render rich text (remote strings must never inject markup).

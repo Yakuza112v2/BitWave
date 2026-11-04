@@ -554,7 +554,7 @@ def test_install_cancel_after_extraction_is_honored_and_staging_swept(monkeypatc
         # install() checks and never reach this phase at all).
         staged = self.staging_dir / "staged"
         staged.mkdir(parents=True, exist_ok=True)
-        (staged / "Waves").write_bytes(b"extracted app copy")
+        (staged / "BitWave").write_bytes(b"extracted app copy")
         assert abort is not None, "abort was not forwarded into _apply"
         abort.set()
         raise UpdateCancelled()
@@ -576,7 +576,7 @@ def test_a_failed_apply_sweeps_the_staged_copy(monkeypatch, tmp_path):
     def failing_apply(self, p, rel, log, abort=None):
         staged = self.staging_dir / "staged"
         staged.mkdir(parents=True, exist_ok=True)
-        (staged / "Waves").write_bytes(b"extracted app copy")
+        (staged / "BitWave").write_bytes(b"extracted app copy")
         raise OSError("swap blew up")
 
     monkeypatch.setattr(type(up), "_apply", failing_apply, raising=True)

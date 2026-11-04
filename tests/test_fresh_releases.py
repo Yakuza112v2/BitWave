@@ -191,8 +191,8 @@ def test_http_fetch_unpacks_gzip_and_names_the_pause_on_a_refusal(monkeypatch):
         return _Resp(gzip.compress(b"hello"), {"Content-Encoding": "gzip"})
 
     monkeypatch.setattr(fr.urllib.request, "urlopen", ok)
-    assert fr.http_fetch("https://api.listenbrainz.org/x", "Waves/test") == b"hello"
-    assert sent[0].get_header("User-agent") == "Waves/test"
+    assert fr.http_fetch("https://api.listenbrainz.org/x", "BitWave/test") == b"hello"
+    assert sent[0].get_header("User-agent") == "BitWave/test"
     assert sent[0].get_header("Accept-encoding") == "gzip"
 
     def refused(req, timeout, context=None):
@@ -200,7 +200,7 @@ def test_http_fetch_unpacks_gzip_and_names_the_pause_on_a_refusal(monkeypatch):
 
     monkeypatch.setattr(fr.urllib.request, "urlopen", refused)
     with pytest.raises(fr.FetchError) as e:
-        fr.http_fetch("https://api.listenbrainz.org/x", "Waves/test")
+        fr.http_fetch("https://api.listenbrainz.org/x", "BitWave/test")
     assert e.value.retry_after == 7200
 
     def short(req, timeout, context=None):
@@ -208,7 +208,7 @@ def test_http_fetch_unpacks_gzip_and_names_the_pause_on_a_refusal(monkeypatch):
 
     monkeypatch.setattr(fr.urllib.request, "urlopen", short)
     with pytest.raises(fr.FetchError) as e:
-        fr.http_fetch("https://api.listenbrainz.org/x", "Waves/test")
+        fr.http_fetch("https://api.listenbrainz.org/x", "BitWave/test")
     # Never sooner than the floor, whatever the answer says.
     assert e.value.retry_after == fr.MIN_BACKOFF_SEC
 
@@ -217,7 +217,7 @@ def test_http_fetch_unpacks_gzip_and_names_the_pause_on_a_refusal(monkeypatch):
 
     monkeypatch.setattr(fr.urllib.request, "urlopen", down)
     with pytest.raises(fr.FetchError) as e:
-        fr.http_fetch("https://api.listenbrainz.org/x", "Waves/test")
+        fr.http_fetch("https://api.listenbrainz.org/x", "BitWave/test")
     # Never reached (no network yet after a wake): it tries again soon.
     assert e.value.offline and e.value.retry_after == fr.OFFLINE_RETRY_SEC < fr.MIN_BACKOFF_SEC
 

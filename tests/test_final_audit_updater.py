@@ -36,19 +36,19 @@ def _helper_text(up):
 
 def _install_with_user_files(tmp_path):
     """An install folder holding the build AND things the user put there."""
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     (install_root / "music" / "Some Artist" / "Some Album").mkdir(parents=True)
     (install_root / "music" / "Some Artist" / "Some Album" / "01 - Track.flac").write_text("MUSIC")
     (install_root / "my-notes.txt").write_text("NOTES")
-    (install_root / "Waves").write_text("OLD")
+    (install_root / "BitWave").write_text("OLD")
     (install_root / "lib.so").write_text("oldlib")
-    return install_root, install_root / "Waves"
+    return install_root, install_root / "BitWave"
 
 
 def _staged_tree(tmp_path, where="staging", exe="NEW"):
-    staged = tmp_path / where / "Waves.dist"
+    staged = tmp_path / where / "BitWave.dist"
     staged.mkdir(parents=True)
-    (staged / "Waves").write_text(exe)
+    (staged / "BitWave").write_text(exe)
     (staged / "lib.so").write_text("newlib")
     return staged
 
@@ -66,17 +66,17 @@ def _refuse_to_move(allow_src):
 
 
 def _macos_bundle(tmp_path):
-    bundle = tmp_path / "Applications" / "Waves.app"
+    bundle = tmp_path / "Applications" / "BitWave.app"
     (bundle / "Contents" / "MacOS").mkdir(parents=True)
-    target = bundle / "Contents" / "MacOS" / "Waves"
+    target = bundle / "Contents" / "MacOS" / "BitWave"
     target.write_text("OLD")
     return bundle, target
 
 
 def _macos_staged(tmp_path, where, exe="NEW"):
-    staged = tmp_path / where / "Waves.app"
+    staged = tmp_path / where / "BitWave.app"
     (staged / "Contents" / "MacOS").mkdir(parents=True)
-    (staged / "Contents" / "MacOS" / "Waves").write_text(exe)
+    (staged / "Contents" / "MacOS" / "BitWave").write_text(exe)
     return staged
 
 
@@ -85,29 +85,29 @@ def test_the_next_macos_update_does_not_delete_the_backup_this_one_kept(tmp_path
     """The keep is a promise, and the next update used to break it.
 
     An update that finds files in the old bundle keeps the WHOLE bundle at
-    Waves.app.old and tells the user so, by name. The next update then asks
+    BitWave.app.old and tells the user so, by name. The next update then asks
     _spare_sibling for a backup slot, which hands out any sibling holding the
     executable, and a kept backup always holds it: the old build never left.
     Its very next statement is a recursive delete, so the files the app said it
     had kept were gone the moment another release shipped, silently and with no
     record of what was lost.
     """
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)  # no real xattr
     bundle, target = _macos_bundle(tmp_path)
     (bundle / "Contents" / "my-notes.txt").write_text("NOTES")
 
     up._apply_macos(_macos_staged(tmp_path, "staging1"), target, lambda *a, **k: None)
 
-    kept = tmp_path / "Applications" / "Waves.app.old"
-    assert up.kept_backup == "Waves.app.old"
+    kept = tmp_path / "Applications" / "BitWave.app.old"
+    assert up.kept_backup == "BitWave.app.old"
     assert (kept / "Contents" / "my-notes.txt").read_text() == "NOTES"
 
     up._apply_macos(_macos_staged(tmp_path, "staging2", exe="NEWER"), target, lambda *a, **k: None)
 
     assert target.read_text() == "NEWER"  # the second update still applied
     assert (kept / "Contents" / "my-notes.txt").read_text() == "NOTES"  # and kept the promise
-    assert not (tmp_path / "Applications" / "Waves.app.old-1").exists()  # its own backup went and came back
+    assert not (tmp_path / "Applications" / "BitWave.app.old-1").exists()  # its own backup went and came back
 
 
 def test_the_next_tree_update_does_not_delete_the_backup_this_one_kept(tmp_path, monkeypatch):
@@ -116,7 +116,7 @@ def test_the_next_tree_update_does_not_delete_the_backup_this_one_kept(tmp_path,
     library is not) must survive the update after it, not be picked as its
     backup slot and wiped."""
     install_root, target = _install_with_user_files(tmp_path)
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     said = []
 
     staged = _staged_tree(tmp_path, "staging1")
@@ -124,16 +124,16 @@ def test_the_next_tree_update_does_not_delete_the_backup_this_one_kept(tmp_path,
         mp.setattr(u.shutil, "move", _refuse_to_move(staged))
         up._apply_unix_tree(staged, target, said.append)
 
-    kept = tmp_path / "Waves.old"
+    kept = tmp_path / "BitWave.old"
     track = kept / "music" / "Some Artist" / "Some Album" / "01 - Track.flac"
     assert track.read_text() == "MUSIC"
-    assert any("still in Waves.old" in m for m in said)
+    assert any("still in BitWave.old" in m for m in said)
 
     up._apply_unix_tree(_staged_tree(tmp_path, "staging2", exe="NEWER"), target, said.append)
 
-    assert (install_root / "Waves").read_text() == "NEWER"  # the second update still applied
+    assert (install_root / "BitWave").read_text() == "NEWER"  # the second update still applied
     assert track.read_text() == "MUSIC"  # and did not take the kept folder for its backup
-    assert not (tmp_path / "Waves.old-1").exists()
+    assert not (tmp_path / "BitWave.old-1").exists()
 
 
 def test_every_keep_the_app_performs_itself_names_the_folder(tmp_path, monkeypatch):
@@ -143,15 +143,15 @@ def test_every_keep_the_app_performs_itself_names_the_folder(tmp_path, monkeypat
     copy of the whole install per update with nothing on screen ever telling
     them where their files went, or that they were still there at all."""
     install_root, target = _install_with_user_files(tmp_path)
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     staged = _staged_tree(tmp_path)
     monkeypatch.setattr(u.shutil, "move", _refuse_to_move(staged))
 
     up._apply_unix_tree(staged, target, lambda *a, **k: None)
 
-    assert up.kept_backup == "Waves.old"  # the same record the macOS keep makes
+    assert up.kept_backup == "BitWave.old"  # the same record the macOS keep makes
     assert up.kept_unprotected is False
-    assert up.status()["kept_backup"] == "Waves.old"  # and a surface the card can read
+    assert up.status()["kept_backup"] == "BitWave.old"  # and a surface the card can read
     assert "/" not in up.kept_backup and str(tmp_path) not in up.kept_backup
 
 
@@ -159,20 +159,20 @@ def test_a_marked_backup_is_never_claimed_however_much_of_ours_it_holds(tmp_path
     """The rule itself. A kept backup is indistinguishable from a disposable
     leftover by content (both hold the executable), so the keep leaves a mark
     inside the folder, where it cannot outlive what it protects."""
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    (install_root / "Waves").write_text("LIVE")
-    leftover = tmp_path / "Waves.old"
+    (install_root / "BitWave").write_text("LIVE")
+    leftover = tmp_path / "BitWave.old"
     leftover.mkdir()
-    (leftover / "Waves").write_text("a backup we left behind last time")
+    (leftover / "BitWave").write_text("a backup we left behind last time")
 
-    assert u._spare_sibling(install_root, ".old", "Waves") == leftover  # reused, as before
+    assert u._spare_sibling(install_root, ".old", "BitWave") == leftover  # reused, as before
 
     where, protected = u._mark_kept(leftover)
 
     assert (where, protected) == (leftover, True)
     assert (leftover / u._KEPT_MARKER).is_file()
-    assert u._spare_sibling(install_root, ".old", "Waves") == tmp_path / "Waves.old-1"
+    assert u._spare_sibling(install_root, ".old", "BitWave") == tmp_path / "BitWave.old-1"
 
 
 @pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root ignores the read-only folder")
@@ -190,23 +190,23 @@ def test_a_kept_backup_that_cannot_be_marked_is_renamed_out_of_reach(tmp_path):
     which is what produces a kept backup in the first place.
     """
     install_root, target = _install_with_user_files(tmp_path)
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     said = []
     install_root.chmod(0o500)  # no room for even a 150-byte marker
-    kept = tmp_path / ("Waves.old" + u._KEPT_SUFFIX)
+    kept = tmp_path / ("BitWave.old" + u._KEPT_SUFFIX)
     try:
         up._apply_unix_tree(_staged_tree(tmp_path), target, said.append)
 
-        assert (install_root / "Waves").read_text() == "NEW"  # the update still applied
-        assert kept.is_dir() and not (tmp_path / "Waves.old").exists()
+        assert (install_root / "BitWave").read_text() == "NEW"  # the update still applied
+        assert kept.is_dir() and not (tmp_path / "BitWave.old").exists()
         assert (kept / "my-notes.txt").read_text() == "NOTES"  # nothing was destroyed
         assert up.kept_backup == kept.name  # and the user is told where it IS
         assert up.kept_unprotected is False, "a rename is protection, not a consolation"
         assert any(kept.name in m for m in said)
         # the whole point: no spelling of the backup slot can ever reach it
-        assert all(u._spare_sibling(install_root, s, "Waves") != kept for s in (".old", ".new", ".old-4128"))
+        assert all(u._spare_sibling(install_root, s, "BitWave") != kept for s in (".old", ".new", ".old-4128"))
     finally:
-        for path in (install_root, tmp_path / "Waves.old", kept):
+        for path in (install_root, tmp_path / "BitWave.old", kept):
             if path.exists():
                 path.chmod(0o700)
 
@@ -215,7 +215,7 @@ def test_a_kept_backup_that_cannot_be_protected_at_all_says_so(tmp_path, monkeyp
     """And if even the rename fails, the one thing that must not happen is
     silence: an unprotected kept folder is one the next update deletes, so the
     result carries it and the log says to move the files out by hand."""
-    backup = tmp_path / "Waves.old"
+    backup = tmp_path / "BitWave.old"
     backup.mkdir()
     (backup / "my-mixtape.flac").write_text("MINE")
 
@@ -233,7 +233,7 @@ def test_a_kept_backup_that_cannot_be_protected_at_all_says_so(tmp_path, monkeyp
 def test_a_recycled_windows_pid_cannot_take_over_a_kept_backup(tmp_path, monkeypatch):
     """Windows recycles pids, so ".old-<pid>" is not the identity it reads as.
 
-    A helper whose reclaim failed keeps Waves.old-4128 with the user's files in
+    A helper whose reclaim failed keeps BitWave.old-4128 with the user's files in
     it. Weeks later another session happens to be pid 4128, arms its own
     helper, and that helper's first post-wait act is an unconditional
     `rmdir /S /Q` of the backup it was given. The mark is what pushes the new
@@ -242,20 +242,20 @@ def test_a_recycled_windows_pid_cannot_take_over_a_kept_backup(tmp_path, monkeyp
     spawns: list[dict] = []
     monkeypatch.setattr(u.subprocess, "Popen", lambda cmd, **kw: spawns.append(kw))
     monkeypatch.setattr(u.os, "getpid", lambda: 4128)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
-    kept = tmp_path / "Waves.old-4128"
+    target = install_root / "BitWave.exe"
+    kept = tmp_path / "BitWave.old-4128"
     kept.mkdir()
-    (kept / "Waves.exe").write_text("OLD")  # the old build never left the backup
+    (kept / "BitWave.exe").write_text("OLD")  # the old build never left the backup
     (kept / "my-mixtape.flac").write_text("MINE")
     u._mark_kept(kept)
 
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
-    new_tree = tmp_path / "staging" / "Waves"
+    new_tree = tmp_path / "staging" / "BitWave"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_text("NEW")
+    (new_tree / "BitWave.exe").write_text("NEW")
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
     backup = spawns[-1]["env"]["WAVES_UPDATE_2"]
@@ -270,16 +270,16 @@ def test_the_tree_helper_marks_what_it_keeps_and_clears_only_what_it_may(tmp_pat
     after this process is gone), and it looks for that mark before its own
     rmdir, for the window where a mark is written between one helper being
     armed and another finishing."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: None)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    new_tree = tmp_path / "staging" / "Waves"
+    new_tree = tmp_path / "staging" / "BitWave"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_bytes(b"NEW")
+    (new_tree / "BitWave.exe").write_bytes(b"NEW")
 
-    up._apply_windows_tree(new_tree, install_root / "Waves.exe", lambda *a, **k: None)
+    up._apply_windows_tree(new_tree, install_root / "BitWave.exe", lambda *a, **k: None)
 
     script = _helper_text(up)
     lines = script.replace("\r\n", "\n").split("\n")
@@ -296,16 +296,16 @@ def test_the_tree_helper_marks_what_it_keeps_and_clears_only_what_it_may(tmp_pat
 # ---- a staged single-file swap can be resumed -------------------------------
 def _onefile_staged_but_unapplied(tmp_path, monkeypatch, *, staged_version="v2.0.0", running="1.0.0"):
     """A single-exe install whose swap was staged and armed but never ran: the
-    marker is on disk and Waves.exe.new is sitting beside the executable."""
+    marker is on disk and BitWave.exe.new is sitting beside the executable."""
     monkeypatch.setattr(u, "is_frozen", lambda: True)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
+    target = install_root / "BitWave.exe"
     target.write_text("OLD")
-    new_exe = install_root / "Waves.exe.new"
+    new_exe = install_root / "BitWave.exe.new"
     new_exe.write_text("NEW")
     monkeypatch.setattr(u, "_current_exe", lambda: target)
-    up = AppUpdater(tmp_path / "config", running, repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", running, repo="owner/BitWave")
     up.os_key = "windows"
     up.staging_dir.mkdir(parents=True)
     # Written exactly as the install that staged it wrote it: a fresh install
@@ -325,8 +325,8 @@ def _onefile_staged_but_unapplied(tmp_path, monkeypatch, *, staged_version="v2.0
 def test_a_staged_single_file_swap_is_re_armed_at_the_next_launch(tmp_path, monkeypatch):
     """install() arms a helper and writes the marker for EVERY Windows layout,
     but only the standalone tree could be resumed: the single-exe layout stages
-    Waves.exe.new beside the executable, and the resume looked exclusively for
-    a Waves.new directory. It found none, concluded the staged build was gone,
+    BitWave.exe.new beside the executable, and the resume looked exclusively for
+    a BitWave.new directory. It found none, concluded the staged build was gone,
     deleted the marker, and the update the UI had already reported as installed
     vanished for good."""
     up, target, new_exe = _onefile_staged_but_unapplied(tmp_path, monkeypatch)
@@ -350,7 +350,7 @@ def test_a_staged_single_file_swap_is_re_armed_at_the_next_launch(tmp_path, monk
 
 def test_a_single_file_swap_that_landed_clears_its_marker_and_leftover(tmp_path, monkeypatch):
     """The other side of the same branch: running the staged version means the
-    swap happened, so the marker and the spent Waves.exe.new go, and no helper
+    swap happened, so the marker and the spent BitWave.exe.new go, and no helper
     is armed for an update already made."""
     up, _, new_exe = _onefile_staged_but_unapplied(tmp_path, monkeypatch, staged_version="v2.0.0", running="2.0.0")
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: pytest.fail("armed a helper"))
@@ -367,16 +367,16 @@ def test_a_backup_kept_by_the_windows_helper_is_noticed_at_the_next_launch(tmp_p
     last place that can still say so, so it looks for the mark the helper left
     and reports the folder the way every other keep is reported."""
     up, _, _ = _onefile_staged_but_unapplied(tmp_path, monkeypatch, staged_version="v2.0.0", running="2.0.0")
-    kept = tmp_path / "Waves.old-4128"
+    kept = tmp_path / "BitWave.old-4128"
     kept.mkdir()
-    (kept / "Waves.exe").write_text("the old build, which never left the backup")
+    (kept / "BitWave.exe").write_text("the old build, which never left the backup")
     (kept / "my-mixtape.flac").write_text("MINE")
     u._mark_kept(kept)
 
     assert up.resume_pending_apply() is None  # the swap landed, nothing to arm
 
-    assert up.kept_backup == "Waves.old-4128"
-    assert up.status()["kept_backup"] == "Waves.old-4128"
+    assert up.kept_backup == "BitWave.old-4128"
+    assert up.status()["kept_backup"] == "BitWave.old-4128"
     assert (kept / "my-mixtape.flac").read_text() == "MINE"
 
 
@@ -410,16 +410,16 @@ def test_a_file_the_new_release_dropped_is_not_carried_back_into_the_install(tmp
     every time."""
     install_root, target = _install_with_user_files(tmp_path)
     (install_root / "dropped.so").write_text("gone in the next build")
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
-    up._record_shipped(["Waves", "lib.so", "dropped.so"], "v1.0.0")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
+    up._record_shipped(["BitWave", "lib.so", "dropped.so"], "v1.0.0")
 
     up._apply_unix_tree(_staged_tree(tmp_path), target, lambda *a, **k: None)
 
-    assert (install_root / "Waves").read_text() == "NEW"
+    assert (install_root / "BitWave").read_text() == "NEW"
     assert not (install_root / "dropped.so").exists(), "the release dropped this file; it stays dropped"
     assert (install_root / "my-notes.txt").read_text() == "NOTES"  # the user's still comes back
     assert (install_root / "music" / "Some Artist" / "Some Album" / "01 - Track.flac").read_text() == "MUSIC"
-    assert not (tmp_path / "Waves.old").exists()
+    assert not (tmp_path / "BitWave.old").exists()
 
 
 def test_a_user_file_inside_a_folder_the_release_dropped_still_comes_back(tmp_path):
@@ -430,21 +430,21 @@ def test_a_user_file_inside_a_folder_the_release_dropped_still_comes_back(tmp_pa
     (install_root / "plugins").mkdir()
     (install_root / "plugins" / "qsvg.so").write_text("a plugin the next build sheds")
     (install_root / "plugins" / "my-mixtape.flac").write_text("MINE")
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
-    up._record_shipped(["Waves", "lib.so", "plugins/", "plugins/qsvg.so"], "v1.0.0")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
+    up._record_shipped(["BitWave", "lib.so", "plugins/", "plugins/qsvg.so"], "v1.0.0")
 
     up._apply_unix_tree(_staged_tree(tmp_path), target, lambda *a, **k: None)
 
     assert (install_root / "plugins" / "my-mixtape.flac").read_text() == "MINE"
     assert not (install_root / "plugins" / "qsvg.so").exists()
-    assert not (tmp_path / "Waves.old").exists()
+    assert not (tmp_path / "BitWave.old").exists()
 
 
 def test_macos_does_not_strand_a_whole_bundle_over_a_file_the_release_dropped(tmp_path, monkeypatch):
     """The macOS cost of the same mistake: the whole ~150 MB backup bundle kept
-    forever, behind a notice ("files that were not part of Waves") that is not
+    forever, behind a notice ("files that were not part of BitWave") that is not
     true of a library the release itself removed."""
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)
     bundle, target = _macos_bundle(tmp_path)
     (bundle / "Contents" / "Frameworks").mkdir()
@@ -453,7 +453,7 @@ def test_macos_does_not_strand_a_whole_bundle_over_a_file_the_release_dropped(tm
         [
             "Contents/",
             "Contents/MacOS/",
-            "Contents/MacOS/Waves",
+            "Contents/MacOS/BitWave",
             "Contents/Frameworks/",
             "Contents/Frameworks/Qt6Svg.dylib",
         ],
@@ -464,9 +464,9 @@ def test_macos_does_not_strand_a_whole_bundle_over_a_file_the_release_dropped(tm
     up._apply_macos(_macos_staged(tmp_path, "staging"), target, said.append)
 
     assert target.read_text() == "NEW"
-    assert not (tmp_path / "Applications" / "Waves.app.old").exists()
+    assert not (tmp_path / "Applications" / "BitWave.app.old").exists()
     assert up.kept_backup == ""
-    assert not any("not part of Waves" in m for m in said)
+    assert not any("not part of BitWave" in m for m in said)
 
 
 def test_a_shipped_record_is_trusted_only_for_the_version_that_is_running(tmp_path):
@@ -474,14 +474,14 @@ def test_a_shipped_record_is_trusted_only_for_the_version_that_is_running(tmp_pa
     user replaced by hand, describes files that are not the ones on disk.
     Trusting it would count a user's file as the old build's, which is the one
     mistake in here that deletes something."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     assert up._shipped_by_the_old_build() is None  # nothing recorded yet
 
-    up._record_shipped(["Waves", "dropped.so"], "v0.9.0")
+    up._record_shipped(["BitWave", "dropped.so"], "v0.9.0")
     assert up._shipped_by_the_old_build() is None
 
-    up._record_shipped(["Waves", "dropped.so"], "v1.0.0")
-    assert up._shipped_by_the_old_build() == {"Waves", "dropped.so"}
+    up._record_shipped(["BitWave", "dropped.so"], "v1.0.0")
+    assert up._shipped_by_the_old_build() == {"BitWave", "dropped.so"}
 
     (up.staging_dir / up._SHIPPED_NAME).write_text("[1, 2, 3]", encoding="utf-8")
     assert up._shipped_by_the_old_build() is None
@@ -494,16 +494,16 @@ def test_the_apply_records_what_the_build_it_just_installed_ships(tmp_path, monk
     this one is the first to read it."""
     install_root, target = _install_with_user_files(tmp_path)
     staged = _staged_tree(tmp_path)
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     up.os_key = "linux"
     monkeypatch.setattr(u, "_current_exe", lambda: target)
-    monkeypatch.setattr(AppUpdater, "_extract_payload", lambda self, p, a, log: staged / "Waves", raising=True)
+    monkeypatch.setattr(AppUpdater, "_extract_payload", lambda self, p, a, log: staged / "BitWave", raising=True)
 
     up._apply(tmp_path / "payload", Release(version="v2.0.0", asset="a", url="u"), lambda *a, **k: None)
 
     assert up._shipped_by_the_old_build() is None, "recorded for v2.0.0, and v1.0.0 is what is running"
     up.current_version = "2.0.0"
-    assert up._shipped_by_the_old_build() == {"Waves", "lib.so"}
+    assert up._shipped_by_the_old_build() == {"BitWave", "lib.so"}
     # never the user's files, which is exactly why it is taken off the staged
     # tree and not off the install folder the reclaim has just written into
     assert not any(p.endswith(".flac") or p == "my-notes.txt" for p in up._shipped_by_the_old_build())
@@ -516,9 +516,9 @@ def test_tree_paths_keeps_folders_and_files_apart(tmp_path):
     root = tmp_path / "tree"
     (root / "plugins").mkdir(parents=True)
     (root / "plugins" / "qsvg.so").write_text("x")
-    (root / "Waves").write_text("x")
+    (root / "BitWave").write_text("x")
 
-    assert sorted(u._tree_paths(root)) == ["Waves", "plugins/", "plugins/qsvg.so"]
+    assert sorted(u._tree_paths(root)) == ["BitWave", "plugins/", "plugins/qsvg.so"]
 
     backup = tmp_path / "backup"
     backup.mkdir()
@@ -536,7 +536,7 @@ def test_install_says_when_it_hands_back_a_previously_staged_version(tmp_path, m
     deliberate). The result therefore has to say so, or a caller renders
     "v0.1.27 installed, restart to finish" over an update that will restart
     into v0.1.26."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key = "windows"
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     up._armed_result = {"ok": True, "version": "v0.1.26", "applied_to": "x", "relaunch": True}
@@ -550,7 +550,7 @@ def test_install_says_when_it_hands_back_a_previously_staged_version(tmp_path, m
 
 
 def test_taking_over_a_staged_swap_reports_it_as_previously_staged_too(tmp_path, monkeypatch):
-    """The same for the other short circuit: a swap staged by a copy of Waves
+    """The same for the other short circuit: a swap staged by a copy of BitWave
     that has since exited is taken over, not downloaded again, and what comes
     back is still a version this call did not stage."""
     up, _, _ = _onefile_staged_but_unapplied(tmp_path, monkeypatch)

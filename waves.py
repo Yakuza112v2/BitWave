@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Packaged-build entry point for the Waves QML UI.
+"""Packaged-build entry point for the BitWave QML UI.
 
-This is the compile target for a standalone Waves build (the binary that ships
+This is the compile target for a standalone BitWave build (the binary that ships
 in the public repo's Releases). It is a thin launcher, deliberately separate
 from ``waves/waves_ui/app.py``: Nuitka compiles the entry file as ``__main__``,
 so it must use *absolute* imports, ``waves_ui`` keeps its relative imports and
@@ -26,13 +26,13 @@ along as data files so ``app.py`` finds them next to itself at runtime.
 # nuitka-project-if: {OS} in ("Darwin"):
 #    nuitka-project: --macos-create-app-bundle
 #    nuitka-project: --macos-app-icon={MAIN_DIRECTORY}/waves/ui/icon.icns
-#    nuitka-project: --macos-signed-app-name=com.waves.app
+#    nuitka-project: --macos-signed-app-name=io.github.Yakuza112v2.BitWave
 #    nuitka-project: --macos-app-mode=gui
 # nuitka-project-if: {OS} in ("Linux", "FreeBSD"):
 #    nuitka-project: --linux-icon={MAIN_DIRECTORY}/waves/ui/icon512.png
 # nuitka-project-if: {OS} in ("Windows"):
 #    nuitka-project: --windows-icon-from-ico={MAIN_DIRECTORY}/waves/ui/icon.ico
-#    nuitka-project: --file-description="Waves: saves music from your TIDAL account for offline listening."
+#    nuitka-project: --file-description="BitWave: saves music from your TIDAL account for offline listening."
 
 # Debugging options, controlled via environment variable at compile time.
 # nuitka-project-if: {OS} == "Windows" and os.getenv("DEBUG_COMPILATION", "no") == "yes":
@@ -71,12 +71,12 @@ along as data files so ``app.py`` finds them next to itself at runtime.
 # plugin scan rather than the DLL list, so --noinclude-dlls does not reach
 # it; the Makefile prunes it from the build virtualenv beforehand instead
 # (tools/prune_static_qml_plugins.py, run from the Makefile).
-# Drop the heavy Qt modules Waves never loads, it is a QtQuick app that only
+# Drop the heavy Qt modules BitWave never loads, it is a QtQuick app that only
 # imports QtQuick(.Controls.Basic/.Layouts/.Effects/.Shapes/.Dialogs) + QtCore.
 # NOTE: on a macOS standalone build Nuitka names the Qt libraries without the
 # "libQt6" prefix (e.g. "QtWebEngineCore"), so the patterns must match the bare
 # module name, "libQt6WebEngine*" matches nothing here. By far the biggest win
-# is QtWebEngineCore: a ~210 MB bundled Chromium that nothing in Waves touches.
+# is QtWebEngineCore: a ~210 MB bundled Chromium that nothing in BitWave touches.
 # nuitka-project: --noinclude-dlls=*WebEngine*
 # nuitka-project: --noinclude-dlls=*QtPdf*
 # nuitka-project: --noinclude-dlls=*Qt3D*
@@ -125,7 +125,7 @@ along as data files so ``app.py`` finds them next to itself at runtime.
 # back to a heuristic.
 # nuitka-project: --include-package=charset_normalizer
 # The data-dir DESTINATIONS deliberately do not mirror the package path: a
-# waves/ directory beside the binary would collide with the Waves executable
+# waves/ directory beside the binary would collide with the BitWave executable
 # on the case-insensitive filesystems macOS and Windows ship with (the build
 # died on exactly that). app.py's _data_dir() knows both this packaged layout
 # and the in-package source layout.
@@ -144,15 +144,15 @@ along as data files so ``app.py`` finds them next to itself at runtime.
 # AGPL-3.0 requires the license text to travel with the binary; ship it inside
 # the bundle next to the Phosphor (qml/) and JetBrains Mono (fonts/) notices.
 # nuitka-project: --include-data-files=./LICENSE=LICENSE
-# nuitka-project: --company-name=Waves
-# nuitka-project: --product-name=Waves
+# nuitka-project: --company-name=BitWave
+# nuitka-project: --product-name=BitWave
 # nuitka-project: --copyright=(C) 2026 iamprivacy, licensed under AGPL-3.0
 
 import sys
 
 
 def main() -> int:
-    """Launch the Waves QML UI and return its exit code.
+    """Launch the BitWave QML UI and return its exit code.
 
     ``--library-worker`` runs the library scanner instead (the app starts
     its own binary this way, see waves.library_worker): decided before any
@@ -165,7 +165,7 @@ def main() -> int:
         from waves.waves_ui.app import waves_activate
     except ImportError as e:
         print(e)
-        print("Qt dependencies missing. Cannot start Waves. Please read the 'README.md' carefully.")
+        print("Qt dependencies missing. Cannot start BitWave. Please read the 'README.md' carefully.")
         return 1
 
     return waves_activate()

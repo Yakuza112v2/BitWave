@@ -4,7 +4,7 @@
 # single-file AppImage.
 #
 # Usage: build_appimage.sh <dist-tree> <output.AppImage>
-#   <dist-tree>        the trimmed standalone folder (CI calls it "Waves")
+#   <dist-tree>        the trimmed standalone folder (CI calls it "BitWave")
 #   <output.AppImage>  where to write the finished AppImage
 #
 # Linux-only (CI's ubuntu legs). appimagetool is downloaded pinned by version
@@ -18,7 +18,7 @@ OUT="${2:?usage: build_appimage.sh <dist-tree> <output.AppImage>}"
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ -d "$DIST_TREE" ] || { echo "error: dist tree '$DIST_TREE' not found" >&2; exit 1; }
-[ -x "$DIST_TREE/Waves" ] || { echo "error: '$DIST_TREE/Waves' is not an executable" >&2; exit 1; }
+[ -x "$DIST_TREE/BitWave" ] || { echo "error: '$DIST_TREE/BitWave' is not an executable" >&2; exit 1; }
 
 # Pinned appimagetool 1.9.1 (github.com/AppImage/appimagetool), hashed 2026-07-12.
 TOOL_VERSION="1.9.1"
@@ -41,13 +41,13 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 # AppDir layout: AppRun + desktop entry + icon at the root, the untouched
-# standalone tree under usr/lib/waves (AppRun execs usr/lib/waves/Waves).
+# standalone tree under usr/lib/bitwave (AppRun execs usr/lib/bitwave/BitWave).
 APPDIR="$WORK/AppDir"
 mkdir -p "$APPDIR/usr/lib"
-cp -a "$DIST_TREE" "$APPDIR/usr/lib/waves"
+cp -a "$DIST_TREE" "$APPDIR/usr/lib/bitwave"
 install -m 0755 "$REPO_ROOT/tools/appimage/AppRun" "$APPDIR/AppRun"
-install -m 0644 "$REPO_ROOT/tools/appimage/waves.desktop" "$APPDIR/waves.desktop"
-install -m 0644 "$REPO_ROOT/waves/ui/icon512.png" "$APPDIR/waves.png"
+install -m 0644 "$REPO_ROOT/tools/appimage/bitwave.desktop" "$APPDIR/bitwave.desktop"
+install -m 0644 "$REPO_ROOT/waves/ui/icon512.png" "$APPDIR/bitwave.png"
 
 # AppStream metainfo: catalogs (AppImageHub, software centers) read it for the
 # description and the author-chosen screenshots. Without it the AppImageHub
@@ -59,13 +59,13 @@ VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$REPO_ROOT/pyproject.toml" | he
 [ -n "$VERSION" ] || { echo "error: could not read version from pyproject.toml" >&2; exit 1; }
 mkdir -p "$APPDIR/usr/share/metainfo"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$(date -u +%Y-%m-%d)/g" \
-  "$REPO_ROOT/tools/appimage/dev.getwaves.Waves.metainfo.xml" \
-  > "$APPDIR/usr/share/metainfo/dev.getwaves.Waves.metainfo.xml"
+  "$REPO_ROOT/tools/appimage/io.github.Yakuza112v2.BitWave.metainfo.xml" \
+  > "$APPDIR/usr/share/metainfo/io.github.Yakuza112v2.BitWave.metainfo.xml"
 # The metainfo names its launcher by desktop id, and validators (appstreamcli
 # validate-tree) look for that id under usr/share/applications, not at the
 # AppDir root where appimagetool wants its own copy.
 mkdir -p "$APPDIR/usr/share/applications"
-install -m 0644 "$REPO_ROOT/tools/appimage/waves.desktop" "$APPDIR/usr/share/applications/waves.desktop"
+install -m 0644 "$REPO_ROOT/tools/appimage/bitwave.desktop" "$APPDIR/usr/share/applications/bitwave.desktop"
 
 TOOL="$WORK/appimagetool"
 echo "→ fetching appimagetool ${TOOL_VERSION} (${TOOL_ARCH})"
@@ -77,7 +77,7 @@ chmod +x "$TOOL"
 
 # --appimage-extract-and-run: CI runners have no FUSE. ARCH tells appimagetool
 # which embedded runtime to bundle into the output. No update information is
-# embedded: Waves's own signed in-app updater replaces the file.
+# embedded: BitWave's own signed in-app updater replaces the file.
 ARCH="$TOOL_ARCH" "$TOOL" --appimage-extract-and-run "$APPDIR" "$OUT"
 chmod +x "$OUT"
 echo "✓ built $OUT"

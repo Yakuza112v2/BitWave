@@ -1,6 +1,6 @@
-"""In-app FFmpeg manager for Waves.
+"""In-app FFmpeg manager for BitWave.
 
-Waves needs FFmpeg for three optional post-processing steps in
+BitWave needs FFmpeg for three optional post-processing steps in
 ``waves.download``, converting videos to MP4, extracting FLAC out of MP4
 containers, and downsampling hi-res audio. Rather than make the user install
 FFmpeg and point the app at the binary, this module downloads a trusted static
@@ -24,7 +24,7 @@ Sources (native build per CPU arch, chosen for trust + automatability):
   Windows builds). LGPL ``win64``/``winarm64`` zip, verified against the
   release's ``checksums.sha256``.
 
-We never ship the binary ourselves, so Waves carries no FFmpeg redistribution or
+We never ship the binary ourselves, so BitWave carries no FFmpeg redistribution or
 licensing obligation.
 
 A note on trust: the ``.sha256`` sidecar comes from the same origin as the zip,
@@ -62,7 +62,7 @@ _TIMEOUT = 30
 _CHUNK = 1 << 16  # 64 KiB streaming chunks
 _MR_BASE = "https://ffmpeg.martin-riedl.de"
 _BTBN_LATEST = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/tags/latest"
-_UA = "Waves-ffmpeg-manager"
+_UA = "BitWave-ffmpeg-manager"
 
 
 class FfmpegUnsupportedPlatform(Exception):
@@ -392,7 +392,7 @@ class FfmpegManager:
         _log(f"downloading {release.label or release.version}")
         with tempfile.NamedTemporaryFile(dir=self.install_dir, suffix=".zip", delete=False) as tmp:
             zip_tmp = Path(tmp.name)
-        # A staged name of this install's OWN: two Waves instances share
+        # A staged name of this install's OWN: two BitWave instances share
         # <config>/bin, and both staging through one fixed "ffmpeg.new" let
         # either truncate, promote, or unlink the other's half-written binary
         # (the in-process inflight flag cannot see a second process). A
@@ -550,7 +550,7 @@ class FfmpegManager:
     def sweep_aside(self) -> None:
         """Delete binaries an earlier install or remove renamed aside.
 
-        Best-effort and quiet: one that is still running (a Waves that has not
+        Best-effort and quiet: one that is still running (a BitWave that has not
         exited yet, or a straggling ffmpeg child) stays until the next sweep.
         Only the manager's own ``<exe>.old-<pid>`` files under its ``bin``
         folder are touched, never anything of the user's.

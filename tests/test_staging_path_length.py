@@ -21,7 +21,7 @@ from waves.download import _STAGING_NAME_OVERHEAD, _staging_path
 # The album from the report, respelled with POSIX separators so the length
 # arithmetic is the same on the test machine as on the reporter's Windows box.
 ALBUM_DIR = pathlib.Path(
-    "/Users/Admin/Desktop/Tidal Waves Download/3 Doors Down/"
+    "/Users/Admin/Desktop/Tidal BitWave Download/3 Doors Down/"
     "The Better Life (Rarities Edition · Live At Cynthia Woods Mitchell Pavilion)"
 )
 TRACK_NAME = (

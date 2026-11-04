@@ -49,7 +49,7 @@ def metadata_project() -> ProjectInformation:
                 # attempt to parse, else use hardcoded fallback
                 repo_url = next(
                     (url.split(", ")[1] for url in urls if url.startswith("Repository")),
-                    "https://github.com/iamprivacy/Waves",
+                    "https://github.com/Yakuza112v2/BitWave",
                 )
 
             result = ProjectInformation(version=meta_info["Version"], repository_url=repo_url)
@@ -111,7 +111,7 @@ def latest_version_information() -> ReleaseLatest:
 
 
 def name_package() -> str:
-    package_name: str = __package__ or __name__
+    package_name: str = "bitwave"
 
     return package_name
 
@@ -146,7 +146,7 @@ def is_dev_env() -> bool:
 
 
 def name_app() -> str:
-    app_name: str = name_package()
+    app_name: str = "BitWave"
     is_dev: bool = is_dev_env()
 
     if is_dev:
@@ -166,14 +166,14 @@ def name_app() -> str:
 # independent of the package name: a package rename must never move or strand
 # this folder. It also must never collide with ~/.config/tidaler, where an
 # installed copy of the upstream Tidaler / tidal-dl-ng app keeps ITS login
-# and settings; Waves state stays fully isolated from every other app's.
+# and settings; BitWave state stays fully isolated from every other app's.
 def __getattr__(name: str):
     if name == "__name_display__":
         value = name_app()
     elif name == "__version__":
         value = version_app()
     elif name == "__config_dirname__":
-        value = "Waves-dev" if is_dev_env() else "Waves"
+        value = "BitWave-dev" if is_dev_env() else "BitWave"
     else:
         msg = f"module {__name__!r} has no attribute {name!r}"
         raise AttributeError(msg)

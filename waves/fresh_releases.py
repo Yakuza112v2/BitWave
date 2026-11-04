@@ -18,7 +18,7 @@ matching happens here.
 
 TIDAL's own feed is the second list (``parse_tidal_feed``): the new albums,
 EPs and singles of the account's favorite artists over the last month, in
-one read-only request (about 90 KB) on the session Waves already holds. It
+one read-only request (about 90 KB) on the session BitWave already holds. It
 names TIDAL artist and album ids, so it is exact and has no MusicBrainz lag,
 but it covers only TIDAL favorites. It is only ever read: nothing here marks
 an activity seen, so the TIDAL apps' own new-release dot is left alone.

@@ -4,7 +4,7 @@ WHAT THIS FENCES OFF
 --------------------
 TIDAL ships Atmos as a SEPARATE release with its own id, every track of it
 Atmos-only, listed under the same title as the stereo edition (sometimes with a
-"(Dolby Atmos)" suffix, sometimes not). Both stages of Waves' duplicate handling
+"(Dolby Atmos)" suffix, sometimes not). Both stages of BitWave' duplicate handling
 group by title, so the Atmos edition met its stereo twin in one group and,
 ranking as the tier TIDAL reports for its container, either lost the collapse
 (the Atmos row silently vanished) or won it (the stereo edition was replaced by

@@ -1,4 +1,4 @@
-"""Nothing stops a second copy of Waves running, so nothing may assume one.
+"""Nothing stops a second copy of BitWave running, so nothing may assume one.
 
 Two instances share one config folder: the same settings.json, the same
 token.json, the same ownership DB, the same staging names. Three places wrote
@@ -116,7 +116,7 @@ def _old_schema(path) -> sqlite3.Connection:
 
 
 class _RacedConn:
-    """A connection where the OTHER copy of Waves adds the column in the moment
+    """A connection where the OTHER copy of BitWave adds the column in the moment
     between our reading the column list and our adding it ourselves."""
 
     def __init__(self, conn: sqlite3.Connection, column: str, decl: str):

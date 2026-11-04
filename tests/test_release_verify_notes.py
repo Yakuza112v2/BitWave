@@ -42,7 +42,7 @@ def test_the_readme_prints_the_embedded_key_and_the_commands():
     assert "## Verify a download" in readme
     assert public_key_pem().rstrip("\n") in readme
     for needle in (
-        "openssl pkeyutl -verify -pubin -inkey waves-release.pem -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig.bin",
+        "openssl pkeyutl -verify -pubin -inkey bitwave-release.pem -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig.bin",
         "base64 --decode < SHA256SUMS.sig > SHA256SUMS.sig.bin",
         "tr -d '\\r' | shasum -a 256 --ignore-missing -c -",
         "Get-FileHash",
@@ -84,7 +84,7 @@ def test_the_readme_commands_verify_a_signed_manifest_with_openssl(tmp_path):
     digest = hashlib.sha256(b"build").hexdigest()
     manifest.write_bytes(f"# waves-version: v9.9.9\n{digest}  waves_x.zip\r\n{digest}  waves_win.zip\r\n".encode())
     (tmp_path / "SHA256SUMS.sig").write_text(sign(manifest.read_bytes(), priv_pem))
-    (tmp_path / "waves-release.pem").write_text(public_key_pem(pub_b64))
+    (tmp_path / "bitwave-release.pem").write_text(public_key_pem(pub_b64))
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     block = re.search(r"```bash\n(printf[^`]*?)```", readme[readme.index("## Verify a download") :]).group(1)

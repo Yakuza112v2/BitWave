@@ -2,13 +2,13 @@
 
 THE BUG
 -------
-``download_delay`` is a Waves setting: it appears in ``_FLAG_FIELDS``, on the
+``download_delay`` is a BitWave setting: it appears in ``_FLAG_FIELDS``, on the
 Settings page under Downloads, and its two companion fields "Minimum/Maximum
 download delay (s)" were live. The flag itself was never read by anything in
 ``waves/``.
 
 The engine takes it as a PARAMETER and relies on the caller to forward it.
-Waves forwarded nothing, so each dispatch fell back to a different default and
+BitWave forwarded nothing, so each dispatch fell back to a different default and
 the toggle was inert in both directions:
 
   * a collection got ``items()``' default of True, so turning the delay OFF

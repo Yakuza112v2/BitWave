@@ -17,7 +17,7 @@ from waves.helper.path import path_config_base, path_file_settings
 
 
 def _real_config_homes() -> list[str]:
-    """Where a person's own Waves config lives on this machine."""
+    """Where a person's own BitWave config lives on this machine."""
     home = os.path.expanduser("~")
     return [
         os.path.join(home, "Library", "Application Support"),

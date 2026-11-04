@@ -3,7 +3,7 @@
 THE BUG WE ARE FENCING OFF
 --------------------------
 ``_category_pl`` had no TTL, no revalidation and no eviction, and was cleared
-only at logout. Waves is designed to run for weeks (see the always-on freshness
+only at logout. BitWave is designed to run for weeks (see the always-on freshness
 rule), so this was reachable without anything going wrong:
 
   Day 1: DOWNLOAD ALL on a category says "Download 24 playlists?", the user

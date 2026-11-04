@@ -36,7 +36,7 @@ goes out at most every few seconds, an hourly ceiling backs that up, and a
 rate limit pauses the writes for minutes.
 
 The library import. Every artist the scanned library holds is offered in
-one review: a folder whose files carry the TIDAL artist id a Waves download
+one review: a folder whose files carry the TIDAL artist id a BitWave download
 writes is matched from the tag with no request at all, and the rest are
 searched by name one a second, the sweep pausing meanwhile so the two never
 add up. Confirming follows the picks in one transaction and never touches
@@ -306,7 +306,7 @@ def _releases_fresh_known(seen: set, kept, today: str) -> dict:
 
 def _tagged_artist_id(cache, folders: list) -> str:
     """The one TIDAL album-artist id an artist's album files carry (the tag a
-    Waves download writes), trying the first file of up to three of its
+    BitWave download writes), trying the first file of up to three of its
     folders. A file naming two artists (a collaboration) proves neither."""
     for folder in folders:
         path = cache.first_audio_file(str(folder))
@@ -2748,7 +2748,7 @@ class ReleasesMixin:
 
         def alive() -> bool:
             # The library folder changed or was turned off: its files are
-            # no longer Waves' to read (the two-folder rule).
+            # no longer BitWave' to read (the two-folder rule).
             return self._releases_import_alive(gen, igen) and self._releases_library_cache() is cache
 
         tagged = self._releases_import_tags(

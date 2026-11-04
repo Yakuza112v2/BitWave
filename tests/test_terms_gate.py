@@ -21,22 +21,22 @@ TERMS_STAMP = "Terms v1.0 (10 August 2026)"
 
 # Every clause of the canonical text, in the exact wording that was chosen.
 CANONICAL_CLAUSES = (
-    "Waves is a personal, non-commercial tool for accessing your own TIDAL account.",
-    "You will use Waves only for lawful, personal, non-commercial purposes, and only "
+    "BitWave is a personal, non-commercial tool for accessing your own TIDAL account.",
+    "You will use BitWave only for lawful, personal, non-commercial purposes, and only "
     "with content you are authorized to access.",
-    "You will not use Waves to infringe copyright or to reproduce, distribute, or "
+    "You will not use BitWave to infringe copyright or to reproduce, distribute, or "
     "pirate any content. Respect the rights of artists and rights-holders.",
-    "Your use of Waves may violate TIDAL's Terms of Service. You accept that risk and "
+    "Your use of BitWave may violate TIDAL's Terms of Service. You accept that risk and "
     "any consequences to your account, and you are responsible for complying with all "
     "laws that apply to you.",
     "without warranty of any kind, and to the fullest extent permitted by law its "
     "developers and contributors accept no liability for any damages arising from it. "
     "See sections 15 and 16 of the AGPL-3.0.",
-    "You will indemnify and hold harmless the developers and contributors of Waves "
+    "You will indemnify and hold harmless the developers and contributors of BitWave "
     "against any claim, loss or demand arising from your use of it or your breach of "
     "these terms.",
-    "Waves is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a "
-    "trademark of its owner, used here only to identify the service Waves works with.",
+    "BitWave is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a "
+    "trademark of its owner, used here only to identify the service BitWave works with.",
 )
 
 
@@ -50,7 +50,7 @@ def _gate_source() -> str:
 def _gate_body_text() -> str:
     """The gate's body string, QML concatenation collapsed."""
     gate = _gate_source()
-    m = re.search(r'text: ("Waves is a personal.*?TIDAL account\..*?)\n\s*\}', gate, re.S)
+    m = re.search(r'text: ("BitWave is a personal.*?TIDAL account\..*?)\n\s*\}', gate, re.S)
     assert m, "the gate body text must be a plain concatenation of string literals"
     parts = re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(1))
     return "".join(parts).replace('\\"', '"').replace("\\n", "\n")
@@ -159,8 +159,8 @@ def test_readme_disclaimer_matches_the_gate():
         "Your use may violate TIDAL's Terms of Service, and you accept that risk",
         "sections 15 and 16",
         "indemnify and hold harmless",
-        "https://getwaves.dev/terms/",
-        "https://github.com/iamprivacy/Waves/issues",
+        "https://github.com/Yakuza112v2/BitWave/terms/",
+        "https://github.com/Yakuza112v2/BitWave/issues",
     ):
         assert phrase in disclaimer, f"the README disclaimer lost: {phrase!r}"
     # The no-monitoring fact is a privacy statement, never a liability shield.

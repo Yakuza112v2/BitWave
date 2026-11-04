@@ -76,7 +76,7 @@ def test_factory_defaults_cover_schema_keys_in_apply_shape():
     assert isinstance(values["quality_audio"], str)
     # First-run override wins over the stock dataclass default.
     assert values["video_download"] is _FIRST_RUN_OVERRIDES["video_download"]
-    # Waves pref comes from the waves.json defaults.
+    # BitWave pref comes from the waves.json defaults.
     assert values["explicit_mode"] == "explicit"
     # Composite sub-keys are resolved too.
     assert "metadata_cover_file_dimension" in values
@@ -127,9 +127,9 @@ def test_factory_defaults_leave_housekeeping_alone():
 # factoryReset
 #
 # The safety property under test is structural: the wipe is an allowlist of
-# exact Waves-written names with no recursive deletion, so it must be
+# exact BitWave-written names with no recursive deletion, so it must be
 # INCAPABLE of touching a user's file even when one sits inside (or is
-# symlinked into) Waves' own folders.
+# symlinked into) BitWave' own folders.
 # --------------------------------------------------------------------------- #
 class _FakeOwnership:
     def __init__(self):
@@ -190,7 +190,7 @@ def test_factory_reset_wipes_waves_files_and_keeps_install_channel(tmp_path, mon
         "ownership.sqlite3-wal",
         # The library and MusicBrainz caches hold what the user's library
         # contains and which titles the arbiter asked about: exactly the
-        # activity trace "erases everything Waves has saved" promises to take.
+        # activity trace "erases everything BitWave has saved" promises to take.
         "library.sqlite3",
         "library-0123456789ab.sqlite3",
         "library-0123456789ab.sqlite3-wal",
@@ -235,7 +235,7 @@ def test_factory_reset_wipes_waves_files_and_keeps_install_channel(tmp_path, mon
     assert stub._mb_service is not stub._original_mb and stub._mb_service._path is None
     assert stub._mb_arbiter is None and stub._rel_mb_client is None
     assert stub._catalog.closed, "the catalog stops reading before the files go"
-    assert sorted(os.listdir(base)) == ["install_channel"], "every Waves file (and empty subdir) is gone"
+    assert sorted(os.listdir(base)) == ["install_channel"], "every BitWave file (and empty subdir) is gone"
     assert (base / "install_channel").read_text() == "homebrew"
     assert _FakeQSettings.cleared, "the QML setup flags are cleared too"
 
@@ -279,7 +279,7 @@ def test_factory_reset_takes_everything_a_self_update_left_behind(tmp_path, monk
     updates.mkdir()
     (updates / "applied.json").write_text("{}")
     (updates / "update.log").write_text("swap ok")
-    (updates / "armed.json").write_text('{"version": "0.1.26", "applied_to": "C:/Users/someone/AppData/Local/Waves"}')
+    (updates / "armed.json").write_text('{"version": "0.1.26", "applied_to": "C:/Users/someone/AppData/Local/BitWave"}')
     (updates / "install.lock").write_text("")
     (updates / "apply_update_66648.bat").write_text("@echo off")
     (updates / "staged").mkdir()
@@ -298,7 +298,7 @@ def test_factory_reset_takes_everything_a_self_update_left_behind(tmp_path, monk
 
 def test_factory_reset_patterns_still_cannot_touch_a_foreign_file(tmp_path, monkeypatch):
     """The per-subdirectory patterns are anchored at both ends to a name only
-    Waves writes, so widening the wipe to reach a pid did not widen it to reach
+    BitWave writes, so widening the wipe to reach a pid did not widen it to reach
     anything of the user's."""
     base = tmp_path / "cfg"
     base.mkdir()
@@ -355,7 +355,7 @@ def test_factory_reset_takes_every_flac_report_and_nothing_else_there(tmp_path, 
 
 def test_factory_reset_cannot_touch_foreign_files(tmp_path, monkeypatch):
     """A user's own files inside the config folder must survive untouched:
-    unknown top-level names, unknown names inside Waves' subdirs (which then
+    unknown top-level names, unknown names inside BitWave' subdirs (which then
     also keep the subdir alive), and whole foreign directories."""
     base = tmp_path / "cfg"
     base.mkdir()
@@ -380,9 +380,9 @@ def test_factory_reset_cannot_touch_foreign_files(tmp_path, monkeypatch):
 
 
 def test_factory_reset_never_deletes_through_a_symlinked_subdir(tmp_path, monkeypatch):
-    """If something replaced Waves' bin/ with a symlink into a user directory,
+    """If something replaced BitWave' bin/ with a symlink into a user directory,
     the wipe must not follow it: the target's contents stay, even one named
-    exactly like Waves' own ffmpeg binary."""
+    exactly like BitWave' own ffmpeg binary."""
     outside = tmp_path / "user-tools"
     outside.mkdir()
     (outside / "ffmpeg").write_text("the user's own build")
@@ -454,7 +454,7 @@ def test_factory_reset_empties_the_cover_cache(tmp_path, monkeypatch):
 
     assert not any(p.exists() for p in entries), "every cover Qt wrote is gone"
     assert not (base / "art_cache").exists(), "and the emptied tree falls with it"
-    assert os.listdir(base) == [], "nothing of Waves' is left"
+    assert os.listdir(base) == [], "nothing of BitWave' is left"
 
 
 def test_factory_reset_leaves_a_foreign_file_in_the_cover_cache_alone(tmp_path, monkeypatch):

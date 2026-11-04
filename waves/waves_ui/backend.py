@@ -1,4 +1,4 @@
-"""Bridge between the download engine and the Waves QML UI.
+"""Bridge between the download engine and the BitWave QML UI.
 
 Everything the QML layer needs is exposed here as Qt properties, slots and
 signals on a single ``WavesBridge`` QObject. The bridge wraps the existing
@@ -441,7 +441,7 @@ def _finishing_seats_of(bridge) -> int:
         return 3
 
 
-# Whole-number Waves prefs (waves.json, not the engine config), each with its
+# Whole-number BitWave prefs (waves.json, not the engine config), each with its
 # range: setWavesPref and the loader hold the stored value inside it, so a
 # hand-edited file or a stray string can never size the UI off a cliff.
 _WAVES_INT_PREFS = {
@@ -473,7 +473,7 @@ def _bounded_int_pref(key: str, value, default: int) -> int:
 
 # Second-scale floats (Speed & Pacing), rendered as a decimal stepper.
 _FLOAT_FIELDS = ["download_delay_sec_min", "download_delay_sec_max", "api_rate_limit_delay_sec"]
-# Waves' opinionated defaults layered over the engine's stock dataclass defaults.
+# BitWave' opinionated defaults layered over the engine's stock dataclass defaults.
 # Applied once on a brand-new install (_apply_first_run_defaults) and restored
 # by the Diagnostics section's "reset all settings" action, so the two always agree
 # on what "factory default" means.
@@ -491,9 +491,9 @@ _FIRST_RUN_OVERRIDES = {
 }
 
 
-# Factory reset deletes ONLY these files: the exact names Waves itself writes
+# Factory reset deletes ONLY these files: the exact names BitWave itself writes
 # into its config directory. The wipe is allowlist-only with no recursive
-# deletion anywhere (os.remove on named files, os.rmdir on Waves' own subdirs,
+# deletion anywhere (os.remove on named files, os.rmdir on BitWave' own subdirs,
 # which fails on anything non-empty), so a foreign file that somehow lands in
 # the folder is structurally impossible to touch, let alone anything outside
 # it. install_channel is deliberately absent: the installer owns it and a
@@ -510,7 +510,7 @@ def _write_text_atomic(path_file: str, text: str) -> None:
     Mirrors BaseConfig.save, which does the same for settings and token.
 
     The temp name is this write's OWN (mkstemp), for the same reason
-    BaseConfig.save's is: nothing stops a second copy of Waves running against
+    BaseConfig.save's is: nothing stops a second copy of BitWave running against
     the same config folder, and two writers staging through one fixed ".tmp"
     sibling interleave into it, publish the mixture, and silently reset every
     preference on the next launch. The factory wipe knows this name shape.
@@ -651,31 +651,31 @@ _FACTORY_WIPE_FILES = (
 # and exported diagnostic bundles carry a sub-second timestamp
 # (waves-diagnostics-YYYYMMDD-HHMMSS-mmm.txt, see diagnostics.export_bundle),
 # so none of them can appear in the exact-name list above. The bundle pattern
-# is anchored to that full digit shape: it can only ever match a Waves export.
+# is anchored to that full digit shape: it can only ever match a BitWave export.
 _FACTORY_WIPE_LOG_PATTERNS = (
     re.compile(r"crash\.log\.\d+\Z"),
     re.compile(r"waves_dev\.log\.\d+\Z"),
     # Per-root library caches (library-<12 hex>.sqlite3 and sqlite's sidecars,
     # see cache_file_for_root); the anchored digest shape only ever matches a
-    # file Waves named.
+    # file BitWave named.
     *_db.wipe_patterns(),
     re.compile(r"waves-diagnostics-\d{8}-\d{6}-\d{3}\.txt\Z"),
     # Per-write staging leftovers: BaseConfig.save and _write_text_atomic both
     # stage through tempfile.mkstemp names of the shape "<name>.<random>.tmp".
     # A hard kill or power cut mid-save strands one, and for token.json the
     # stray holds the session token document, exactly what a factory reset
-    # promises to remove. Anchored on both ends to the exact files Waves
-    # stages, so it can only ever match a file Waves itself named.
+    # promises to remove. Anchored on both ends to the exact files BitWave
+    # stages, so it can only ever match a file BitWave itself named.
     re.compile(
         "(" + "|".join(re.escape(n) for n in ("settings.json", "token.json", "waves.json", *_db.json_names())) + ")"
         r"\.[0-9A-Za-z_-]+\.tmp\Z"
     ),
 )
-# Waves-created subdirectories and the exact files Waves puts in them,
+# BitWave-created subdirectories and the exact files BitWave puts in them,
 # leaf-first so an emptied child lets its parent's rmdir succeed. Random-named
 # staging leftovers (a crashed FFmpeg download's tmp zip or staged binary, an
 # unapplied update blob) are deliberately NOT matched unless the pattern is
-# anchored on both ends to a name Waves itself stages (the config staging
+# anchored on both ends to a name BitWave itself stages (the config staging
 # pattern above): deleting by loose pattern is how a wipe grows the capability
 # to eat a user's file, so those rare crumbs stay behind and keep their
 # directory alive instead. None of them carries user data.
@@ -685,24 +685,24 @@ _ART_CACHE_DIR = "art_cache"
 # A local copy of the bundled ambient wave loop, under the config folder (see
 # motionVideoUrl): playback must not stream off the install volume at boot.
 _MOTION_CACHE_DIR = "motion_bg"
-# The only two names Waves itself writes in there: the copy named by the
+# The only two names BitWave itself writes in there: the copy named by the
 # asset's byte size, and the uuid tmp sibling it is staged through. Anchored at
 # both ends and shared by the two places that delete in that folder (the
 # factory wipe below and motionVideoUrl's own sweep of stale sizes), so neither
-# can grow into deleting a file Waves did not write.
+# can grow into deleting a file BitWave did not write.
 _MOTION_CACHE_NAMES = (
     re.compile(r"wave_loop_\d+\.mp4\Z"),
     re.compile(r"wave_loop_\d+\.mp4\.[0-9a-f]+\.tmp\Z"),
 )
 # (subdirectory, exact names, anchored patterns). The patterns exist for the
-# files Waves names with something it cannot predict (a pid, a mkstemp random
-# part): each is anchored at BOTH ends to a name only Waves writes, the same
+# files BitWave names with something it cannot predict (a pid, a mkstemp random
+# part): each is anchored at BOTH ends to a name only BitWave writes, the same
 # rule the config-staging pattern above follows, so a loose match can never
 # grow into deleting a user's file.
 _FACTORY_WIPE_SUBDIRS = (
     (os.path.join("updates", "staged"), (), ()),
     # update.log, the swap helper, the staging lock and the armed-swap marker
-    # are Waves' own, written by the self-updater at every step and left behind
+    # are BitWave' own, written by the self-updater at every step and left behind
     # whenever a helper run did not finish. Unlisted, the wipe called them
     # foreign and kept them, so the updates folder survived a reset and both
     # update.log and armed.json went on holding the install paths they quote,
@@ -718,7 +718,7 @@ _FACTORY_WIPE_SUBDIRS = (
     # mkstemp(prefix="ffmpeg.", suffix=".new") and the manifest through
     # mkstemp(prefix="ffmpeg.json.", suffix=".tmp"), so a crashed install
     # leaves a name with a random middle that no exact list can hold, and the
-    # bin folder then never fell. (The download's tmp zip has no Waves-written
+    # bin folder then never fell. (The download's tmp zip has no BitWave-written
     # prefix to anchor on and deliberately stays behind, as before.)
     (
         "bin",
@@ -730,11 +730,11 @@ _FACTORY_WIPE_SUBDIRS = (
     ),
     # The motion background's local copy (motionVideoUrl): the cached loop is
     # named by its byte size and staged through a uuid tmp sibling, both parts
-    # Waves writes, so both patterns stay anchored end to end.
+    # BitWave writes, so both patterns stay anchored end to end.
     (_MOTION_CACHE_DIR, (), _MOTION_CACHE_NAMES),
     # The FLAC check's CSV reports (bridge_flac): named by kind and time
     # stamp, plus a counter for a second report in the same second, all parts
-    # Waves writes, anchored end to end.
+    # BitWave writes, anchored end to end.
     # The queue's missing-tracks reports share the folder, named the same way.
     (
         REPORTS_DIR,
@@ -1130,7 +1130,7 @@ _ENUM_LABELS = {
 def _enum_options(key: str, members) -> list:
     """Build [{value, label}] dropdown options for an enum field. ``members``
     may be an enum class (uses each member's ``name``) or a list of value
-    strings (for the Waves prefs, which aren't backed by a Python enum)."""
+    strings (for the BitWave prefs, which aren't backed by a Python enum)."""
     labels = _ENUM_LABELS.get(key, {})
     out = []
     for m in members:
@@ -1174,7 +1174,7 @@ _FAV_MIXES_GROUP_ID = "fav:mixes"
 _FAV_VIDEOS_GROUP_ID = "fav:videos"
 _ARTIST_ROLLUP_MEMBER = "artist:"
 
-# The download folder Waves used to ship as a silent default. A blank path now
+# The download folder BitWave used to ship as a silent default. A blank path now
 # means "unset" (fresh installs), but existing users who never changed it still
 # carry this exact value; it triggers the one-time "choose a folder" nudge.
 _LEGACY_DEFAULT_DOWNLOAD_PATH = "~/download"
@@ -1387,7 +1387,7 @@ _CLASS_TIER = {"hires": "HI_RES_LOSSLESS", "lossless": "LOSSLESS", "high": "HIGH
 def _measure_file_quality(path: str) -> dict:
     """What the audio file at ``path`` IS, read off the disk, in the shape
     _stream_quality gives a fetched stream, so a copy the engine found and
-    adopted gets a real tier and takes part in upgrades like a copy Waves
+    adopted gets a real tier and takes part in upgrades like a copy BitWave
     wrote. Reads the same facts the library scanner does: codec and sample
     rate, bit depth for a lossless file, bitrate for a lossy one, and the MP4
     codec that marks a Dolby Atmos copy (ranked at the fixed tier an Atmos
@@ -2048,7 +2048,7 @@ class _TrackedDownload(Download):
         being owned is exactly what must not skip it.
 
         Returns the verdict with a detail dict that, for a skip, says what the
-        copy you already hold is: ``kind`` "own" (Waves wrote that exact file,
+        copy you already hold is: ``kind`` "own" (BitWave wrote that exact file,
         the ownership ledger) or "claim" (the library scan's tag match), and
         ``tier`` (its quality word, "" when unknown). The ledger row states
         both, so IN LIBRARY keeps its quality column and speaks in the same
@@ -2345,7 +2345,7 @@ class _TrackedDownload(Download):
             # finished at once having fetched nothing. Marked adopted: the
             # recorder measures the file itself for its tier (see
             # _record_ownership), so a copy below the setting still upgrades
-            # and one at or above it settles, the same as a copy Waves wrote.
+            # and one at or above it settles, the same as a copy BitWave wrote.
             event["path"] = str(path)
             event["quality"] = {"tier": None, "requested_rank": -1, "ceiling_rank": -1, "adopted": True}
         relay.track_event.emit(event)
@@ -3215,7 +3215,7 @@ def _quality_rank(obj) -> int:
     An album is not gated that way, which is why this never showed before ranking
     moved to the recording. Rank 0 has to mean "the lowest tier", never "the tier
     could not be read": the merge treats a low rank as an invitation to borrow
-    from another edition, and Waves settles availability at stream time anyway
+    from another edition, and BitWave settles availability at stream time anyway
     (see download.py, allow_streaming is deliberately not trusted)."""
     name = ""
     try:
@@ -4495,7 +4495,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # The library scanner's three executors, via gauges: they are
         # ThreadPoolExecutors built and torn down per scan, so what is registered
         # is a stable in-flight counter rather than the pool itself. A cold scan
-        # of a big NAS library is the longest background job Waves runs, and its
+        # of a big NAS library is the longest background job BitWave runs, and its
         # saturation is the first thing worth seeing in a verbose report.
         diagnostics.register_pool("libwalk", WALK_GAUGE)
         diagnostics.register_pool("libread", READ_GAUGE)
@@ -4616,7 +4616,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # sort is never persisted to the disk page cache (see _save_page_cache).
         self._lib_sort: dict[str, tuple[str, str]] = {}
         # Favorite album/track id sets for the library-scoped artist page, built
-        # lazily and cleared on logout (Waves never mutates favorites itself, so
+        # lazily and cleared on logout (BitWave never mutates favorites itself, so
         # the only staleness is an external edit, tolerated like the page caches).
         self._fav_ids: dict[str, tuple[float, set]] = {}
         self._search_gen = 0  # bumped per search / open-link to drop stale results
@@ -4996,7 +4996,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 "Could not open the ownership store (%s); this session will not remember downloads", type(exc).__name__
             )
             self._ownership = OwnershipStore(":memory:")
-        # Waves only ever looks for music it has in two places: the download
+        # BitWave only ever looks for music it has in two places: the download
         # folder and the library folder. A copy recorded anywhere else (an
         # earlier download folder, issue #38) is not owned, is never statted,
         # and never stops a download.
@@ -5057,7 +5057,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # ---- Local music-library scan (the "in your library" badge) ----------
         # See waves.library_index + bridge_library.LibraryMixin: scans the
         # configured library folder for albums the user already has, downloaded
-        # by Waves or not. Kept across logout: it describes files on THIS disk.
+        # by BitWave or not. Kept across logout: it describes files on THIS disk.
         # Local library-presence index: matching.presence_key -> [ {year, tracks,
         # id, codec, bitrate, bits, rate}, ... ] built by scanning the user's
         # music folder (see _rebuild_library_index). None means not built yet, so
@@ -5126,7 +5126,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # forever by a queue that keeps delivering (see _on_download_recorded).
         self._library_dl_burst_start = 0.0
         # Outcome of the last folder scan (see waves.library_index SCAN_*), so
-        # Settings can tell "your library is empty" from "Waves can't read this
+        # Settings can tell "your library is empty" from "BitWave can't read this
         # folder". The progress dict feeds the live "Scanning… N of M" note
         # during a cold scan (see libraryScanProgress).
         self._library_scan_status = "unset"
@@ -5196,7 +5196,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # first send builds the notifier once. The timer coalesces finished
         # downloads the way the releases banner does; the counters feed the
         # queue-drain banner and reset each time the queue runs dry.
-        self._notifier = DesktopNotify("Waves")
+        self._notifier = DesktopNotify("BitWave")
         self._notify_pool = QtCore.QThreadPool()
         self._notify_pool.setMaxThreadCount(1)
         diagnostics.register_pool("notify", self._notify_pool)
@@ -5251,7 +5251,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         self._library_watch_debounce.setInterval(_LIBRARY_WATCH_DEBOUNCE_MS)
         self._library_watch_debounce.timeout.connect(self._on_library_watch_settled)
         # First scan after launch: the worker seeds badges instantly from the
-        # committed DB, then re-checks the library for changes made while Waves
+        # committed DB, then re-checks the library for changes made while BitWave
         # was closed. That check is normally the cheap mtime-incremental sweep,
         # but if it has been longer than the deep-sweep interval since a full
         # re-list, do a full one now so an add/remove/replace an unreliable mount
@@ -7746,7 +7746,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         for cat in list(getattr(page, "categories", None) or []):
             try:
                 # TIDAL Magazine is editorial articles: no downloadable music
-                # and no page Waves can render (it drills into a blank). Drop it
+                # and no page BitWave can render (it drills into a blank). Drop it
                 # wherever it appears, as a content row or a link tile.
                 if "magazine" in str(getattr(cat, "title", "") or "").lower():
                     continue
@@ -9608,7 +9608,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
     def _quality_choice_scope(self, media_id: str) -> list[str]:
         """The media ids whose download standing a choice on ``media_id``
-        moves: the item itself and, for an album, every track of it Waves
+        moves: the item itself and, for an album, every track of it BitWave
         knows (the members the ownership store learned from a download or
         an opened page, plus the tracks seen on a results page). A track's
         choice never reaches its album: the album's own download would still
@@ -10541,7 +10541,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
     @Slot(str, result="QVariant")
     def collectionMemberIds(self, collection_id: str):
         """Locally learned member track ids for an album/playlist/mix id, or
-        None if Waves has never observed this collection's contents (never
+        None if BitWave has never observed this collection's contents (never
         opened, never downloaded). A plain local table lookup (see
         OwnershipStore.members_of), safe to call directly from the GUI thread:
         unlike ownershipOf it never stats the user's music folder."""
@@ -10621,10 +10621,10 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         mistake).
 
         A track answers with its own copy's delivered tier, which is what the
-        file actually is, not what was asked for. A collection Waves knows the
+        file actually is, not what was asked for. A collection BitWave knows the
         members of answers only when EVERY member is owned, with the WEAKEST
         member's tier: the mark says "you already have this at this quality",
-        and on an album that has to mean the whole album. A collection Waves
+        and on an album that has to mean the whole album. A collection BitWave
         has never observed, and any item with no copy, answers "".
 
         A Dolby Atmos copy answers ATMOS, never its tier. TIDAL files every
@@ -11222,7 +11222,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             LibraryMixin._reveal_in_file_manager(path if sys.platform == "darwin" else os.path.dirname(path))
         self.missingTracksExported.emit(qid, count, path)
 
-    # ----- Waves-only preferences (kept out of the engine's Settings) -------
+    # ----- BitWave-only preferences (kept out of the engine's Settings) -------
 
     def _migrate_video_template(self) -> bool:
         """Follow the video template's shipped default forward for users who
@@ -11300,7 +11300,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         logger.info("recommended filename stand-ins declined")
 
     def _apply_first_run_defaults(self) -> None:
-        """Waves' opinionated defaults for a brand-new install, layered over
+        """BitWave' opinionated defaults for a brand-new install, layered over
         the engine's stock dataclass defaults and persisted. Only called when no
         settings file existed yet, an existing user's choices are never touched.
         resetSettingsDefaults restores the same values, so keep the two in step
@@ -11380,7 +11380,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             # resolves to nothing, so no folder (the download folder included) is
             # ever scanned, whatever the other two prefs say. library_source is
             # where an enabled scan looks: "separate" (a folder the user picks,
-            # the default) or "download" (the same folder Waves downloads to).
+            # the default) or "download" (the same folder BitWave downloads to).
             # library_folder is the separate folder's path. All three are staged
             # on the Settings Library card and committed together by SAVE CHANGES
             # (applySettings), which also starts the first scan.
@@ -11406,7 +11406,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             # links, albums) in the shared MusicBrainz file.
             "library_mb_lookup": False,
             # The FLAC signatures card (Settings, FFmpeg & FLAC): what a scan walks.
-            # "waves" is the Waves library (the download folder plus the
+            # "waves" is the BitWave library (the download folder plus the
             # library folder when the library scan is on); "folder" is the one
             # folder in flac_check_folder, set only from the card's Browse
             # dialog. Written straight away by the card (bridge_flac).
@@ -11425,14 +11425,14 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             "update_last_check": 0,
             # Desktop banners (the Notifications section; releases_notify
             # above is one of them). notify_enabled is the master switch,
-            # off by default: no banner of any kind leaves Waves until the
+            # off by default: no banner of any kind leaves BitWave until the
             # user arms it, and the save that arms it sends a test banner
             # (on macOS that first send is what raises the OS permission
-            # prompt). The rest pick which banners an armed Waves sends:
+            # prompt). The rest pick which banners an armed BitWave sends:
             # finished downloads ("queue" sends one banner when the whole
             # queue runs dry, "every" one per download, coalesced, "never"
             # none), failed downloads, and a release the automatic update
-            # check found. notify_in_front lets banners out while Waves is
+            # check found. notify_in_front lets banners out while BitWave is
             # the app in front (on by default; the test banner always goes).
             # notify_update_seen is the version already announced
             # (housekeeping, not in settingsSchema).
@@ -11444,7 +11444,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             "notify_update_seen": "",
             # FFmpeg auto-check mirrors the app updater: opt-in, off by
             # default, and only meaningful for the managed copy (a system
-            # FFmpeg has nothing Waves could update).
+            # FFmpeg has nothing BitWave could update).
             "ffmpeg_auto_update": False,
             "ffmpeg_update_cadence": "daily",
             "ffmpeg_update_last_check": 0,
@@ -11547,7 +11547,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         except FileNotFoundError:
             # A fresh install (or a config folder someone moved): defaults are
             # the whole answer and there is nothing to keep.
-            logger.debug("No Waves prefs to load", exc_info=True)
+            logger.debug("No BitWave prefs to load", exc_info=True)
         except Exception:
             # The file IS there and could not be read: truncated by a power
             # loss, half-written by a process that died mid-save, corrupt on
@@ -11584,9 +11584,9 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             os.replace(self._waves_prefs_path, kept)
         except OSError:
             self._prefs_unsavable = True
-            logger.warning("Waves prefs could not be read or set aside; this session will not save them", exc_info=True)
+            logger.warning("BitWave prefs could not be read or set aside; this session will not save them", exc_info=True)
             return
-        logger.warning("Waves prefs could not be read; the file was set aside and defaults are in use", exc_info=True)
+        logger.warning("BitWave prefs could not be read; the file was set aside and defaults are in use", exc_info=True)
 
     def _save_waves_prefs(self) -> None:
         # Window geometry saves land often, a debounced write per drag/resize
@@ -11613,7 +11613,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
             self._config_writer.submit("waves_prefs", _write)
         except Exception:
-            logger.exception("Could not save Waves prefs")
+            logger.exception("Could not save BitWave prefs")
 
     def set_motion_video_source(self, path: str) -> None:
         """app.py hands over the bundled wave-loop path (it owns the packaged
@@ -11706,9 +11706,9 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 shutil.copyfile(src, tmp)
                 os.replace(tmp, local)
                 for stale in os.listdir(cache_dir):
-                    # Waves' own older copies only. This runs inside the user's
+                    # BitWave' own older copies only. This runs inside the user's
                     # config folder, and "everything that is not the current
-                    # copy" is not a description of what Waves wrote: anything
+                    # copy" is not a description of what BitWave wrote: anything
                     # else that ended up in there, by any route, was deleted
                     # with it. The names are the anchored ones the factory wipe
                     # uses, the app's standing rule for deleting by pattern.
@@ -11728,7 +11728,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
     @Slot(str, result="QVariant")
     def wavesPref(self, key: str):
-        """Read one Waves-only pref (whitelisted in _load_waves_prefs)."""
+        """Read one BitWave-only pref (whitelisted in _load_waves_prefs)."""
         return self._waves_prefs.get(key)
 
     # ---- Audio output ---------------------------------------------------
@@ -13672,13 +13672,13 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         carries counts, never names. ``on_sent`` runs on the pool thread
         after a hand-over, never after a refusal. Every banner passes this
         gate, so the master switch (off by default) silences them all, and
-        with notify_in_front off none goes out while Waves is the app in
+        with notify_in_front off none goes out while BitWave is the app in
         front. The ``test`` banner is the one exception to that: it is sent
-        from Settings, so Waves is always in front for it."""
+        from Settings, so BitWave is always in front for it."""
         if not self._waves_pref_bool("notify_enabled"):
             return
         if not test and not self._waves_pref_bool("notify_in_front") and self._notify_waves_in_front():
-            _notify_log.info("notify: banner held, Waves is in front")
+            _notify_log.info("notify: banner held, BitWave is in front")
             return
         notifier = self._notifier
 
@@ -13693,7 +13693,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
     @staticmethod
     def _notify_waves_in_front() -> bool:
-        """(GUI thread) Whether Waves is the app the user is in right now."""
+        """(GUI thread) Whether BitWave is the app the user is in right now."""
         return QtGui.QGuiApplication.applicationState() == Qt.ApplicationState.ApplicationActive
 
     def _notify_job_ended(self, item: dict | None) -> None:
@@ -13798,7 +13798,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             return
         self._notify_send(
             "Notifications are on",
-            "Waves will announce new releases, finished downloads and updates here.",
+            "BitWave will announce new releases, finished downloads and updates here.",
             "settings: test banner handed to the OS",
             test=True,
         )
@@ -13816,7 +13816,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         """(GUI thread, off _autoUpdateFound) One banner per version the
         automatic check finds. A check the user ran, from the Updates card or
         the status bar's version mark, never raises one: they are already
-        looking at Waves. The version is remembered only once the banner was
+        looking at BitWave. The version is remembered only once the banner was
         handed over, so a refused one is tried again by a later check."""
         if not latest:
             return
@@ -13826,7 +13826,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             return
         latest = str(latest)
         self._notify_send(
-            f"Waves {latest} is available",
+            f"BitWave {latest} is available",
             "Install it from Settings, Updates.",
             "updates: update banner handed to the OS",
             on_sent=lambda: self._emit_from_worker("_updateBannerSent", latest),
@@ -14603,7 +14603,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 stream = track.get_stream()
                 manifest = stream.get_stream_manifest()
                 if manifest.is_encrypted:
-                    # Waves does not process encrypted streams, so there is
+                    # BitWave does not process encrypted streams, so there is
                     # nothing here to preview.
                     raise RuntimeError("preview: encrypted stream is not previewable")  # noqa: TRY003
                 # BTS (a single https file) is directly seekable; hand it straight
@@ -14722,7 +14722,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         if not segments:
             return None
         if any(getattr(seg.key, "method", None) not in (None, "NONE") for seg in segments):
-            return None  # Waves does not process keyed segments
+            return None  # BitWave does not process keyed segments
         if not whole:
             keep, total = 0, 0.0
             for seg in segments:
@@ -17809,7 +17809,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         after we exit."""
         if self._updater.os_key == "windows" and not self._updater.rearm_for_restart():
             # The install-time helper gives up after a few hours, and a quit
-            # with no helper waiting closed Waves without applying anything
+            # with no helper waiting closed BitWave without applying anything
             # or bringing it back. The marker is still on disk, so the next
             # launch re-arms it.
             _update_log.warning("no swap helper is waiting; the update will be re-armed at the next launch")
@@ -18379,7 +18379,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 extra["sanitize"] = True
             return field(key, "str", str(getattr(d, key)), extra)
 
-        # Waves-only prefs (stored in waves.json) keep their hand-written labels
+        # BitWave-only prefs (stored in waves.json) keep their hand-written labels
         # and help; indexed by key so sections can pick them in any order.
         waves_fields = {
             f["key"]: f
@@ -18413,7 +18413,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     "min_tracks_key": "releases_import_min_tracks",
                     "label": "Music library",
                     "help": (
-                        "Choose where your music library lives, then SAVE CHANGES to scan it. Waves matches "
+                        "Choose where your music library lives, then SAVE CHANGES to scan it. BitWave matches "
                         "your TIDAL browsing against it to badge what you already have. Scanning only ever "
                         "reads: it never writes, moves or renames anything it finds."
                     ),
@@ -18606,7 +18606,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     "key": "auto_update",
                     "label": "Check for updates automatically",
                     "help": (
-                        "Off by default. When on, Waves checks the releases page for a newer version "
+                        "Off by default. When on, BitWave checks the releases page for a newer version "
                         "(at launch or once a day) and only notifies you; nothing downloads until you "
                         "click Update. The check sends none of your data."
                     ),
@@ -18679,7 +18679,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 },
                 {
                     "key": "notify_in_front",
-                    "label": "Show banners while Waves is in front",
+                    "label": "Show banners while BitWave is in front",
                     "help": "Turn off to hear only about what happens while you are in another app.",
                     "type": "bool",
                     "value": self._waves_pref_bool("notify_in_front"),
@@ -18754,7 +18754,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     "label": "Music videos",
                     "help": (
                         "Videos from the artists you follow, in the feed and on the Artists page. "
-                        "Hidden, Waves stops checking for them."
+                        "Hidden, BitWave stops checking for them."
                     ),
                     "type": "enum",
                     "value": str(self._waves_prefs.get("releases_videos", "show")),
@@ -18786,7 +18786,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     "key": "ffmpeg_auto_update",
                     "label": "Check for updates automatically",
                     "help": (
-                        "Off by default. When on, Waves checks for a newer managed FFmpeg build "
+                        "Off by default. When on, BitWave checks for a newer managed FFmpeg build "
                         "(at launch or once a day) and only notifies you; nothing downloads until "
                         "you click Update. The check sends none of your data."
                     ),
@@ -18892,7 +18892,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             if key == "path_binary_ffmpeg":
                 # Surface a genuine user override first. With none set, prefill
                 # the binary detected on the system PATH so the box shows what
-                # Waves is actually using (and Browse opens beside it); the box
+                # BitWave is actually using (and Browse opens beside it); the box
                 # is empty only when nothing is detected. The managed copy is
                 # never shown here, it has its own card above, and this stays a
                 # display prefill: nothing persists unless the user edits/saves.
@@ -18907,7 +18907,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 f["value"] = val
                 f["label"] = "Or link your own FFmpeg"
                 f["help"] = (
-                    "Point Waves at an FFmpeg binary you already have instead of the managed copy. "
+                    "Point BitWave at an FFmpeg binary you already have instead of the managed copy. "
                     "Leave empty to use the managed copy above, or one found on your system PATH."
                 )
             # edition_conflict deliberately has NO depends_on: 'Best of both'
@@ -18955,7 +18955,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             {
                 "group": "Library",
                 "id": "library",
-                "desc": "Point Waves at your music library so it can badge what you already have.",
+                "desc": "Point BitWave at your music library so it can badge what you already have.",
                 "fields": [
                     "library",
                 ],
@@ -18963,7 +18963,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             {
                 "group": "Releases",
                 "id": "releases",
-                "desc": "New releases from the artists you follow, and what Waves does when one lands.",
+                "desc": "New releases from the artists you follow, and what BitWave does when one lands.",
                 "fields": [
                     "releases_auto_download",
                     "follow_mirror_tidal",
@@ -19108,7 +19108,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             {
                 "group": "Speed & Pacing",
                 "id": "pacing",
-                "desc": "How hard Waves pulls from TIDAL. The defaults are right for almost everyone.",
+                "desc": "How hard BitWave pulls from TIDAL. The defaults are right for almost everyone.",
                 # The delay switch and its range ride one row, and so do the
                 # batch size and its pause (see the "range" rows below).
                 "fields": [
@@ -19126,7 +19126,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 "group": "Updates",
                 "id": "updates",
                 "card": "updates",
-                "desc": "Keep Waves current. Checks are off by default and never send any of your data.",
+                "desc": "Keep BitWave current. Checks are off by default and never send any of your data.",
                 "fields": ["auto_update", "update_cadence"],
             },
             {
@@ -19486,7 +19486,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         """Put every user-facing setting back to its factory default (Settings,
         Diagnostics: "reset all settings").
 
-        Factory default = the engine's stock dataclass values with Waves'
+        Factory default = the engine's stock dataclass values with BitWave'
         first-run overrides on top (_FIRST_RUN_OVERRIDES), plus the waves.json
         pref defaults. Only keys that appear in settingsSchema are touched:
         housekeeping state (window frame, section collapse memory, update-check
@@ -19504,14 +19504,14 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
     @Slot()
     def factoryReset(self) -> None:
-        """Erase what Waves keeps on this machine (Settings, Diagnostics: "reset
+        """Erase what BitWave keeps on this machine (Settings, Diagnostics: "reset
         application"): settings, prefs, the sign-in token, the ownership
         store, disk caches, logs and the QSettings setup flags. Downloaded
         music is never touched. The UI quits right after this returns (its
         aboutToQuit shutdown aborts any in-flight downloads), so the next
         launch starts like a brand-new install.
 
-        Safety property, load-bearing: the wipe can only ever delete Waves'
+        Safety property, load-bearing: the wipe can only ever delete BitWave'
         own files. It works from the _FACTORY_WIPE_* allowlists of exact
         names, uses os.remove (a single file) and os.rmdir (fails on any
         non-empty directory), and contains no recursive delete, so a user
@@ -19638,7 +19638,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 os.rmdir(sub)
         _factory_wipe_art_cache(os.path.join(base, _ART_CACHE_DIR))
         # QSettings backs the QML-side setup flags (first-run FFmpeg gate,
-        # update-toast memory); clearing it only edits Waves' own preferences
+        # update-toast memory); clearing it only edits BitWave' own preferences
         # store, no file deletion involved.
         with contextlib.suppress(Exception):
             qsettings = QtCore.QSettings()

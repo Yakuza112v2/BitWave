@@ -42,14 +42,14 @@ def test_path_file_sanitize_keeps_folder_path_depth(tmp_path):
 
 
 def test_config_dir_is_waves_specific():
-    # Waves must never share per-user state (token.json, settings.json) with an
+    # BitWave must never share per-user state (token.json, settings.json) with an
     # installed Tidaler / tidal-dl-ng: a fresh install has to start signed out.
     import os
 
     from waves import __config_dirname__
     from waves.helper.path import path_config_base, path_file_settings, path_file_token
 
-    assert __config_dirname__ in ("Waves", "Waves-dev")
-    assert os.path.basename(path_config_base()).startswith("Waves")
+    assert __config_dirname__ in ("BitWave", "BitWave-dev")
+    assert os.path.basename(path_config_base()).startswith("BitWave")
     for f in (path_file_token(), path_file_settings()):
-        assert os.path.basename(os.path.dirname(f)).startswith("Waves")
+        assert os.path.basename(os.path.dirname(f)).startswith("BitWave")

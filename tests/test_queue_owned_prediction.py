@@ -389,7 +389,7 @@ def _run_scenario() -> int:  # (one straight line of scene setup)
         [{"id": str(i), "num": i, "title": f"track {i}", "duration": "3:00"} for i in (1, 2, 3)],
     )
     settle(150)
-    # Track 1 is Waves' own copy, track 2 a tag match, track 3 not held.
+    # Track 1 is BitWave' own copy, track 2 a tag match, track 3 not held.
     bridge._apply_owned_marks(
         qid,
         {"1": {"kind": "own", "tier": "LOSSLESS"}, "2": {"kind": "claim", "tier": "HIGH"}},

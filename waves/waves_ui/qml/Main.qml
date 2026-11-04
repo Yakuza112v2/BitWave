@@ -31,7 +31,7 @@ ApplicationWindow {
     // real floor. headerRow reports 0 until it is laid out, hence the max.
     minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 44)
     minimumHeight: 560
-    title: "Waves"
+    title: "BitWave"
     color: bg
 
     // ---- Album-art hover tilt knobs (iteration; final home = settings) --
@@ -1867,7 +1867,7 @@ ApplicationWindow {
 
     // ---- Open-water launch dials -----------------------------------------
     // Driven by bootOverlay (end of file). The scrim starts light so the
-    // water shows under the WAVES wordmark, and the interface starts hidden;
+    // water shows under the BITWAVE wordmark, and the interface starts hidden;
     // the launch sequence animates both to their resting values exactly once.
     property real bootScrimLevel: 0.55
     property real bootContentShown: 0
@@ -4183,7 +4183,7 @@ ApplicationWindow {
                 root.artistFollowed = waves.isFollowed("" + root.artistData.id)
                 root.artistTidalRead()
             }
-            // Seen needs eyes: a Waves sitting on this pane behind another
+            // Seen needs eyes: a BitWave sitting on this pane behind another
             // app's window (windowUp, not active) must not eat the badge,
             // or a day of finds is acknowledged with nobody looking.
             if (root.releasesOpen && root.looking) {
@@ -7936,7 +7936,7 @@ ApplicationWindow {
         libraryClaimGate.shown = true
     }
     // The owned twin of the claim gate, same dialog in its other mode: this
-    // is a RECORD of a download Waves made, not a tag guess, so the question
+    // is a RECORD of a download BitWave made, not a tag guess, so the question
     // is not "is the match right" but "fetch it again?". REDOWNLOAD forces
     // the whole job (the ownership gate would otherwise skip every track and
     // the job would fetch nothing). Takes the card so the confirm can start
@@ -8620,7 +8620,7 @@ ApplicationWindow {
             libSure = !!(p && p.sure === true)
             libPath = libPresent ? ("" + (p.local_album_id || "")) : ""
         }
-        // A tag match, not a record of a download Waves made: it wears the
+        // A tag match, not a record of a download BitWave made: it wears the
         // done face but keeps a way through, exactly as on the full button.
         readonly property bool libClaim: liveSt === "" && !owned && libPresent
         // The gold face: only the UNPROVEN matches. A sure one falls through
@@ -9623,10 +9623,10 @@ ApplicationWindow {
         property var collectionIds: null
         // Collection rollup, discovered locally: mediaId is a collection id
         // (album/playlist/mix) and its member ids are looked up from what
-        // Waves has already LEARNED locally (see collectionMemberIds): no
+        // BitWave has already LEARNED locally (see collectionMemberIds): no
         // caller-supplied list needed, so this also covers collapsed rows and
         // shelf cards that have never had their track list fetched. A
-        // collection Waves has genuinely never opened or downloaded reads as
+        // collection BitWave has genuinely never opened or downloaded reads as
         // unknown (not owned) until the first time it is: this is a local
         // cache, not a live query, so it can never require a network call.
         property bool collectionCheck: false
@@ -9763,7 +9763,7 @@ ApplicationWindow {
             libPath = libPresent ? ("" + (p.local_album_id || "")) : ""
         }
         // DOWNLOADED purely because the library scan matched something on disk:
-        // a GUESS from tags, not a record of a download Waves made. Ownership
+        // a GUESS from tags, not a record of a download BitWave made. Ownership
         // (`owned`) is a fact and stays inert; this one keeps a way through,
         // because a wrong match must never be the end of the conversation.
         readonly property bool libClaim: liveSt === "" && !owned && libPresent
@@ -9781,7 +9781,7 @@ ApplicationWindow {
             root.openLibraryClaim(db.mediaId, db.libTitle, db.libPath,
                                   db.libAlbum ? "album" : "track")
         }
-        // The owned twin: a record of a download Waves made. It used to be
+        // The owned twin: a record of a download BitWave made. It used to be
         // inert, which left a copy the user could not find with no way to
         // fetch it again; the gate names its folder and offers REDOWNLOAD.
         // A live "done" counts: a copy downloaded THIS session is owned the
@@ -9953,7 +9953,7 @@ ApplicationWindow {
         property bool bare: false
         // Filled like DOWNLOAD SELECTED so every download button reads primary.
         // A library claim wears gold, not green: green DOWNLOADED is a fact
-        // (Waves wrote that exact file), gold IN LIBRARY is a tag match, a
+        // (BitWave wrote that exact file), gold IN LIBRARY is a tag match, a
         // guess that stays clickable to explain itself.
         // A partial claim wears cyan: still a live download button (a click
         // fetches what's missing), colored to say part of this is on disk.
@@ -10233,7 +10233,7 @@ ApplicationWindow {
                 textFormat: Text.PlainText  // db.label carries a remote artist name
                 // The claim says what it knows, never what the fact-state says
                 // ("DOWNLOADED"): the scan matched tags on disk, it did not
-                // watch Waves write the file. It says MAYBE out loud, because
+                // watch BitWave write the file. It says MAYBE out loud, because
                 // this button is where a guess PREVENTS an action, and the
                 // hedge is the difference between "we recorded this" and "we
                 // recognized this". The gold stays: color separates it from
@@ -10918,11 +10918,11 @@ ApplicationWindow {
         }
     }
 
-    // Wide "Welcome to Waves" banner for the login card: the WaveMark parallax ocean
+    // Wide "Welcome to BitWave" banner for the login card: the WaveMark parallax ocean
     // at banner scale, with the title scrolling as a marquee (or centered) over it.
     component WelcomeBanner: Rectangle {
         id: banner
-        property string title: "Welcome to Waves"
+        property string title: "Welcome to BitWave"
         property bool marquee: false
         property bool mono: false
         property color ink: "#eef1f4"
@@ -11453,7 +11453,7 @@ ApplicationWindow {
         // "You already downloaded this" rides the top-LEFT corner, across from
         // the resolution badge: same plate, same size, green (the on-disk
         // owned color). Videos never appear in the library scan (it only
-        // walks audio), so the one truthful signal here is Waves' own
+        // walks audio), so the one truthful signal here is BitWave' own
         // ownership record for this exact video id.
         property bool owned: false
         function _refreshOwned() {
@@ -14065,10 +14065,10 @@ ApplicationWindow {
         readonly property string dlSt: root.dlSt(bc.card.id || "")
         readonly property real dlPct: root.dlPct(bc.card.id || "")
         // The ownership rollup ArtCard carries (its applyOwn / refreshOwned,
-        // same economy): a collection Waves downloaded in an earlier session
+        // same economy): a collection BitWave downloaded in an earlier session
         // reads DONE here too, and its click opens the owned gate with
         // REDOWNLOAD one click away. Without it this was the one card in the
-        // app that printed DOWNLOAD over files Waves itself wrote.
+        // app that printed DOWNLOAD over files BitWave itself wrote.
         readonly property bool ownable: bc.kind === "album" || bc.kind === "playlist" || bc.kind === "mix"
         property bool owned: false
         property var _ownIds: null
@@ -14374,7 +14374,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText
                     anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                     visible: bc.dlSt !== "running" && !bcDlBox.waiting
-                    // A download Waves made is the freshest fact this line can
+                    // A download BitWave made is the freshest fact this line can
                     // state, so DONE outranks any library verdict; only an idle
                     // card falls through to what the scan found.
                     text: bc.dlDone ? "DONE" : bc.dlSt === "failed" ? "RETRY" : bc.libWord
@@ -15722,9 +15722,9 @@ ApplicationWindow {
                     // carries it, which is why proven reads in the pill's
                     // lossless green rather than the filled button's accent:
                     // the accent is already on PREVIEW, one divider away.
-                    // A download Waves made is the freshest fact the half can
+                    // A download BitWave made is the freshest fact the half can
                     // state: it wears the checkmark and the fact green ahead
-                    // of any library verdict (a gold MAYBE over a file Waves
+                    // of any library verdict (a gold MAYBE over a file BitWave
                     // itself wrote would be absurd), and its click opens the
                     // owned gate with REDOWNLOAD one click away.
                     readonly property bool dlDone: acRiser.dlDone
@@ -18339,7 +18339,7 @@ ApplicationWindow {
                 WaveMark { id: headerMark }
                 // Wordmark sized to fill the logo box height (sublabel removed).
                 Text {
-                    text: "WAVES"; color: root.textHi; font.bold: true; font.letterSpacing: 2.6
+                    text: "BITWAVE"; color: root.textHi; font.bold: true; font.letterSpacing: 2.6
                     font.pixelSize: 40
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -18509,7 +18509,7 @@ ApplicationWindow {
                                     // Returning to the app must re-arm that select-all. The
                                     // backend filter swallows WindowActivate/Deactivate (the
                                     // app-switch freeze fix), so the scene keeps its focus item
-                                    // across a switch and the click that brings Waves back never
+                                    // across a switch and the click that brings BitWave back never
                                     // replays the transition above: the term sat unselected until
                                     // a click away and back. Ride the window's active flag (a
                                     // QWindow signal the swallow does not touch) to fire the same
@@ -19236,7 +19236,7 @@ ApplicationWindow {
                     }
 
                     // Empty state: a drilled page that loaded fine but has
-                    // nothing Waves can render (e.g. an editorial article
+                    // nothing BitWave can render (e.g. an editorial article
                     // page with no music). Better than a blank page below
                     // the back bar.
                     Text {
@@ -19827,7 +19827,7 @@ ApplicationWindow {
                                 libArtist: root.artistData.name || ""
                                 onTap: function(){ waves.downloadArtist(root.artistData.id) }
                             }
-                            // Follow for the Releases feed (Waves' own list; it
+                            // Follow for the Releases feed (BitWave' own list; it
                             // reaches the TIDAL favorites only through the
                             // mirror pref or the button after it).
                             SpecBtn {
@@ -22684,7 +22684,7 @@ ApplicationWindow {
                     property string verState: ""
                     Text {
                         textFormat: Text.PlainText
-                        text: "TIDAL · WAVES CONSOLE · "
+                        text: "TIDAL · BITWAVE CONSOLE · "
                         color: root.textDim; font.family: root.mono; font.pixelSize: 11; font.letterSpacing: 0.5
                     }
                     Text {
@@ -24086,7 +24086,7 @@ ApplicationWindow {
                                                     : td.status === "running" ? "" : "·"
                                                 // IN LIBRARY speaks in the download
                                                 // button's two voices: green when
-                                                // Waves wrote that exact file (the
+                                                // BitWave wrote that exact file (the
                                                 // ownership ledger, a fact), gold
                                                 // when the library scan matched it
                                                 // by tags (a guess). Its tier cell
@@ -24665,7 +24665,7 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "Waves doesn't have a folder to save downloads to yet. Pick where your music should go, then start the download again."
+                    text: "BitWave doesn't have a folder to save downloads to yet. Pick where your music should go, then start the download again."
                 }
                 SpecBtn { Layout.alignment: Qt.AlignHCenter; primary: true; label: "OPEN DOWNLOAD SETTINGS"; onClicked: { root.folderGateBlocking = false; root.openDownloadSetting() } }
                 Text {
@@ -24879,7 +24879,7 @@ ApplicationWindow {
                     visible: root.flacFixResume
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "The last fix stopped before it finished. Waves scans these folders again and writes the signature into the files it did not reach. The files it already signed are skipped."
+                    text: "The last fix stopped before it finished. BitWave scans these folders again and writes the signature into the files it did not reach. The files it already signed are skipped."
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
@@ -24920,11 +24920,11 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: frCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Reset Waves completely?" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Reset BitWave completely?" }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "This signs you out and permanently erases everything Waves has saved on this computer: all settings, the record of which tracks you own, caches and logs. Your downloaded music files are not touched. Waves closes when it finishes, and the next launch starts like a brand-new install."
+                    text: "This signs you out and permanently erases everything BitWave has saved on this computer: all settings, the record of which tracks you own, caches and logs. Your downloaded music files are not touched. BitWave closes when it finishes, and the next launch starts like a brand-new install."
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -24974,7 +24974,7 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "The folder is set, but writing to it failed just now. If it lives on a network drive or NAS, it may have disconnected while the computer slept. Reconnect it, or choose a different folder. The download is held: Waves keeps checking and resumes on its own the moment the folder is back."
+                    text: "The folder is set, but writing to it failed just now. If it lives on a network drive or NAS, it may have disconnected while the computer slept. Reconnect it, or choose a different folder. The download is held: BitWave keeps checking and resumes on its own the moment the folder is back."
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -25043,9 +25043,9 @@ ApplicationWindow {
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     text: appFfmpeg.stateKey === "managed"
-                            ? "Installed and managed by Waves. Video conversion, FLAC extraction, and downsampling are all available. You can manage or replace FFmpeg anytime in Settings."
+                            ? "Installed and managed by BitWave. Video conversion, FLAC extraction, and downsampling are all available. You can manage or replace FFmpeg anytime in Settings."
                           : appFfmpeg.stateKey === "path"
-                            ? "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. Waves found a copy on your system and can use it as is."
+                            ? "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. BitWave found a copy on your system and can use it as is."
                           : "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. Without it, those steps are skipped."
                 }
 
@@ -25093,13 +25093,13 @@ ApplicationWindow {
                     visible: appFfmpeg.stateKey === "missing" && !appFfmpeg.busy
                     highlight: true
                     title: "Install a managed copy"; chip: "RECOMMENDED"
-                    desc: "Private to Waves, updated in one click from Settings."
+                    desc: "Private to BitWave, updated in one click from Settings."
                     onClicked: appFfmpeg.install()
                 }
                 GateCard {
                     visible: appFfmpeg.stateKey === "missing" && !appFfmpeg.busy
                     title: "Set it up myself later"
-                    desc: "Point Waves at your own FFmpeg from Settings."
+                    desc: "Point BitWave at your own FFmpeg from Settings."
                     onClicked: { setupSettings.ffmpegSetupDone = true; ffmpegGate.sessionSnoozed = true }
                 }
                 Item {
@@ -25134,7 +25134,7 @@ ApplicationWindow {
                 GateCard {
                     visible: appFfmpeg.stateKey === "path" && !appFfmpeg.busy
                     title: "Switch to a managed copy"
-                    desc: "Private to Waves, one-click updates from Settings."
+                    desc: "Private to BitWave, one-click updates from Settings."
                     onClicked: appFfmpeg.install()
                 }
 
@@ -25171,9 +25171,9 @@ ApplicationWindow {
         }
     }
 
-    // Update toast: a newer Waves release was detected (launch check or a
+    // Update toast: a newer BitWave release was detected (launch check or a
     // manual one), and the WHOLE update flow runs inline here:
-    //   offer      [gold dot] Waves vX is available     INSTALL   ✕
+    //   offer      [gold dot] BitWave vX is available     INSTALL   ✕
     //   installing [LedBar: download / verify / stage]  CANCEL
     //   ready      [green dot] vX installed             RESTART NOW   LATER
     //   failed     [red dot] Install failed: <reason>   RETRY   ✕
@@ -25229,7 +25229,7 @@ ApplicationWindow {
             // The staged version comes straight off the release tag, which in
             // this project is spelled "v0.1.26", while everything the label
             // puts a "v" in front of has been through update_available()'s
-            // strip. Unstripped it renders "Waves vv0.1.26 installed", on the
+            // strip. Unstripped it renders "BitWave vv0.1.26 installed", on the
             // ordinary install too: every successful Windows install arms a
             // pending restart, so this is the usual path, not the rare one.
             var staged = st ? ("" + (st.pending_version || "")).replace(/^[vV]/, "") : ""
@@ -25311,9 +25311,9 @@ ApplicationWindow {
                 textFormat: Text.PlainText
                 text: updateToast.face === "ready"
                       ? (updateToast.swapFailure !== "" ? updateToast.swapFailure + " Restart to try once more."
-                                                        : "Waves v" + updateToast.landedVersion() + " installed")
+                                                        : "BitWave v" + updateToast.landedVersion() + " installed")
                     : updateToast.face === "failed" ? "Install failed: " + updateToast.error
-                    : "Waves v" + updateToast.version + " is available"
+                    : "BitWave v" + updateToast.version + " is available"
                 color: updateToast.face === "failed" ? root.red : root.textHi
                 font.pixelSize: 12; elide: Text.ElideRight
                 Layout.maximumWidth: root.width - 300
@@ -25542,13 +25542,13 @@ ApplicationWindow {
                         // scrollbar) even with the whole card to spare.
                         bottomPadding: 6
                         color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                        text: "Waves is a personal, non-commercial tool for accessing your own TIDAL account. By continuing, you agree that:\n\n"
-                            + "•  You will use Waves only for lawful, personal, non-commercial purposes, and only with content you are authorized to access.\n"
-                            + "•  You will not use Waves to infringe copyright or to reproduce, distribute, or pirate any content. Respect the rights of artists and rights-holders.\n"
-                            + "•  Your use of Waves may violate TIDAL's Terms of Service. You accept that risk and any consequences to your account, and you are responsible for complying with all laws that apply to you.\n"
-                            + "•  Waves is provided \"as is\", without warranty of any kind, and to the fullest extent permitted by law its developers and contributors accept no liability for any damages arising from it. See sections 15 and 16 of the AGPL-3.0.\n"
-                            + "•  You will indemnify and hold harmless the developers and contributors of Waves against any claim, loss or demand arising from your use of it or your breach of these terms.\n\n"
-                            + "Waves is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a trademark of its owner, used here only to identify the service Waves works with."
+                        text: "BitWave is a personal, non-commercial tool for accessing your own TIDAL account. By continuing, you agree that:\n\n"
+                            + "•  You will use BitWave only for lawful, personal, non-commercial purposes, and only with content you are authorized to access.\n"
+                            + "•  You will not use BitWave to infringe copyright or to reproduce, distribute, or pirate any content. Respect the rights of artists and rights-holders.\n"
+                            + "•  Your use of BitWave may violate TIDAL's Terms of Service. You accept that risk and any consequences to your account, and you are responsible for complying with all laws that apply to you.\n"
+                            + "•  BitWave is provided \"as is\", without warranty of any kind, and to the fullest extent permitted by law its developers and contributors accept no liability for any damages arising from it. See sections 15 and 16 of the AGPL-3.0.\n"
+                            + "•  You will indemnify and hold harmless the developers and contributors of BitWave against any claim, loss or demand arising from your use of it or your breach of these terms.\n\n"
+                            + "BitWave is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a trademark of its owner, used here only to identify the service BitWave works with."
                     }
                 }
                 // Privacy promise, emphasized, the closing note of the preamble.
@@ -25556,7 +25556,7 @@ ApplicationWindow {
                 Text { // guard:deliberate-richtext privacy-promise
                     Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.StyledText
-                    text: "Waves does not collect any information from its users and has no way of knowing how the application is used. "
+                    text: "BitWave does not collect any information from its users and has no way of knowing how the application is used. "
                         + "<font color=\"#3dff6e\">Privacy is the foundation of this application.</font>"
                     color: root.textHi; font.pixelSize: 13; font.bold: true; lineHeight: 1.3
                 }
@@ -25617,7 +25617,7 @@ ApplicationWindow {
 
     // ====================================================================
     // The library claim, opened up. A Download button reading DOWNLOADED
-    // because the LIBRARY SCAN matched a folder (not because Waves has a
+    // because the LIBRARY SCAN matched a folder (not because BitWave has a
     // record of downloading it) stays clickable, and lands here.
     //
     // WHY THIS EXISTS: the match is inferred from tags, so it can be wrong,
@@ -25650,7 +25650,7 @@ ApplicationWindow {
         // click makes; everything else about the conversation is the same.
         property string kind: "album"
         // "claim" (a library tag match, the original conversation) or
-        // "owned" (a record of a download Waves made; REDOWNLOAD re-fetches).
+        // "owned" (a record of a download BitWave made; REDOWNLOAD re-fetches).
         property string mode: "claim"
         property var card: null
         readonly property bool isTrack: kind === "track"
@@ -25709,7 +25709,7 @@ ApplicationWindow {
                     // line below is then the album it was found sitting in,
                     // which is also the evidence the identity was proven from.
                     // The owned mode is a different conversation: a record of
-                    // a download Waves made, not a guess to be judged.
+                    // a download BitWave made, not a guess to be judged.
                     // Each promise below is conditional because the behavior
                     // is: with "Skip existing" on nothing on disk is ever
                     // replaced, with it off a same-named file of the same
@@ -25718,11 +25718,11 @@ ApplicationWindow {
                     // download; the engine steps aside to a numbered name.
                     text: libraryClaimGate.isOwned
                         ? ((libraryClaimGate.albumTitle !== ""
-                              ? "Waves downloaded “" + libraryClaimGate.albumTitle + "” itself, so this is a record, not a guess."
-                              : "Waves downloaded this itself, so this is a record, not a guess.")
+                              ? "BitWave downloaded “" + libraryClaimGate.albumTitle + "” itself, so this is a record, not a guess."
+                              : "BitWave downloaded this itself, so this is a record, not a guess.")
                            + (libraryClaimGate.isTrack
-                                ? " Redownloading fetches it fresh and replaces the copy Waves wrote,"
-                                : " Redownloading fetches every track fresh and replaces the copies Waves wrote,")
+                                ? " Redownloading fetches it fresh and replaces the copy BitWave wrote,"
+                                : " Redownloading fetches every track fresh and replaces the copies BitWave wrote,")
                            + " including a same-named file it cannot tell apart from its own."
                            + " A Dolby Atmos file is never replaced by a stereo download; that lands beside it.")
                         : ((libraryClaimGate.isTrack
@@ -25737,7 +25737,7 @@ ApplicationWindow {
                                 ? " Downloading again never replaces a file already on disk: a track already"
                                   + " sitting at its exact name is kept, anything else gets its own copy beside it."
                                 : " With “Skip existing” turned off, downloading again replaces a same-named file"
-                                  + " unless Waves can tell it is a different track. A Dolby Atmos file is never"
+                                  + " unless BitWave can tell it is a different track. A Dolby Atmos file is never"
                                   + " replaced by a stereo download."))
                 }
                 // The evidence, so the user can judge the match rather than
@@ -25839,15 +25839,15 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: updateOptInGate.freshSetup ? "Stay current with Waves" : "Want to hear about updates?"
+                    text: updateOptInGate.freshSetup ? "Stay current with BitWave" : "Want to hear about updates?"
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     text: (updateOptInGate.freshSetup
-                            ? "Waves updates often, and most updates fix problems you would otherwise run into. "
-                            : "Waves never asked before, so you have been running without update checks. ")
+                            ? "BitWave updates often, and most updates fix problems you would otherwise run into. "
+                            : "BitWave never asked before, so you have been running without update checks. ")
                         + "A once-a-day check tells you when a new version is out. Nothing is downloaded or installed unless you choose it."
                 }
                 Text {
@@ -25936,7 +25936,7 @@ ApplicationWindow {
                     textFormat: Text.StyledText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "Some FLAC files saved by earlier versions of Waves (and by tidal-dl-ng, which Waves grew from) are missing their audio signature. <b><font color=\"" + root.textHi + "\">The music in them is intact and plays normally</font></b>, but strict tools like flac -t or Music Assistant may flag them. Waves now adds the signature to everything it saves, and a new check in Settings can find and fix older files for you in a few clicks, without touching the audio. <b><font color=\"" + root.textHi + "\">Fixing them is optional.</font></b>"
+                    text: "Some FLAC files saved by earlier versions of BitWave (and by tidal-dl-ng, which BitWave grew from) are missing their audio signature. <b><font color=\"" + root.textHi + "\">The music in them is intact and plays normally</font></b>, but strict tools like flac -t or Music Assistant may flag them. BitWave now adds the signature to everything it saves, and a new check in Settings can find and fix older files for you in a few clicks, without touching the audio. <b><font color=\"" + root.textHi + "\">Fixing them is optional.</font></b>"
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -26223,7 +26223,7 @@ ApplicationWindow {
             waves.startArtistImportMore()
         }
         function park(name) { parked = true; open = false; followDialog.show(name) }
-        // One line under a close name: how sure your library makes Waves,
+        // One line under a close name: how sure your library makes BitWave,
         // and why (the titles of yours this artist has). A row weighed
         // before the library had a say, or one it could not read, says so.
         function candidateWhy(c) {
@@ -26374,7 +26374,7 @@ ApplicationWindow {
                     text: {
                         var d = importDialog
                         if (d.stage === "start")
-                            return "Waves finds each artist in your library on TIDAL. Artists you downloaded with Waves are recognized from their files at once; the rest are searched one a second, so a big library takes a few minutes. Nothing is followed until you say so, and your TIDAL favorites are not changed."
+                            return "BitWave finds each artist in your library on TIDAL. Artists you downloaded with BitWave are recognized from their files at once; the rest are searched one a second, so a big library takes a few minutes. Nothing is followed until you say so, and your TIDAL favorites are not changed."
                         if (d.stage === "tags") return "Reading your files… " + d.done + " of " + d.total
                         if (d.stage === "scan") {
                             // One search a second, so what is left is the time left.
@@ -26386,7 +26386,7 @@ ApplicationWindow {
                             return d.error === "not-signed-in" ? "Sign in to TIDAL first."
                                  : d.error === "no-library" ? "Turn on your library in Settings and let it finish scanning first."
                                  : d.error === "library-scanning" ? "Your library is still being scanned. Its first artists are ready in a moment, so try again shortly."
-                                 : d.error === "rate-limited" ? "TIDAL asked Waves to slow down. Try again in a little while."
+                                 : d.error === "rate-limited" ? "TIDAL asked BitWave to slow down. Try again in a little while."
                                  : d.error === "offline" ? "TIDAL could not be reached. Check your connection and try again."
                                  : d.error === "library-changed" ? "Your library folder changed while this ran. Try again once it is scanned."
                                  : "Your library could not be read. Try again after its next scan."
@@ -26731,7 +26731,7 @@ ApplicationWindow {
 
     // ==== Open-water launch sequence ("Z FILL", picked in the boot lab) ====
     // The app opens on its own water video, bright (scrim held at 0.55) with
-    // the WAVES wordmark centered and the running version tucked at its
+    // the BITWAVE wordmark centered and the running version tucked at its
     // bottom-right. Once the session resolves and the landing has content
     // (2s cap), a progress bar completes over the version and drains away,
     // then the wordmark zooms toward the viewer as the water dims to its
@@ -26912,13 +26912,13 @@ ApplicationWindow {
             // on its own without touching its advance.
             Row {
                 anchors.centerIn: parent; anchors.verticalCenterOffset: 2
-                spacing: 28
+                spacing: 18
                 Repeater {
-                    model: ["W", "A", "V", "E", "S"]
+                    model: ["B", "I", "T", "W", "A", "V", "E"]
                     Text {
                         id: gs
                         textFormat: Text.PlainText; text: modelData
-                        font.family: root.mono; font.pixelSize: 126; font.bold: true
+                        font.family: root.mono; font.pixelSize: 96; font.bold: true
                         color: "#0a160d"; opacity: 0.9 * bootTitle.shown   // shadow
                         transform: Scale { origin.x: gs.width / 2; xScale: gs.text === "W" ? 1.08 : 1 }
                     }
@@ -26927,13 +26927,13 @@ ApplicationWindow {
             Row {
                 id: bootMark
                 anchors.centerIn: parent
-                spacing: 28
+                spacing: 18
                 Repeater {
-                    model: ["W", "A", "V", "E", "S"]
+                    model: ["B", "I", "T", "W", "A", "V", "E"]
                     Text {
                         id: gf
                         textFormat: Text.PlainText; text: modelData
-                        font.family: root.mono; font.pixelSize: 126; font.bold: true
+                        font.family: root.mono; font.pixelSize: 96; font.bold: true
                         // Softened off flat white: full textHi at this size
                         // read harsh against the dark water.
                         color: root.textHi; opacity: 0.85 * bootTitle.shown
@@ -26957,7 +26957,7 @@ ApplicationWindow {
             // trailing spacing, so its right edge IS the S's right edge.
             x: bootOverlay.width / 2 + bootMark.width / 2 - width
             // Tucked just under the wordmark's baseline. The metrics box runs
-            // a descender's worth below the caps, and "WAVES" has none, so
+            // a descender's worth below the caps, and "BITWAVE" has none, so
             // sitting at its bottom edge left the readout stranded well clear
             // of the glyphs; pull back up to hug them.
             y: bootOverlay.height / 2 + bootMark.height / 2 - 27

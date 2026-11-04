@@ -1,6 +1,6 @@
 name: release-or-test-build
 
-# Builds the Waves QML app for every platform and, on a version tag, publishes
+# Builds the BitWave QML app for every platform and, on a version tag, publishes
 # the binaries to a GitHub Release together with a signed checksum manifest the
 # in-app updater verifies before installing. Tag a release on the public repo as
 # `vX.Y.Z`; `test-build` / workflow_dispatch produce unsigned artifacts only.
@@ -40,7 +40,7 @@ concurrency:
 
 env:
   ASSET_EXTENSION: ".zip"
-  OUT_NAME_FILE: "waves"
+  OUT_NAME_FILE: "bitwave"
   ARCH_MACOS_X64: "macos-intel"
   ARCH_MACOS_ARM64: "macos-apple-silicon"
   # Legacy macOS flavor (pyside6 6.9.3, floor 12.0) for macOS 12 through 14;
@@ -63,7 +63,7 @@ jobs:
     # A tag or test-build push starts a build on the public repo only: the
     # private dev mirror meters Actions minutes. A manual run still works
     # anywhere. Every other job needs this one, so skipping it skips them all.
-    if: github.repository == 'iamprivacy/Waves' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'Yakuza112v2/BitWave' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       ASSET_EXTENSION: ${{ env.ASSET_EXTENSION }}
@@ -200,7 +200,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS legs ship a zip of the trimmed Waves.app: both a manual
+          # macOS legs ship a zip of the trimmed BitWave.app: both a manual
           # unzip-and-drag install and the exact shape the in-app updater extracts.
           # Both legs build on runners NEWER than the oldest macOS we support
           # (WAVES_MACOS_MIN in the Makefile), so nothing here can ever prove a
@@ -293,10 +293,10 @@ jobs:
               source $VENV &&
               poetry run make gui-waves-linux &&
               cd dist &&
-              mv waves.dist Waves &&
-              bash ../tools/bundle_xcb_libs.sh Waves &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} Waves &&
-              bash ../tools/build_appimage.sh Waves ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}.AppImage &&
+              mv waves.dist BitWave &&
+              bash ../tools/bundle_xcb_libs.sh BitWave &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
+              bash ../tools/build_appimage.sh BitWave ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}.AppImage &&
               cd ..
           - os: "ubuntu-24.04-arm"
             TARGET: "ubuntu-24.04-arm"
@@ -305,10 +305,10 @@ jobs:
               source $VENV &&
               poetry run make gui-waves-linux &&
               cd dist &&
-              mv waves.dist Waves &&
-              bash ../tools/bundle_xcb_libs.sh Waves &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} Waves &&
-              bash ../tools/build_appimage.sh Waves ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}.AppImage &&
+              mv waves.dist BitWave &&
+              bash ../tools/bundle_xcb_libs.sh BitWave &&
+              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
+              bash ../tools/build_appimage.sh BitWave ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}.AppImage &&
               cd ..
           - os: "windows-2022"
             TARGET: "windows-2022"
@@ -318,8 +318,8 @@ jobs:
               source $VENV &&
               poetry run make gui-waves-windows &&
               cd dist &&
-              mv waves.dist Waves &&
-              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} Waves &&
+              mv waves.dist BitWave &&
+              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
               cd ..
           - os: "windows-11-arm"
             TARGET: "windows-11-arm"
@@ -329,8 +329,8 @@ jobs:
               source $VENV &&
               poetry run make gui-waves-windows &&
               cd dist &&
-              mv waves.dist Waves &&
-              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} Waves &&
+              mv waves.dist BitWave &&
+              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
               cd ..
     runs-on: ${{ matrix.os }}
     steps:
@@ -352,7 +352,7 @@ jobs:
       - name: Install X11 helper libraries to bundle
         if: ${{ runner.os == 'Linux' && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
         run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends patchelf libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-util1 libxcb-xkb1 libxcb-xinerama0 libxcb-xinput0 libxcb-randr0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0
-      - name: Build Waves for ${{matrix.TARGET}}
+      - name: Build BitWave for ${{matrix.TARGET}}
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
         run: ${{matrix.CMD_BUILD}}
       # Smoke-launch the freshly built+trimmed bundle headlessly BEFORE it is
@@ -383,9 +383,9 @@ jobs:
         run: |
           set -u
           case "${{ matrix.OS_ARCH }}" in
-            macos-*)   BIN="dist/waves.app/Contents/MacOS/Waves" ;;
-            windows-*) BIN="dist/Waves/Waves.exe" ;;
-            *)         BIN="dist/Waves/Waves" ;;
+            macos-*)   BIN="dist/waves.app/Contents/MacOS/BitWave" ;;
+            windows-*) BIN="dist/BitWave/BitWave.exe" ;;
+            *)         BIN="dist/BitWave/BitWave" ;;
           esac
           if [ ! -e "$BIN" ]; then
             echo "::error::smoke-launch: built binary '$BIN' not found"; exit 1
@@ -430,7 +430,7 @@ jobs:
           LD_DEBUG_OUTPUT: /tmp/waves-ld
         run: |
           set -u
-          BIN="dist/Waves/Waves"
+          BIN="dist/BitWave/BitWave"
           xvfb-run -a "$BIN" > /tmp/waves-xcb.log 2>&1 &
           APP_PID=$!
           for _ in $(seq 1 15); do
@@ -444,7 +444,7 @@ jobs:
           if grep -q "Could not load the Qt platform plugin" /tmp/waves-xcb.log; then
             echo "::error::xcb smoke-launch: the xcb platform plugin did not load"; tail -n 40 /tmp/waves-xcb.log; exit 1
           fi
-          TREE="$(cd dist/Waves && pwd -P)"
+          TREE="$(cd dist/BitWave && pwd -P)"
           # The loader prints the copy through the plugin's own rpath
           # (<tree>/PySide6/qt-plugins/platforms/../../../lib...), so match
           # the tree prefix and the file name, not the direct path.
@@ -593,7 +593,7 @@ jobs:
   sign-manifest:
     # Runs for any release (a tag PUSH or a dispatch+release_tag): gather every
     # per-asset checksum into one SHA256SUMS manifest, sign it with the Ed25519
-    # release key (CI secret WAVES_SIGNING_KEY), and publish SHA256SUMS +
+    # release key (CI secret BITWAVE_SIGNING_KEY), and publish SHA256SUMS +
     # SHA256SUMS.sig, then flip the Release live. The app verifies the signature
     # against the public key baked into the binary before trusting any hash, so a
     # tampered release can't slip a malicious build past the updater.
@@ -625,13 +625,13 @@ jobs:
           echo "----- SHA256SUMS -----"; cat SHA256SUMS
       - name: Sign SHA256SUMS
         env:
-          WAVES_SIGNING_KEY: ${{ secrets.WAVES_SIGNING_KEY }}
+          BITWAVE_SIGNING_KEY: ${{ secrets.BITWAVE_SIGNING_KEY }}
         run: |
-          if [ -n "$WAVES_SIGNING_KEY" ]; then
+          if [ -n "$BITWAVE_SIGNING_KEY" ]; then
             source $VENV
             poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
           else
-            echo "::error::WAVES_SIGNING_KEY is not set; a tagged release MUST be signed or the in-app updater (fail-closed) will refuse every update. Add the WAVES_SIGNING_KEY secret before tagging."
+            echo "::error::BITWAVE_SIGNING_KEY is not set; a tagged release MUST be signed or the in-app updater (fail-closed) will refuse every update. Add the BITWAVE_SIGNING_KEY secret before tagging."
             exit 1
           fi
       # The Release body comes from CHANGELOG.md: the section whose heading is
@@ -647,22 +647,6 @@ jobs:
             /^## / { on = 0; for (i = 2; i <= NF; i++) if ($i == tag) on = 1; next }
             on && (started || NF) { started = 1; print }
           ' CHANGELOG.md > RELEASE_NOTES.md
-          # Every release body opens with the star-and-donate banner (kept in
-          # step with the README's), so it cannot be forgotten again: it was
-          # pasted in by hand for a while and quietly stopped after v0.1.5.
-          if [ -s RELEASE_NOTES.md ]; then
-            cat > NOTES_HEADER.md <<'BANNER'
-          <p align="center">
-            <strong>🌊 If you enjoy Waves, a star on this repo goes a long way, and if you'd like to help me afford to keep developing it, consider donating.</strong>
-          </p>
-
-          <p align="center">
-            <a href="https://www.buymeacoffee.com/iamprivacy"><img src="https://img.shields.io/badge/-Buy%20me%20a%20coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
-          </p>
-
-          BANNER
-            cat NOTES_HEADER.md RELEASE_NOTES.md > RELEASE_NOTES.tmp && mv RELEASE_NOTES.tmp RELEASE_NOTES.md
-          fi
           if [ ! -s RELEASE_NOTES.md ]; then
             echo "::warning::CHANGELOG.md has no '## ${RELEASE_TAG}' section; the Release body carries only the Verify footer."
           fi
@@ -700,87 +684,3 @@ jobs:
           files: |
             SHA256SUMS
             SHA256SUMS.sig
-
-  update-homebrew-tap:
-    # A published release must reach every install channel, so once the signed
-    # release is live this job bumps the Homebrew cask (Casks/waves.rb in the
-    # tap repo) to the new version with the freshly built macOS checksums.
-    # Without it, `brew upgrade` and Homebrew-managed in-app updates keep
-    # serving the previous version until someone edits the tap by hand (which
-    # is exactly how the cask once sat two releases stale).
-    #
-    # Auth: the TAP_PUSH_TOKEN secret, a fine-grained PAT with contents
-    # read/write on the tap repo only (GITHUB_TOKEN cannot push to another
-    # repo). If the secret is missing the job warns and exits green: the
-    # release itself is already complete, the tap just needs a manual bump.
-    needs: ["sign-manifest"]
-    if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
-    runs-on: ubuntu-24.04
-    env:
-      TAP_REPO: iamprivacy/homebrew-waves
-      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-    steps:
-      - name: Collect per-asset checksums
-        uses: actions/download-artifact@v4
-        with:
-          pattern: sha256-*
-          merge-multiple: true
-          path: sums
-      - name: Bump the cask to this release
-        env:
-          GH_TOKEN: ${{ secrets.TAP_PUSH_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::TAP_PUSH_TOKEN is not set; the Homebrew cask was NOT bumped. Update ${TAP_REPO} Casks/waves.rb to ${RELEASE_TAG} by hand (version + the macOS sha256s from SHA256SUMS, all four once the dual-flavor cask is live)."
-            exit 0
-          fi
-          VERSION="${RELEASE_TAG#v}"
-          # The cask covers the macOS zips; their checksum artifacts must
-          # exist or the bump would write garbage, so fail loudly instead.
-          ARM_SHA="$(awk '{print $1}' sums/waves_macos-apple-silicon.zip.sha256)"
-          INTEL_SHA="$(awk '{print $1}' sums/waves_macos-intel.zip.sha256)"
-          case "$ARM_SHA$INTEL_SHA" in
-            *[!0-9a-f]*|"") echo "::error::macOS checksums missing or malformed; cask not bumped."; exit 1 ;;
-          esac
-          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${TAP_REPO}.git" tap
-          cd tap
-          if grep -q "on_sequoia" Casks/waves.rb; then
-            # Dual-flavor cask: an on_sequoia block serves the regular bundles
-            # and an on_sonoma :or_older block the legacy ones, so each sha256
-            # pattern appears twice and every sed is scoped to its block.
-            LEG_ARM_SHA="$(awk '{print $1}' ../sums/waves_macos-apple-silicon_legacy.zip.sha256)"
-            LEG_INTEL_SHA="$(awk '{print $1}' ../sums/waves_macos-intel_legacy.zip.sha256)"
-            case "$LEG_ARM_SHA$LEG_INTEL_SHA" in
-              *[!0-9a-f]*|"") echo "::error::legacy macOS checksums missing or malformed; cask not bumped."; exit 1 ;;
-            esac
-            # Ranges anchor to the block OPENER at its exact indent: a comment
-            # that merely mentions a block name must not start a range, or the
-            # second sed re-covers the first block and both flavors end up
-            # with the same checksums.
-            sed -E -i "s/version \"[0-9][0-9.]*\"/version \"${VERSION}\"/" Casks/waves.rb
-            sed -E -i "/^  on_sequoia /,/^  end$/ { s/arm:   \"[0-9a-f]{64}\"/arm:   \"${ARM_SHA}\"/; s/intel: \"[0-9a-f]{64}\"/intel: \"${INTEL_SHA}\"/; }" Casks/waves.rb
-            sed -E -i "/^  on_sonoma /,/^  end$/ { s/arm:   \"[0-9a-f]{64}\"/arm:   \"${LEG_ARM_SHA}\"/; s/intel: \"[0-9a-f]{64}\"/intel: \"${LEG_INTEL_SHA}\"/; }" Casks/waves.rb
-            grep -q "$LEG_ARM_SHA" Casks/waves.rb || { echo "::error::legacy arm sha256 not updated in cask"; exit 1; }
-            grep -q "$LEG_INTEL_SHA" Casks/waves.rb || { echo "::error::legacy intel sha256 not updated in cask"; exit 1; }
-          else
-            sed -E -i \
-              -e "s/version \"[0-9][0-9.]*\"/version \"${VERSION}\"/" \
-              -e "s/arm:   \"[0-9a-f]{64}\"/arm:   \"${ARM_SHA}\"/" \
-              -e "s/intel: \"[0-9a-f]{64}\"/intel: \"${INTEL_SHA}\"/" \
-              Casks/waves.rb
-          fi
-          # Every value must have landed; a silent partial edit would ship a
-          # cask whose checksum can never match the download.
-          grep -q "version \"${VERSION}\"" Casks/waves.rb || { echo "::error::version not updated in cask"; exit 1; }
-          grep -q "$ARM_SHA" Casks/waves.rb || { echo "::error::arm sha256 not updated in cask"; exit 1; }
-          grep -q "$INTEL_SHA" Casks/waves.rb || { echo "::error::intel sha256 not updated in cask"; exit 1; }
-          if git diff --quiet; then
-            echo "Cask already at ${VERSION}; nothing to push."
-            exit 0
-          fi
-          git config user.name "waves-release"
-          git config user.email "waves-release@users.noreply.github.com"
-          git add Casks/waves.rb
-          git commit -m "waves ${VERSION}"
-          git push
-          echo "Cask bumped to ${VERSION}."

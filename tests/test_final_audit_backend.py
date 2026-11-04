@@ -504,10 +504,10 @@ def test_a_clear_credits_only_the_rows_it_actually_removed():
 
 
 # --------------------------------------------------------------------------- #
-# 5. The motion-background sweep deletes only what Waves wrote.
+# 5. The motion-background sweep deletes only what BitWave wrote.
 #
 # The sweep runs inside the user's own config folder. "Everything that is not
-# the current copy" is not a description of what Waves wrote, so anything else
+# the current copy" is not a description of what BitWave wrote, so anything else
 # that ended up in that folder, by any route, was deleted with the stale
 # copies. The app never deletes a file it did not write.
 # --------------------------------------------------------------------------- #
@@ -521,7 +521,7 @@ def test_the_motion_cache_sweep_is_anchored_to_waves_own_names():
     from waves.waves_ui import backend as bk
 
     source = inspect.getsource(bk.WavesBridge.motionVideoUrl)
-    assert "_MOTION_CACHE_NAMES" in source, "the sweep decides by name shape again, not by what Waves wrote"
+    assert "_MOTION_CACHE_NAMES" in source, "the sweep decides by name shape again, not by what BitWave wrote"
 
 
 def test_the_motion_cache_names_match_only_what_waves_writes():
@@ -530,7 +530,7 @@ def test_the_motion_cache_names_match_only_what_waves_writes():
     def swept(name: str) -> bool:
         return any(p.match(name) for p in bk._MOTION_CACHE_NAMES)
 
-    # Waves' own: the copy named by the asset's byte size, and the uuid tmp
+    # BitWave' own: the copy named by the asset's byte size, and the uuid tmp
     # sibling it is staged through.
     assert swept("wave_loop_111.mp4")
     assert swept("wave_loop_111.mp4.deadbeef.tmp")

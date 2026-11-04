@@ -412,7 +412,7 @@ class _RacingConn:
 
 
 def test_a_locked_database_does_not_re_raise_when_the_column_arrived(tmp_path):
-    """Two copies of Waves opening the store on the first launch after an
+    """Two copies of BitWave opening the store on the first launch after an
     upgrade both read the column list before either alters. sqlite answers the
     loser with "duplicate column name" USUALLY, and with "database is locked"
     once its busy timeout is exceeded, which carries no column name at all.

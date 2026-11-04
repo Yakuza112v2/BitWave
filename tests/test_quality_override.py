@@ -450,7 +450,7 @@ def test_a_choice_names_what_it_moves_and_re_asks_their_ownership():
     b.setQualityOverride("t1", "HIGH")
     assert b.qualityChoiceChanged.calls == [(["t1"],)]
     assert b.ownershipChanged.calls == [("t1",)]
-    # An album's choice reaches every track of it Waves knows: the members
+    # An album's choice reaches every track of it BitWave knows: the members
     # the ownership store learned and the results page's track objects, once
     # each, and never a track of another album.
     b._objs["track"]["t2"] = _track("t2", "a1")

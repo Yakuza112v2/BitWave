@@ -7,7 +7,7 @@ The macOS SMB client fills a directory cache with ten parallel queries. On the
 affected pairing all ten come back with the FIRST page and all ten are kept, so
 a folder holding 1345 subfolders lists as 10000 entries of 1000 distinct names,
 and the OS reports success. Every application on the machine is affected,
-Finder included. Waves believed it, so 304 artists were never indexed: every
+Finder included. BitWave believed it, so 304 artists were never indexed: every
 badge read "not in library" for music the user owned, and duplicates were
 downloaded on that answer.
 
@@ -123,7 +123,7 @@ def test_an_unmount_that_is_refused_is_forced(monkeypatch):
 
 
 def test_a_mount_point_with_anything_in_it_is_left_alone(tmp_path):
-    # Waves never deletes user files. If an unmount somehow failed, the mount
+    # BitWave never deletes user files. If an unmount somehow failed, the mount
     # point still holds the share, and rmdir refusing is the whole safety net.
     point = tmp_path / "point"
     point.mkdir()

@@ -23,7 +23,7 @@ ScrollBar {
     property real reach: 22
     property Item beside: null
 
-    // Waves palette (defaults mirror the app tokens; override if they diverge)
+    // BitWave palette (defaults mirror the app tokens; override if they diverge)
     property color accent:     "#3dff6e"
     property color accentSoft: "#9dffbe"
     property color surfaceHi:  "#22262e"

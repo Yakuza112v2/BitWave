@@ -45,7 +45,7 @@ def _run_as_test_script(tmp_path: Path, xdg: str | None) -> subprocess.Completed
 def test_a_test_file_run_directly_cannot_reach_the_profile(tmp_path):
     proc = _run_as_test_script(tmp_path, None)
     assert proc.returncode != 0
-    assert "would use the real Waves profile" in proc.stderr
+    assert "would use the real BitWave profile" in proc.stderr
     assert "BASE" not in proc.stdout
 
 

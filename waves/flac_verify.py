@@ -7,7 +7,7 @@ whose signature is all zeros ("unset") cannot be verified, so those tools
 report the file as failing even though every audio frame is intact, and
 strict players treat it as corrupt. TIDAL's packaging shipped such headers
 for a while and a copied-out extraction keeps the header verbatim, which is
-how a Waves library can hold files like that.
+how a BitWave library can hold files like that.
 
 This module is the one place both the download engine (right after an
 extraction) and the Settings tool (over an existing library) go through.
@@ -841,7 +841,7 @@ def iter_flac_files(
     already did) is dropped, so each file is checked and counted once.
 
     Every folder that could not be opened or listed (a root included: a
-    share that is not mounted, a folder the system will not let Waves read)
+    share that is not mounted, a folder the system will not let BitWave read)
     is appended to ``unreadable``, so a caller can tell a clean walk from
     one that missed files.
 

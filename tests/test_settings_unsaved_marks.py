@@ -68,8 +68,8 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     if sys.platform != "darwin":
-        app.setApplicationName("Waves")
-        app.setOrganizationName("Waves")
+        app.setApplicationName("BitWave")
+        app.setOrganizationName("BitWave")
     try:
         from waves.waves_ui.app import _load_mono
         from waves.waves_ui.backend import WavesBridge

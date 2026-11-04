@@ -1,7 +1,7 @@
 """An album named "." gets a folder, and only a name that is nothing but dots
 is touched.
 
-Kesha has an album whose title is a single period. Nothing in Waves removed it:
+Kesha has an album whose title is a single period. Nothing in BitWave removed it:
 it survived every sanitizer intact and then evaporated in the join that builds
 the destination, because "." is what every platform calls "this folder". The
 album had no folder at all and its tracks landed loose in the artist folder,

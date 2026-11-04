@@ -4,7 +4,17 @@ All notable user-facing changes to Waves are documented here, newest first.
 Each release section becomes the GitHub Release notes for that version, so keep
 bullets short, objective, and written for end users.
 
-Format per release: `## vX.Y.Z (YYYY-MM-DD)` followed by any of the subheadings
+Format per release: `## v0.2.2 (2026-11-04)
+
+- Rename the application, executable, desktop identity and UI to BitWave.
+- Keep BitWave settings, credentials, cache and update staging separate from Waves.
+- Move release builds, downloads, support links and updates to Yakuza112v2/BitWave.
+- Use an independent Ed25519 release key and BITWAVE_SIGNING_KEY Actions secret.
+- Remove the upstream donation destination and Homebrew publishing job from BitWave releases.
+- Preserve original licensing and attribution; retain the internal waves package.
+- Write Windows update helper scripts with exact CRLF line endings.
+
+## vX.Y.Z (YYYY-MM-DD)` followed by any of the subheadings
 **Added**, **Changed**, **Fixed**, **Removed**, each a bullet list, always in
 that order (a test enforces it). Section headings and their bullets carry a
 leading emoji accent (for example ✨ Added, 🔧 Changed, 🐛 Fixed). Changes land

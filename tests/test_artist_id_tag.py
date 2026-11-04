@@ -76,7 +76,7 @@ def _artist(id_, name, roles=None):
 
 
 # --------------------------------------------------------------------------- #
-# The ids reach every container Waves can write
+# The ids reach every container BitWave can write
 # --------------------------------------------------------------------------- #
 def test_flac_carries_both_id_lists(tmp_path):
     flac = _write(

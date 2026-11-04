@@ -122,10 +122,10 @@ class BaseConfig:
         # mid-write corrupts the config or loses the login. Serialize to a temp
         # sibling, flush it to disk, then os.replace (atomic on POSIX and
         # Windows), so a reader (or the next launch) only ever sees a complete
-        # file. This mirrors the page_cache write in the Waves bridge.
+        # file. This mirrors the page_cache write in the BitWave bridge.
         obj_json_config = json.loads(data_json)  # pretty format
         # A temp sibling of this write's OWN, not one fixed name. Nothing stops
-        # a second copy of Waves running against the same config folder (the
+        # a second copy of BitWave running against the same config folder (the
         # launch path contemplates one), and both staged through
         # "settings.json.tmp": open() truncates and each writer flushes its own
         # length, so the two interleaved into one file and whichever os.replace

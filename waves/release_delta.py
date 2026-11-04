@@ -1,4 +1,4 @@
-"""The "what's new" release-delta core (Waves-owned, stdlib-only).
+"""The "what's new" release-delta core (BitWave-owned, stdlib-only).
 
 Pure functions the follow store (``waves.follows``) builds its baseline logic
 on, kept apart from the SQL so the decisions are testable on their own and

@@ -178,7 +178,7 @@ class Settings:
     # helper.path.safe_filename_replacement_map).
     # Empty by default on purpose: constants.DEFAULT_ILLEGAL_MAP holds the
     # recommended table, but an existing library was built under the spelling it
-    # already has, so Waves offers that table on the settings page instead of
+    # already has, so BitWave offers that table on the settings page instead of
     # applying it. A brand-new install starts with it (_FIRST_RUN_OVERRIDES).
     filename_illegal_map: dict[str, str] = field(default_factory=dict)
     metadata_target_upc: MetadataTargetUPC = MetadataTargetUPC.UPC
@@ -194,7 +194,7 @@ class Settings:
 @dataclass
 class HelpSettings:
     skip_existing: str = (
-        "Skips a track you already have: a file at its name, or one Waves saved in your "
+        "Skips a track you already have: a file at its name, or one BitWave saved in your "
         "download or library folder. Off downloads everything again."
     )
     confirm_category_download: str = (

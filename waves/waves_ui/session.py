@@ -1,4 +1,4 @@
-"""Waves-owned TIDAL session config.
+"""BitWave-owned TIDAL session config.
 
 Subclasses the engine's ``waves.config.Tidal`` so a correctness fix lands here
 instead of in the shared ``config.py`` method body. Keeping the override out of

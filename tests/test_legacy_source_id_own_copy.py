@@ -1,9 +1,9 @@
-"""A merged track re-saved over a copy an older Waves tagged the other way replaces it.
+"""A merged track re-saved over a copy an older BitWave tagged the other way replaces it.
 
 A "best of both" merge fetches a track from one edition (``member.id``, the
 SOURCE id) and files it under another edition's slot (``waves_identity_id``).
 Every build up to v0.1.21 stamped the SOURCE id into that file; today's build
-stamps the identity id. A library assembled by an older Waves is therefore full
+stamps the identity id. A library assembled by an older BitWave is therefore full
 of merged tracks tagged with an id the current build no longer files them under.
 
 With skipping off (overwrite mode, or a quality upgrade), the engine asks
@@ -110,7 +110,7 @@ def _merge_member() -> Track:
 
 class TestIsOwnCopyKnowsEveryIdTheFileMayCarry:
     def test_a_copy_tagged_with_the_source_id_is_this_items_own(self, tmp_path):
-        # The library an older Waves assembled: the merged track carries the
+        # The library an older BitWave assembled: the merged track carries the
         # SOURCE edition's id. Still ours to replace.
         dl = _make_download(tmp_path, skip_existing=False)
         path_file = tmp_path / "Song.flac"

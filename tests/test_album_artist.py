@@ -1,7 +1,7 @@
 """Unit tests for the opt-in 'Clean album-artist tag' setting.
 
 The album-artist METADATA tag is written from ``get_album_artists`` (download.py).
-Waves wraps that one symbol so the tag can be reduced to just the primary artist
+BitWave wraps that one symbol so the tag can be reduced to just the primary artist
 (multi-value album-artist fields confuse Plex). Folder paths are untouched.
 
 Pure-function tests: no Qt, no network. We drive the real upstream helper with

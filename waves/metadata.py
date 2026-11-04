@@ -85,7 +85,7 @@ ALBUM_ARTIST_ID_TAG = "WAVES_TIDAL_ALBUM_ARTIST_ID"
 
 
 def read_custom_ids(path_file: str | pathlib.Path, tag: str) -> list[str]:
-    """Every value one of Waves' own id tags carries, in written order.
+    """Every value one of BitWave' own id tags carries, in written order.
 
     One probe for all three containers: a Vorbis comment is stored under the
     bare name, ID3 under a "TXXX:" description, MP4 under an iTunes freeform
@@ -195,11 +195,11 @@ def carry_over_tags(path_old: str | pathlib.Path, path_new: str | pathlib.Path) 
     """Copy onto the fresh file at ``path_new`` every tag the copy it is about
     to replace (``path_old``) carries that the fresh tagging did not write.
 
-    Waves writes the tags it knows and leaves the rest alone, so a Genre, a
+    BitWave writes the tags it knows and leaves the rest alone, so a Genre, a
     Comment, a rating or a mood the user typed into the old file has no
     counterpart in the new one, and replacing the file in place threw it away
     (issue #55: a bulk download upgraded hand-tagged tracks and every Genre
-    was gone). Only tags the new file LACKS are carried: a field Waves writes
+    was gone). Only tags the new file LACKS are carried: a field BitWave writes
     (title, artists, the item id) keeps the fresh value, which is what a
     re-tag is for. The Genre is the one exception: the old copy's is the
     user's own (or their tagger's), so it replaces a looked-up one. Tags that describe the old audio itself (ReplayGain, the

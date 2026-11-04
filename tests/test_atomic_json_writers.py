@@ -110,7 +110,7 @@ def test_a_mkstemp_staging_leftover_is_wiped_by_a_factory_reset():
 
 
 def test_the_staging_pattern_cannot_eat_a_foreign_file():
-    # Anchored on both ends: only a name Waves itself stages may ever match.
+    # Anchored on both ends: only a name BitWave itself stages may ever match.
     from waves.waves_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
 
     for foreign in (

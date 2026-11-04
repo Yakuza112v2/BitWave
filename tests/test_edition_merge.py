@@ -618,7 +618,7 @@ def test_duplicate_isrc_pairs_by_closest_recording():
 # ---- the id written into the file is the one the guards ask about -----------
 def test_a_merged_member_is_filed_under_the_identity_id():
     # download.py stamps an item id into the file and compares it back to decide
-    # whether a destination holds Waves' own copy. Writing the SOURCE edition's
+    # whether a destination holds BitWave' own copy. Writing the SOURCE edition's
     # id meant a later plain job asked with the identity id, failed to recognize
     # the file, and wrote a _01 duplicate beside it instead of replacing it.
     from waves.download import _waves_item_id, _waves_owned_ids

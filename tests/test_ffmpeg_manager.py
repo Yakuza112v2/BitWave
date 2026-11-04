@@ -1,4 +1,4 @@
-"""Unit tests for the Waves in-app FFmpeg manager (no network)."""
+"""Unit tests for the BitWave in-app FFmpeg manager (no network)."""
 
 from __future__ import annotations
 

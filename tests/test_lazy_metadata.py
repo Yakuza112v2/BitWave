@@ -44,7 +44,7 @@ version = waves.__version__
 display = waves.__name_display__
 
 print("PROBES_AFTER_ALL_THREE", len(calls))
-print("DIRNAME_OK", dirname in ("Waves", "Waves-dev"))
+print("DIRNAME_OK", dirname in ("BitWave", "BitWave-dev"))
 print("VERSION_NONEMPTY", bool(version))
 print("DISPLAY_NONEMPTY", bool(display))
 

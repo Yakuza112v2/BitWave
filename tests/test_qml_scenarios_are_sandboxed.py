@@ -4,7 +4,7 @@ WHAT THIS FENCES OFF
 --------------------
 A scenario that builds a real ``WavesBridge`` inherits whatever config
 directory the environment points at, and on a developer's machine that is
-the packaged app's own: ``~/Library/Application Support/Waves`` (or the
+the packaged app's own: ``~/Library/Application Support/BitWave`` (or the
 platform equivalent). The bridge then adopts the user's settings, writes
 its startup lines and tracebacks into the user's ``waves_dev.log``, and,
 if a library root is configured, starts a REAL scan of the user's music

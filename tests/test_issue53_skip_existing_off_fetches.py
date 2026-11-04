@@ -3,13 +3,13 @@
 WHAT THIS FENCES OFF
 --------------------
 The reporter turned "Skip existing" off and downloaded a playlist into a new
-folder, to have every song of it in one place for DJing. Every song Waves had
+folder, to have every song of it in one place for DJing. Every song BitWave had
 already downloaded earlier, into an album folder, was skipped anyway: the new
 folder got neither the file nor a playlist entry for it, and the row read
 IN LIBRARY.
 
 The setting was only ever read by the engine's checks at the destination path.
-The gate that runs before the engine, the ownership ledger (a copy Waves
+The gate that runs before the engine, the ownership ledger (a copy BitWave
 recorded under the download or library folder) followed by the library scan's
 tag claim, never asked it. Now a job queued with the setting off skips nothing:
 neither gate is consulted and every track is fetched. With it on, nothing

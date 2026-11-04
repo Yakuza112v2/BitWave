@@ -114,7 +114,7 @@ def test_every_dynamic_text_on_the_card_is_plain_text():
 
 def test_the_folder_row_offers_the_waves_library_or_a_browsed_folder():
     card = _block(_code(SETTINGS), "id: flacCardComp")
-    assert 'text: "WAVES LIBRARY"' in card
+    assert 'text: "BITWAVE LIBRARY"' in card
     assert 'text: "CUSTOM LOCATION"' in card
     assert 'waves.flacCheckSetSource("waves")' in card
     assert 'waves.flacCheckSetSource("folder")' in card
@@ -139,7 +139,7 @@ def test_the_card_offers_no_fix_for_folders_it_is_no_longer_showing():
 
 
 def test_the_card_re_reads_its_folders_whenever_the_waves_library_can_move():
-    """The "Waves library" is the download folder and the library folder; both
+    """The "BitWave library" is the download folder and the library folder; both
     can change while Settings stays open (SAVE CHANGES, the library card's
     live switches, a settings reset), and the card's stale check compares
     against what it last read. Each of those paths refreshes it."""

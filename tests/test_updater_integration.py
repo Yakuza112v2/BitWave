@@ -49,7 +49,7 @@ def test_full_selfupdate_round_trip_over_local_http(tmp_path, monkeypatch):
     # --- 2. Build a realistic new build: a .dist tree (exe + a bundled lib). ---
     web = tmp_path / "web"
     web.mkdir()
-    asset = "waves_linux-x64.zip"
+    asset = "bitwave_linux-x64.zip"
     zip_path = web / asset
     with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr("waves.dist/waves", "NEW-BINARY-v9.9.9")
@@ -113,7 +113,7 @@ def test_full_selfupdate_rejects_tampered_asset_over_local_http(tmp_path, monkey
 
     web = tmp_path / "web"
     web.mkdir()
-    asset = "waves_linux-x64.zip"
+    asset = "bitwave_linux-x64.zip"
     zip_path = web / asset
     with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr("waves.dist/waves", "LEGIT-BINARY")

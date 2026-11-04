@@ -7,7 +7,7 @@
 #
 # Since Qt 6.5 the xcb plugin links libxcb-cursor, libxkbcommon-x11 and the
 # other xcb-util libraries. A stock Ubuntu 22.04 desktop lacks some of them,
-# and without them Qt finds no platform plugin and Waves exits before showing
+# and without them Qt finds no platform plugin and BitWave exits before showing
 # a window ("could not load the Qt platform plugin xcb"). Nuitka does not
 # bundle them because they are system libraries, so this step does: every
 # direct dependency of the xcb plugin pieces that matches the xcb-util family

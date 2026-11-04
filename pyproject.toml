@@ -1,11 +1,11 @@
 [project]
-name = "waves"
-authors = [{ name = "iamprivacy" }]
+name = "bitwave"
+authors = [{ name = "Yakuza112v2" }, { name = "iamprivacy (Waves upstream)" }]
 # Kept equal to waves.waves_ui.__version__, which is the version the app and
 # the updater actually report; tests/test_package_version.py fails the build if
 # the two drift. Bump both in the same commit that cuts a release.
-version = "0.2.1"
-description = "Waves: a native desktop app for saving music from your own TIDAL account for offline listening"
+version = "0.2.2"
+description = "BitWave: a native desktop app for saving music from your own TIDAL account for offline listening"
 readme = "README.md"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
@@ -20,9 +20,9 @@ requires-python = ">=3.12,<3.14"
 dynamic = ["dependencies"]
 
 [project.urls]
-homepage = "https://getwaves.dev"
-repository = "https://github.com/iamprivacy/Waves"
-documentation = "https://getwaves.dev"
+homepage = "https://github.com/Yakuza112v2/BitWave"
+repository = "https://github.com/Yakuza112v2/BitWave"
+documentation = "https://github.com/Yakuza112v2/BitWave"
 
 [tool.poetry]
 packages = [{ include = "waves" }]
@@ -293,7 +293,7 @@ ignore = [
 # Drives the real release.sh (bash) and git against throwaway sandbox repos;
 # both are resolved from PATH on purpose (S603/S607, fixed argv).
 "tests/test_release_star_history.py" = ["S603", "S607"]
-# The Waves bridge has several inherently branchy but linear functions (the
+# The BitWave bridge has several inherently branchy but linear functions (the
 # settings-schema builder, the settings dispatcher and the search/discography
 # orchestration) that trip mccabe (C901) without being genuinely complex.
 "waves/waves_ui/backend.py" = ["C901"]

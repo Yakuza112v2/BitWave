@@ -28,7 +28,7 @@ def _helper_text(up):
     """The one swap helper the updater just armed.
 
     Named per pid so a re-armed helper can never overwrite one another copy of
-    Waves is executing, so tests look it up rather than spelling the name.
+    BitWave is executing, so tests look it up rather than spelling the name.
     """
     scripts = sorted(up.staging_dir.glob("apply_update_*.bat"))
     assert len(scripts) == 1, scripts
@@ -43,15 +43,15 @@ def test_apply_unix_tree_is_cross_device_safe(tmp_path, monkeypatch):
     the app uninstalled. The fix lands the tree on the install volume first, so
     the final swap is a same-device rename. Simulate EXDEV for any os.replace
     whose source is the staged tree; the new flow must never make that call."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     install_root = tmp_path / "app"
     install_root.mkdir()
-    (install_root / "Waves").write_text("OLD")
+    (install_root / "BitWave").write_text("OLD")
     (install_root / "lib.so").write_text("oldlib")
-    target = install_root / "Waves"
-    staged = tmp_path / "staging" / "Waves.dist"
+    target = install_root / "BitWave"
+    staged = tmp_path / "staging" / "BitWave.dist"
     staged.mkdir(parents=True)
-    (staged / "Waves").write_text("NEW")
+    (staged / "BitWave").write_text("NEW")
     (staged / "lib.so").write_text("newlib")
 
     real_replace = os.replace
@@ -64,7 +64,7 @@ def test_apply_unix_tree_is_cross_device_safe(tmp_path, monkeypatch):
     monkeypatch.setattr(u.os, "replace", fake_replace)
     up._apply_unix_tree(staged, target, lambda *a, **k: None)
 
-    assert (install_root / "Waves").read_text() == "NEW"
+    assert (install_root / "BitWave").read_text() == "NEW"
     assert (install_root / "lib.so").read_text() == "newlib"
     assert not (tmp_path / "app.old").exists()
     assert not (tmp_path / "app.new").exists()
@@ -74,14 +74,14 @@ def test_apply_unix_tree_is_cross_device_safe(tmp_path, monkeypatch):
 def test_apply_unix_tree_rolls_back_on_swap_failure(tmp_path, monkeypatch):
     """If the swap fails partway, the live install must be restored from backup
     rather than left deleted."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     install_root = tmp_path / "app"
     install_root.mkdir()
-    (install_root / "Waves").write_text("LIVE")
-    target = install_root / "Waves"
-    staged = tmp_path / "staging" / "Waves.dist"
+    (install_root / "BitWave").write_text("LIVE")
+    target = install_root / "BitWave"
+    staged = tmp_path / "staging" / "BitWave.dist"
     staged.mkdir(parents=True)
-    (staged / "Waves").write_text("NEW")
+    (staged / "BitWave").write_text("NEW")
 
     real_replace = os.replace
 
@@ -93,27 +93,27 @@ def test_apply_unix_tree_rolls_back_on_swap_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(u.os, "replace", fake_replace)
     with pytest.raises(OSError):
         up._apply_unix_tree(staged, target, lambda *a, **k: None)
-    assert install_root.exists() and (install_root / "Waves").read_text() == "LIVE"
+    assert install_root.exists() and (install_root / "BitWave").read_text() == "LIVE"
 
 
 # ---- the install folder is not only ours (foreign-file rescue) --------------
 def _install_with_foreign_files(tmp_path):
     """An install folder holding the build AND things the user put there: a
     download folder aimed inside it and a loose note beside the executable."""
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     (install_root / "music" / "Some Artist" / "Some Album").mkdir(parents=True)
     (install_root / "music" / "Some Artist" / "Some Album" / "01 - Track.flac").write_text("MUSIC")
     (install_root / "my-notes.txt").write_text("NOTES")
-    (install_root / "Waves").write_text("OLD")
+    (install_root / "BitWave").write_text("OLD")
     (install_root / "lib.so").write_text("oldlib")
     (install_root / "dropped.so").write_text("gone in the next build")
-    return install_root, install_root / "Waves"
+    return install_root, install_root / "BitWave"
 
 
 def _staged_tree(tmp_path):
-    staged = tmp_path / "staging" / "Waves.dist"
+    staged = tmp_path / "staging" / "BitWave.dist"
     staged.mkdir(parents=True)
-    (staged / "Waves").write_text("NEW")
+    (staged / "BitWave").write_text("NEW")
     (staged / "lib.so").write_text("newlib")
     return staged
 
@@ -122,20 +122,20 @@ def test_apply_unix_tree_keeps_files_that_were_not_part_of_the_build(tmp_path):
     """The swap replaces the WHOLE install directory and then deletes the
     backup, so anything the user kept in there (a download folder pointed at
     it, a zip unpacked over a folder that already held other files) went with
-    it: no Recycle Bin, no warning. Waves never deletes a user's files, so
+    it: no Recycle Bin, no warning. BitWave never deletes a user's files, so
     every path the new tree does not have is carried back in first."""
     install_root, target = _install_with_foreign_files(tmp_path)
     staged = _staged_tree(tmp_path)
     kept = []
 
-    u.AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")._apply_unix_tree(staged, target, kept.append)
+    u.AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")._apply_unix_tree(staged, target, kept.append)
 
-    assert (install_root / "Waves").read_text() == "NEW"  # the update still applied
+    assert (install_root / "BitWave").read_text() == "NEW"  # the update still applied
     assert (install_root / "lib.so").read_text() == "newlib"
     assert (install_root / "my-notes.txt").read_text() == "NOTES"
     assert (install_root / "music" / "Some Artist" / "Some Album" / "01 - Track.flac").read_text() == "MUSIC"
-    assert not (tmp_path / "Waves.old").exists()  # nothing left behind once it all came back
-    assert any("not part of Waves" in m for m in kept)
+    assert not (tmp_path / "BitWave.old").exists()  # nothing left behind once it all came back
+    assert any("not part of BitWave" in m for m in kept)
 
 
 def _refuse_to_move(allow_src):
@@ -158,12 +158,12 @@ def test_apply_unix_tree_keeps_the_backup_when_a_file_cannot_be_moved_back(tmp_p
     monkeypatch.setattr(u.shutil, "move", _refuse_to_move(str(staged)))
     said = []
 
-    u.AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")._apply_unix_tree(staged, target, said.append)
+    u.AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")._apply_unix_tree(staged, target, said.append)
 
-    backup = tmp_path / "Waves.old"
-    assert (install_root / "Waves").read_text() == "NEW"  # the update still applied
+    backup = tmp_path / "BitWave.old"
+    assert (install_root / "BitWave").read_text() == "NEW"  # the update still applied
     assert (backup / "my-notes.txt").read_text() == "NOTES"  # and nothing was destroyed
-    assert any("still in Waves.old" in m for m in said)
+    assert any("still in BitWave.old" in m for m in said)
 
 
 def test_foreign_leftovers_reports_a_whole_directory_once(tmp_path):
@@ -179,22 +179,22 @@ def test_foreign_leftovers_reports_a_whole_directory_once(tmp_path):
 
 
 def test_the_swap_never_clears_a_sibling_folder_that_is_not_ours(tmp_path, monkeypatch):
-    """The swap stages at Waves.new and backs up to Waves.old, wiping whatever
-    sits at those names first. Nothing says a folder called Waves.old next to
-    the install belongs to the app, and Waves never deletes a user's files, so
+    """The swap stages at BitWave.new and backs up to BitWave.old, wiping whatever
+    sits at those names first. Nothing says a folder called BitWave.old next to
+    the install belongs to the app, and BitWave never deletes a user's files, so
     a name holding anything but our own tree is skipped for the next one."""
     install_root, target = _install_with_foreign_files(tmp_path)
     staged = _staged_tree(tmp_path)
-    squatter_new = install_root.with_name("Waves.new")
+    squatter_new = install_root.with_name("BitWave.new")
     squatter_new.mkdir()
     (squatter_new / "mixtape.flac").write_text("MINE")
-    squatter_old = install_root.with_name("Waves.old")
+    squatter_old = install_root.with_name("BitWave.old")
     squatter_old.mkdir()
     (squatter_old / "notes.txt").write_text("ALSO MINE")
 
-    u.AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")._apply_unix_tree(staged, target, lambda *a, **k: None)
+    u.AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")._apply_unix_tree(staged, target, lambda *a, **k: None)
 
-    assert (install_root / "Waves").read_text() == "NEW"  # the update still applied
+    assert (install_root / "BitWave").read_text() == "NEW"  # the update still applied
     assert (squatter_new / "mixtape.flac").read_text() == "MINE"
     assert (squatter_old / "notes.txt").read_text() == "ALSO MINE"
 
@@ -204,63 +204,63 @@ def test_a_staging_sibling_we_left_behind_IS_reused(tmp_path, monkeypatch):
     executable) is cleared rather than piling up a -1, -2, -3 of stale trees."""
     install_root, target = _install_with_foreign_files(tmp_path)
     staged = _staged_tree(tmp_path)
-    ours = install_root.with_name("Waves.new")
+    ours = install_root.with_name("BitWave.new")
     ours.mkdir()
-    (ours / "Waves").write_text("A TREE WE STAGED LAST TIME")
+    (ours / "BitWave").write_text("A TREE WE STAGED LAST TIME")
 
-    u.AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")._apply_unix_tree(staged, target, lambda *a, **k: None)
+    u.AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")._apply_unix_tree(staged, target, lambda *a, **k: None)
 
-    assert (install_root / "Waves").read_text() == "NEW"
-    assert not install_root.with_name("Waves.new-1").exists()
+    assert (install_root / "BitWave").read_text() == "NEW"
+    assert not install_root.with_name("BitWave.new-1").exists()
 
 
 def test_apply_macos_keeps_the_backup_rather_than_writing_into_the_bundle(tmp_path, monkeypatch):
     """Same exposure inside a .app, opposite answer: moving foreign files into
     the new bundle would break its code signature and the app would stop
     launching, so the old bundle is kept instead of deleted."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)  # no real xattr
-    bundle = tmp_path / "Applications" / "Waves.app"
+    bundle = tmp_path / "Applications" / "BitWave.app"
     (bundle / "Contents" / "MacOS").mkdir(parents=True)
-    target = bundle / "Contents" / "MacOS" / "Waves"
+    target = bundle / "Contents" / "MacOS" / "BitWave"
     target.write_text("OLD")
     (bundle / "Contents" / "my-notes.txt").write_text("NOTES")
-    staged = tmp_path / "staging" / "Waves.app"
+    staged = tmp_path / "staging" / "BitWave.app"
     (staged / "Contents" / "MacOS").mkdir(parents=True)
-    (staged / "Contents" / "MacOS" / "Waves").write_text("NEW")
+    (staged / "Contents" / "MacOS" / "BitWave").write_text("NEW")
     said = []
 
     up._apply_macos(staged, target, said.append)
 
-    backup = tmp_path / "Applications" / "Waves.app.old"
+    backup = tmp_path / "Applications" / "BitWave.app.old"
     assert target.read_text() == "NEW"
     assert (backup / "Contents" / "my-notes.txt").read_text() == "NOTES"
     assert not (bundle / "Contents" / "my-notes.txt").exists()  # never written into the bundle
-    assert any("not part of Waves" in m for m in said)
+    assert any("not part of BitWave" in m for m in said)
     # Recorded, not only logged: the log line is a passing status that
     # "Updated to vX. Restart to finish." overwrites a moment later, so a user
     # could accumulate a whole extra copy of the app per update and never be
     # told. The NAME only, never the path (it sits under the user's home).
-    assert up.kept_backup == "Waves.app.old"
+    assert up.kept_backup == "BitWave.app.old"
     assert "/" not in up.kept_backup and str(tmp_path) not in up.kept_backup
 
 
 def test_apply_macos_deletes_a_backup_that_held_nothing_but_the_build(tmp_path, monkeypatch):
     """The common case is unchanged: no leftovers, no .old folder left behind."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)
-    bundle = tmp_path / "Applications" / "Waves.app"
+    bundle = tmp_path / "Applications" / "BitWave.app"
     (bundle / "Contents" / "MacOS").mkdir(parents=True)
-    target = bundle / "Contents" / "MacOS" / "Waves"
+    target = bundle / "Contents" / "MacOS" / "BitWave"
     target.write_text("OLD")
-    staged = tmp_path / "staging" / "Waves.app"
+    staged = tmp_path / "staging" / "BitWave.app"
     (staged / "Contents" / "MacOS").mkdir(parents=True)
-    (staged / "Contents" / "MacOS" / "Waves").write_text("NEW")
+    (staged / "Contents" / "MacOS" / "BitWave").write_text("NEW")
 
     up._apply_macos(staged, target, lambda *a, **k: None)
 
     assert target.read_text() == "NEW"
-    assert not (tmp_path / "Applications" / "Waves.app.old").exists()
+    assert not (tmp_path / "Applications" / "BitWave.app.old").exists()
     assert up.kept_backup == "", "nothing was kept, so there is nothing to tell the user about"
 
 
@@ -270,18 +270,18 @@ def test_windows_helper_spawn_contract(tmp_path, monkeypatch):
     ran (tasklist/find/start are console programs), so updates downloaded but
     were never applied. The cwd is pinned to the staging dir so the helper
     cannot hold a lock inside the install folder it renames."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     calls = {}
 
     def fake_popen(args, **kw):
         calls["args"], calls["kw"] = args, kw
 
     monkeypatch.setattr(u.subprocess, "Popen", fake_popen)
-    target = tmp_path / "install" / "Waves.exe"
+    target = tmp_path / "install" / "BitWave.exe"
     target.parent.mkdir()
     target.write_text("OLD")
     up.staging_dir.mkdir(parents=True, exist_ok=True)
-    staged = up.staging_dir / "Waves.exe"
+    staged = up.staging_dir / "BitWave.exe"
     staged.write_text("NEW")
     monkeypatch.setattr(u.os, "getpid", lambda: 4242)
 
@@ -302,16 +302,16 @@ def test_apply_macos_is_cross_device_safe(tmp_path, monkeypatch):
     raise EXDEV. The new flow lands the bundle on the install volume first, so the
     final swap is a same-device rename and never calls os.replace on the staged
     path directly."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)  # no real xattr
     apps = tmp_path / "Applications"
-    bundle = apps / "Waves.app"
+    bundle = apps / "BitWave.app"
     (bundle / "Contents" / "MacOS").mkdir(parents=True)
-    target = bundle / "Contents" / "MacOS" / "Waves"
+    target = bundle / "Contents" / "MacOS" / "BitWave"
     target.write_text("OLD")
-    staged = tmp_path / "staging" / "Waves.app"
+    staged = tmp_path / "staging" / "BitWave.app"
     (staged / "Contents" / "MacOS").mkdir(parents=True)
-    (staged / "Contents" / "MacOS" / "Waves").write_text("NEW")
+    (staged / "Contents" / "MacOS" / "BitWave").write_text("NEW")
 
     real_replace = os.replace
 
@@ -323,25 +323,25 @@ def test_apply_macos_is_cross_device_safe(tmp_path, monkeypatch):
     monkeypatch.setattr(u.os, "replace", fake_replace)
     up._apply_macos(staged, target, lambda *a, **k: None)
 
-    assert (bundle / "Contents" / "MacOS" / "Waves").read_text() == "NEW"
-    assert not (apps / "Waves.app.old").exists()
-    assert not (apps / "Waves.app.new").exists()
+    assert (bundle / "Contents" / "MacOS" / "BitWave").read_text() == "NEW"
+    assert not (apps / "BitWave.app.old").exists()
+    assert not (apps / "BitWave.app.new").exists()
     assert not staged.exists()
 
 
 def test_apply_macos_rolls_back_on_swap_failure(tmp_path, monkeypatch):
     """If the bundle swap fails partway, the live `.app` must be restored from its
     backup rather than left deleted."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     monkeypatch.setattr(u.subprocess, "run", lambda *a, **k: None)
     apps = tmp_path / "Applications"
-    bundle = apps / "Waves.app"
+    bundle = apps / "BitWave.app"
     (bundle / "Contents" / "MacOS").mkdir(parents=True)
-    target = bundle / "Contents" / "MacOS" / "Waves"
+    target = bundle / "Contents" / "MacOS" / "BitWave"
     target.write_text("LIVE")
-    staged = tmp_path / "staging" / "Waves.app"
+    staged = tmp_path / "staging" / "BitWave.app"
     (staged / "Contents" / "MacOS").mkdir(parents=True)
-    (staged / "Contents" / "MacOS" / "Waves").write_text("NEW")
+    (staged / "Contents" / "MacOS" / "BitWave").write_text("NEW")
 
     real_replace = os.replace
 
@@ -353,20 +353,20 @@ def test_apply_macos_rolls_back_on_swap_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(u.os, "replace", fake_replace)
     with pytest.raises(OSError):
         up._apply_macos(staged, target, lambda *a, **k: None)
-    assert (bundle / "Contents" / "MacOS" / "Waves").read_text() == "LIVE"
+    assert (bundle / "Contents" / "MacOS" / "BitWave").read_text() == "LIVE"
 
 
 def test_apply_windows_helper_backs_up_and_restores(tmp_path, monkeypatch):
     """The detached .bat that swaps a single .exe must back the old exe up and, on
     a failed move, restore it and relaunch; never leave `target` missing."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     spawned = {}
     monkeypatch.setattr(u.subprocess, "Popen", lambda cmd, **kw: spawned.update(cmd=cmd, kw=kw))
     install = tmp_path / "app"
     install.mkdir()
-    target = install / "Waves.exe"
-    staged = tmp_path / "staging" / "Waves.exe"
+    target = install / "BitWave.exe"
+    staged = tmp_path / "staging" / "BitWave.exe"
     staged.parent.mkdir(parents=True)
     staged.write_text("NEW")
 
@@ -380,7 +380,7 @@ def test_apply_windows_helper_backs_up_and_restores(tmp_path, monkeypatch):
     # into it and never on a command line cmd would expand percent pairs in
     assert str(target) not in script
     env = spawned["kw"]["env"]
-    # The backup is named per pid: two copies of Waves can each have a helper
+    # The backup is named per pid: two copies of BitWave can each have a helper
     # waiting, and a shared ".old" let the loser delete the winner's only copy
     # of the old build (see test_two_helpers_cannot_collide_over_one_backup).
     assert [env[f"WAVES_UPDATE_{i}"] for i in (1, 3)] == [str(target), f"{target}.new"]
@@ -393,14 +393,14 @@ def test_apply_windows_is_cross_device_safe(tmp_path, monkeypatch):
     the install dir, which on Windows is MoveFileExW without COPY_ALLOWED and
     fails outright. Config on C: with the app on D: is an ordinary setup, and
     the user would have watched a whole download end in "update failed"."""
-    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: None)
     install = tmp_path / "app"
     install.mkdir()
-    target = install / "Waves.exe"
+    target = install / "BitWave.exe"
     target.write_text("OLD")
-    staged = up.staging_dir / "Waves.exe"
+    staged = up.staging_dir / "BitWave.exe"
     staged.write_text("NEW")
 
     real_replace = os.replace
@@ -415,7 +415,7 @@ def test_apply_windows_is_cross_device_safe(tmp_path, monkeypatch):
 
     # The new exe is beside the target, on the install volume, so the helper's
     # own move is a same-volume rename; the live exe is untouched until then.
-    assert (install / "Waves.exe.new").read_text() == "NEW"
+    assert (install / "BitWave.exe.new").read_text() == "NEW"
     assert target.read_text() == "OLD"
     assert not staged.exists()
 
@@ -423,15 +423,15 @@ def test_apply_windows_is_cross_device_safe(tmp_path, monkeypatch):
 def test_apply_windows_tree_helper_backs_up_and_restores(tmp_path, monkeypatch):
     """The detached .bat that mirrors a whole .dist tree must rename the live
     install to .old first and restore it if robocopy reports a real failure."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: None)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
-    new_tree = tmp_path / "staging" / "Waves.dist"
+    target = install_root / "BitWave.exe"
+    new_tree = tmp_path / "staging" / "BitWave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_text("NEW")
+    (new_tree / "BitWave.exe").write_text("NEW")
 
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
@@ -444,7 +444,7 @@ def test_apply_windows_tree_helper_backs_up_and_restores(tmp_path, monkeypatch):
 def test_two_helpers_cannot_collide_over_one_backup(tmp_path, monkeypatch):
     """The window the shared ".old" name left open, and what it cost.
 
-    Two copies of Waves can each end up with a helper waiting: one arms at
+    Two copies of BitWave can each end up with a helper waiting: one arms at
     install time and exits, the other re-arms at its next launch. Both derived
     the SAME backup path from the install root. The loser then wakes between
     the winner's `move INSTALL -> BACKUP` and its `move NEWTREE -> INSTALL`,
@@ -455,18 +455,18 @@ def test_two_helpers_cannot_collide_over_one_backup(tmp_path, monkeypatch):
     """
     spawns: list[dict] = []
     monkeypatch.setattr(u.subprocess, "Popen", lambda cmd, **kw: spawns.append(kw))
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
+    target = install_root / "BitWave.exe"
 
     backups = []
     for n, pid in enumerate((4242, 5353)):
         monkeypatch.setattr(u.os, "getpid", lambda pid=pid: pid)
-        up = AppUpdater(tmp_path / f"cfg{n}", "1.0.0", repo="owner/Waves")
+        up = AppUpdater(tmp_path / f"cfg{n}", "1.0.0", repo="owner/BitWave")
         up.staging_dir.mkdir(parents=True)
-        new_tree = tmp_path / f"staging{n}" / "Waves"
+        new_tree = tmp_path / f"staging{n}" / "BitWave"
         new_tree.mkdir(parents=True)
-        (new_tree / "Waves.exe").write_text("NEW")
+        (new_tree / "BitWave.exe").write_text("NEW")
         up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
         backups.append(spawns[-1]["env"]["WAVES_UPDATE_2"])
 
@@ -474,20 +474,20 @@ def test_two_helpers_cannot_collide_over_one_backup(tmp_path, monkeypatch):
     assert backups[0].endswith(".old-4242") and backups[1].endswith(".old-5353")
     # And the dangerous line is still there, which is the point: it is only
     # safe because it can no longer reach anyone else's backup.
-    assert 'rmdir /S /Q "%BACKUP%"' in _helper_text(AppUpdater(tmp_path / "cfg1", "1.0.0", repo="owner/Waves"))
+    assert 'rmdir /S /Q "%BACKUP%"' in _helper_text(AppUpdater(tmp_path / "cfg1", "1.0.0", repo="owner/BitWave"))
 
 
 def _tree_helper_script(tmp_path, monkeypatch, *, exe_bytes=b"NEW"):
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: None)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir(exist_ok=True)
-    target = install_root / "Waves.exe"
-    new_tree = tmp_path / "staging" / "Waves"
+    target = install_root / "BitWave.exe"
+    new_tree = tmp_path / "staging" / "BitWave"
     new_tree.mkdir(parents=True, exist_ok=True)
     if exe_bytes is not None:
-        (new_tree / "Waves.exe").write_bytes(exe_bytes)
+        (new_tree / "BitWave.exe").write_bytes(exe_bytes)
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
     return up, install_root, target, new_tree, _helper_text(up)
 
@@ -496,9 +496,9 @@ def test_apply_windows_tree_refuses_a_staged_tree_without_the_exe(tmp_path, monk
     """Field report: an update left the install folder empty. A staged tree with
     no executable (or an empty one, the antivirus having eaten it) must be
     refused before any helper is written, never mirrored over the live install."""
-    with pytest.raises(UpdaterError, match="no Waves.exe"):
+    with pytest.raises(UpdaterError, match="no BitWave.exe"):
         _tree_helper_script(tmp_path, monkeypatch, exe_bytes=None)
-    with pytest.raises(UpdaterError, match="no Waves.exe"):
+    with pytest.raises(UpdaterError, match="no BitWave.exe"):
         _tree_helper_script(tmp_path, monkeypatch, exe_bytes=b"")
     assert list((tmp_path / "updates").glob("apply_update_*.bat")) == []
 
@@ -514,7 +514,7 @@ def test_apply_windows_tree_helper_never_deletes_the_last_good_copy(tmp_path, mo
     lines = script.replace("\r\n", "\n").split("\n")
     # the staged tree is checked before the swap, the executable after it
     assert 'if not exist "%NEWTREE%" (echo nothing staged' in script
-    assert 'if not exist "%TARGET%" (echo swap left no Waves.exe' in script
+    assert 'if not exist "%TARGET%" (echo swap left no BitWave.exe' in script
     # the backup is deleted on exactly one line, and only after the exe check
     deletes = [i for i, ln in enumerate(lines) if ln.startswith('rmdir /S /Q "%BACKUP%"')]
     assert len(deletes) == 1
@@ -559,18 +559,18 @@ def test_windows_helpers_are_pure_ascii_whatever_the_paths_are(tmp_path, monkeyp
     UI had already said "Updated, restart to finish". Every path now reaches
     the script as a command-line argument (UTF-16 all the way), so the script
     body is ASCII and the code page cannot touch it."""
-    app_dir = tmp_path / "\u041c\u0430\u0440\u0438\u044f" / "AppData" / "Roaming" / "Waves"
+    app_dir = tmp_path / "\u041c\u0430\u0440\u0438\u044f" / "AppData" / "Roaming" / "BitWave"
     app_dir.mkdir(parents=True)
-    up = AppUpdater(app_dir, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(app_dir, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     spawned = {}
     monkeypatch.setattr(u.subprocess, "Popen", lambda cmd, **kw: spawned.update(cmd=cmd, kw=kw))
-    install_root = tmp_path / "\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u044b" / "Waves"
+    install_root = tmp_path / "\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u044b" / "BitWave"
     install_root.mkdir(parents=True)
-    target = install_root / "Waves.exe"
-    new_tree = up.staging_dir / "staged" / "Waves.dist"
+    target = install_root / "BitWave.exe"
+    new_tree = up.staging_dir / "staged" / "BitWave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_bytes(b"NEW")
+    (new_tree / "BitWave.exe").write_bytes(b"NEW")
 
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
@@ -580,7 +580,7 @@ def test_windows_helpers_are_pure_ascii_whatever_the_paths_are(tmp_path, monkeyp
     # the non-ASCII paths did reach the helper, through the environment
     env = spawned["kw"]["env"]
     assert env["WAVES_UPDATE_1"] == str(install_root)
-    assert env["WAVES_UPDATE_3"] == str(install_root.with_name("Waves.new"))
+    assert env["WAVES_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
 
 
 def test_windows_helper_paths_survive_every_character_a_folder_may_hold(tmp_path, monkeypatch):
@@ -592,17 +592,17 @@ def test_windows_helper_paths_survive_every_character_a_folder_may_hold(tmp_path
     on the old build with the UI already saying it had updated. The paths
     travel in the environment now, where a value is substituted once and never
     rescanned, so the command line carries no path at all."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     spawned = {}
     monkeypatch.setattr(u.subprocess, "Popen", lambda cmd, **kw: spawned.update(cmd=cmd, kw=kw))
     hostile = "Rock & Roll %TEMP% ^ mixes!"
-    install_root = tmp_path / hostile / "Waves"
+    install_root = tmp_path / hostile / "BitWave"
     install_root.mkdir(parents=True)
-    target = install_root / "Waves.exe"
-    new_tree = up.staging_dir / "staged" / "Waves.dist"
+    target = install_root / "BitWave.exe"
+    new_tree = up.staging_dir / "staged" / "BitWave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_bytes(b"NEW")
+    (new_tree / "BitWave.exe").write_bytes(b"NEW")
 
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
@@ -628,7 +628,7 @@ def test_apply_windows_tree_lands_the_new_tree_on_the_install_volume_first(tmp_p
 
     staged_same_dev = install_root.with_name(install_root.name + ".new")
     assert staged_same_dev.is_dir()  # landed next to the install, before arming
-    assert (staged_same_dev / "Waves.exe").read_bytes() == b"NEW"
+    assert (staged_same_dev / "BitWave.exe").read_bytes() == b"NEW"
     assert not new_tree.exists()  # moved, not copied: no third copy on disk
     # the helper mirrors nothing; it renames twice
     assert "/MIR" not in script
@@ -640,16 +640,16 @@ def test_apply_windows_tree_cleans_up_a_half_landed_tree(tmp_path, monkeypatch):
     """If the copy onto the install volume fails (a full disk), no helper is
     armed and the partial .new folder does not survive to confuse the next
     attempt."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     spawned = []
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: spawned.append(a))
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
-    new_tree = up.staging_dir / "staged" / "Waves.dist"
+    target = install_root / "BitWave.exe"
+    new_tree = up.staging_dir / "staged" / "BitWave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves.exe").write_bytes(b"NEW")
+    (new_tree / "BitWave.exe").write_bytes(b"NEW")
 
     def half_move(src, dst, *a, **k):
         pathlib.Path(dst).mkdir(parents=True, exist_ok=True)
@@ -659,9 +659,9 @@ def test_apply_windows_tree_cleans_up_a_half_landed_tree(tmp_path, monkeypatch):
     with pytest.raises(OSError):
         up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
-    assert not install_root.with_name("Waves.new").exists()
+    assert not install_root.with_name("BitWave.new").exists()
     assert spawned == []  # nothing armed
-    assert (install_root / "Waves.exe").exists() is False and install_root.is_dir()
+    assert (install_root / "BitWave.exe").exists() is False and install_root.is_dir()
 
 
 def test_windows_helpers_never_start_a_second_instance_on_giveup(tmp_path, monkeypatch):
@@ -675,14 +675,14 @@ def test_windows_helpers_never_start_a_second_instance_on_giveup(tmp_path, monke
     assert f"GTR {AppUpdater._HELPER_WAIT_TICKS}" in tree_script
     assert AppUpdater._HELPER_WAIT_TICKS >= 3600
 
-    up = AppUpdater(tmp_path / "single", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "single", "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     install = tmp_path / "single" / "app"
     install.mkdir(parents=True)
-    staged = tmp_path / "single" / "staging" / "Waves.exe"
+    staged = tmp_path / "single" / "staging" / "BitWave.exe"
     staged.parent.mkdir(parents=True)
     staged.write_text("NEW")
-    up._apply_windows(staged, install / "Waves.exe", lambda *a, **k: None)
+    up._apply_windows(staged, install / "BitWave.exe", lambda *a, **k: None)
     single = _helper_text(up)
     giveup_line = next(ln for ln in single.replace("\r\n", "\n").split("\n") if "gave up waiting" in ln)
     assert 'start ""' not in giveup_line
@@ -708,15 +708,15 @@ def _wait_seconds(script: str) -> float:
 def test_the_wait_loop_really_lasts_hours(tmp_path, monkeypatch):
     """Both helpers, in seconds rather than in ticks."""
     _, _, _, _, tree_script = _tree_helper_script(tmp_path, monkeypatch)
-    up = AppUpdater(tmp_path / "single2", "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path / "single2", "1.0.0", repo="owner/BitWave")
     up.staging_dir.mkdir(parents=True)
     install = tmp_path / "single2" / "app"
     install.mkdir(parents=True)
-    staged = tmp_path / "single2" / "staging" / "Waves.exe"
+    staged = tmp_path / "single2" / "staging" / "BitWave.exe"
     staged.parent.mkdir(parents=True)
     staged.write_text("NEW")
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: None)
-    up._apply_windows(staged, install / "Waves.exe", lambda *a, **k: None)
+    up._apply_windows(staged, install / "BitWave.exe", lambda *a, **k: None)
 
     for script in (tree_script, _helper_text(up)):
         assert _wait_seconds(script) >= 3 * 3600, "a music app is regularly open longer than this"
@@ -727,7 +727,7 @@ def test_install_with_an_armed_windows_helper_does_not_stage_twice(tmp_path, mon
     install in the same session must return the staged result untouched: a
     second helper would race the first over the same .old folder and staged
     tree, and a re-extraction would empty the tree the first one mirrors."""
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key = "windows"
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     calls = []
@@ -747,15 +747,15 @@ def _staged_but_unapplied(tmp_path, monkeypatch, *, staged_version="v2.0.0", run
     """An install folder whose swap was staged and armed but never ran: the
     marker is on disk and the new tree is sitting next to the install."""
     monkeypatch.setattr(u, "is_frozen", lambda: True)
-    install_root = tmp_path / "Waves"
+    install_root = tmp_path / "BitWave"
     install_root.mkdir()
-    target = install_root / "Waves.exe"
+    target = install_root / "BitWave.exe"
     target.write_text("OLD")
-    new_tree = install_root.with_name("Waves.new")
+    new_tree = install_root.with_name("BitWave.new")
     new_tree.mkdir()
-    (new_tree / "Waves.exe").write_text("NEW")
+    (new_tree / "BitWave.exe").write_text("NEW")
     monkeypatch.setattr(u, "_current_exe", lambda: target)
-    up = AppUpdater(tmp_path / "config", running, repo="owner/Waves")
+    up = AppUpdater(tmp_path / "config", running, repo="owner/BitWave")
     up.os_key = "windows"
     up.staging_dir.mkdir(parents=True)
     up._write_armed_marker({"ok": True, "version": staged_version, "applied_to": str(target), "relaunch": True})
@@ -775,7 +775,7 @@ def test_a_staged_swap_that_never_ran_is_re_armed_at_the_next_launch(tmp_path, m
 
     assert pending is not None and pending["version"] == "v2.0.0"
     assert _helper_text(up)  # a fresh helper, armed against THIS process
-    assert spawned["kw"]["env"]["WAVES_UPDATE_3"] == str(install_root.with_name("Waves.new"))
+    assert spawned["kw"]["env"]["WAVES_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
     # and the UI can see it without being told
     assert up.status()["pending_restart"] is True
     assert up.status()["pending_version"] == "v2.0.0"
@@ -797,7 +797,7 @@ def test_resume_gives_up_when_the_staged_tree_is_gone(tmp_path, monkeypatch):
     folder was cleaned): clear the marker rather than arm a helper that would
     find nothing."""
     up, _, _, new_tree = _staged_but_unapplied(tmp_path, monkeypatch)
-    (new_tree / "Waves.exe").unlink()
+    (new_tree / "BitWave.exe").unlink()
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: pytest.fail("armed a helper"))
 
     assert up.resume_pending_apply() is None
@@ -805,7 +805,7 @@ def test_resume_gives_up_when_the_staged_tree_is_gone(tmp_path, monkeypatch):
 
 
 def test_resume_stands_down_while_another_copy_owns_the_update(tmp_path, monkeypatch):
-    """Two copies of Waves share one updates/ folder. Only the copy holding the
+    """Two copies of BitWave share one updates/ folder. Only the copy holding the
     staging lock may arm a helper: two helpers racing the same .old folder is
     how the app ends up deleted."""
     up, _, _, _ = _staged_but_unapplied(tmp_path, monkeypatch)
@@ -828,7 +828,7 @@ def test_a_marker_that_is_not_an_object_is_not_a_marker(tmp_path, monkeypatch):
 
 def test_a_second_copy_cannot_stage_over_an_armed_update(tmp_path, monkeypatch):
     """The armed guard used to be a per-process attribute, so a second copy of
-    Waves re-extracted over the staged tree the first one's helper was waiting
+    BitWave re-extracted over the staged tree the first one's helper was waiting
     to swap in and rewrote the helper script mid-execution. The staging lock is
     held for the whole life of a process that armed a helper, so the second
     copy is told to restart instead."""
@@ -846,7 +846,7 @@ def test_a_second_copy_cannot_stage_over_an_armed_update(tmp_path, monkeypatch):
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
     )
     second.os_key = "windows"
-    with pytest.raises(UpdaterError, match="Another copy of Waves"):
+    with pytest.raises(UpdaterError, match="Another copy of BitWave"):
         second.install(session=object())
     first._armed_lock.release()
 
@@ -925,18 +925,18 @@ def test_is_newer(latest, current, expected):
 
 # ---- asset selection --------------------------------------------------------
 _ASSETS = [
-    {"name": "Waves-macos-arm64.dmg", "browser_download_url": "mac-arm"},
-    {"name": "Waves-macos-arm64.dmg.sha256", "browser_download_url": "mac-arm-sha"},
-    {"name": "Waves-macos-x64.dmg", "browser_download_url": "mac-x64"},
-    {"name": "Waves-linux-x86_64.zip", "browser_download_url": "lin-x64"},
-    {"name": "Waves-windows-x64.zip", "browser_download_url": "win-x64"},
+    {"name": "BitWave-macos-arm64.dmg", "browser_download_url": "mac-arm"},
+    {"name": "BitWave-macos-arm64.dmg.sha256", "browser_download_url": "mac-arm-sha"},
+    {"name": "BitWave-macos-x64.dmg", "browser_download_url": "mac-x64"},
+    {"name": "BitWave-linux-x86_64.zip", "browser_download_url": "lin-x64"},
+    {"name": "BitWave-windows-x64.zip", "browser_download_url": "win-x64"},
     {"name": "checksums.txt", "browser_download_url": "sums"},
 ]
 
 
 def test_select_macos_arm_with_sha():
     assert u._select_asset(_ASSETS, "macos", "arm64", want_legacy=False) == (
-        "Waves-macos-arm64.dmg",
+        "BitWave-macos-arm64.dmg",
         "mac-arm",
         "mac-arm-sha",
     )
@@ -944,11 +944,11 @@ def test_select_macos_arm_with_sha():
 
 def test_select_prefers_correct_arch():
     name, url, _ = u._select_asset(_ASSETS, "macos", "amd64", want_legacy=False)
-    assert (name, url) == ("Waves-macos-x64.dmg", "mac-x64")
+    assert (name, url) == ("BitWave-macos-x64.dmg", "mac-x64")
 
 
 def test_select_windows_no_sidecar():
-    assert u._select_asset(_ASSETS, "windows", "amd64") == ("Waves-windows-x64.zip", "win-x64", None)
+    assert u._select_asset(_ASSETS, "windows", "amd64") == ("BitWave-windows-x64.zip", "win-x64", None)
 
 
 def test_select_never_picks_wrong_arch():
@@ -959,20 +959,20 @@ def test_select_never_picks_wrong_arch():
 
 def test_select_linux_amd64():
     name, url, _ = u._select_asset(_ASSETS, "linux", "amd64")
-    assert (name, url) == ("Waves-linux-x86_64.zip", "lin-x64")
+    assert (name, url) == ("BitWave-linux-x86_64.zip", "lin-x64")
 
 
 def test_select_arch_agnostic_fallback():
-    assets = [{"name": "Waves-linux.tar.gz", "browser_download_url": "uni"}]
-    assert u._select_asset(assets, "linux", "arm64")[0] == "Waves-linux.tar.gz"
+    assets = [{"name": "BitWave-linux.tar.gz", "browser_download_url": "uni"}]
+    assert u._select_asset(assets, "linux", "arm64")[0] == "BitWave-linux.tar.gz"
 
 
 def test_select_arch_agnostic_appimage_still_needs_the_flag():
     # Format follows install: even a release carrying ONLY an AppImage must not
     # be installed over a zip/dist-tree copy (and vice versa).
-    assets = [{"name": "Waves-linux.AppImage", "browser_download_url": "uni"}]
+    assets = [{"name": "BitWave-linux.AppImage", "browser_download_url": "uni"}]
     assert u._select_asset(assets, "linux", "arm64")[0] == ""
-    assert u._select_asset(assets, "linux", "arm64", prefer_appimage=True)[0] == "Waves-linux.AppImage"
+    assert u._select_asset(assets, "linux", "arm64", prefer_appimage=True)[0] == "BitWave-linux.AppImage"
 
 
 def test_select_shipped_macos_names():
@@ -980,20 +980,20 @@ def test_select_shipped_macos_names():
     # matches amd64 and is skipped on arm64; the apple-silicon zip carries no
     # arch token and is picked on arm64 via the arch-agnostic fallback.
     assets = [
-        {"name": "waves_macos-intel.zip", "browser_download_url": "mac-intel"},
-        {"name": "waves_macos-intel.zip.sha256", "browser_download_url": "mac-intel-sha"},
-        {"name": "waves_macos-apple-silicon.zip", "browser_download_url": "mac-as"},
-        {"name": "waves_macos-apple-silicon.zip.sha256", "browser_download_url": "mac-as-sha"},
-        {"name": "waves_linux-x64.zip", "browser_download_url": "lin-x64"},
-        {"name": "waves_windows-arm64.zip", "browser_download_url": "win-arm"},
+        {"name": "bitwave_macos-intel.zip", "browser_download_url": "mac-intel"},
+        {"name": "bitwave_macos-intel.zip.sha256", "browser_download_url": "mac-intel-sha"},
+        {"name": "bitwave_macos-apple-silicon.zip", "browser_download_url": "mac-as"},
+        {"name": "bitwave_macos-apple-silicon.zip.sha256", "browser_download_url": "mac-as-sha"},
+        {"name": "bitwave_linux-x64.zip", "browser_download_url": "lin-x64"},
+        {"name": "bitwave_windows-arm64.zip", "browser_download_url": "win-arm"},
     ]
     assert u._select_asset(assets, "macos", "arm64", want_legacy=False) == (
-        "waves_macos-apple-silicon.zip",
+        "bitwave_macos-apple-silicon.zip",
         "mac-as",
         "mac-as-sha",
     )
     assert u._select_asset(assets, "macos", "amd64", want_legacy=False) == (
-        "waves_macos-intel.zip",
+        "bitwave_macos-intel.zip",
         "mac-intel",
         "mac-intel-sha",
     )
@@ -1003,14 +1003,14 @@ def test_select_shipped_macos_names():
 # underscore is load-bearing: pre-dual updaters in the field pick by name sort,
 # and ".zip" < "_legacy.zip" keeps them on the regular bundle.
 _DUAL_MACOS_ASSETS = [
-    {"name": "waves_macos-intel.zip", "browser_download_url": "mac-intel"},
-    {"name": "waves_macos-intel.zip.sha256", "browser_download_url": "mac-intel-sha"},
-    {"name": "waves_macos-intel_legacy.zip", "browser_download_url": "mac-intel-legacy"},
-    {"name": "waves_macos-intel_legacy.zip.sha256", "browser_download_url": "mac-intel-legacy-sha"},
-    {"name": "waves_macos-apple-silicon.zip", "browser_download_url": "mac-as"},
-    {"name": "waves_macos-apple-silicon.zip.sha256", "browser_download_url": "mac-as-sha"},
-    {"name": "waves_macos-apple-silicon_legacy.zip", "browser_download_url": "mac-as-legacy"},
-    {"name": "waves_macos-apple-silicon_legacy.zip.sha256", "browser_download_url": "mac-as-legacy-sha"},
+    {"name": "bitwave_macos-intel.zip", "browser_download_url": "mac-intel"},
+    {"name": "bitwave_macos-intel.zip.sha256", "browser_download_url": "mac-intel-sha"},
+    {"name": "bitwave_macos-intel_legacy.zip", "browser_download_url": "mac-intel-legacy"},
+    {"name": "bitwave_macos-intel_legacy.zip.sha256", "browser_download_url": "mac-intel-legacy-sha"},
+    {"name": "bitwave_macos-apple-silicon.zip", "browser_download_url": "mac-as"},
+    {"name": "bitwave_macos-apple-silicon.zip.sha256", "browser_download_url": "mac-as-sha"},
+    {"name": "bitwave_macos-apple-silicon_legacy.zip", "browser_download_url": "mac-as-legacy"},
+    {"name": "bitwave_macos-apple-silicon_legacy.zip.sha256", "browser_download_url": "mac-as-legacy-sha"},
 ]
 
 
@@ -1019,14 +1019,14 @@ def test_select_flavor_follows_the_host():
     # one, on both arches; neither may ever cross over (the regular bundle is
     # dyld-killed below 15, and a silent downgrade to legacy loses Qt fixes).
     sel = u._select_asset
-    assert sel(_DUAL_MACOS_ASSETS, "macos", "amd64", want_legacy=False)[0] == "waves_macos-intel.zip"
+    assert sel(_DUAL_MACOS_ASSETS, "macos", "amd64", want_legacy=False)[0] == "bitwave_macos-intel.zip"
     assert sel(_DUAL_MACOS_ASSETS, "macos", "amd64", want_legacy=True) == (
-        "waves_macos-intel_legacy.zip",
+        "bitwave_macos-intel_legacy.zip",
         "mac-intel-legacy",
         "mac-intel-legacy-sha",
     )
-    assert sel(_DUAL_MACOS_ASSETS, "macos", "arm64", want_legacy=False)[0] == "waves_macos-apple-silicon.zip"
-    assert sel(_DUAL_MACOS_ASSETS, "macos", "arm64", want_legacy=True)[0] == "waves_macos-apple-silicon_legacy.zip"
+    assert sel(_DUAL_MACOS_ASSETS, "macos", "arm64", want_legacy=False)[0] == "bitwave_macos-apple-silicon.zip"
+    assert sel(_DUAL_MACOS_ASSETS, "macos", "arm64", want_legacy=True)[0] == "bitwave_macos-apple-silicon_legacy.zip"
 
 
 def test_select_legacy_host_gets_nothing_without_a_legacy_asset():
@@ -1102,7 +1102,7 @@ def test_select_no_os_match():
 
 
 def test_select_ignores_lone_sidecar():
-    assets = [{"name": "Waves-macos-arm64.dmg.sha256", "browser_download_url": "s"}]
+    assets = [{"name": "BitWave-macos-arm64.dmg.sha256", "browser_download_url": "s"}]
     assert u._select_asset(assets, "macos", "arm64") == ("", "", None)
 
 
@@ -1115,15 +1115,15 @@ def test_status_not_configured_when_repo_blank():
 
 def test_status_source_when_configured_but_not_frozen(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: False)
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "source" and st["configured"] and not st["can_self_install"]
-    assert st["releases_url"] == "https://github.com/owner/Waves/releases"
+    assert st["releases_url"] == "https://github.com/owner/BitWave/releases"
 
 
 def test_status_ready_when_frozen_and_configured(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "ready" and st["can_self_install"]
 
@@ -1136,7 +1136,7 @@ def test_update_available_no_network_when_unconfigured():
 
 
 def test_update_available_compares_versions():
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     up.latest = lambda *a, **k: Release(version="v1.1.0", asset="a", url="u")
     assert up.update_available() == (True, "1.0.0", "1.1.0")  # bare version, no tag "v"
     up.latest = lambda *a, **k: Release(version="v1.0.0", asset="a", url="u")
@@ -1152,13 +1152,13 @@ def test_install_blocked_when_unconfigured():
 
 def test_install_blocked_from_source(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: False)
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     with pytest.raises(UpdaterError, match="packaged builds"):
         up.install()
 
 
 # ---- mocked download → verify → stage (signed manifest; real swap stubbed) --
-_ASSET = "Waves.bin"
+_ASSET = "BitWave.bin"
 
 
 def _manifest(payload: bytes, asset: str = _ASSET, version: str = "v2.0.0") -> bytes:
@@ -1175,7 +1175,7 @@ def _prep(monkeypatch, tmp_path, *, payload, manifest, signature, pubkey, asset=
     the live executable."""
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "UPDATE_PUBLIC_KEY", pubkey)
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.latest = lambda *a, **k: Release(
         version="v2.0.0",
         asset=asset,
@@ -1378,7 +1378,7 @@ def test_safe_extractall_preserves_symlinks_and_exec_bit(tmp_path):
     zp.write_bytes(
         _zip_with(
             [
-                ("waves.app/Contents/MacOS/Waves", b"BINARY", 0o100755),  # regular, rwxr-xr-x
+                ("waves.app/Contents/MacOS/BitWave", b"BINARY", 0o100755),  # regular, rwxr-xr-x
                 ("waves.app/Contents/Frameworks/Foo.framework/Versions/Current", b"A", 0o120755),  # symlink
             ]
         )
@@ -1386,7 +1386,7 @@ def test_safe_extractall_preserves_symlinks_and_exec_bit(tmp_path):
     out = tmp_path / "out"
     with zipfile.ZipFile(zp) as zf:
         AppUpdater._safe_extractall(zf, out)
-    exe = out / "waves.app/Contents/MacOS/Waves"
+    exe = out / "waves.app/Contents/MacOS/BitWave"
     link = out / "waves.app/Contents/Frameworks/Foo.framework/Versions/Current"
     assert exe.read_bytes() == b"BINARY" and os.access(exe, os.X_OK)
     assert link.is_symlink() and os.readlink(link) == "A"
@@ -1414,21 +1414,21 @@ def test_apply_unix_tree_swaps_whole_directory(tmp_path):
     # its OWN bundled libs, so the entire install dir is replaced, not just the exe.
     install_root = tmp_path / "waves.dist"
     install_root.mkdir()
-    (install_root / "Waves").write_bytes(b"OLD-EXE")
+    (install_root / "BitWave").write_bytes(b"OLD-EXE")
     (install_root / "libQt6Core.so.6").write_bytes(b"OLD-LIB")
-    target = install_root / "Waves"
+    target = install_root / "BitWave"
 
     new_tree = tmp_path / "staged" / "waves.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "Waves").write_bytes(b"NEW-EXE")
+    (new_tree / "BitWave").write_bytes(b"NEW-EXE")
     (new_tree / "libQt6Core.so.6").write_bytes(b"NEW-LIB")
 
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key = "linux"
     assert up._apply_unix_tree(new_tree, target, lambda *a: None) == target
-    assert (install_root / "Waves").read_bytes() == b"NEW-EXE"
+    assert (install_root / "BitWave").read_bytes() == b"NEW-EXE"
     assert (install_root / "libQt6Core.so.6").read_bytes() == b"NEW-LIB"  # the lib was swapped too
-    assert os.access(install_root / "Waves", os.X_OK)
+    assert os.access(install_root / "BitWave", os.X_OK)
 
 
 # ---- managed install channels (package-manager-owned copies) -----------------
@@ -1457,7 +1457,7 @@ def test_managed_channel_from_container_env(_no_channel_env, monkeypatch, tmp_pa
     monkeypatch.setenv("SNAP", "/snap/waves/1")
     assert u.managed_channel() == "snap"
     monkeypatch.delenv("SNAP")
-    monkeypatch.setenv("FLATPAK_ID", "app.waves.Waves")
+    monkeypatch.setenv("FLATPAK_ID", "app.waves.BitWave")
     assert u.managed_channel() == "flatpak"
 
 
@@ -1465,14 +1465,14 @@ def test_appimage_is_not_a_managed_channel(_no_channel_env, monkeypatch, tmp_pat
     # An AppImage self-updates (the updater swaps the $APPIMAGE file), so it
     # must NOT read as managed, which would down-rank it to notify-only.
     _point_config_at(monkeypatch, tmp_path)
-    monkeypatch.setenv("APPIMAGE", "/home/u/Waves.AppImage")
+    monkeypatch.setenv("APPIMAGE", "/home/u/BitWave.AppImage")
     assert u.managed_channel() == ""
 
 
 def test_managed_channel_from_scoop_path(_no_channel_env, monkeypatch, tmp_path):
     _point_config_at(monkeypatch, tmp_path)
     monkeypatch.setattr(
-        u, "_current_exe", lambda: __import__("pathlib").Path("C:/Users/u/scoop/apps/waves/current/Waves.exe")
+        u, "_current_exe", lambda: __import__("pathlib").Path("C:/Users/u/scoop/apps/waves/current/BitWave.exe")
     )
     assert u.managed_channel() == "scoop"
 
@@ -1496,19 +1496,19 @@ def test_sentinel_content_is_sanitized(_no_channel_env, monkeypatch, tmp_path):
 def test_status_managed_when_channel_owns_install(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "managed"
     assert st["can_self_install"] is False
     assert st["channel"] == "homebrew-cask"
     assert st["channel_label"] == "Homebrew"
-    assert st["update_hint"] == "brew upgrade --cask waves"
+    assert st["update_hint"] == ""
 
 
 def test_status_ready_reports_no_channel(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "ready" and st["can_self_install"]
     assert st["channel"] == "" and st["channel_label"] == "" and st["update_hint"] == ""
@@ -1519,7 +1519,7 @@ def test_source_state_wins_over_managed(monkeypatch):
     # "source" is the truer state (self-install impossible either way).
     monkeypatch.setattr(u, "is_frozen", lambda: False)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     assert up.status()["state"] == "source"
 
 
@@ -1529,15 +1529,15 @@ def test_install_blocked_on_managed_channel_without_manager_binary(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
     monkeypatch.setattr(u, "_find_brew", lambda: "")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
-    with pytest.raises(UpdaterError, match=r"managed by Homebrew.*brew upgrade --cask waves"):
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
+    with pytest.raises(UpdaterError, match=r"managed by Homebrew; update it there"):
         up.install()
 
 
 def test_install_blocked_on_unknown_channel_without_hint(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "nixpkgs")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     with pytest.raises(UpdaterError, match=r"managed by nixpkgs"):
         up.install()
 
@@ -1570,9 +1570,9 @@ class _FakeProc:
 def _managed_up(monkeypatch, proc, latest=None):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "_find_brew", lambda: "/opt/homebrew/bin/brew")
+    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: proc)
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     up.latest = (lambda *a, **k: latest) if latest is not None else (lambda *a, **k: None)
     return up
 
@@ -1583,26 +1583,26 @@ def test_managed_upgrade_runs_brew_and_reports_done(monkeypatch):
         [
             "==> Upgrading waves 1.0.0 -> 1.1.0",
             "==> Downloading waves",
-            "==> Moving App 'Waves.app' to '/Applications/Waves.app'",
+            "==> Moving App 'BitWave.app' to '/Applications/BitWave.app'",
             "🍺  waves was upgraded",
         ]
     )
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "_find_brew", lambda: "/opt/homebrew/bin/brew")
+    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
 
     def fake_popen(argv, **kw):
         argv_seen["argv"] = argv
         return proc
 
     monkeypatch.setattr(u.subprocess, "Popen", fake_popen)
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     up.latest = lambda *a, **k: Release(version="v1.1.0", asset="a", url="u")
 
     pcts, logs = [], []
     result = up.install(progress_cb=pcts.append, log_cb=logs.append)
 
-    assert argv_seen["argv"] == ["/opt/homebrew/bin/brew", "upgrade", "--cask", "iamprivacy/waves/waves"]
+    assert argv_seen["argv"] == ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"]
     assert result["ok"] is True and result["version"] == "v1.1.0" and result["relaunch"] is True
     assert pcts[-1] == 100.0
     # The UI hears fixed phase words, never the manager's own lines (C04).
@@ -1645,18 +1645,18 @@ def test_managed_upgrade_abort_cancels(monkeypatch):
 def test_status_can_managed_install_tracks_brew_presence(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "_find_brew", lambda: "/opt/homebrew/bin/brew")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "managed" and st["can_managed_install"] is True and st["can_self_install"] is False
-    monkeypatch.setattr(u, "_find_brew", lambda: "")
+    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: None)
     assert up.status()["can_managed_install"] is False
 
 
 def test_status_snap_has_no_managed_install(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "snap")
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     assert up.status()["can_managed_install"] is False
 
 
@@ -1668,40 +1668,40 @@ def _assets(*names):
 def test_select_asset_zip_install_never_gets_an_appimage():
     # ".AppImage" sorts before ".zip" alphabetically; without hard partitioning
     # every zip user would silently be switched to an AppImage payload.
-    name, _url, _ = u._select_asset(_assets("waves_linux-x64.AppImage", "waves_linux-x64.zip"), "linux", "amd64")
-    assert name == "waves_linux-x64.zip"
+    name, _url, _ = u._select_asset(_assets("bitwave_linux-x64.AppImage", "bitwave_linux-x64.zip"), "linux", "amd64")
+    assert name == "bitwave_linux-x64.zip"
 
 
 def test_select_asset_appimage_install_gets_only_appimage():
     name, _url, sha = u._select_asset(
-        _assets("waves_linux-x64.AppImage", "waves_linux-x64.AppImage.sha256", "waves_linux-x64.zip"),
+        _assets("bitwave_linux-x64.AppImage", "bitwave_linux-x64.AppImage.sha256", "bitwave_linux-x64.zip"),
         "linux",
         "amd64",
         prefer_appimage=True,
     )
-    assert name == "waves_linux-x64.AppImage"
-    assert sha == "http://x/waves_linux-x64.AppImage.sha256"
+    assert name == "bitwave_linux-x64.AppImage"
+    assert sha == "http://x/bitwave_linux-x64.AppImage.sha256"
 
 
 def test_select_asset_appimage_missing_yields_nothing():
     # An old release without AppImage assets: better no update than a zip tree
     # smeared over a single file.
-    name, url, _ = u._select_asset(_assets("waves_linux-x64.zip"), "linux", "amd64", prefer_appimage=True)
+    name, url, _ = u._select_asset(_assets("bitwave_linux-x64.zip"), "linux", "amd64", prefer_appimage=True)
     assert name == "" and url == ""
 
 
 def test_apply_targets_the_appimage_file(monkeypatch, tmp_path):
-    appimage_path = tmp_path / "Waves.AppImage"
+    appimage_path = tmp_path / "BitWave.AppImage"
     appimage_path.write_bytes(b"OLD")
     monkeypatch.setenv("APPIMAGE", str(appimage_path))
     # The AppImage claim is only honored when this process runs out of the
     # advertised mount (see _running_appimage), so point APPDIR at ourselves.
     monkeypatch.setenv("APPDIR", str(pathlib.Path(sys.executable).parent))
-    up = AppUpdater(tmp_path, "1.0.0", repo="owner/Waves")
+    up = AppUpdater(tmp_path, "1.0.0", repo="owner/BitWave")
     up.os_key = "linux"
     payload = tmp_path / "dl.bin"
     payload.write_bytes(b"NEW-APPIMAGE")
-    rel = Release(version="v2.0.0", asset="waves_linux-x64.AppImage", url="http://x")
+    rel = Release(version="v2.0.0", asset="bitwave_linux-x64.AppImage", url="http://x")
     applied = up._apply(payload, rel, lambda *a: None)
     assert applied == appimage_path
     assert appimage_path.read_bytes() == b"NEW-APPIMAGE"
@@ -1722,5 +1722,5 @@ def test_managed_channel_from_app_dir_sentinel(_no_channel_env, monkeypatch, tmp
     exe_dir = tmp_path / "opt" / "waves"
     exe_dir.mkdir(parents=True)
     (exe_dir / "install_channel").write_text("aur\n")
-    monkeypatch.setattr(u, "_current_exe", lambda: exe_dir / "Waves")
+    monkeypatch.setattr(u, "_current_exe", lambda: exe_dir / "BitWave")
     assert u.managed_channel() == "aur"

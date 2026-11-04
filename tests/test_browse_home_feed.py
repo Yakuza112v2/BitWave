@@ -56,7 +56,7 @@ _ALBUM = _J(
 _PLAYLIST = _J(
     {
         "uuid": "pl-1",
-        "title": "Essential Waves",
+        "title": "Essential BitWave",
         "numberOfTracks": 40,
         "numberOfVideos": 0,
         "duration": 9000,

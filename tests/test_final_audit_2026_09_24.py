@@ -78,7 +78,7 @@ def test_the_config_folder_is_made_owner_only_on_posix(tmp_path):
 
     if os.name != "posix":
         pytest.skip("POSIX only")
-    folder = tmp_path / "Waves"
+    folder = tmp_path / "BitWave"
     folder.mkdir(mode=0o755)
     folder.chmod(0o755)
     app_mod._make_private(folder)

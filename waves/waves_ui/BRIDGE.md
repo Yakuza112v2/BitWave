@@ -124,7 +124,7 @@ child process (`waves/library_worker.py`, driven by
 `waves/waves_ui/library_proc.py`'s `LibraryWorker`), so a long scan never holds
 the interpreter lock the interface thread needs.
 
-Ownership (the record of what Waves itself downloaded) is scoped to at most two
+Ownership (the record of what BitWave itself downloaded) is scoped to at most two
 roots, the download folder and the library folder (`_ownership_roots`): a
 recorded path outside both never counts and is never statted. `ownershipOf`
 answers carry `in_library` and `folder` per copy, and
@@ -224,7 +224,7 @@ state instead of offering a restart (see `pvActive` in Main.qml).
 
 The family lives in `bridge_flac.py` (`FlacCheckMixin`, mixed into
 `WavesBridge`); `waves/flac_verify.py` does the work. It walks the folders
-the card selects: the Waves library (the download folder, and the library
+the card selects: the BitWave library (the download folder, and the library
 folder when the library scan is on and configured), or one folder the user
 picked with Browse. The choice is remembered in the `flac_check_source` and
 `flac_check_folder` prefs. It reads every FLAC header there and can fill in a
@@ -246,9 +246,9 @@ watchdog that stops ffmpeg on Cancel or past a time limit scaled to the
 file's size, so a share that stopped answering cannot hold the run.
 
 A folder that cannot be opened or listed (a share not mounted, a drive
-unplugged, a folder the system will not let Waves read) is never taken for
+unplugged, a folder the system will not let BitWave read) is never taken for
 an empty one. When none of the selected folders opens, the scan fails ("The
-chosen folder could not be opened.", or "The Waves library folder(s) could
+chosen folder could not be opened.", or "The BitWave library folder(s) could
 not be opened."); otherwise it finishes over what it could read, and
 `folders_unreadable` in the state counts the folders it could not (the
 report lists them as `folder_unreadable` lines). A link to a FLAC file the
@@ -273,7 +273,7 @@ count, the report path, the scope the last scan walked, `folders_unreadable`,
 `cached`, `resume_source` / `resume_folders` for RESUME, and `reports`: whether any
 report is on disk), `flacCheckSources()`
 (the selected source, the chosen folder, the scope key the selection names,
-the Waves library folders), `flacCheckSetSource(source)` ("waves" or
+the BitWave library folders), `flacCheckSetSource(source)` ("waves" or
 "folder"), `flacCheckSetFolder(path)` (an absolute path from the card's folder
 dialog; selects it), `flacCheckScan(deep, recheck)` (header scan, or decode every file
 too; `recheck` reads files an earlier scan already judged), `flacCheckFix()`

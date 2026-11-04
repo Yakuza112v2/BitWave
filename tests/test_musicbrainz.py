@@ -62,7 +62,7 @@ def _query(url) -> dict:
 def _client(transport):
     t, monotonic, sleep = _clock()
     pacer = mb.Pacer(sleep=sleep, monotonic=monotonic)
-    client = mb.MusicBrainzClient(fetch=transport, pacer=pacer, user_agent="Waves/test (https://getwaves.dev)")
+    client = mb.MusicBrainzClient(fetch=transport, pacer=pacer, user_agent="BitWave/test (https://github.com/Yakuza112v2/BitWave)")
     return client, t
 
 

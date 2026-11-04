@@ -43,7 +43,7 @@ QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
 
 # Staged yesterday, never restarted into. Spelled as the release TAG, which is
 # what the updater stores: everything the UI prints puts its own "v" in front,
-# so an unstripped tag renders "Waves vv0.1.26".
+# so an unstripped tag renders "BitWave vv0.1.26".
 _STAGED_TAG = "v0.1.26"
 _STAGED = "0.1.26"
 _NEWER = "0.1.27"  # published since, and what the check finds today
@@ -157,7 +157,7 @@ def _run_scenario() -> int:
 
     # The label is what the user reads, so it has to be the one asking. Pinned
     # on the label's own expression, not merely on the function existing.
-    label = '"Waves v" + updateToast.landedVersion() + " installed"'
+    label = '"BitWave v" + updateToast.landedVersion() + " installed"'
     if label not in QML_MAIN.read_text(encoding="utf-8"):
         print("the installed label no longer asks what the restart will land", file=sys.stderr)
         return _EXIT_NAMED_THE_WRONG_VERSION

@@ -4,7 +4,7 @@ WHAT THIS FENCES OFF
 --------------------
 TIDAL serves Dolby Atmos only through a session pinned to
 ``ATMOS_REQUEST_QUALITY`` (constants.py), so an Atmos file arrives at that tier
-no matter what the audio quality setting says. Waves recorded the echoed tier
+no matter what the audio quality setting says. BitWave recorded the echoed tier
 and then ranked it on the ordinary stereo scale, where it sits below any
 Lossless or Max target. The consequences all followed from that one comparison:
 

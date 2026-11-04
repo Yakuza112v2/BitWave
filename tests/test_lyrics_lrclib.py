@@ -34,7 +34,7 @@ class _Session:
 
     def get(self, url, params=None, headers=None, timeout=None):
         assert timeout is not None, "a lyrics lookup must always carry a timeout"
-        assert headers and headers.get("User-Agent", "").startswith("Waves/")
+        assert headers and headers.get("User-Agent", "").startswith("BitWave/")
         self.calls.append((url, params or {}))
         for suffix, response in self._by_suffix.items():
             if url.endswith(suffix):

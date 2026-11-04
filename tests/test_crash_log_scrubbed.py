@@ -66,7 +66,7 @@ def _raise_with(message: str):
 
 def test_crash_log_write_is_scrubbed_like_the_logger(crash_log):
     """A home path in the exception message must not reach crash.log."""
-    home = "/Users/testuser/Music/Waves/Aphex Twin/Selected Ambient Works/04 Heliosphan.flac"
+    home = "/Users/testuser/Music/BitWave/Aphex Twin/Selected Ambient Works/04 Heliosphan.flac"
     sys.excepthook(*_raise_with(f"could not write {home}"))
 
     written = crash_log.read_text(encoding="utf-8")

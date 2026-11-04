@@ -12,7 +12,7 @@ Now the skip event carries the owned copy's tier (from the ownership ledger's
 record, or the library scan's local class) plus HOW it was found, and the row:
 
 * keeps the tier in its column at full strength (it is what the file IS);
-* colors IN LIBRARY green when Waves wrote that exact file (a fact) and gold
+* colors IN LIBRARY green when BitWave wrote that exact file (a fact) and gold
   when the library scan matched it by tags (a guess), the download button's
   own two voices.
 """
@@ -178,7 +178,7 @@ def _run_scenario() -> int:
     )
     q(f"root.queueExpanded = ({{ {qid}: true }})")
     settle(400)
-    # Track 1: Waves wrote it, at LOSSLESS. Track 2: the scan matched it by
+    # Track 1: BitWave wrote it, at LOSSLESS. Track 2: the scan matched it by
     # tags, a hi-res copy. Track 3 stays queued.
     bridge._track_lifecycle(qid, {"id": "1", "status": "skipped", "quality": "LOSSLESS", "owned": "own"})
     bridge._track_lifecycle(qid, {"id": "2", "status": "skipped", "quality": "HI-RES", "owned": "claim"})

@@ -510,7 +510,7 @@ def test_local_quality_class_bands():
 
 
 def test_rescan_picks_up_music_added_after_the_first_scan(tmp_path):
-    # Music added from outside Waves has no filesystem watcher over a network
+    # Music added from outside BitWave has no filesystem watcher over a network
     # mount; the Rescan button (and the hourly sweep, same code path) is how it
     # gains a badge without a relaunch.
     lib = str(tmp_path / "lib")
@@ -520,7 +520,7 @@ def test_rescan_picks_up_music_added_after_the_first_scan(tmp_path):
     s = _make(tmp_path, library_folder=lib, tagmap=tagmap)
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("B", "Two", "2001", 1)["present"] is False
-    # An album lands on the share while Waves runs...
+    # An album lands on the share while BitWave runs...
     d2 = _album(lib, "B/Two", ["1.flac"])
     tagmap[d2] = {"album": "Two", "artist": "B", "date": "2001"}
     s.rescanLibrary()
@@ -1010,7 +1010,7 @@ def test_presence_never_reaches_the_download_engine():
     can DECLINE a fetch, and it can do NOTHING else.
 
     The engine's own skip decisions (ownership store, skip_existing, the ISRC
-    scan) run on exact identifiers Waves recorded itself. Presence reaches the
+    scan) run on exact identifiers BitWave recorded itself. Presence reaches the
     download path in exactly one shape: the bulk claim gate
     (library_bulk_skip), which answers "don't fetch this" through callables the
     bridge injects at enqueue time. A claim can therefore only ever cost a

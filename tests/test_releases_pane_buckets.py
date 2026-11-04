@@ -1509,7 +1509,7 @@ def _run_scenario() -> int:  # noqa: C901
     q("importDialog.discard()")
 
     # 1c. Being on the pane marks arrivals seen only while the user is
-    # LOOKING (window up and focused): a Waves parked on the Releases pane
+    # LOOKING (window up and focused): a BitWave parked on the Releases pane
     # behind another app's window must not eat the badge, and focus coming
     # back acknowledges what it counted (user report 2026-10-26).
     q("openReleases()")

@@ -346,12 +346,12 @@ def _os_error_text(error: BaseException | None) -> str:
 def _waves_item_id(media) -> str:
     """The id a downloaded file is filed under, which is not always ``media.id``.
 
-    A Waves 'best of both' merge fetches a track from one edition and lands it in
+    A BitWave 'best of both' merge fetches a track from one edition and lands it in
     another edition's folder, so it carries ``waves_identity_id``: the id the
     whole app (queue rows, ownership, collection membership) keys that download
     by, while ``media.id`` stays the source stream being fetched. Stamping the
     source id into the file meant a later plain job over the same folder asked
-    about the identity id, failed to recognise Waves' own file, and wrote a
+    about the identity id, failed to recognise BitWave' own file, and wrote a
     ``_01`` duplicate beside it instead of replacing it.
 
     Args:
@@ -387,7 +387,7 @@ def _waves_owned_ids(media) -> set[str]:
     Normally just its own id. A best-of-both member is filed under the identity
     edition (see :func:`_waves_item_id`), but every build up to v0.1.21 wrote the
     SOURCE edition's id into that same file, so libraries assembled by an older
-    Waves are full of merged tracks tagged the other way. Recognising both means
+    BitWave are full of merged tracks tagged the other way. Recognising both means
     a forced re-save replaces its own file, and re-tags it with the identity id
     on the way, instead of leaving a numbered duplicate beside it that the app
     will never delete.
@@ -406,7 +406,7 @@ def _file_audio_mode_is_atmos(path_file: pathlib.Path) -> bool | None:
     """Whether the audio file at this path is a Dolby Atmos copy.
 
     Read off the disk, not out of any ledger, so a user's own Atmos file is
-    recognised the same as one Waves wrote. Only an MP4 container can hold
+    recognised the same as one BitWave wrote. Only an MP4 container can hold
     Atmos (E-AC-3 JOC or AC-4, the two codings TIDAL delivers it in); every
     other extension is stereo by construction, answered without opening the
     file. TIDAL's stereo AAC shares the .m4a extension, which is exactly why
@@ -1074,13 +1074,13 @@ class Download:
                     f"Something went wrong while writing to {log_content(media.name)}. File is corrupt!"
                 )
             elif isinstance(media, Track) and stream_manifest.is_encrypted:
-                # Waves does not process encrypted streams. TIDAL serves plain
-                # MPEG-DASH for every quality Waves requests, so this branch is
+                # BitWave does not process encrypted streams. TIDAL serves plain
+                # MPEG-DASH for every quality BitWave requests, so this branch is
                 # not reached in normal operation. Should a stream ever arrive
                 # encrypted, fail the download rather than leave an unplayable
                 # file behind.
                 self.fn_logger.error(
-                    f"{log_content(media.name)} arrived as an encrypted stream, which Waves does not process. "
+                    f"{log_content(media.name)} arrived as an encrypted stream, which BitWave does not process. "
                     "The download was stopped so no unplayable file is written."
                 )
                 result_merge = False
@@ -2180,7 +2180,7 @@ class Download:
 
         ``owned_ids`` widens "its own" to every id this item may have been
         written under (see :func:`_waves_owned_ids`), which is what lets a
-        best-of-both member replace the copy an older Waves filed under the
+        best-of-both member replace the copy an older BitWave filed under the
         source edition's id. ``fetch_is_atmos`` is what THIS download is
         bringing; None means the caller cannot say, and the mode gate stands
         down.
@@ -2684,7 +2684,7 @@ class Download:
             return False, path_media_dst
 
         # Update path to the TRUE stream extension. The step-2 path was guessed from a
-        # possibly-None quality (the Waves UI never passes quality_audio), so the real
+        # possibly-None quality (the BitWave UI never passes quality_audio), so the real
         # extension is only known now. Everything downstream (skip check, returned path,
         # symlink) must use this corrected path, not the guess.
         if path_media_dst.suffix != file_extension:
@@ -4578,7 +4578,7 @@ class Download:
 
         ``items()`` ends with this, and so must any fan-out that stands in for
         ``items()`` over an explicit track list (the best-of-both merge in the
-        Waves bridge): an album gets its playlist file the same way however its
+        BitWave bridge): an album gets its playlist file the same way however its
         tracks were sourced. Kept as one method so the two cannot drift on what
         the file is called, whether it sorts by number, or what it lists.
 
@@ -5417,7 +5417,7 @@ class Download:
         if depth_changing:
             filter_parts.append(f"osf={sample_fmt}")
             filter_parts.append("dither_method=triangular")
-        # soxr is asked for first. It is a build option, and the builds Waves
+        # soxr is asked for first. It is a build option, and the builds BitWave
         # ships with today (martin-riedl 9.x on macOS and Linux, Homebrew's 9.x)
         # leave it out, where ffmpeg then fails the whole conversion with
         # "Error reinitializing filters" and the track failed. Only that

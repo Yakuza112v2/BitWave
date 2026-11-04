@@ -21,7 +21,7 @@ ANYWAY. Two halves of that are pinned here, and both matter:
   waves.downloadAlbum with the right album id (detection must never prevent a
   download the user could otherwise make), and
 * a DOWNLOADED that comes from the OWNERSHIP STORE is not a guess but a
-  record of a download Waves made, so it stays inert and opens nothing.
+  record of a download BitWave made, so it stays inert and opens nothing.
 
 Also pinned here: the verdict's two axes as the user reads them. Identity
 ("sure") picks the words and color: a proven complete copy wears the green

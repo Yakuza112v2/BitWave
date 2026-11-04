@@ -4,7 +4,7 @@ Releases pane.
 Three things live here, all in one sqlite file (``releases.sqlite3``, next to
 the settings):
 
-* ``followed``: the follow list. Waves keeps its own; a row says where it came
+* ``followed``: the follow list. BitWave keeps its own; a row says where it came
   from (``origin``: mirrored from the TIDAL favorites, imported from the
   local library, or followed by hand) and whether the user ever acted on it
   (``touched``), so the read-only TIDAL mirror can drop a favorite the user
@@ -421,7 +421,7 @@ class FollowStore:
         Re-following refreshes the display name and art, never downgrades
         ``touched`` and never changes ``origin``: where a follow came from is a
         fact about its first appearance. A hand follow (``touched``) also
-        clears any "unfollowed on Waves" memory, so the TIDAL mirror may carry
+        clears any "unfollowed on BitWave" memory, so the TIDAL mirror may carry
         the artist again. The baseline starts unseeded: the first complete
         catalog the sweep fetches is absorbed silently (see record_check),
         so following never floods the badge with a back catalog.

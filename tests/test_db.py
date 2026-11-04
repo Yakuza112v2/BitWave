@@ -1,5 +1,5 @@
 """waves.db: every store opens its file the same way, and the store list
-the factory reset and the catalog read covers every file Waves keeps."""
+the factory reset and the catalog read covers every file BitWave keeps."""
 
 from __future__ import annotations
 

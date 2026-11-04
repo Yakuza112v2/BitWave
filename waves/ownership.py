@@ -1,4 +1,4 @@
-"""Local record of what has actually been downloaded, so Waves can answer "do
+"""Local record of what has actually been downloaded, so BitWave can answer "do
 you already have this track, and at what quality" from reality rather than from
 a history log.
 
@@ -262,7 +262,7 @@ class OwnershipStore:
                     present = set()
                 if name not in present:
                     raise
-                logger.debug("ownership: %s was added by another copy of Waves", name)
+                logger.debug("ownership: %s was added by another copy of BitWave", name)
 
     def _read(self, sql: str, params: tuple = ()) -> list:
         """Run a read on this thread's own connection (see __init__). Falls
@@ -488,7 +488,7 @@ class OwnershipStore:
         """Remember the exact, current track ids that make up ``collection_id``
         (an album, playlist or mix), replacing any previous record for it.
 
-        Called wherever Waves already has the full track list in hand for a
+        Called wherever BitWave already has the full track list in hand for a
         reason other than this (opening the item's page, expanding an album
         panel), so a later "is this fully owned" question elsewhere in the app
         (e.g. a collapsed row that has never been opened) can be answered from
@@ -512,7 +512,7 @@ class OwnershipStore:
 
         Called incrementally as a collection download progresses (see
         ``record_members_replace`` for the alternative, authoritative case):
-        Waves observes each track as it is queued, so membership for a
+        BitWave observes each track as it is queued, so membership for a
         downloaded album/playlist is learned for free, from data already
         flowing through the download, no extra network call.
         """
@@ -529,12 +529,12 @@ class OwnershipStore:
             self._conn.commit()
 
     def members_of(self, collection_id: str) -> list[str] | None:
-        """Known member track ids for ``collection_id``, or None if Waves has
+        """Known member track ids for ``collection_id``, or None if BitWave has
         never observed this collection's contents (never opened, never
         downloaded): distinct from an empty list, so a caller can tell
         "unknown" apart from a genuinely empty collection.
 
-        A plain indexed lookup against Waves' own local database, not the
+        A plain indexed lookup against BitWave' own local database, not the
         user's music folder: unlike ownership_of, there is no live filesystem
         stat here, so this never risks hanging on a dropped network mount and
         is safe to call directly.
@@ -649,7 +649,7 @@ class OwnershipStore:
         """The first folder name under ``base`` of every path this store has
         recorded, newest first, deduplicated.
 
-        These are not guesses. They are the exact directory names Waves itself
+        These are not guesses. They are the exact directory names BitWave itself
         wrote on that disk, which makes them the one seed list worth having when
         a share's directory listing is broken and the folders can only be found
         by asking for them by name (see LibraryIndex.probe_folders). A path that

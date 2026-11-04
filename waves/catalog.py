@@ -1,4 +1,4 @@
-"""One read-only view of everything Waves keeps.
+"""One read-only view of everything BitWave keeps.
 
 Each feature keeps its own sqlite file (see ``waves.db``): the library scan
 cache, the follows and releases, the downloads record, the MusicBrainz file
@@ -8,7 +8,7 @@ question that spans them in one SQL statement:
 
     lib   the library scan cache of the current library folder
     rel   follows and the releases the sweep saw
-    own   what Waves downloaded
+    own   what BitWave downloaded
     mb    what MusicBrainz answered
     flac  the FLAC check's verdicts
 
@@ -31,7 +31,7 @@ Rules this is built on:
 * Each file is consistent on its own; a statement that reads two files reads
   each as of its own last commit, which is all any display or match needs.
 
-Waves' own normalizer is there as an SQL function, ``waves_name_key(text)``
+BitWave' own normalizer is there as an SQL function, ``waves_name_key(text)``
 (``artist_import.name_key``), so artist names from different stores meet
 the way the app compares them. The views every connection carries:
 

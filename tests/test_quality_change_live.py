@@ -1,6 +1,6 @@
 """Issue #9: a saved audio-quality change must reach the tidal session live.
 
-Streams are requested at the SESSION's audio quality (the Waves UI never
+Streams are requested at the SESSION's audio quality (the BitWave UI never
 passes a per-download quality), and historically that was only written at
 startup, so a settings change kept downloading at the old quality until the
 app was restarted. applySettings must re-apply settings to the tidal session

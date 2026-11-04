@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Waves
+Name=BitWave
 Comment=Save music from your own TIDAL account for offline listening
-Exec=Waves
-Icon=waves
+Exec=BitWave
+Icon=bitwave
 Terminal=false
 Categories=AudioVideo;Audio;Music;

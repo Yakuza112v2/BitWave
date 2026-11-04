@@ -40,7 +40,7 @@ from waves.waves_ui.backend import WavesBridge
 # The managed binary sits under the account's own Application Support folder, so
 # the path is identity-bearing. That is the whole reason it must never reach the
 # settings file, which the bug template asks users to paste in public.
-_MANAGED = "/Users/testuser/Library/Application Support/Waves/bin/ffmpeg"
+_MANAGED = "/Users/testuser/Library/Application Support/BitWave/bin/ffmpeg"
 
 
 class _Stub:

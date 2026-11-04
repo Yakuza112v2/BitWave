@@ -147,7 +147,7 @@ def test_the_agreeing_cut_is_chosen_over_the_other_edition():
 
 
 def test_a_complete_split_set_tagged_with_the_release_total_is_full():
-    # Waves writes TRACKTOTAL=album.num_tracks on every file of every disc, so
+    # BitWave writes TRACKTOTAL=album.num_tracks on every file of every disc, so
     # Album/CD1 and Album/CD2 each declare 20. Summing read "20 OF 40".
     idx = _album_index(
         ("Album", "A", "2015", 10, "/m/A/Album/CD1", {"declared": 20, "disc_no": 1, "disc_total": 2}),
@@ -370,7 +370,7 @@ def test_name_markers_only_ever_fall_back():
         ([1, 1, 1], "Album", 1),
         ([0, 0, 0], "Album", 0),
         ([0, 1, 0], "Album", 1),  # one explicit cut makes the explicit release
-        ([-1, -1, -1], "Album (Explicit)", 1),  # the files never said: Waves' folder marker
+        ([-1, -1, -1], "Album (Explicit)", 1),  # the files never said: BitWave' folder marker
         ([-1, -1, -1], "Album", -1),
         ([0, 0, -1], "Album (Explicit)", 0),  # the files outrank the name
     ],

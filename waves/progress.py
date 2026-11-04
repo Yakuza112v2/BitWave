@@ -1,7 +1,7 @@
 """Headless progress bookkeeping, drop-in for the slice of ``rich.progress``
 the engine used.
 
-Nothing in Waves ever rendered a progress bar to a terminal: download.py and
+Nothing in BitWave ever rendered a progress bar to a terminal: download.py and
 the bridge used ``rich.progress.Progress`` purely as a thread-safe task table
 (ids, totals, completed counts, percentages) and the QML UI gets numbers via
 signals. Compiling rich plus its pygments dependency (150+ modules) into the

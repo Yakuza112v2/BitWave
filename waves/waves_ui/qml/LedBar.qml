@@ -12,7 +12,7 @@ Rectangle {
     property string label: ""   // centered status text ("message · NN%")
     property string mono: ""    // monospace family for the label
 
-    // Waves palette (defaults mirror the app tokens; override if they diverge)
+    // BitWave palette (defaults mirror the app tokens; override if they diverge)
     property color accent:     "#3dff6e"
     property color accentCont: "#06210f"
     property color accentDim:  "#22a64a"

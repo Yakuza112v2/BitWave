@@ -153,7 +153,7 @@ def test_a_track_with_no_release_to_name_asks_an_unprovable_question():
 
 # ---- what a skip SAYS about the copy you hold ---------------------------------
 # The ledger's IN LIBRARY row keeps its quality column and speaks in the same
-# two voices as the download button: green when Waves wrote that exact file
+# two voices as the download button: green when BitWave wrote that exact file
 # (the ownership ledger), gold when the library scan matched it by tags. Both
 # ride on the skip event, so the detail must come out of the decision.
 

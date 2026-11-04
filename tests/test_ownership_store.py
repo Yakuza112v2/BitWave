@@ -241,7 +241,7 @@ def _on_fresh_thread(fn):
 def test_cold_reader_works_under_an_awkward_folder_name(tmp_path, caplog):
     """The per-thread reader opens the file by URI, so a space or a '#' in the
     config folder's path must not push it onto the fallback."""
-    folder = tmp_path / "Waves site #1"
+    folder = tmp_path / "BitWave site #1"
     folder.mkdir()
     store = OwnershipStore(str(folder / "ownership.sqlite3"))
     store.record_members_replace("album1", ["1", "2"])
@@ -295,7 +295,7 @@ def test_members_of_reads_as_unknown_when_the_store_cannot_answer(tmp_path):
 
 def test_folder_names_under_lists_the_artist_folders_it_wrote(tmp_path):
     """The seed list for a share whose directory listing is broken: these are
-    the exact folder names Waves wrote, so they can be looked up by name even
+    the exact folder names BitWave wrote, so they can be looked up by name even
     when the folder never appears in any listing."""
     store = _store(tmp_path)
     base = str(tmp_path / "music")

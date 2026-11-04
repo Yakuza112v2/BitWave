@@ -2,7 +2,7 @@
 many of its tracks" from the user's own files on disk.
 
 This is what lets the ownership badge recognize a whole library, not only what
-Waves downloaded. It walks a configured library folder, treats every directory
+BitWave downloaded. It walks a configured library folder, treats every directory
 that directly holds audio files as an album, reads that album's identity from
 the TAGS of one representative file (album / album-artist / date), and counts
 the audio files for the track total. The raw per-album facts are cached in a
@@ -53,10 +53,10 @@ from waves.poolgauge import PoolGauge
 # never the library path, folder names, or an album's artist/title.
 logger = logging.getLogger("waves.library")
 
-# Audio file extensions we treat as album tracks. A superset of what Waves
+# Audio file extensions we treat as album tracks. A superset of what BitWave
 # writes (see waves.constants.AudioExtensionsValid), widened to the common
 # formats a pre-existing, ripped-or-purchased library actually contains, so an
-# album Waves did not create is still recognized.
+# album BitWave did not create is still recognized.
 AUDIO_EXTS = frozenset(
     {
         ".flac",
@@ -86,7 +86,7 @@ AUDIO_EXTS = frozenset(
 )
 
 # Directory names that never hold an album and must not be walked. Two groups:
-# Waves' own non-album exports (so a playlist/mix/video folder is never mistaken
+# BitWave' own non-album exports (so a playlist/mix/video folder is never mistaken
 # for an album), and the metadata/thumbnail/recycle folders a NAS or OS writes
 # under EVERY folder. The second group matters enormously: a Synology writes an
 # @eaDir under every directory, each holding a thumbnail subfolder per media
@@ -95,7 +95,7 @@ AUDIO_EXTS = frozenset(
 # ballooned and the walk pegged a core crawling phantom folders).
 _SKIP_DIR_NAMES = frozenset(
     {
-        # Waves' own exports under the download root.
+        # BitWave' own exports under the download root.
         "Playlists",
         "Playlist",
         "Mix",
@@ -473,7 +473,7 @@ def _advisory_word(value: str) -> int:
     """An iTunes advisory value as the stored fact: 1 explicit, 0 clean, -1
     unknown. The convention is shared by ``rtng`` and ``ITUNESADVISORY``: 1
     (and the older 4) mark explicit, 2 marks a clean cut, 0 is "none", which
-    Waves itself writes for a clean track and iTunes writes for content with
+    BitWave itself writes for a clean track and iTunes writes for content with
     nothing to warn about, so it reads clean. A value that is not a number is
     a tagger's own vocabulary and says nothing."""
     try:
@@ -496,7 +496,7 @@ _FOLDER_CLEAN_RE = re.compile(r"[\[(]\s*clean\s*[\])]", re.IGNORECASE)
 
 
 def _marker_word(*texts: str) -> int:
-    """The advisory fact a NAME carries: Waves' own ``{album_explicit}``
+    """The advisory fact a NAME carries: BitWave' own ``{album_explicit}``
     folder marker (" (Explicit)"), or a "(Clean)"/"(Explicit)" spelled into
     the folder or the album tag by whoever ripped it. 1, 0 or -1 when no text
     says. Only a fallback for files whose tags never said: an unmarked name is
@@ -555,7 +555,7 @@ def _flat_set_declared(pairs: list[tuple[int, int]], held: int) -> int:
     folder (its files name different discs), read from each disc's claim.
 
     Two conventions share the field: Picard and iTunes write each disc's own
-    count, Waves writes the release's count on every file. Every disc must
+    count, BitWave writes the release's count on every file. Every disc must
     carry one agreed claim, or nothing is declared. Differing claims can only
     be per-disc, so they add up. Equal claims are read by the files held,
     exactly as matching._declared_total reads a joined set: more files than
@@ -2020,7 +2020,7 @@ class LibraryIndex:
             try:
                 fut = pool.submit(probe, path, expected_mtime(path))
             except RuntimeError:
-                # Quitting Waves mid-scan tears the interpreter down under us,
+                # Quitting BitWave mid-scan tears the interpreter down under us,
                 # and from that moment EVERY submit raises "cannot schedule new
                 # futures after interpreter shutdown". alive() cannot see it
                 # (the generation is untouched: nobody asked the scan to stop,
@@ -2607,7 +2607,7 @@ class LibraryIndex:
         # The folder's advisory fact, from its files: explicit when any file
         # is (a release with one explicit cut is the explicit release), clean
         # when every file that knows says clean, otherwise the name marker
-        # (Waves' own " (Explicit)" folder token, or a "(Clean)" the ripper
+        # (BitWave' own " (Explicit)" folder token, or a "(Clean)" the ripper
         # spelled out), or -1. A folder in conflict declares nothing here
         # either: the strays may be the other edition.
         words = {t[8] for t in tracks} - {-1}
@@ -2782,7 +2782,7 @@ class LibraryIndex:
         spelling most of that artist's folders are tagged with; ``tracks``
         is how many of their files the library holds (the import's floor
         for following); ``folders`` are up to three of its album folders,
-        where the import looks for the TIDAL artist id a Waves download
+        where the import looks for the TIDAL artist id a BitWave download
         writes into its files. Keyless rows (Various Artists, untagged
         files) never reach here: their artist half is empty by design."""
         rows = self._read(

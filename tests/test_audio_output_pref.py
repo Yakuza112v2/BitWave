@@ -1,6 +1,6 @@
 """The audio output pick (Settings > Playback, and the bar's output chip).
 
-Issue #57: speakers on Miracast, Bluetooth or AirPlay never got Waves' sound,
+Issue #57: speakers on Miracast, Bluetooth or AirPlay never got BitWave' sound,
 because every AudioOutput took whatever Qt called the default when it was
 made. The pick is one pref holding the device id as hex ("" follows the
 system default) plus the device's name alongside it, so a pick that is

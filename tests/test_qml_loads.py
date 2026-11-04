@@ -81,8 +81,8 @@ def _run_scenario() -> int:
         # QSettings refuses to start and warns. Here it writes under the
         # sandboxed XDG_CONFIG_HOME; on macOS it would reach the real
         # Preferences folder, and there the bundle id already serves.
-        app.setApplicationName("Waves")
-        app.setOrganizationName("Waves")
+        app.setApplicationName("BitWave")
+        app.setOrganizationName("BitWave")
     try:
         from waves.waves_ui.backend import WavesBridge
     except Exception as exc:

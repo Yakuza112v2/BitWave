@@ -7,7 +7,7 @@ does not gate input in Qt Quick. Every control on the Browse landing was
 therefore live while invisible: the cursor flipped to the pointing hand over
 buttons nobody could see, and a click on the opening water could land on a
 preview control and start full-volume audio with no player on screen
-(reported as issue #13, "Waves autoplayed on startup").
+(reported as issue #13, "BitWave autoplayed on startup").
 
 HOW THIS STAYS FIXED
 --------------------

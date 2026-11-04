@@ -61,7 +61,7 @@ def _bind(stub, name):
 def _stub(prefs=None):
     s = _Stub()
     s._waves_prefs = {
-        # Armed: these tests are about what an armed Waves sends. The
+        # Armed: these tests are about what an armed BitWave sends. The
         # master-switch tests below flip it themselves.
         "notify_enabled": True,
         "notify_downloads": "queue",
@@ -72,7 +72,7 @@ def _stub(prefs=None):
         **(prefs or {}),
     }
     s._waves_pref_bool = _bind(s, "_waves_pref_bool")
-    # Waves in front, the case notify_in_front is about.
+    # BitWave in front, the case notify_in_front is about.
     s._notify_waves_in_front = lambda: True
     s._notifier = _FakeNotifier()
     s._notify_pool = _InlinePool()
@@ -259,7 +259,7 @@ def test_never_mode_with_the_switch_off_sends_nothing():
 def test_update_banner_fires_once_per_version():
     s = _stub()
     s._notify_app_update("0.3.0")
-    assert s._notifier.sent == [("Waves 0.3.0 is available", "Install it from Settings, Updates.")]
+    assert s._notifier.sent == [("BitWave 0.3.0 is available", "Install it from Settings, Updates.")]
     assert s._waves_prefs["notify_update_seen"] == "0.3.0"
     s._notify_app_update("0.3.0")
     assert len(s._notifier.sent) == 1
@@ -349,7 +349,7 @@ def test_arming_the_master_switch_sends_one_test_banner():
     s._waves_prefs["notify_enabled"] = True
     s._notify_master_armed(False)
     assert s._notifier.sent == [
-        ("Notifications are on", "Waves will announce new releases, finished downloads and updates here.")
+        ("Notifications are on", "BitWave will announce new releases, finished downloads and updates here.")
     ]
     # Every later save in the visit resubmits the same True: no second one.
     s._notify_master_armed(True)
@@ -369,11 +369,11 @@ def test_in_front_off_holds_banners_only_while_waves_is_in_front():
     _end(s, "B", "done")
     s._on_dl_notify()
     s._notify_app_update("0.3.0")
-    assert [t for t, _m in s._notifier.sent] == ["Download finished", "Waves 0.3.0 is available"]
+    assert [t for t, _m in s._notifier.sent] == ["Download finished", "BitWave 0.3.0 is available"]
 
 
 def test_the_test_banner_ignores_the_in_front_switch():
-    # Arming happens in Settings, so Waves is always in front for it.
+    # Arming happens in Settings, so BitWave is always in front for it.
     s = _stub(prefs={"notify_enabled": False, "notify_in_front": False})
     s._notify_master_armed = _bind(s, "_notify_master_armed")
     s._waves_prefs["notify_enabled"] = True

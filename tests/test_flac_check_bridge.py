@@ -3,7 +3,7 @@
 Qt-free, the way test_library_bridge.py does it: the mixin's methods are
 bound onto a bare stub with an inline pool, and the worker's events are
 handed straight to the GUI-thread handler. What is pinned: the scan reads
-only, walks exactly the selected folders (the Waves library's two, or the one
+only, walks exactly the selected folders (the BitWave library's two, or the one
 folder chosen with Browse), and writes its report under the config folder;
 the fix writes only the files the scan found without a signature, and only
 while the selection still names the folders that scan walked; every guard
@@ -241,7 +241,7 @@ def test_a_waves_library_that_cannot_be_opened_fails_instead_of_reporting_a_clea
     assert (st["phase"], st["running"], st["error"]) == (
         "failed",
         False,
-        "The Waves library folder could not be opened.",
+        "The BitWave library folder could not be opened.",
     )
     assert st["report"] == ""
     assert not (tmp_path / "config" / bridge_flac.REPORTS_DIR).exists()
@@ -251,7 +251,7 @@ def test_a_waves_library_that_cannot_be_opened_fails_instead_of_reporting_a_clea
     lib = tmp_path / "Library not mounted"
     b = _bridge(tmp_path, download=str(tmp_path / "Share not mounted"), library=str(lib))
     b.flacCheckScan(False)
-    assert b.flacCheckState()["error"] == "The Waves library folders could not be opened."
+    assert b.flacCheckState()["error"] == "The BitWave library folders could not be opened."
 
 
 def test_a_waves_library_folder_that_cannot_be_opened_is_counted_and_keeps_the_marker(tmp_path):
@@ -293,7 +293,7 @@ def _locked(folder: Path) -> None:
 
 
 def test_a_chosen_folder_that_exists_but_cannot_be_listed_fails(tmp_path):
-    """The folder is there (a network volume the system has not let Waves
+    """The folder is there (a network volume the system has not let BitWave
     read, or one with no read permission): isdir says yes, listing it fails.
     Never an empty, clean scan, and the marker stays."""
     chosen = tmp_path / "Locked"
@@ -837,7 +837,7 @@ def test_sources_report_the_selection_and_the_waves_folders(tmp_path):
     _choose(b, other)
     src = b.flacCheckSources()
     assert (src["source"], src["folder"], src["key"]) == ("folder", str(other), f"folder:{other}")
-    assert src["waves"] == [str(tmp_path / "Downloads"), str(lib)], "the Waves folders are still listed"
+    assert src["waves"] == [str(tmp_path / "Downloads"), str(lib)], "the BitWave folders are still listed"
 
 
 def test_choosing_a_folder_takes_only_an_absolute_path_saves_it_and_selects_it(tmp_path):
@@ -1117,7 +1117,7 @@ def test_resume_selects_the_chosen_folder_it_was_writing_in_again(tmp_path, monk
     chosen = tmp_path / "Elsewhere"
     _choose(b, chosen)
     _cut_short_fix(tmp_path, monkeypatch, b, chosen, 2)
-    b.flacCheckSetSource("waves")  # the card moved on to the Waves library
+    b.flacCheckSetSource("waves")  # the card moved on to the BitWave library
     st = b.flacCheckState()
     assert (st["resume_source"], st["resume_folders"]) == ("folder", [str(chosen)])
 

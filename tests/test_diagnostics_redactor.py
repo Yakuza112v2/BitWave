@@ -33,9 +33,9 @@ IDENTITY_CORPUS = [
     # user paths, all OS spellings
     ("could not open /Users/carol.smith/Music/waves/track.flac", ["carol.smith"]),
     ("scan found /home/dave_99/library", ["dave_99"]),
-    (r"error at C:\Users\Eve Adams\AppData\Local\Waves\settings.json", ["Eve Adams"]),
+    (r"error at C:\Users\Eve Adams\AppData\Local\BitWave\settings.json", ["Eve Adams"]),
     # each half of a spaced profile name, not just the joined string
-    (r"error at C:\Users\Eve Adams\AppData\Local\Waves\settings.json", ["Eve", "Adams"]),
+    (r"error at C:\Users\Eve Adams\AppData\Local\BitWave\settings.json", ["Eve", "Adams"]),
     ("opened /home/Ann Lee Park/Music/a.flac", ["Ann", "Lee", "Park"]),
     (r"share path \\SERVER01\Users\frank\music unreachable", ["frank"]),
     ("mixed style C:/Users/gina.h/Downloads failed", ["gina.h"]),
@@ -184,7 +184,7 @@ def test_smb_relist_share_and_mount_point_never_survive(diag):
     form the exception text would print them.
     """
     url = "smb://carol@nas-box._smb._tcp.local/Media"
-    point = "/Users/carol/Library/Application Support/Waves/relist-mounts/pid-4821"
+    point = "/Users/carol/Library/Application Support/BitWave/relist-mounts/pid-4821"
     diag.register_secret(url, "‹share-origin›")
     diag.register_secret(point, "‹mount-point›")
     out = diag.scrub(
@@ -264,7 +264,7 @@ def test_installer_failure_text_shown_to_the_user_is_scrubbed():
     assert "nina" not in shown and "/" not in shown
     # Final audit C05: the UI gets a plain sentence for the failure's kind,
     # never the library's own text; the raw exception stays in the log.
-    assert shown == "Waves could not write to its install folder"
+    assert shown == "BitWave could not write to its install folder"
     raw = OSError("[Errno 13] Permission denied: '/Users/nina/Library/Application Support/waves/ffmpeg.tmp'")
     assert _user_error(raw, "Install failed") == "Install failed"
     assert _user_error(RuntimeError(""), "Install failed") == "Install failed"

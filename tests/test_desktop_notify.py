@@ -46,10 +46,10 @@ def test_builds_once_and_sends():
         built.append(name)
         return n
 
-    d = DesktopNotify("Waves", factory=factory)
+    d = DesktopNotify("BitWave", factory=factory)
     assert d.send("New album from A", "X") is True
     assert d.send("2 new releases", "From A and B") is True
-    assert built == ["Waves"]
+    assert built == ["BitWave"]
     assert n.sent == [("New album from A", "X"), ("2 new releases", "From A and B")]
 
 
@@ -63,7 +63,7 @@ def test_a_failed_build_is_remembered_for_its_pause():
     d = DesktopNotify(factory=factory)
     assert d.send("t", "m") is False
     assert d.send("t", "m") is False
-    assert calls == ["Waves"]
+    assert calls == ["BitWave"]
 
 
 def test_a_failed_build_is_tried_again_after_the_pause(monkeypatch):
@@ -84,7 +84,7 @@ def test_a_failed_build_is_tried_again_after_the_pause(monkeypatch):
     d = DesktopNotify(factory=factory)
     assert d.send("t", "m") is False
     assert d.send("t", "m") is True
-    assert calls == ["Waves", "Waves"] and good.sent == [("t", "m")]
+    assert calls == ["BitWave", "BitWave"] and good.sent == [("t", "m")]
 
 
 def test_a_failing_send_is_swallowed():
@@ -174,7 +174,7 @@ def test_two_threads_build_one_notifier():
     gate.set()
     for t in threads:
         t.join(2)
-    assert built == ["Waves"]
+    assert built == ["BitWave"]
 
 
 def test_without_the_package_it_is_a_quiet_no_op(monkeypatch):
@@ -264,7 +264,7 @@ def test_banners_carry_the_waves_icon(monkeypatch):
     from pathlib import Path
 
     built = _fake_package(monkeypatch)
-    assert DesktopNotify("Waves").send("t", "m") is True
+    assert DesktopNotify("BitWave").send("t", "m") is True
     icon = built[0]["app_icon"]
     # Not the package's own default (its Python logo).
     assert icon is not None and Path(icon.path).name == "icon256.png"
@@ -284,7 +284,7 @@ def test_linux_without_a_notification_service_sends_nothing(monkeypatch):
 
     built = _fake_package(monkeypatch, caps_error=RuntimeError("org.freedesktop.Notifications unknown"))
     monkeypatch.setattr(sys, "platform", "linux")
-    d = DesktopNotify("Waves")
+    d = DesktopNotify("BitWave")
     assert d.send("t", "m") is False
     assert d.send("t", "m") is False
     # Asked once, then remembered: no new bus connection per banner.
@@ -296,7 +296,7 @@ def test_linux_with_a_notification_service_sends(monkeypatch):
 
     _fake_package(monkeypatch)
     monkeypatch.setattr(sys, "platform", "linux")
-    assert DesktopNotify("Waves").send("t", "m") is True
+    assert DesktopNotify("BitWave").send("t", "m") is True
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="the UNUserNotificationCenter delegate is macOS only")

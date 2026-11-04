@@ -1,4 +1,4 @@
-"""Entry point for the Waves QML UI.
+"""Entry point for the BitWave QML UI.
 
 Launch with::
 
@@ -36,7 +36,7 @@ def _data_dir(name: str) -> Path:
 
     From source it sits beside this file. A packaged build cannot ship it
     there: next to the binary, a ``waves/`` data directory would collide with
-    the ``Waves`` executable on the case-insensitive filesystems macOS and
+    the ``BitWave`` executable on the case-insensitive filesystems macOS and
     Windows ship with, so the build lands the data at ``waves_ui/<name>``
     beside the binary instead (the --include-data-dir directives in the
     repo-root waves.py). Candidate order mirrors the window-icon lookup
@@ -485,10 +485,10 @@ def _app_icon() -> QIcon | None:
         if icon is not None and _icon_usable(icon):
             if debug:
                 sizes = sorted(s.width() for s in icon.availableSizes())
-                _icon_debug(f"WAVES icon: root={root} source={source} sizes={sizes} px48={icon.pixmap(48, 48).width()}")
+                _icon_debug(f"BITWAVE icon: root={root} source={source} sizes={sizes} px48={icon.pixmap(48, 48).width()}")
             return icon
     if debug:
-        _icon_debug("WAVES icon: no usable icon found in any root")
+        _icon_debug("BITWAVE icon: no usable icon found in any root")
     return None
 
 
@@ -545,7 +545,7 @@ def _open_crash_log():
     fh = open(path, "a", encoding="utf-8")  # noqa: SIM115
     from waves.waves_ui import __version__
 
-    fh.write(f"\n=== Waves {__version__} session start ===\n")
+    fh.write(f"\n=== BitWave {__version__} session start ===\n")
     fh.flush()
     return fh
 
@@ -747,8 +747,8 @@ def _failed_qml_load(bridge, owns_app: bool) -> int:
     """app.exec never runs, so aboutToQuit never fires: drain the pools and
     abort anything the bridge started (the token login, the library sweep)
     here, and say so where a crash report can see it."""
-    logging.getLogger("waves").error("Failed to load the Waves QML UI")
-    print("Failed to load Waves QML UI", file=sys.stderr)
+    logging.getLogger("waves").error("Failed to load the BitWave QML UI")
+    print("Failed to load BitWave QML UI", file=sys.stderr)
     bridge.shutdown()
     diagnostics.flush_disk_log()
     if owns_app:
@@ -782,17 +782,17 @@ def waves_activate(tidal: Tidal | None = None) -> int:
         try:
             import ctypes
 
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Waves.Waves")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("BitWave.BitWave")
             if os.environ.get("WAVES_DEBUG"):
-                _icon_debug("WAVES aumid: set Waves.Waves")
+                _icon_debug("BITWAVE aumid: set BitWave.BitWave")
         except Exception:
             logging.getLogger(__name__).debug("could not set AppUserModelID", exc_info=True)
             if os.environ.get("WAVES_DEBUG"):
-                _icon_debug("WAVES aumid: FAILED to set")
+                _icon_debug("BITWAVE aumid: FAILED to set")
     owns_app = QGuiApplication.instance() is None
     app = QGuiApplication.instance() or QGuiApplication(sys.argv)
-    app.setApplicationName("Waves")
-    app.setOrganizationName("Waves")
+    app.setApplicationName("BitWave")
+    app.setOrganizationName("BitWave")
     icon = _app_icon()
     if icon is not None:
         app.setWindowIcon(icon)
@@ -870,7 +870,7 @@ def waves_activate(tidal: Tidal | None = None) -> int:
         root_objects[0].setIcon(icon)
     if os.environ.get("WAVES_DEBUG"):
         _icon_debug(
-            f"WAVES window: root_type={type(root_objects[0]).__name__} "
+            f"BITWAVE window: root_type={type(root_objects[0]).__name__} "
             f"is_qwindow={isinstance(root_objects[0], QWindow)} icon_set={icon is not None}"
         )
 

@@ -228,7 +228,7 @@ def _stub(tmp_path, *, prefs=None):
     s = _Stub()
     s._releases = FollowStore(str(tmp_path / "releases.sqlite3"))
     s._waves_prefs = {
-        # Armed: the notify tests here are about an armed Waves's banners.
+        # Armed: the notify tests here are about an armed BitWave's banners.
         "notify_enabled": True,
         "notify_in_front": True,
         "releases_notify": True,

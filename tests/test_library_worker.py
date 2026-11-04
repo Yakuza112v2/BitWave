@@ -166,8 +166,8 @@ def test_default_command_frozen_and_source(monkeypatch):
     monkeypatch.setattr(updater, "is_frozen", lambda: False)
     assert library_proc.default_command() == [sys.executable, "-m", "waves.library_worker"]
     monkeypatch.setattr(updater, "is_frozen", lambda: True)
-    monkeypatch.setattr(updater, "_current_exe", lambda: "/Applications/Waves.app/Contents/MacOS/Waves")
-    assert library_proc.default_command() == ["/Applications/Waves.app/Contents/MacOS/Waves", "--library-worker"]
+    monkeypatch.setattr(updater, "_current_exe", lambda: "/Applications/BitWave.app/Contents/MacOS/BitWave")
+    assert library_proc.default_command() == ["/Applications/BitWave.app/Contents/MacOS/BitWave", "--library-worker"]
 
 
 def test_a_job_stops_when_the_parent_goes_away(tmp_path, monkeypatch):

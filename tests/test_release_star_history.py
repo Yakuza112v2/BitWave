@@ -79,7 +79,7 @@ def _write(path: Path, text: str) -> None:
 
 
 def _readme(block: str) -> str:
-    return f"# Waves\n\n## Star History\n\n{_START}\n{block}{_END}\n\n## Acknowledgments\n"
+    return f"# BitWave\n\n## Star History\n\n{_START}\n{block}{_END}\n\n## Acknowledgments\n"
 
 
 def _write_hook(private: Path, markers: str = _HOOK_MARKERS) -> Path:
@@ -333,7 +333,7 @@ def test_the_public_owner_inside_a_github_url_is_not_a_hit(sandbox: Path):
     """The owner name of the public repo is a hook marker that the README's
     own URLs match; the release scan drops that one alternative and nothing
     else."""
-    _write(sandbox / "README.md", _readme("") + f"\nSee https://github.com/{_OWNER}/Waves/issues\n")
+    _write(sandbox / "README.md", _readme("") + f"\nSee https://github.com/{_OWNER}/BitWave/issues\n")
     _git(sandbox, "add", "-A")
     _git(sandbox, "commit", "-m", "a legitimate URL")
 
@@ -341,7 +341,7 @@ def test_the_public_owner_inside_a_github_url_is_not_a_hit(sandbox: Path):
     assert proc.returncode == 0, proc.stderr
 
     # The other markers are still live around it, in any case.
-    _write(sandbox / "waves" / "x.py", f"# https://github.com/{_OWNER}/Waves and Relay-Id-Beta\n")
+    _write(sandbox / "waves" / "x.py", f"# https://github.com/{_OWNER}/BitWave and Relay-Id-Beta\n")
     _git(sandbox, "add", "-A")
     _git(sandbox, "commit", "-m", "a URL beside a marker")
     proc = _dry_run(sandbox)

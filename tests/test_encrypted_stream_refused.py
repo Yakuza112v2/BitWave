@@ -1,7 +1,7 @@
 """Encrypted streams are refused, never written out as an unplayable file.
 
-Waves does not process encrypted streams. TIDAL serves plain MPEG-DASH for
-every quality Waves requests, so the guard is not reached in normal operation,
+BitWave does not process encrypted streams. TIDAL serves plain MPEG-DASH for
+every quality BitWave requests, so the guard is not reached in normal operation,
 but if a stream ever arrives encrypted the download must fail cleanly instead
 of leaving a scrambled file behind in the user's library.
 """

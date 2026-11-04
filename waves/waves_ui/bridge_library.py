@@ -1359,7 +1359,7 @@ class LibraryMixin:
     def _path_inside_library(self, path: str) -> bool:
         """Does ``path`` lie under the scanned library root? The same rule
         downloadsInsideLibrary applies to the download folder, applied to any
-        one path: a copy Waves wrote before the download folder moved may sit
+        one path: a copy BitWave wrote before the download folder moved may sit
         anywhere, and its face must name where THAT copy is. String compare
         only, never a stat (GUI thread, possibly a dead mount)."""
         # The ownership store's own rule (path_under), so a copy it counts as
@@ -1370,7 +1370,7 @@ class LibraryMixin:
     @Slot()
     def rescanLibrary(self) -> None:
         """Rescan the music library now (Settings' Rescan button), for when the
-        user just added music from outside Waves and wants badges without waiting
+        user just added music from outside BitWave and wants badges without waiting
         for the hourly sweep. Forces a FULL re-list (not the cheap mtime sweep the
         automatic rebuilds run), so it always finds a moved-in album even on a
         network mount that fails to bump the parent folder's mtime; only changed
@@ -1989,7 +1989,7 @@ class LibraryMixin:
 
     def _library_probe_candidates(self, name: str) -> list[str]:
         """The folder spellings to try for an artist, from the naming settings
-        this install writes with (so a folder Waves itself created is found
+        this install writes with (so a folder BitWave itself created is found
         first) plus the older and raw spellings; see folder_name_candidates."""
         try:
             data = self.settings.data
@@ -2157,7 +2157,7 @@ class LibraryMixin:
 
     def _library_probe_backfill(self) -> None:
         """(worker thread, once per session) Seed the queue with the artist
-        folders Waves itself wrote into this library.
+        folders BitWave itself wrote into this library.
 
         A truncated listing hides folders, but the download record holds their
         exact names, so these are the artists the user is likeliest to be told
@@ -2178,7 +2178,7 @@ class LibraryMixin:
         root = self._library_root()
         if store is None or not root:
             return
-        # The download folder counts too, even when it is not the library. Waves
+        # The download folder counts too, even when it is not the library. BitWave
         # names an artist's folder the same wherever it writes it, so the names
         # it used while downloading are the names to look for inside the library.
         bases = [root]
@@ -2423,7 +2423,7 @@ class LibraryMixin:
 
     @Slot(result=str)
     def librarySource(self) -> str:
-        """Where the ownership-badge scan looks: 'download' (the same folder Waves
+        """Where the ownership-badge scan looks: 'download' (the same folder BitWave
         downloads to) or 'separate' (a folder the user picked, the default)."""
         return "download" if self._waves_prefs.get("library_source") == "download" else "separate"
 

@@ -22,11 +22,11 @@ elif [ "$(basename "$DIR")" = "MacOS" ]; then
 else
   LIBDIR="$DIR"
 fi
-[ -d "$LIBDIR/PySide6" ] || { echo "error: '$LIBDIR' doesn't look like a Waves bundle (no PySide6/)" >&2; exit 1; }
+[ -d "$LIBDIR/PySide6" ] || { echo "error: '$LIBDIR' doesn't look like a BitWave bundle (no PySide6/)" >&2; exit 1; }
 
 echo "=== bundle size report: $DIR ==="
 echo "total_mb $(du -sm "$DIR" | cut -f1)"
-for exe in "$LIBDIR/Waves" "$LIBDIR/Waves.exe" "$LIBDIR/waves" "$LIBDIR/waves.bin" "$LIBDIR/waves.exe"; do
+for exe in "$LIBDIR/BitWave" "$LIBDIR/BitWave.exe" "$LIBDIR/waves" "$LIBDIR/waves.bin" "$LIBDIR/waves.exe"; do
   if [ -f "$exe" ]; then
     echo "binary_mb $(du -sm "$exe" | cut -f1) ($(basename "$exe"))"
     break

@@ -36,7 +36,7 @@ def _headers() -> dict[str, str]:
     # version_app() reads package metadata.
     global _user_agent
     if _user_agent is None:
-        _user_agent = f"Waves/{version_app()} (https://github.com/iamprivacy/Waves)"
+        _user_agent = f"BitWave/{version_app()} (https://github.com/Yakuza112v2/BitWave)"
     return {"User-Agent": _user_agent}
 
 

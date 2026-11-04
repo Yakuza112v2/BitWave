@@ -17,7 +17,7 @@ import sys
 
 from waves.waves_ui.signing import parse_sha256sums, public_key_pem
 
-README_VERIFY_URL = "https://github.com/iamprivacy/Waves#verify-a-download"
+README_VERIFY_URL = "https://github.com/Yakuza112v2/BitWave#verify-a-download"
 
 
 def verify_notes(manifest_text: str) -> str:
@@ -31,7 +31,7 @@ def verify_notes(manifest_text: str) -> str:
     lines.extend(f"| `{name}` | `{digest}` |" for name, digest in sorted(sums.items()))
     lines += [
         "",
-        "`SHA256SUMS` lists these hashes and `SHA256SUMS.sig` is an Ed25519 signature over it, made with the Waves release key. The public key, also compiled into every build:",
+        "`SHA256SUMS` lists these hashes and `SHA256SUMS.sig` is an Ed25519 signature over it, made with the BitWave release key. The public key, also compiled into every build:",
         "",
         "```",
         public_key_pem().rstrip("\n"),
@@ -42,9 +42,9 @@ def verify_notes(manifest_text: str) -> str:
         "```bash",
         "printf '%s\\n' '-----BEGIN PUBLIC KEY-----' '"
         + public_key_pem().splitlines()[1]
-        + "' '-----END PUBLIC KEY-----' > waves-release.pem",
+        + "' '-----END PUBLIC KEY-----' > bitwave-release.pem",
         "base64 --decode < SHA256SUMS.sig > SHA256SUMS.sig.bin",
-        "openssl pkeyutl -verify -pubin -inkey waves-release.pem -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig.bin",
+        "openssl pkeyutl -verify -pubin -inkey bitwave-release.pem -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig.bin",
         "grep -v '^#' SHA256SUMS | tr -d '\\r' | shasum -a 256 --ignore-missing -c -",
         "```",
         "",

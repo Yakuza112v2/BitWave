@@ -358,7 +358,7 @@ def test_kept_remaster_does_not_match_plain_album():
         # No disc marker: nothing to group.
         ("/m/A/Album", None),
         ("/m/A/Album (Deluxe)", None),
-        # A duplicate-download folder. Waves makes these itself on a name
+        # A duplicate-download folder. BitWave makes these itself on a name
         # collision, and two PARTIAL attempts at one album summed would read as
         # a complete copy: the one case this must never fire on.
         ("/m/A/Album_1", None),
@@ -405,7 +405,7 @@ def test_a_genuinely_incomplete_disc_set_stays_partial():
 
 
 def test_two_partial_download_attempts_are_never_summed():
-    # THE case the disc-marker requirement exists for. Waves creates "_NN"
+    # THE case the disc-marker requirement exists for. BitWave creates "_NN"
     # folders when a name collides, so two interrupted attempts at one album sit
     # side by side under the same parent with identical tags. Summing them would
     # claim a complete copy the user does not have and leave them unable to

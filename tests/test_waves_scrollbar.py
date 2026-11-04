@@ -189,9 +189,9 @@ def _run_scenario() -> int:
         print("the seeded feed does not scroll", file=sys.stderr)
         return _EXIT_PRECONDITION
 
-    # 1. The feed's bar is the Waves bar, beside the list, never over it.
+    # 1. The feed's bar is the BitWave bar, beside the list, never over it.
     if q(f"{bar}.objectName") != "wavesScrollBar":
-        failures.append(f"the feed's bar is {q(bar + '.objectName')!r}, not the Waves bar")
+        failures.append(f"the feed's bar is {q(bar + '.objectName')!r}, not the BitWave bar")
     lx, ly, lw, lh = box("relFeedList")
     bx, by, bw, bh = box(bar)
     if bx < lx + lw:

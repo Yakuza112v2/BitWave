@@ -1,6 +1,6 @@
-"""How Waves opens its sqlite stores, and the one list of every file it keeps.
+"""How BitWave opens its sqlite stores, and the one list of every file it keeps.
 
-Waves keeps its data in several files under the config folder, one per
+BitWave keeps its data in several files under the config folder, one per
 feature, on purpose: each has its own writer (the library scan runs in a child
 process, downloads and the Releases sweep on worker threads, MusicBrainz
 answers on whichever worker asked), and sqlite lets one writer at a time touch
@@ -17,7 +17,7 @@ Two things live here:
   a power cut take the last few commits, which a rescan or a re-ask restores.
   A STATE store (the user's own record: follows, what was downloaded) keeps
   sqlite's default full sync.
-* ``STORES``: every file Waves keeps, what kind it is, and which wipes take it.
+* ``STORES``: every file BitWave keeps, what kind it is, and which wipes take it.
   The factory reset and the catalog both read this list, so a new store is
   added in one place and cannot be forgotten by either.
 
@@ -42,7 +42,7 @@ _WAL_SIDECARS = ("-wal", "-shm")
 
 @dataclass(frozen=True)
 class Store:
-    """One file Waves keeps under the config folder.
+    """One file BitWave keeps under the config folder.
 
     ``schema`` is the name the catalog attaches a sqlite store under ('' for
     a file the catalog does not read). ``pattern`` matches the per-root

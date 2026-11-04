@@ -1224,7 +1224,7 @@ def _library_tree(tmp_path):
 def test_a_scan_never_writes_creates_or_deletes_anything_in_the_library(tmp_path):
     """THE data-safety invariant of the whole feature.
 
-    Waves reads the user's music library and writes only its own sqlite cache.
+    BitWave reads the user's music library and writes only its own sqlite cache.
     Nothing in a scan may create, modify, rename or delete a single byte under
     the library root, including the non-audio files (cover art, rip logs, .nfo,
     playlists) that a cleanup-minded scanner might think it owns. User libraries
@@ -2038,7 +2038,7 @@ def test_a_probe_failed_scan_still_sizes_the_poll_for_a_network_root(tmp_path, m
 
 
 def test_a_scan_quit_partway_through_the_read_is_finished_by_the_next_plain_scan(tmp_path):
-    """Quitting Waves mid-scan must not cost the library its unread albums.
+    """Quitting BitWave mid-scan must not cost the library its unread albums.
 
     A scan reaches every album folder in the walk, stamps each one into the
     dirs tree with the mtime it was listed at, and only then reads their tags.

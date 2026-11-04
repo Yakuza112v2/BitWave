@@ -142,7 +142,7 @@ def _brew(monkeypatch, lines, code=0):
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
     monkeypatch.setattr(u, "_find_brew", lambda: "/opt/homebrew/bin/brew")
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: _FakeProc(lines, code))
-    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/Waves")
+    up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     up.latest = lambda *a, **k: Release(version="v1.1.0", asset="a", url="u")
     return up
 
@@ -153,12 +153,12 @@ _REAL_BREW = [
     "==> Upgrading 1 outdated package:",
     "iamprivacy/waves/waves 1.0.0 -> 1.1.0",
     "==> Upgrading waves",
-    "==> Downloading https://github.com/iamprivacy/Waves/releases/download/v1.1.0/waves_macos.zip",
+    "==> Downloading https://github.com/Yakuza112v2/BitWave/releases/download/v1.1.0/bitwave_macos.zip",
     "==> Downloading from https://objects.githubusercontent.com/github-production-release-asset/x",
     "######################################################################## 100.0%",
-    "==> Backing App 'Waves.app' up to '/opt/homebrew/Caskroom/waves/1.0.0/Waves.app'",
-    "==> Removing App '/Applications/Waves.app'",
-    "==> Moving App 'Waves.app' to '/Applications/Waves.app'",
+    "==> Backing App 'BitWave.app' up to '/opt/homebrew/Caskroom/waves/1.0.0/BitWave.app'",
+    "==> Removing App '/Applications/BitWave.app'",
+    "==> Moving App 'BitWave.app' to '/Applications/BitWave.app'",
     "==> Purging files for version 1.0.0 of Cask waves",
     "🍺  waves was successfully upgraded!",
 ]
@@ -175,7 +175,7 @@ def test_a_real_brew_transcript_reads_downloading_before_installing(monkeypatch)
 
 def test_a_brew_failure_shows_fixed_wording_and_logs_the_tail(monkeypatch, caplog):
     lines = [
-        "==> Downloading https://github.com/iamprivacy/Waves/releases/download/v1.1.0/waves_macos.zip",
+        "==> Downloading https://github.com/Yakuza112v2/BitWave/releases/download/v1.1.0/bitwave_macos.zip",
         "curl: (6) Could not resolve host: github.com",
         "Error: Download failed on Cask 'waves' with message: Download failed",
     ]
@@ -201,7 +201,7 @@ def test_user_facing_error_takes_the_callers_server_and_folder():
     err = requests.exceptions.HTTPError("503", response=resp)
     assert user_facing_error(err, "Install failed", **kw) == "The FFmpeg download server returned an error"
     assert user_facing_error(PermissionError(13, "x"), "Install failed", **kw) == (
-        "Waves could not write to its tools folder"
+        "BitWave could not write to its tools folder"
     )
     # The app updater's wording is unchanged.
     assert user_facing_error(requests.exceptions.ConnectTimeout("x"), "Update failed") == (

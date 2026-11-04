@@ -353,7 +353,7 @@ def test_a_scan_holding_the_cache_defers_instead_of_forgetting(tmp_path, monkeyp
 
 
 def test_the_download_record_seeds_the_queue_once(tmp_path, monkeypatch):
-    """The exact folder names Waves itself wrote are the best seed there is:
+    """The exact folder names BitWave itself wrote are the best seed there is:
     they are real directory names, not guesses."""
     s = _wide_library(tmp_path, monkeypatch)
     root = s._library_root()
@@ -368,7 +368,7 @@ def test_the_download_record_seeds_the_queue_once(tmp_path, monkeypatch):
 
 
 def test_the_backfill_also_uses_the_download_folder_when_it_is_elsewhere(tmp_path, monkeypatch):
-    """An artist folder is named the same wherever Waves writes it, so names it
+    """An artist folder is named the same wherever BitWave writes it, so names it
     used while downloading are worth looking for inside a separate library."""
     s = _wide_library(tmp_path, monkeypatch)
     root = s._library_root()

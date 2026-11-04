@@ -1,4 +1,4 @@
-"""Waves only ever looks for a downloaded copy in two places: the download
+"""BitWave only ever looks for a downloaded copy in two places: the download
 folder and the library folder (waves/ownership.py set_roots).
 
 A copy recorded anywhere else, typically under an earlier download folder

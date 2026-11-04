@@ -183,7 +183,7 @@ def path_config_base() -> str:
         return os.path.join(path_user_custom, __config_dirname__)
     if _is_unsandboxed_test_script():
         msg = (
-            "a test file run as a script would use the real Waves profile; "
+            "a test file run as a script would use the real BitWave profile; "
             "run it through pytest, or set XDG_CONFIG_HOME to a scratch folder"
         )
         raise RuntimeError(msg)
@@ -1575,7 +1575,7 @@ def strip_apple_double(path_file: pathlib.Path) -> None:
     from the file makes macOS's own WebDAV client retire the server-side
     companion. Deliberately prevention-only: this function never deletes or
     unlinks any file itself, it only edits attribute metadata on the one file
-    Waves just wrote.
+    BitWave just wrote.
 
     macOS only, and every step is best-effort: metadata cleanup must never
     fail a download that already landed.

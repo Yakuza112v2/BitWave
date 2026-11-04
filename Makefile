@@ -1,4 +1,4 @@
-WAVES_APP_NAME = "Waves"
+WAVES_APP_NAME = "BitWave"
 WAVES_VERSION=`grep -m 1 '__version__' waves/waves_ui/__init__.py | tr -d ' "' | cut -d'=' -f2`
 app_path_dist = "dist"
 # Oldest macOS the bundle can run on: the most demanding file shipped inside
@@ -42,7 +42,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: gui-waves
-gui-waves: ## Build the Waves QML app (standalone). On macOS this yields dist/waves.app
+gui-waves: ## Build the BitWave QML app (standalone). On macOS this yields dist/waves.app
 	@# Qt 6.11 ships Qt.labs.assetdownloader as a static library only, which
 	@# Nuitka cannot process (see tools/prune_static_qml_plugins.py). Prune it
 	@# from the build virtualenv first; a no-op on Qt versions without it.
@@ -64,8 +64,8 @@ gui-waves: ## Build the Waves QML app (standalone). On macOS this yields dist/wa
 	@if [ -d "$(app_path_dist)/waves.app" ]; then \
 		bash tools/trim_qt_bundle.sh "$(app_path_dist)/waves.app"; \
 		echo "🔐 Declaring network/removable volume access so macOS shows a persistable consent prompt (no Full Disk Access needed)"; \
-		plutil -replace NSNetworkVolumesUsageDescription -string "Waves saves your downloads to the folder you choose, which can live on a network share (NAS/SMB)." "$(app_path_dist)/waves.app/Contents/Info.plist"; \
-		plutil -replace NSRemovableVolumesUsageDescription -string "Waves saves your downloads to the folder you choose, which can live on an external drive." "$(app_path_dist)/waves.app/Contents/Info.plist"; \
+		plutil -replace NSNetworkVolumesUsageDescription -string "BitWave saves your downloads to the folder you choose, which can live on a network share (NAS/SMB)." "$(app_path_dist)/waves.app/Contents/Info.plist"; \
+		plutil -replace NSRemovableVolumesUsageDescription -string "BitWave saves your downloads to the folder you choose, which can live on an external drive." "$(app_path_dist)/waves.app/Contents/Info.plist"; \
 		echo "🧱 Declaring the macOS floor so older systems get a clear dialog instead of a silent bounce"; \
 		plutil -replace LSMinimumSystemVersion -string "$(WAVES_MACOS_MIN)" "$(app_path_dist)/waves.app/Contents/Info.plist"; \
 		echo "🔏 Re-sealing macOS bundle (trim + plist edit broke Nuitka's ad-hoc signature)"; \
@@ -78,7 +78,7 @@ gui-waves: ## Build the Waves QML app (standalone). On macOS this yields dist/wa
 # happens in gui-waves; CI zips the result (macOS = waves.app, Linux/Windows =
 # waves.dist). They exist as named entry points so each matrix leg reads clearly.
 .PHONY: gui-waves-linux
-gui-waves-linux: gui-waves ## Build + trim the Waves app (Linux); artifact is dist/waves.dist
+gui-waves-linux: gui-waves ## Build + trim the BitWave app (Linux); artifact is dist/waves.dist
 
 .PHONY: gui-waves-windows
-gui-waves-windows: gui-waves ## Build + trim the Waves app (Windows); artifact is dist/waves.dist
+gui-waves-windows: gui-waves ## Build + trim the BitWave app (Windows); artifact is dist/waves.dist

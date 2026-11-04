@@ -52,7 +52,7 @@ def notifications_supported() -> bool:
 
 
 def _app_icon_path() -> Path | None:
-    """The Waves icon for the banner, from the same places app.py looks:
+    """The BitWave icon for the banner, from the same places app.py looks:
     beside the packaged binary, beside the Nuitka launcher, or the source
     tree. Without one the package falls back to its own Python logo, which
     Windows and Linux then show on every banner (macOS uses the bundle's)."""
@@ -90,12 +90,12 @@ _front_delegate_class = None
 
 
 def _present_in_front(notifier) -> None:
-    """(macOS) Show banners while Waves is the front app too. Without a
+    """(macOS) Show banners while BitWave is the front app too. Without a
     delegate that answers willPresentNotification, the system files a
     banner the front app sends straight into Notification Center, unseen,
     while Windows and Linux show it. The package's delegate answers only
     clicks, so it is swapped for a subclass that also answers this one.
-    Whether a banner goes out while Waves is in front at all is the
+    Whether a banner goes out while BitWave is in front at all is the
     bridge's call (the notify_in_front setting), not this delegate's."""
     global _front_delegate_class
     from desktop_notifier.backends.macos import NotificationCenterDelegate
@@ -153,7 +153,7 @@ def _default_factory(app_name: str):
 
 
 class DesktopNotify:
-    def __init__(self, app_name: str = "Waves", factory: Callable[[str], object] | None = None) -> None:
+    def __init__(self, app_name: str = "BitWave", factory: Callable[[str], object] | None = None) -> None:
         self._app_name = app_name
         self._factory = factory or _default_factory
         self._lock = threading.Lock()

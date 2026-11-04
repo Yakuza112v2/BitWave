@@ -89,7 +89,7 @@ def default_user_agent() -> str:
         v = version_app()
     except Exception:
         v = "dev"
-    return f"Waves/{v} (https://getwaves.dev)"
+    return f"BitWave/{v} (https://github.com/Yakuza112v2/BitWave)"
 
 
 class Pacer:

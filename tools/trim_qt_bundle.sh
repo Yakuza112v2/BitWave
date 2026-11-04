@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# trim_qt_bundle.sh: strip Qt modules Waves never loads from a built bundle.
+# trim_qt_bundle.sh: strip Qt modules BitWave never loads from a built bundle.
 #
 # Nuitka's PySide6 plugin copies the *entire* qml/ module tree (and every Qt
-# library it links) into the standalone build. Waves is a small QtQuick app: it
+# library it links) into the standalone build. BitWave is a small QtQuick app: it
 # only imports QtQuick(.Controls.Basic / .Layouts / .Effects / .Shapes /
 # .Dialogs) and QtCore, so the vast majority is dead weight, led by a ~210 MB
 # bundled Chromium (QtWebEngineCore). Removing unreferenced modules is safe:
@@ -29,9 +29,9 @@ elif [ "$(basename "$DIR")" = "MacOS" ]; then
 else
   LIBDIR="$DIR"                       # Linux/Windows standalone .dist root
 fi
-[ -d "$LIBDIR/PySide6" ] || { echo "error: '$LIBDIR' doesn't look like a Waves bundle (no PySide6/)" >&2; exit 1; }
+[ -d "$LIBDIR/PySide6" ] || { echo "error: '$LIBDIR' doesn't look like a BitWave bundle (no PySide6/)" >&2; exit 1; }
 
-# QML modules under PySide6/qml/ that Waves never imports (same relative path on
+# QML modules under PySide6/qml/ that BitWave never imports (same relative path on
 # every OS).
 # NOTE: QtMultimedia is deliberately NOT listed: the in-app preview player
 # needs the QtMultimedia QML module and its media backend plugin. Its 3D-audio
@@ -44,7 +44,7 @@ QML_MODULES=(
   QtVirtualKeyboard
 )
 
-# Submodule dirs under PySide6/qml/QtQuick/ that Waves never imports. The app's
+# Submodule dirs under PySide6/qml/QtQuick/ that BitWave never imports. The app's
 # QML uses Controls(.Basic), Dialogs, Effects, Layouts, Shapes, Templates and
 # Window; everything below is scenery for apps we are not (audited by grepping
 # every .qml import and the running app's plugin loads).
@@ -54,7 +54,7 @@ QTQUICK_QML_DIRS=(
   Shapes/DesignHelpers
 )
 
-# Qt.labs.* QML modules Waves never imports. `settings` stays: Main.qml uses
+# Qt.labs.* QML modules BitWave never imports. `settings` stays: Main.qml uses
 # Settings {} via the QtCore import, whose plugin lives beside these.
 # folderlistmodel stays: Qt's own non-native Folder/File dialog imports it,
 # and that fallback is the only picker on a Linux desktop without a portal.
@@ -68,7 +68,7 @@ QT_LABS_DIRS=(
 CONTROLS_STYLES=(FluentWinUI3 iOS macOS designer Material Fusion Universal Imagine)
 
 # PySide6 Python bindings for modules a QML-only app never imports. Confirmed
-# leaf nodes by audit (the Waves graph uses only PySide6
+# leaf nodes by audit (the BitWave graph uses only PySide6
 # QtCore/QtGui/QtNetwork/QtQml; the QML runtime links the Qt QUICK library
 # directly, never the QtQuick Python binding).
 PYSIDE_BINDINGS=(QtWidgets QtOpenGL QtQuick)
@@ -153,7 +153,7 @@ done
 rm -rf "$LIBDIR/PySide6/qt-plugins/iconengines" "$LIBDIR/PySide6/Qt/plugins/iconengines"
 
 # The darwin media backend is idle: Qt 6 defaults to the ffmpeg backend and
-# Waves sets no QT_MEDIA_BACKEND override, so libffmpegmediaplugin (kept) is
+# BitWave sets no QT_MEDIA_BACKEND override, so libffmpegmediaplugin (kept) is
 # the one that loads.
 rm -f "$LIBDIR/PySide6/qt-plugins/multimedia/libdarwinmediaplugin.dylib" \
       "$LIBDIR/PySide6/Qt/plugins/multimedia/libdarwinmediaplugin.dylib"

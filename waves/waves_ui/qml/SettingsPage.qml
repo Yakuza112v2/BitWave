@@ -27,7 +27,7 @@ Item {
     signal flacResumeRequested(string where)
     function externalReset() { editMap = ({}); unsaved = ({}); dirty = false; refreshSchema(); syncLibraryMirrors(); flacRefresh() }
 
-    // Waves palette (kept local so this file is self-contained)
+    // BitWave palette (kept local so this file is self-contained)
     readonly property color accent:       "#3dff6e"
     readonly property color accentText:   "#03210e"
     readonly property color surface:      "#15181d"
@@ -105,7 +105,7 @@ Item {
 
     // ---- Ownership-badge scan status ----
     // Mirrored from the bridge so the "Music library" card can explain a blank
-    // badge: "unreadable" means the folder exists but the OS won't let Waves
+    // badge: "unreadable" means the folder exists but the OS won't let BitWave
     // list it (a network/external drive without permission), which otherwise
     // looks identical to an empty library. See backend.libraryScanStatus().
     property string libraryScanStatus: waves.libraryScanStatus()
@@ -170,7 +170,7 @@ Item {
             page.libraryListingReconciled = waves.libraryListingReconciled()
             page.libraryListingShape = waves.libraryListingShape()
             page.downloadFolderLive = waves.libraryDownloadFolder()
-            // The FLAC card's "Waves library" names these folders too.
+            // The FLAC card's "BitWave library" names these folders too.
             page.flacRefresh()
         }
         function onLibrarySourceChanged() {
@@ -198,7 +198,7 @@ Item {
     // network shares answer "list this folder" with the same page of names over
     // and over, so the system reports thousands of entries that are only a few
     // hundred different folders, and everything past that page is invisible to
-    // every app on this Mac, not just Waves. Waves works around it by asking for
+    // every app on this Mac, not just BitWave. BitWave works around it by asking for
     // artists by name, which the share does answer correctly, so anything it has
     // a name for still resolves. No folder name and no artist name goes in here.
     function libTruncationNote() {
@@ -209,9 +209,9 @@ Item {
         return (measured
                 ? ("This folder does not list properly. The system offers " + entries
                    + " entries for it but only " + distinct
-                   + " of them are different folders, so the rest never reach Waves. ")
+                   + " of them are different folders, so the rest never reach BitWave. ")
                 : "This folder's listing comes back incomplete, which some network shares do. ")
-            + "Everything inside the folders it did name is indexed. Waves finds the others by asking for "
+            + "Everything inside the folders it did name is indexed. BitWave finds the others by asking for "
             + "artists by name, which it does whenever you search, open a page, or start a download, and "
             + "what it finds is kept. Artists you have never looked up may show no badge yet."
     }
@@ -275,7 +275,7 @@ Item {
     property var flacState: waves.flacCheckState()
     // The folder choice (waves.flacCheckSources()): which source is selected,
     // the folder picked with Browse, the scope key the selection names and the
-    // Waves library folders. The backend remembers the choice; this is a copy.
+    // BitWave library folders. The backend remembers the choice; this is a copy.
     property var flacSources: waves.flacCheckSources()
     // Whether the next scan also decodes every file (slow, finds damaged ones).
     property bool flacDeep: false
@@ -292,7 +292,7 @@ Item {
     // Where a fix would write, for the confirmation dialog.
     function flacWhere() {
         var src = page.flacSources
-        return src.source === "folder" ? (src.folder || "") : "Your Waves library: " + (src.waves || []).join(", ")
+        return src.source === "folder" ? (src.folder || "") : "Your BitWave library: " + (src.waves || []).join(", ")
     }
     function flacCount(key) { var c = page.flacState.counts || {}; return c[key] || 0 }
     // A count with the locale's thousands separator (a library can hold tens of thousands).
@@ -307,7 +307,7 @@ Item {
     // Where a resume writes, for the confirmation dialog.
     function flacResumeWhere() {
         var st = page.flacState, folders = st.resume_folders || []
-        return st.resume_source === "folder" ? (folders[0] || "") : "Your Waves library: " + folders.join(", ")
+        return st.resume_source === "folder" ? (folders[0] || "") : "Your BitWave library: " + folders.join(", ")
     }
     // The time left beside the progress bar ("" until the backend has a pace to go by).
     function flacTimeLeft() {
@@ -2033,14 +2033,14 @@ Item {
                 x: mug.width + 7
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
-                text: "Buy me a coffee"
+                text: "BitWave on GitHub"
                 color: Qt.tint(coffee.yellow, Qt.rgba(coffee.yellowHot.r, coffee.yellowHot.g, coffee.yellowHot.b, coffee.h))
                 font.family: page.uiFont; font.pixelSize: 14; font.bold: true
             }
             MouseArea {
                 id: coffeeMa
                 anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                onClicked: Qt.openUrlExternally("https://www.buymeacoffee.com/iamprivacy")
+                onClicked: Qt.openUrlExternally("https://github.com/Yakuza112v2/BitWave")
             }
         }
         }
@@ -2097,7 +2097,7 @@ Item {
                         // now-stale schema defaults); it's reset on next open,
                         // when needsRefresh pulls the fresh persisted values.
                         // flacRefresh: a saved download folder moves the FLAC
-                        // card's "Waves library", so its last scan may no
+                        // card's "BitWave library", so its last scan may no
                         // longer describe what it shows.
                         onClicked: { waves.applySettings(page.editMap); page.savedVals = Object.assign({}, page.savedVals, page.editMap); page.syncLibraryMirrors(); page.unsaved = ({}); page.dirty = false; page.needsRefresh = true; page.savedFlash = true; flashTimer.restart(); page.flacRefresh() }
                     }
@@ -2221,7 +2221,7 @@ Item {
                             Layout.fillWidth: true; wrapMode: Text.WordWrap
                             color: page.textLo; font.pixelSize: 13
                             text: page.ff.stateKey === "managed"
-                                    ? "Installed and managed by Waves."
+                                    ? "Installed and managed by BitWave."
                                   : page.ff.stateKey === "path"
                                     ? "Using the FFmpeg already on your system."
                                   : "FFmpeg is not installed."
@@ -2261,8 +2261,8 @@ Item {
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.install() }
                         }
 
-                        // SYSTEM/linked, offer Waves' managed copy (one-click
-                        // updates), the pop-up's "Let Waves manage instead" upsell.
+                        // SYSTEM/linked, offer BitWave' managed copy (one-click
+                        // updates), the pop-up's "Let BitWave manage instead" upsell.
                         ColumnLayout {
                             visible: page.ff.stateKey === "path" && !page.ff.busy
                             Layout.fillWidth: true; spacing: 11
@@ -2304,7 +2304,7 @@ Item {
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true; spacing: 2
-                                    Text { text: "Let Waves manage FFmpeg instead"; color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium; Layout.fillWidth: true }
+                                    Text { text: "Let BitWave manage FFmpeg instead"; color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium; Layout.fillWidth: true }
                                     Text {
                                         text: "Then you can update it in one click whenever you want. Most system installs have no built-in update path."
                                         color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; lineHeight: 1.3; Layout.fillWidth: true
@@ -2375,7 +2375,7 @@ Item {
                                     font.pixelSize: page.ff.updateAvailable ? 14 : 12
                                     font.weight: page.ff.updateAvailable ? Font.DemiBold : Font.Normal
                                     text: page.ff.updateAvailable ? "update available"
-                                        : "installed and managed by Waves"
+                                        : "installed and managed by BitWave"
                                 }
                                 Rectangle {
                                     visible: page.ff.updateAvailable && !page.ff.busy
@@ -2538,7 +2538,7 @@ Item {
                                     width: 7; height: 7; radius: 4
                                     color: page.auUpdate ? page.gold : (auCard.st === "ready" ? page.green : page.textDim)
                                 }
-                                Text { textFormat: Text.PlainText; text: "Waves " + (auCard.cur || ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                Text { textFormat: Text.PlainText; text: "BitWave " + (auCard.cur || ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 Text {
                                     textFormat: Text.PlainText
                                     Layout.fillWidth: true; elide: Text.ElideRight
@@ -2699,7 +2699,7 @@ Item {
                 }
 
                 // FLAC signature check (FFmpeg & FLAC section, at its end).
-                // The folder row picks what SCAN walks: the Waves library (the
+                // The folder row picks what SCAN walks: the BitWave library (the
                 // download and library folders) or a folder chosen with
                 // Browse, remembered by the backend. SCAN reads every FLAC
                 // header there (reads only); FIX writes the missing signature into
@@ -2774,7 +2774,7 @@ Item {
                             }
                             Text {
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: "A FLAC file saved without its audio signature plays fine but fails strict checks (flac -t, Music Assistant). Scan reads the headers in your Waves library or a custom location below and writes a report. Fix adds the missing signature to those files, 34 header bytes each, and never changes the audio or touches a file that already has one. A file that has not changed since an earlier check is not read again unless Recheck all is on."
+                                text: "A FLAC file saved without its audio signature plays fine but fails strict checks (flac -t, Music Assistant). Scan reads the headers in your BitWave library or a custom location below and writes a report. Fix adds the missing signature to those files, 34 header bytes each, and never changes the audio or touches a file that already has one. A file that has not changed since an earlier check is not read again unless Recheck all is on."
                                 color: page.textDim; font.pixelSize: 12
                             }
                             // The folder choice, written straight to the backend's
@@ -2798,7 +2798,7 @@ Item {
                                     radius: page.btnRad
                                     color: !flacCard.chosen ? page.accentCont : "transparent"
                                     border.color: !flacCard.chosen ? page.accentDim : page.outline
-                                    Text { id: flacSegW; anchors.centerIn: parent; text: "WAVES LIBRARY"; color: !flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacSegW; anchors.centerIn: parent; text: "BITWAVE LIBRARY"; color: !flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.flacCheckSetSource("waves") }
                                 }
                                 Rectangle {
@@ -2819,7 +2819,7 @@ Item {
                                     }
                                 }
                                 // What a scan of the selection walks: the chosen folder,
-                                // or the Waves library's folders.
+                                // or the BitWave library's folders.
                                 Rectangle {
                                     Layout.fillWidth: true; Layout.preferredHeight: 36; radius: 8
                                     color: page.surface2; border.color: page.outline
@@ -3009,7 +3009,7 @@ Item {
                                 Text { text: "Start over"; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 Text {
                                     Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                    text: "Put every setting back to its default, or wipe everything Waves has saved on this computer. Downloaded music is never touched."
+                                    text: "Put every setting back to its default, or wipe everything BitWave has saved on this computer. Downloaded music is never touched."
                                     color: page.textDim; font.pixelSize: 12
                                 }
                             }
@@ -3253,7 +3253,7 @@ Item {
                                 color: page.surface3; Layout.alignment: Qt.AlignVCenter
                                 // The FFmpeg section's glyph doubles as a status light:
                                 // red = not found, yellow = found but unmanaged (system
-                                // PATH or a linked path), and managed-by-Waves reads as
+                                // PATH or a linked path), and managed-by-BitWave reads as
                                 // the standard accent, so a healthy FFmpeg section looks
                                 // like every other section (page.green is mintier than
                                 // the accent and made this one glyph stand out). The
@@ -3493,7 +3493,7 @@ Item {
                                                 Text {
                                                     width: parent.width; wrapMode: Text.WordWrap
                                                     textFormat: Text.PlainText
-                                                    text: "Waves can write these five characters instead of removing them. "
+                                                    text: "BitWave can write these five characters instead of removing them. "
                                                           + "Folders already on disk keep the names they have; this applies to new downloads."
                                                     color: page.textDim; font.pixelSize: 12
                                                 }
@@ -4176,7 +4176,7 @@ Item {
                                             // scanning only ever READS them (a test pins the scanner's
                                             // import closure away from the download engine), so the worst
                                             // a bug here can do is mislabel a badge. Deliberately not
-                                            // phrased as "Waves never writes files", which would be a
+                                            // phrased as "BitWave never writes files", which would be a
                                             // promise the app cannot keep: downloading writes new files,
                                             // and replacing a copy is what a re-download with
                                             // skip-existing off is FOR.
@@ -4363,8 +4363,8 @@ Item {
                                                       ? page.libScanNote()
                                                       : page.libraryScanStatus === "unreadable"
                                                       ? (Qt.platform.os === "osx"
-                                                         ? "Waves doesn't have permission to read this folder. It is likely on a network share or external drive that macOS protects. Allow access when macOS asks, or if you already declined, turn Waves on under System Settings, Privacy & Security, then reopen Settings."
-                                                         : "Waves doesn't have permission to read this folder. Check the folder's permissions (and, on a network share, that the mount allows this user to read it), then reopen Settings.")
+                                                         ? "BitWave doesn't have permission to read this folder. It is likely on a network share or external drive that macOS protects. Allow access when macOS asks, or if you already declined, turn BitWave on under System Settings, Privacy & Security, then reopen Settings."
+                                                         : "BitWave doesn't have permission to read this folder. Check the folder's permissions (and, on a network share, that the mount allows this user to read it), then reopen Settings.")
                                                       : page.libraryScanStatus === "missing"
                                                       ? "This folder isn't available right now. If it lives on an external drive or NAS, connect it and reopen Settings."
                                                       : page.libraryScanStatus === "error"

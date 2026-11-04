@@ -1,4 +1,4 @@
-"""The matching brain: how Waves decides that two records name the same music.
+"""The matching brain: how BitWave decides that two records name the same music.
 
 Every "do I already have this?" question is answered here, and only here: the
 library badge compares a TIDAL album against the folders scanned out of the
@@ -399,7 +399,7 @@ def disc_group(folder: str) -> tuple[str, str] | None:
 
     THE CARE REQUIRED: the fix is to add those halves up, and adding up the
     wrong things is how a live Download button becomes an inert one, which is
-    the failure this whole feature is built to avoid. In particular Waves itself
+    the failure this whole feature is built to avoid. In particular BitWave itself
     creates "_NN" suffixed folders when a name collides, so two PARTIAL attempts
     at one album can sit side by side under the same parent with the same tags;
     summing anything that merely shares a parent and a title would read those as
@@ -551,7 +551,7 @@ def _declared_total(discs: list) -> int:
 
     Two tagging conventions share the TRACKTOTAL field. Picard and iTunes
     write each disc's own count (10 on disc 1, 12 on disc 2), and those add
-    up. Waves writes the RELEASE's count on every file (20 on both discs of a
+    up. BitWave writes the RELEASE's count on every file (20 on both discs of a
     20-track set), and adding those called a complete split set "20 OF 40".
     Differing claims can only be per-disc, so they are summed. Equal claims
     are read by the files held: more files than the claim is only possible

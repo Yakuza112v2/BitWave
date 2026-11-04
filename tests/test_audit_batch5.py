@@ -256,9 +256,9 @@ def test_appimage_env_alone_is_not_trusted(monkeypatch):
 
 
 def test_appimage_claim_honored_when_running_from_the_mount(monkeypatch):
-    monkeypatch.setenv("APPIMAGE", "/home/u/Waves.AppImage")
+    monkeypatch.setenv("APPIMAGE", "/home/u/BitWave.AppImage")
     monkeypatch.setenv("APPDIR", str(pathlib.Path(sys.executable).parent))
-    assert updater_mod._running_appimage() == "/home/u/Waves.AppImage"
+    assert updater_mod._running_appimage() == "/home/u/BitWave.AppImage"
 
 
 # Finding 35: backend-persisted settings notify the Settings page.

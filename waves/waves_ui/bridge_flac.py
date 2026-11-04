@@ -7,9 +7,9 @@ mixin is the Qt layer over that module: a scan of the user's folders on a
 worker thread, a fix over what the scan found, a CSV report of every file
 after each, and the state the Settings card renders.
 
-Scope, chosen on the card and remembered as Waves prefs:
+Scope, chosen on the card and remembered as BitWave prefs:
 
-* ``flac_check_source == "waves"`` (the default): the Waves library, meaning
+* ``flac_check_source == "waves"`` (the default): the BitWave library, meaning
   the download folder plus the library folder when the library scan is on
   and configured (the same two folders the ownership badge may look at).
 * ``flac_check_source == "folder"``: the one folder in ``flac_check_folder``,
@@ -30,7 +30,7 @@ run picks up where the other left off. Never started on its own: a fix that
 crashed the app would otherwise crash it again on every launch. The marker
 is dropped only once every folder the unfinished fix could have written in
 was actually walked: a scan or fix that could not open one of them (a share
-not mounted, a drive unplugged, a folder the system will not let Waves
+not mounted, a drive unplugged, a folder the system will not let BitWave
 list) keeps it. A folder the scan behind that fix could not read either
 (a ``lost+found`` at a drive's root, say) never held its files, so it does
 not hold the marker; once the app has restarted that scan is not known, and
@@ -142,8 +142,8 @@ def _unopened(chosen: bool, roots: int) -> str:
     if chosen:
         return "The chosen folder could not be opened."
     if roots == 1:
-        return "The Waves library folder could not be opened."
-    return "The Waves library folders could not be opened."
+        return "The BitWave library folder could not be opened."
+    return "The BitWave library folders could not be opened."
 
 
 class _Progress:
@@ -253,7 +253,7 @@ class FlacCheckMixin:
         return getattr(self, "_waves_prefs", None) or {}
 
     def _flac_check_waves_roots(self) -> list[str]:
-        """The Waves library: the download folder plus the library folder when
+        """The BitWave library: the download folder plus the library folder when
         one is configured and the library scan is on."""
         roots = [(self.settings.data.download_base_path or "").strip()]
         library_root = getattr(self, "_library_root", None)
@@ -280,7 +280,7 @@ class FlacCheckMixin:
 
     def _flac_check_resume_target(self) -> tuple[str, str, list[str]] | None:
         """The fix that stopped before it finished, as (source, chosen folder,
-        folders), or None. A Waves library fix whose folders have moved since
+        folders), or None. A BitWave library fix whose folders have moved since
         is not offered: a scan of the new folders is a new start, not a
         resume. Nothing is stat'ed here (GUI thread)."""
         marker = str(self._flac_check_prefs().get("flac_check_resume") or "")
@@ -314,7 +314,7 @@ class FlacCheckMixin:
     def flacCheckSources(self) -> dict:
         """What the card's folder row shows: the selected source ("waves" or
         "folder"), the chosen folder, the scope key the selection names (the
-        card compares it with flacCheckState().scope), and the Waves library
+        card compares it with flacCheckState().scope), and the BitWave library
         folders a "waves" scan would walk."""
         source, key, _roots, _error = self._flac_check_scope()
         return {
@@ -336,7 +336,7 @@ class FlacCheckMixin:
 
     @Slot(str)
     def flacCheckSetSource(self, source: str) -> None:
-        """Choose what the next scan walks: "waves" (the Waves library) or
+        """Choose what the next scan walks: "waves" (the BitWave library) or
         "folder" (the folder picked with Browse). Ignored while a run is on."""
         if self._flac_check_state.get("running") or source not in (SOURCE_WAVES, SOURCE_FOLDER):
             return
@@ -393,7 +393,7 @@ class FlacCheckMixin:
             "FLAC check: %s scan of %d folder(s) started (%s%s)",
             "deep" if deep else "header",
             len(roots),
-            "chosen folder" if source == SOURCE_FOLDER else "Waves library",
+            "chosen folder" if source == SOURCE_FOLDER else "BitWave library",
             ", every file read again" if recheck else "",
         )
         self.threadpool.start(
@@ -657,7 +657,7 @@ class FlacCheckMixin:
             )
         if roots and all(r in unreadable for r in roots) and alive():
             # Nothing could be walked (a drive unplugged, a share down, a
-            # folder the system will not let Waves list): said so instead of
+            # folder the system will not let BitWave list): said so instead of
             # reporting an empty, clean scan.
             self._flac_check_post(gen, {"phase": "failed", "running": False, "error": _unopened(chosen, len(roots))})
             return

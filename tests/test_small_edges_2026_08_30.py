@@ -78,7 +78,7 @@ def test_install_builds_a_single_dump_handler():
 
 
 # --------------------------------------------------------------------------- #
-# F-41: the reset takes Waves' own files with it.
+# F-41: the reset takes BitWave' own files with it.
 # --------------------------------------------------------------------------- #
 def test_the_updater_log_and_helper_are_named_in_the_factory_wipe():
     named = {name for _sub, names, _pats in _FACTORY_WIPE_SUBDIRS for name in names}
@@ -132,7 +132,7 @@ def test_the_ffmpeg_installer_strays_fall_with_the_bin_folder():
     assert _wipes("bin", "ffmpeg.QmX7d2.new")
     assert _wipes("bin", "ffmpeg.exe.QmX7d2.new")
     assert _wipes("bin", "ffmpeg.json.a1b2c3.tmp")
-    # The download temp has no Waves-written prefix to anchor on: it stays, on
+    # The download temp has no BitWave-written prefix to anchor on: it stays, on
     # purpose, and keeps its directory alive rather than widening the match.
     assert not _wipes("bin", "tmpq8s7d1.zip")
     assert not _wipes("bin", "notffmpeg.x.new")

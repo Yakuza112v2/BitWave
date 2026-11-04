@@ -6,7 +6,7 @@ in by hand. Two steps made that happen. A track the engine skipped because its
 file was already there was recorded as owned with an UNKNOWN tier, and the gate
 read unknown as stale, so the next run "upgraded" it: skipping off for that one
 track, replacing the file in place. And the replace wrote a freshly tagged file
-over the old one, so every tag Waves does not write was gone.
+over the old one, so every tag BitWave does not write was gone.
 
 Pinned here, so that neither needs a hand from the user:
 
@@ -15,7 +15,7 @@ Pinned here, so that neither needs a hand from the user:
   upgrade still comes; only a file that cannot be read stays tier-less, and
   that reads as current rather than as a reason to replace it;
 - a replace in place carries the old file's extra tags (Genre, Comment, a
-  rating) onto the new copy, while the tags Waves writes keep their fresh
+  rating) onto the new copy, while the tags BitWave writes keep their fresh
   value and the ones that describe the old audio (ReplayGain) stay behind.
 """
 
@@ -183,7 +183,7 @@ def test_the_genre_the_user_typed_rides_over_and_the_fresh_title_stays():
 
     assert _carry(old, new) == 2
     assert new.tags["GENRE"] == ["Jazz"] and new.tags["COMMENT"] == ["bought 2019"]
-    assert new.tags["TITLE"] == ["Song"], "a tag Waves writes keeps its fresh value"
+    assert new.tags["TITLE"] == ["Song"], "a tag BitWave writes keeps its fresh value"
     assert "REPLAYGAIN_TRACK_GAIN" not in new.tags, "loudness describes the old bytes, not the new"
     new.save.assert_called_once()
 

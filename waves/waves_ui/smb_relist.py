@@ -304,7 +304,7 @@ def _accept(point: str, sub: str, known: Iterable[str]) -> list[str] | None:
 
 def _make_point(base: str) -> str:
     """An empty directory to mount on, or "" when one cannot be made. The name
-    is the process id, so two Waves instances scanning at once never fight over
+    is the process id, so two BitWave instances scanning at once never fight over
     one mount point, and a leftover is recognizably ours to sweep."""
     try:
         os.makedirs(base, exist_ok=True)
@@ -322,7 +322,7 @@ def _drop_point(point: str) -> None:
     refuses a directory that still has anything in it, so a mount that somehow
     survived the unmount is left alone rather than having the share's contents
     walked. Nothing here can ever delete a file (see the app's standing rule
-    that Waves does not delete user files)."""
+    that BitWave does not delete user files)."""
     try:
         os.rmdir(point)
     except OSError as exc:
@@ -347,7 +347,7 @@ def sweep_stale(config_dir: str, *, unmount: Callable[[str], bool] | None = None
         point = os.path.join(base, name)
         if not os.path.isdir(point):
             continue
-        # Another running Waves owns its own pid-<n> point: leave it mounted.
+        # Another running BitWave owns its own pid-<n> point: leave it mounted.
         pid = name[4:] if name.startswith("pid-") else ""
         if pid.isdigit() and int(pid) != os.getpid() and _pid_alive(int(pid)):
             continue

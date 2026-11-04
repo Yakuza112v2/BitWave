@@ -13,7 +13,7 @@ still replaces its own copy in place.
 
 The mode of the occupant is read off the disk (waves.download's
 _file_audio_mode_is_atmos), never out of a ledger, so a user's own Atmos file
-is protected the same as one Waves wrote, tagged or not.
+is protected the same as one BitWave wrote, tagged or not.
 """
 
 import pathlib
