@@ -192,6 +192,12 @@ def _run_scenario() -> int:
     check(played == acc, f"the played part is not the accent: {played} vs {acc}")
     check(rest == [70, 76, 87], f"the rest is not the plain gray: {rest}")
 
+    # The remaining-time column grows for long tracks, including hour-long mixes.
+    for duration, chars in ((599000, 5), (600000, 6), (3683000, 6)):
+        q(f"root.previewDuration = {duration}")
+        check(q("nowRail.tchars") == chars, f"remaining-time width for {duration} ms is wrong")
+        check(q("nowRail.tw > 8"), "remaining-time column clips its digits")
+
     # A stale answer for another track is ignored.
     begin("t4")
     settle(80)
