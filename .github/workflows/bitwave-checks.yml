@@ -47,3 +47,7 @@ jobs:
           tests/test_playlist_visits.py
           tests/test_playlist_visit_qml.py
           tests/test_offscreen_qt_is_usable.py
+          tests/test_art_card_done_strip.py
+          tests/test_cover_round.py
+          tests/test_now_rail_loading_qml.py
+          tests/test_releases_pane_scroll.py

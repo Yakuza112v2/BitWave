@@ -1,5 +1,18 @@
 # Änderungen
 
+## v0.2.2 (2026-11-04)
+
+**BitWave by Yakuza112**
+
+- Cover haben weichere Übergänge zwischen Rundungen und geraden Kanten und behalten ihre quadratische Form.
+- Vorschau- und Download-Schaltflächen auf Covern fahren nach abgeschlossenen Downloads wieder ein. In der Musiksammlung gespeicherte Downloads zeigen sofort „IN MUSIKSAMMLUNG“.
+- Ohne Cover zeigt die Wellenform der Wiedergabeleiste den abgespielten Teil türkis und den verbleibenden Teil grau.
+- Bereits vorhandene Titel stehen in den Top-Titeln eines Künstlers wieder bündig mit den übrigen Zeilen.
+- Die Restzeitanzeige bietet auch bei Titeln über zehn Minuten ausreichend Platz.
+- Neu eingetroffene Veröffentlichungen erscheinen sofort mit abgerundeten Cover-Ecken und türkisfarbenem Rahmen.
+
+Lade das Windows-ZIP herunter, entpacke es vollständig und starte `BitWave.exe`.
+
 ## v0.2.1 (2026-11-04)
 
 **BitWave by Yakuza112**
@@ -16,18 +29,3 @@
 ### Starten
 
 Lade `bitwave_windows-x64.zip` herunter, entpacke den gesamten Inhalt und starte `BitWave.exe`. Diese Ausgabe unterstützt Windows-PCs mit 64-Bit-Prozessoren von Intel oder AMD. Für die TIDAL-Funktionen benötigst du ein kostenpflichtiges TIDAL-Konto.
-
-## v0.2.2 (2026-11-04)
-
-**BitWave by Yakuza112**
-
-Deine TIDAL-Musik und deine lokale Musiksammlung in einer deutschen Windows-App. Suche nach Künstlern und Alben, höre Musik und speichere Titel aus deinem TIDAL-Konto auf deinem PC.
-
-### Herunterladen und starten
-
-1. Lade das Windows-ZIP aus den [Releases](https://github.com/Yakuza112v2/BitWave/releases) herunter.
-2. Entpacke den gesamten Inhalt in einen Ordner.
-3. Starte `BitWave.exe` und melde dich mit deinem TIDAL-Konto an.
-
-Für die TIDAL-Funktionen benötigst du ein kostenpflichtiges TIDAL-Konto. Die verfügbaren Windows-Versionen findest du beim jeweiligen Release.
-
