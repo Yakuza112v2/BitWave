@@ -1,36 +1,15 @@
-# Changelog
+# Änderungen
 
-All notable user-facing changes to Waves are documented here, newest first.
-Each release section becomes the GitHub Release notes for that version, so keep
-bullets short, objective, and written for end users.
+## v0.2.2 (2026-11-04)
 
-Format per release: `## v0.2.2 (2026-11-04)
+- BitWave als eigenständige Windows-App mit separaten Einstellungen und Anmeldedaten.
+- Deutsche Oberfläche mit übersetzten Einstellungen, Hilfetexten und Benachrichtigungen.
+- Windows-Pakete für x64 und ARM64; Linux- und macOS-Veröffentlichungen entfernt.
+- Downloads und Updates über Yakuza112v2/BitWave mit eigenem Signierschlüssel.
+- Windows-Updatehelfer mit korrekten Zeilenenden.
+- Ursprüngliche Lizenz und Urheberhinweise bleiben erhalten.
 
-- Rename the application, executable, desktop identity and UI to BitWave.
-- Keep BitWave settings, credentials, cache and update staging separate from Waves.
-- Move release builds, downloads, support links and updates to Yakuza112v2/BitWave.
-- Use an independent Ed25519 release key and BITWAVE_SIGNING_KEY Actions secret.
-- Remove the upstream donation destination and Homebrew publishing job from BitWave releases.
-- Preserve original licensing and attribution; retain the internal waves package.
-- Write Windows update helper scripts with exact CRLF line endings.
-
-## vX.Y.Z (YYYY-MM-DD)` followed by any of the subheadings
-**Added**, **Changed**, **Fixed**, **Removed**, each a bullet list, always in
-that order (a test enforces it). Section headings and their bullets carry a
-leading emoji accent (for example ✨ Added, 🔧 Changed, 🐛 Fixed). Changes land
-under **Unreleased** as they are made; cutting a release renames that section
-to the new version.
-
-A bullet is written on one line, however long it runs. GitHub renders a Release
-body with every newline turned into a line break, so a bullet wrapped across
-source lines arrives on the Releases page broken mid-sentence, one ragged
-fragment per source line. A test enforces it.
-
-A bullet that closes a reported issue names it in full and links to it:
-`([issue #11](https://github.com/iamprivacy/Waves/issues/11))`, never a bare
-`(#11)`. These notes are read outside the repo (release emails, the website,
-package managers), where a bare number is neither a link nor obviously an
-issue. A test enforces it.
+Ältere Einträge dokumentieren die unveränderte Entwicklung des ursprünglichen Projekts.
 
 ## 🗂️ v0.2.1 (2026-11-03)
 

@@ -1,3 +1,4 @@
+import "Deutsch.js" as I18n
 import QtQuick
 import QtQuick.Effects
 
@@ -98,7 +99,7 @@ Rectangle {
         id: ledLabel
         anchors.centerIn: parent
         textFormat: Text.PlainText
-        text: bar.label
+        text: I18n.t(bar.label)
         color: bar.accent; font.family: bar.mono; font.pixelSize: 11; font.bold: true
         style: Text.Outline; styleColor: "#a0060f09"
     }

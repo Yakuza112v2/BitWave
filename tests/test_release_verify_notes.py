@@ -39,7 +39,7 @@ def test_a_wrong_length_key_is_refused():
 
 def test_the_readme_prints_the_embedded_key_and_the_commands():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "## Verify a download" in readme
+    assert "## Download prüfen" in readme
     assert public_key_pem().rstrip("\n") in readme
     for needle in (
         "openssl pkeyutl -verify -pubin -inkey bitwave-release.pem -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig.bin",
@@ -54,11 +54,11 @@ def test_the_release_footer_puts_the_hash_next_to_each_download():
     from tools.release_verify_notes import verify_notes
 
     out = verify_notes("# waves-version: v9.9.9\naa11  waves_b.zip\nbb22  waves_a.zip\n")
-    assert out.startswith("### 🔐 Verify\n")
+    assert out.startswith("### 🔐 Download prüfen\n")
     assert out.index("`waves_a.zip` | `bb22`") < out.index("`waves_b.zip` | `aa11`")
     assert public_key_pem().rstrip("\n") in out
     assert "openssl pkeyutl -verify" in out
-    assert "#verify-a-download" in out
+    assert "#download-prüfen" in out
     assert "\u2014" not in out
 
 
@@ -87,7 +87,7 @@ def test_the_readme_commands_verify_a_signed_manifest_with_openssl(tmp_path):
     (tmp_path / "bitwave-release.pem").write_text(public_key_pem(pub_b64))
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    block = re.search(r"```bash\n(printf[^`]*?)```", readme[readme.index("## Verify a download") :]).group(1)
+    block = re.search(r"```bash\n(printf[^`]*?)```", readme[readme.index("## Download prüfen") :]).group(1)
     commands = [line for line in block.splitlines()[1:] if line.strip()]  # drop the printf that writes the real key
     assert commands, "the README verify block lost its commands"
 

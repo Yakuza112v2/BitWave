@@ -1036,52 +1036,13 @@ def test_select_legacy_host_gets_nothing_without_a_legacy_asset():
     assert u._select_asset(assets, "macos", "amd64", want_legacy=True) == ("", "", None)
 
 
-def test_select_old_updater_name_sort_stays_on_regular():
-    # The exact behavior of ALREADY-SHIPPED updaters (no want_legacy concept):
-    # with both flavors attached, the name sort must keep resolving to the
-    # regular zip. Sorting two literals written here would pin nothing: the
-    # names that matter are the ones the release workflow publishes, so they
-    # are read from it. Rename a leg to "macos-intel-legacy" (a hyphen sorts
-    # before the dot) and every old updater in the field downgrades itself.
-    workflow = (
-        Path(__file__).resolve().parent.parent / ".github" / "workflows" / "release-or-test-build.yml"
-    ).read_text(encoding="utf-8")
-    names = {}
-    for key in (
-        "OUT_NAME_FILE",
-        "ASSET_EXTENSION",
-        "ARCH_MACOS_X64",
-        "ARCH_MACOS_X64_LEGACY",
-        "ARCH_MACOS_ARM64",
-        "ARCH_MACOS_ARM64_LEGACY",
-    ):
-        match = re.search(rf'^  {key}: "([^"]*)"$', workflow, re.M)
-        assert match, f"{key} is gone from the release workflow"
-        names[key] = match.group(1)
-
-    for regular, legacy, arch in (
-        ("ARCH_MACOS_X64", "ARCH_MACOS_X64_LEGACY", "amd64"),
-        ("ARCH_MACOS_ARM64", "ARCH_MACOS_ARM64_LEGACY", "arm64"),
-    ):
-        stem, ext = names["OUT_NAME_FILE"], names["ASSET_EXTENSION"]
-        regular_name = f"{stem}_{names[regular]}{ext}"
-        legacy_name = f"{stem}_{names[legacy]}{ext}"
-        pool = sorted([regular_name, legacy_name])
-        assert pool[0] == regular_name, f"{names[legacy]} sorts first: old updaters would downgrade"
-        # And the sort is only half of it. The CURRENT updater partitions on
-        # the literal substring "legacy" (_select_asset), which no ordering
-        # assertion can see: rename the workflow's legacy leg to
-        # "macos-intel_old" and the sort above is still correct while every
-        # Mac on 12, 13 and 14 is told "no build for this platform" and stops
-        # updating, with CI green. So drive the real selector against the real
-        # published names, both ways.
-        assets = [{"name": n, "browser_download_url": n} for n in (regular_name, legacy_name)]
-        assert (
-            u._select_asset(assets, "macos", arch, want_legacy=True)[0] == legacy_name
-        ), f"{names[legacy]} carries no token _select_asset recognizes: macOS 12-14 would get nothing"
-        assert (
-            u._select_asset(assets, "macos", arch, want_legacy=False)[0] == regular_name
-        ), f"{names[regular]} reads as a legacy asset: macOS 15+ would be downgraded"
+def test_select_published_windows_assets():
+    import yaml
+    workflow = yaml.safe_load((Path(__file__).resolve().parents[1] / ".github/workflows/release-or-test-build.yml").read_text(encoding="utf-8"))
+    env = workflow["env"]
+    assets = [{"name": env["OUT_NAME_FILE"] + "_" + env[k] + env["ASSET_EXTENSION"], "browser_download_url": k} for k in ("ARCH_WINDOWS_X64", "ARCH_WINDOWS_ARM64")]
+    assert u._select_asset(assets, "windows", "amd64")[0] == "bitwave_windows-x64.zip"
+    assert u._select_asset(assets, "windows", "arm64")[0] == "bitwave_windows-arm64.zip"
 
 
 def test_macos_wants_legacy_parses_versions(monkeypatch):

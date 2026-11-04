@@ -18,7 +18,7 @@
 # the Linux/Windows legs are exercised on CI.
 set -euo pipefail
 
-DIR="${1:-dist/waves.app}"
+DIR="${1:-dist/waves.dist}"
 [ -e "$DIR" ] || { echo "error: '$DIR' not found; build first (make gui-waves)" >&2; exit 1; }
 
 # Resolve the directory that holds the Qt libraries + the PySide6/ tree.

@@ -22,17 +22,9 @@ in Qt's QML runtime, and the bundled ``qml/`` and ``fonts/`` directories ride
 along as data files so ``app.py`` finds them next to itself at runtime.
 """
 
-# Compilation mode, support OS-specific options
-# nuitka-project-if: {OS} in ("Darwin"):
-#    nuitka-project: --macos-create-app-bundle
-#    nuitka-project: --macos-app-icon={MAIN_DIRECTORY}/waves/ui/icon.icns
-#    nuitka-project: --macos-signed-app-name=io.github.Yakuza112v2.BitWave
-#    nuitka-project: --macos-app-mode=gui
-# nuitka-project-if: {OS} in ("Linux", "FreeBSD"):
-#    nuitka-project: --linux-icon={MAIN_DIRECTORY}/waves/ui/icon512.png
-# nuitka-project-if: {OS} in ("Windows"):
-#    nuitka-project: --windows-icon-from-ico={MAIN_DIRECTORY}/waves/ui/icon.ico
-#    nuitka-project: --file-description="BitWave: saves music from your TIDAL account for offline listening."
+# Windows ist die einzige unterstützte Veröffentlichungsplattform.
+# nuitka-project: --windows-icon-from-ico={MAIN_DIRECTORY}/waves/ui/icon.ico
+# nuitka-project: --file-description="BitWave: Musik aus deinem TIDAL-Konto offline speichern."
 
 # Debugging options, controlled via environment variable at compile time.
 # nuitka-project-if: {OS} == "Windows" and os.getenv("DEBUG_COMPILATION", "no") == "yes":

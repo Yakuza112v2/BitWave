@@ -28,7 +28,7 @@ def test_settings_updater_card_splits_failed_from_up_to_date():
     assert 'latest === ""' in body
     assert "page.auCheckFailed = true" in body
     assert "page.auUpToDate = true" in body
-    assert 'text: "✗ Could not check"' in src
+    assert 'text: I18n.t("✗ Could not check")' in src
 
 
 def test_ffmpeg_manager_splits_failed_from_up_to_date():

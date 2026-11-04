@@ -20,7 +20,7 @@ import time
 import traceback
 from pathlib import Path
 
-from PySide6.QtCore import SIGNAL, QDateTime, QObject, Qt, QTimer, QUrl, Slot
+from PySide6.QtCore import SIGNAL, QLocale, QDateTime, QObject, Qt, QTimer, QUrl, Slot
 from PySide6.QtGui import QFontDatabase, QGuiApplication, QIcon, QWindow
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkDiskCache, QNetworkRequest, QSslConfiguration
 from PySide6.QtQml import QQmlApplicationEngine, QQmlIncubationController, QQmlNetworkAccessManagerFactory
@@ -790,6 +790,7 @@ def waves_activate(tidal: Tidal | None = None) -> int:
             if os.environ.get("WAVES_DEBUG"):
                 _icon_debug("BITWAVE aumid: FAILED to set")
     owns_app = QGuiApplication.instance() is None
+    QLocale.setDefault(QLocale("de_DE"))
     app = QGuiApplication.instance() or QGuiApplication(sys.argv)
     app.setApplicationName("BitWave")
     app.setOrganizationName("BitWave")

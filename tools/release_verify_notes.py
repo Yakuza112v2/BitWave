@@ -17,27 +17,27 @@ import sys
 
 from waves.waves_ui.signing import parse_sha256sums, public_key_pem
 
-README_VERIFY_URL = "https://github.com/Yakuza112v2/BitWave#verify-a-download"
+README_VERIFY_URL = "https://github.com/Yakuza112v2/BitWave#download-prüfen"
 
 
 def verify_notes(manifest_text: str) -> str:
     sums = parse_sha256sums(manifest_text)
     lines = [
-        "### 🔐 Verify",
+        "### 🔐 Download prüfen",
         "",
-        "| Asset | SHA-256 |",
+        "| Datei | SHA-256 |",
         "| --- | --- |",
     ]
     lines.extend(f"| `{name}` | `{digest}` |" for name, digest in sorted(sums.items()))
     lines += [
         "",
-        "`SHA256SUMS` lists these hashes and `SHA256SUMS.sig` is an Ed25519 signature over it, made with the BitWave release key. The public key, also compiled into every build:",
+        "`SHA256SUMS` enthält die Prüfsummen. `SHA256SUMS.sig` ist die Ed25519-Signatur mit dem BitWave-Schlüssel. Dieser öffentliche Schlüssel ist auch fest in der App hinterlegt:",
         "",
         "```",
         public_key_pem().rstrip("\n"),
         "```",
         "",
-        "From a folder holding the zip, `SHA256SUMS` and `SHA256SUMS.sig` (Linux, or macOS with OpenSSL 3 from Homebrew in place of the built-in `openssl`):",
+        "Mit Git Bash und OpenSSL 3 im Ordner mit ZIP-Archiv, `SHA256SUMS` und `SHA256SUMS.sig`:",
         "",
         "```bash",
         "printf '%s\\n' '-----BEGIN PUBLIC KEY-----' '"
@@ -48,7 +48,7 @@ def verify_notes(manifest_text: str) -> str:
         "grep -v '^#' SHA256SUMS | tr -d '\\r' | shasum -a 256 --ignore-missing -c -",
         "```",
         "",
-        f"Windows steps and details: [Verify a download]({README_VERIFY_URL}).",
+        f"Windows-Anleitung und Einzelheiten: [Download prüfen]({README_VERIFY_URL}).",
     ]
     return "\n".join(lines) + "\n"
 

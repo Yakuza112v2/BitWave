@@ -1,48 +1,30 @@
-name: Feature Request
-description: File a feature request.
-labels: ["enhancement"]
+name: Verbesserung vorschlagen
+description: Schlage eine neue Funktion vor.
 body:
   - type: markdown
     attributes:
-      value: |
-        We appreciate your feedback on how to improve this project. Please be sure to include as much details & any images if possible! Otherwise this issue gets rejected and closed.
-  - type: checkboxes
-    id: search-done
-    attributes:
-      label: You must use the search before you create an issue!
-      description: "**Search [here](https://github.com/Yakuza112v2/BitWave/issues?q=is%3Aissue+is%3Aopen%2Cclosed).** Otherwise this issue gets closed without any comment. Please keep in mind that everyone's time is very precious."
-      options:
-        - label: I did use the search, I promise!
+      value: Bitte prüfe zuerst die vorhandenen Meldungen. BitWave wird ausschließlich für Windows angeboten.
   - type: textarea
-    id: situation
+    id: description
     attributes:
-      label: Current Situation
-      description: Describe the current situation, which is lacking of something you like to have.
-      placeholder: Write at least three sentences (!) and be as precise as possible.
+      label: Beschreibung
+      description: Was ist passiert oder was wünschst du dir? Nenne bei Fehlern die Schritte zum Nachstellen und das erwartete Ergebnis.
     validations:
       required: true
-  - type: textarea
-    id: suggestion
-    attributes:
-      label: Suggestion / Feature Request
-      description: Describe the feature(s) you would like to see added.
-      placeholder: Write three sentences (!) or more and be as precise as possible.
-    validations:
-      required: true
-  - type: dropdown
-    id: os
-    attributes:
-      label: What operating system do you use?
-      multiple: false
-      options:
-        - macOS
-        - Linux
-        - Windows
   - type: input
-    id: version-os
+    id: app-version
     attributes:
-      label: Version OS
-      description: What is the version of your operating system?
-      placeholder: Ubuntu 24.04.1 LTS / macOS 15.2 / Windows 10 22H2
+      label: BitWave-Version
+      placeholder: 0.2.2
     validations:
       required: true
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows-Version und Architektur
+      placeholder: Windows 11, x64 oder ARM64
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnosebericht und relevante Einstellungen
+      description: Bei Fehlern unter Einstellungen → Diagnose einen bereinigten Bericht exportieren und hier anhängen. Keine Zugangsdaten oder unbearbeiteten Einstellungsdateien einfügen.

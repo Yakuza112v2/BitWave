@@ -280,7 +280,7 @@ def _run_scenario() -> int:
         else:
             if body.isEnabled() or abs(body.opacity() - 0.4) > 0.01:
                 failures.append(f"the body under an off master is not asleep (opacity {body.opacity():.2f})")
-            if note is None or "never asked" not in str(note.property("text")):
+            if note is None or "nicht um Erlaubnis" not in str(note.property("text")):
                 failures.append("the off master does not say what off means")
             click(master)
             settle(500)

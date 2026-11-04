@@ -1,3 +1,4 @@
+import "Deutsch.js" as I18n
 import QtQuick
 
 // The loading hint: what a page shows while its payload is still on the wire.
@@ -84,7 +85,7 @@ Item {
 
         Text {
             width: parent.width; horizontalAlignment: Text.AlignHCenter
-            textFormat: Text.PlainText; text: hint.phrase
+            textFormat: Text.PlainText; text: I18n.t(hint.phrase)
             color: hint.tint; font.pixelSize: 22; opacity: 0.88
         }
 

@@ -5,11 +5,12 @@ authors = [{ name = "Yakuza112v2" }, { name = "iamprivacy (Waves upstream)" }]
 # the updater actually report; tests/test_package_version.py fails the build if
 # the two drift. Bump both in the same commit that cuts a release.
 version = "0.2.2"
-description = "BitWave: a native desktop app for saving music from your own TIDAL account for offline listening"
+description = "BitWave: Windows-App zum Offline-Speichern von Musik aus dem eigenen TIDAL-Konto"
 readme = "README.md"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 classifiers = [
+  "Operating System :: Microsoft :: Windows",
   "Development Status :: 4 - Beta",
   "Intended Audience :: End Users/Desktop",
   "Programming Language :: Python :: 3",
@@ -33,16 +34,7 @@ mutagen = "^1.48.1"
 dataclasses-json = "^0.6.7"
 pathvalidate = "^3.3.1"
 m3u8 = "^6.0.0"
-# Exact pin. PySide6 6.10.0 through 6.11.1 ship macOS binding libraries built
-# for macOS 15 despite their macosx_13_0 wheel tag, so on macOS this version
-# really requires Sequoia (dyld kills the app on anything older, issue #14).
-# The release handles that with two macOS flavors: the regular build uses this
-# pin (floor 15.0), and CI's legacy macOS legs overlay pyside6==6.9.3 (the
-# newest release whose binaries honor their macOS 12 wheel tag) on top of the
-# locked venv for a "_legacy" bundle with floor 12.0 (see WAVES_MACOS_MIN in
-# the Makefile and the legacy legs in release-or-test-build.yml). CI's "Assert
-# macOS version floor" step enforces each flavor's floor on every macOS build;
-# when a PySide6 release honors its wheel tags again the legacy legs can go.
+# Getestete Qt-Version für die Windows-Ausgaben.
 pyside6 = { version = "6.11.1", optional = true }
 # Optional on purpose: waves_ui.notify degrades to "no banner" without it, and
 # Settings shows the notification switch only when it is importable.

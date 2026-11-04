@@ -1,3 +1,4 @@
+import "Deutsch.js" as I18n
 import QtQuick
 import QtQml
 import QtQuick.Controls.Basic
@@ -31,7 +32,7 @@ ApplicationWindow {
     // real floor. headerRow reports 0 until it is laid out, hence the max.
     minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 44)
     minimumHeight: 560
-    title: "BitWave"
+    title: I18n.t("BitWave")
     color: bg
 
     // ---- Album-art hover tilt knobs (iteration; final home = settings) --
@@ -672,13 +673,13 @@ ApplicationWindow {
                     id: bttCrest
                     textFormat: Text.PlainText
                     property int ph: 0
-                    text: ("_.-~^~-._.~^'~._").substring(bttCrest.ph) + ("_.-~^~-._.~^'~._").substring(0, bttCrest.ph)
+                    text: I18n.t(("_.-~^~-._.~^'~._").substring(bttCrest.ph) + ("_.-~^~-._.~^'~._").substring(0, bttCrest.ph))
                     anchors.verticalCenter: parent.verticalCenter
                     color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; font.letterSpacing: -1
                     Timer { running: btt.on && root.onScreen; interval: 120; repeat: true; onTriggered: bttCrest.ph = (bttCrest.ph + 1) % 16 }
                 }
                 Text {
-                    textFormat: Text.PlainText; text: "TOP"
+                    textFormat: Text.PlainText; text: I18n.t("TOP")
                     anchors.verticalCenter: parent.verticalCenter
                     color: root.textHi; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack
                 }
@@ -2194,12 +2195,12 @@ ApplicationWindow {
                 width: Math.min(implicitWidth, cap.width - (cap.meta !== "" ? capMeta.implicitWidth + capDot.implicitWidth + 8 : 0)
                                                - (cap.fresh ? capNew.implicitWidth + 4 : 0))
             }
-            Text { id: capDot; textFormat: Text.PlainText; visible: cap.lead !== "" && cap.meta !== ""; text: "\u00b7"; color: root.textDim; font.pixelSize: cap.px }
+            Text { id: capDot; textFormat: Text.PlainText; visible: cap.lead !== "" && cap.meta !== ""; text: I18n.t("\u00b7"); color: root.textDim; font.pixelSize: cap.px }
             Text {
                 id: capMeta
                 textFormat: Text.PlainText
                 visible: cap.meta !== ""
-                text: cap.meta
+                text: I18n.t(cap.meta)
                 color: cap.metaColor; font.pixelSize: cap.px
             }
             // Never taller than the caption's own text line: at 11px that line
@@ -2214,7 +2215,7 @@ ApplicationWindow {
             Text {
                 textFormat: Text.PlainText
                 visible: cap.fallback !== ""
-                text: cap.fallback
+                text: I18n.t(cap.fallback)
                 color: root.textDim; font.pixelSize: cap.px
                 elide: Text.ElideRight
                 width: Math.min(implicitWidth, cap.width)
@@ -3723,7 +3724,7 @@ ApplicationWindow {
         contentItem: Text {
             objectName: "fullTipText"
             textFormat: Text.PlainText; wrapMode: Text.Wrap
-            text: root.fullTipText
+            text: I18n.t(root.fullTipText)
             color: root.textHi; font.pixelSize: 12
         }
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: root.hoverMotion ? 120 : 0 } }
@@ -4929,7 +4930,7 @@ ApplicationWindow {
             spacing: 2
             Text {
                 leftPadding: 8; topPadding: 3; bottomPadding: 3
-                textFormat: Text.PlainText; text: "AUDIO OUTPUT"
+                textFormat: Text.PlainText; text: I18n.t("AUDIO OUTPUT")
                 color: root.textDim; font.family: root.mono; font.pixelSize: 9; font.bold: true
             }
             // Ten rows at most; a longer list scrolls inside the menu. One
@@ -5081,7 +5082,7 @@ ApplicationWindow {
                     Text {
                         x: orowDot.x + 12; anchors.verticalCenter: parent.verticalCenter
                         width: orowTail.x - x - 8; elide: Text.ElideRight
-                        textFormat: Text.PlainText; text: orow.modelData.label
+                        textFormat: Text.PlainText; text: I18n.t(orow.modelData.label)
                         color: orow.modelData.missing ? root.textDim : orow.lit ? root.accentContTx : root.textHi
                         font.family: root.mono; font.pixelSize: 10; font.bold: true
                     }
@@ -5098,7 +5099,7 @@ ApplicationWindow {
                                 : orow.modelData.value === "" ? orow.modelData.sub : ""
                             visible: tag !== ""
                             width: Math.min(implicitWidth, 118); elide: Text.ElideRight
-                            textFormat: Text.PlainText; text: tag
+                            textFormat: Text.PlainText; text: I18n.t(tag)
                             color: orow.modelData.missing ? root.gold : orow.lit ? root.textHi : root.textLo
                             font.family: root.mono; font.pixelSize: 9
                         }
@@ -5322,13 +5323,13 @@ ApplicationWindow {
         Text {
             x: 0; width: nr.tw - 8; horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
-            textFormat: Text.PlainText; text: root.fmtMs(root.previewPosition)
+            textFormat: Text.PlainText; text: I18n.t(root.fmtMs(root.previewPosition))
             color: root.textLo; font.family: root.mono; font.pixelSize: 10
         }
         Text {
             x: nr.tw + nr.rw + 8; width: nr.tw - 8
             anchors.verticalCenter: parent.verticalCenter
-            textFormat: Text.PlainText; text: "-" + root.fmtMs(Math.max(0, root.previewDuration - root.previewPosition))
+            textFormat: Text.PlainText; text: I18n.t("-" + root.fmtMs(Math.max(0, root.previewDuration - root.previewPosition)))
             color: root.textDim; font.family: root.mono; font.pixelSize: 10
         }
         // Plain line (no waveform, none coming or the wait ran long).
@@ -5511,7 +5512,7 @@ ApplicationWindow {
         onHoveredChanged: if (hovered && root.hoverMotion) nmGlintRun.restart()
         Text {
             id: nmTx; anchors.centerIn: parent; textFormat: Text.PlainText
-            text: "+" + nm.n
+            text: I18n.t("+" + nm.n)
             color: nm.lit ? root.accentContTx : root.accent
             font.family: root.mono; font.pixelSize: 10; font.bold: true
         }
@@ -5553,7 +5554,7 @@ ApplicationWindow {
         Text {
             visible: ncr.here
             anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
-            textFormat: Text.PlainText; text: "here"
+            textFormat: Text.PlainText; text: I18n.t("here")
             color: root.textDim; font.family: root.mono; font.pixelSize: 9
         }
         MouseArea {
@@ -5657,14 +5658,14 @@ ApplicationWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         width: on.prevW; elide: Text.ElideRight
                         opacity: 1 - on.p
-                        textFormat: Text.PlainText; text: on.prev
+                        textFormat: Text.PlainText; text: I18n.t(on.prev)
                         color: on.nameCol; font.family: root.mono; font.pixelSize: 11
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.min(implicitWidth, on.capW); elide: Text.ElideRight
                         opacity: on.p
-                        textFormat: Text.PlainText; text: on.cur
+                        textFormat: Text.PlainText; text: I18n.t(on.cur)
                         color: on.nameCol; font.family: root.mono; font.pixelSize: 11
                     }
                 }
@@ -5941,7 +5942,7 @@ ApplicationWindow {
                     // The dots march instead of the label pulsing: one clock,
                     // no fade to fight the snake behind it.
                     textFormat: Text.PlainText
-                    text: "LOADING VIDEO" + ".".repeat(peekWaitDots.tick)
+                    text: I18n.t("LOADING VIDEO" + ".".repeat(peekWaitDots.tick))
                     color: root.textLo
                     font.family: root.mono; font.pixelSize: 11; font.bold: true
                 }
@@ -6027,7 +6028,7 @@ ApplicationWindow {
                 anchors.centerIn: videoStage
                 visible: root.videoLoading || root.videoError
                 textFormat: Text.PlainText
-                text: root.videoError ? "ERR  stream unavailable" : "GET  video stream…"
+                text: I18n.t(root.videoError ? "ERR  stream unavailable" : "GET  video stream…")
                 color: root.videoError ? root.red : root.accentDim
                 font.family: root.mono; font.pixelSize: 13
             }
@@ -6039,7 +6040,7 @@ ApplicationWindow {
                     anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 10; spacing: 12
                     Text {
                         textFormat: Text.PlainText
-                        text: root.vPlayer.playbackState === MediaPlayer.PlayingState ? "[||]" : "[>]"
+                        text: I18n.t(root.vPlayer.playbackState === MediaPlayer.PlayingState ? "[||]" : "[>]")
                         color: root.accent; font.family: root.mono; font.pixelSize: 14
                         MouseArea {
                             anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor
@@ -6068,7 +6069,7 @@ ApplicationWindow {
                     }
                     Text {
                         textFormat: Text.PlainText
-                        text: root.fmtMs(root.vPlayer.position) + " / " + root.fmtMs(root.vPlayer.duration)
+                        text: I18n.t(root.fmtMs(root.vPlayer.position) + " / " + root.fmtMs(root.vPlayer.duration))
                         color: root.textLo; font.family: root.mono; font.pixelSize: 11
                     }
                     // Title -> the video's album page (when TIDAL links one).
@@ -6109,8 +6110,8 @@ ApplicationWindow {
                         // resolution is about to change on its own, and a
                         // manual pick would race that resolve.
                         visible: root.videoNow !== null && !root.videoUpgrading && !root.videoFromPeek
-                        text: root.videoSwitching ? "…"
-                            : root.videoNow && root.videoNow.res ? root.videoNow.res + "p" : "AUTO"
+                        text: I18n.t(root.videoSwitching ? "…"
+                            : root.videoNow && root.videoNow.res ? root.videoNow.res + "p" : "AUTO")
                         color: root.accent; font.family: root.mono; font.pixelSize: 11
                         font.underline: vqMa.containsMouse || vqMenu.visible
                         MouseArea {
@@ -6123,7 +6124,7 @@ ApplicationWindow {
                     Text {
                         id: vpClose
                         textFormat: Text.PlainText
-                        text: "[x]"
+                        text: I18n.t("[x]")
                         color: vpCloseMa.containsMouse ? "#ff7b74" : root.red
                         font.family: root.mono; font.pixelSize: 14
                         MouseArea {
@@ -6160,7 +6161,7 @@ ApplicationWindow {
                             required property var modelData
                             textFormat: Text.PlainText
                             width: 62; horizontalAlignment: Text.AlignHCenter
-                            text: modelData + "p"
+                            text: I18n.t(modelData + "p")
                             color: root.videoNow && root.videoNow.res === modelData ? root.accent
                                  : vqOptMa.containsMouse ? root.textHi : root.textLo
                             font.family: root.mono; font.pixelSize: 12
@@ -6937,7 +6938,7 @@ ApplicationWindow {
             // A stand-in on its way (url still empty while the page payload
             // is in flight) must not flash the no-art glyph first.
             visible: artRoot.artState === "none" && artRoot.underUrl === ""
-            text: "≈"
+            text: I18n.t("≈")
             color: textDim
             font.family: root.mono; font.pixelSize: parent.width * 0.4
         }
@@ -7301,13 +7302,13 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
-                    text: qt.q; color: qt.ink; font.family: root.mono; font.pixelSize: 9; font.bold: true
+                    text: I18n.t(qt.q); color: qt.ink; font.family: root.mono; font.pixelSize: 9; font.bold: true
                 }
                 Text {
                     textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
                     visible: qt.specText !== ""
-                    text: qt.specText; color: qt.specInk; font.family: root.mono; font.pixelSize: 9
+                    text: I18n.t(qt.specText); color: qt.specInk; font.family: root.mono; font.pixelSize: 9
                 }
             }
         }
@@ -7335,7 +7336,7 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "MIXED"; color: root.textHi; font.family: root.mono; font.pixelSize: 9; font.bold: true
+                    text: I18n.t("MIXED"); color: root.textHi; font.family: root.mono; font.pixelSize: 9; font.bold: true
                 }
                 Repeater {
                     // The per-tier counts are the widest thing a pill can
@@ -7350,12 +7351,12 @@ ApplicationWindow {
                             textFormat: Text.PlainText
                             visible: index > 0
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "/"; color: root.textDim; font.family: root.mono; font.pixelSize: 9
+                            text: I18n.t("/"); color: root.textDim; font.family: root.mono; font.pixelSize: 9
                         }
                         Text {
                             textFormat: Text.PlainText
                             anchors.verticalCenter: parent.verticalCenter
-                            text: modelData.n + "× " + modelData.q
+                            text: I18n.t(modelData.n + "× " + modelData.q)
                             color: root.qualSpecFg(modelData.q); font.family: root.mono; font.pixelSize: 9
                         }
                     }
@@ -7754,7 +7755,7 @@ ApplicationWindow {
             Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: 3; color: root.qualDot(qpr.t) }
             Text {
                 textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                text: qpr.t; color: qpr.lit ? root.qualFg(qpr.t) : root.textHi
+                text: I18n.t(qpr.t); color: qpr.lit ? root.qualFg(qpr.t) : root.textHi
                 font.family: root.mono; font.pixelSize: 10; font.bold: true
                 Behavior on color { ColorAnimation { duration: root.hoverMotion ? 110 : 0 } }
             }
@@ -7763,7 +7764,7 @@ ApplicationWindow {
                 // ATMOS has no container ink of its own (qualSpecFg falls to
                 // textLo): lit, its SPATIAL keeps the plain ink rather than
                 // dimming under the pointer.
-                text: root.qualSpec(qpr.t); color: qpr.lit && qpr.t !== "ATMOS" ? root.qualSpecFg(qpr.t) : root.textHi
+                text: I18n.t(root.qualSpec(qpr.t)); color: qpr.lit && qpr.t !== "ATMOS" ? root.qualSpecFg(qpr.t) : root.textHi
                 font.family: root.mono; font.pixelSize: 10
                 Behavior on color { ColorAnimation { duration: root.hoverMotion ? 110 : 0 } }
             }
@@ -7773,13 +7774,13 @@ ApplicationWindow {
             Text {
                 textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
                 visible: qpr.isDefault || !qpr.ok
-                text: !qpr.ok ? "NOT OFFERED" : "DEFAULT"
+                text: I18n.t(!qpr.ok ? "NOT OFFERED" : "DEFAULT")
                 color: qpr.lit ? root.textHi : root.textLo; font.family: root.mono; font.pixelSize: 9
             }
             Text {
                 textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
                 visible: qpr.inLibrary
-                text: root.libraryWord
+                text: I18n.t(root.libraryWord)
                 color: qpr.lit ? root.libContTx : root.libAccent
                 font.family: root.mono; font.pixelSize: 9; font.bold: true
                 Behavior on color { ColorAnimation { duration: root.hoverMotion ? 110 : 0 } }
@@ -7893,7 +7894,7 @@ ApplicationWindow {
             x: 7; anchors.verticalCenter: parent.verticalCenter
             width: 5; horizontalAlignment: Text.AlignHCenter
             visible: !pxt.proven
-            text: "?"
+            text: I18n.t("?")
             color: root.pillClassFg(pxt.qclass)
             font.family: root.mono; font.pixelSize: 10; font.bold: true
         }
@@ -7901,7 +7902,7 @@ ApplicationWindow {
             id: pxBase
             textFormat: Text.PlainText
             x: pxt.proven ? 7 : 17; anchors.verticalCenter: parent.verticalCenter
-            text: pxt.partial ? (pxt.have + " OF " + pxt.want + " IN LIBRARY") : "IN LIBRARY"
+            text: I18n.t(pxt.partial ? (pxt.have + " OF " + pxt.want + " IN LIBRARY") : "IN LIBRARY")
             color: root.pillClassTx(pxt.qclass); font.family: root.mono; font.pixelSize: 9; font.bold: true
         }
         MouseArea {
@@ -8013,7 +8014,7 @@ ApplicationWindow {
             y: Math.round(cvd.height / 2 + cvdFm.tightBoundingRect("H").height / 2 - baselineOffset)
             opacity: cvd.open ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 140 } }
-            text: cvd.word; color: cvd.ink
+            text: I18n.t(cvd.word); color: cvd.ink
             font.family: root.mono; font.pixelSize: 8; font.bold: true; font.letterSpacing: 0.5
         }
     }
@@ -8057,7 +8058,7 @@ ApplicationWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: Math.round(parent.height / 2 + cvmMarkFm.tightBoundingRect("?").height / 2 - baselineOffset)
                 visible: cvm.libState === "maybe"
-                textFormat: Text.PlainText; text: "?"; color: cvmLib.glyphInk
+                textFormat: Text.PlainText; text: I18n.t("?"); color: cvmLib.glyphInk
                 font.family: root.mono; font.pixelSize: 10; font.bold: true
             }
         }
@@ -8353,7 +8354,7 @@ ApplicationWindow {
                 spacing: 2
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    textFormat: Text.PlainText; text: "IN LIBRARY"
+                    textFormat: Text.PlainText; text: I18n.t("IN LIBRARY")
                     color: root.green
                     style: Text.Outline; styleColor: "#000000"
                     font.family: root.mono; font.pixelSize: arb.barLabelPx
@@ -8363,19 +8364,19 @@ ApplicationWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 7
                     Text {
-                        textFormat: Text.PlainText; text: arb.albumLine
+                        textFormat: Text.PlainText; text: I18n.t(arb.albumLine)
                         color: root.textHi
                         style: Text.Outline; styleColor: "#000000"
                         font.family: root.mono; font.pixelSize: arb.barCountPx; font.bold: true
                     }
                     Text {
-                        textFormat: Text.PlainText; text: "\u00b7"
+                        textFormat: Text.PlainText; text: I18n.t("\u00b7")
                         color: root.textLo
                         style: Text.Outline; styleColor: "#000000"
                         font.family: root.mono; font.pixelSize: arb.barCountPx
                     }
                     Text {
-                        textFormat: Text.PlainText; text: arb.songLine
+                        textFormat: Text.PlainText; text: I18n.t(arb.songLine)
                         color: root.textHi
                         style: Text.Outline; styleColor: "#000000"
                         font.family: root.mono; font.pixelSize: arb.barCountPx; font.bold: true
@@ -8398,7 +8399,7 @@ ApplicationWindow {
             visible: !arb.bar
             spacing: 3
             Text {
-                textFormat: Text.PlainText; text: "IN LIBRARY"
+                textFormat: Text.PlainText; text: I18n.t("IN LIBRARY")
                 color: root.green
                 font.family: root.mono; font.pixelSize: 10
                 font.bold: true; font.letterSpacing: 1.4
@@ -8406,16 +8407,16 @@ ApplicationWindow {
             Row {
                 spacing: 8
                 Text {
-                    textFormat: Text.PlainText; text: arb.albumLine
+                    textFormat: Text.PlainText; text: I18n.t(arb.albumLine)
                     color: root.textHi
                     font.family: root.mono; font.pixelSize: arb.pageCountPx; font.bold: true
                 }
                 Text {
-                    textFormat: Text.PlainText; text: "\u00b7"
+                    textFormat: Text.PlainText; text: I18n.t("\u00b7")
                     color: root.textDim; font.family: root.mono; font.pixelSize: arb.pageCountPx
                 }
                 Text {
-                    textFormat: Text.PlainText; text: arb.songLine
+                    textFormat: Text.PlainText; text: I18n.t(arb.songLine)
                     color: root.textHi
                     font.family: root.mono; font.pixelSize: arb.pageCountPx; font.bold: true
                 }
@@ -8728,7 +8729,7 @@ ApplicationWindow {
         Text {
             textFormat: Text.PlainText
             anchors.centerIn: parent; visible: di.st === "running"
-            text: di.pct >= 0 ? Math.round(di.pct) + "%" : "…"
+            text: I18n.t(di.pct >= 0 ? Math.round(di.pct) + "%" : "…")
             color: root.textHi; font.family: root.mono; font.pixelSize: 9; font.bold: true
             style: Text.Outline; styleColor: root.bg
         }
@@ -8918,7 +8919,7 @@ ApplicationWindow {
             // Art does, instead of leaving a disc that reads as still loading.
             Text {
                 anchors.centerIn: parent
-                textFormat: Text.PlainText; text: "≈"
+                textFormat: Text.PlainText; text: I18n.t("≈")
                 visible: pa.artState === "none"
                 color: root.textDim
                 font.family: root.mono; font.pixelSize: paPlate.width * 0.4
@@ -9168,7 +9169,7 @@ ApplicationWindow {
             Text {
                 id: paAimTxt
                 anchors.centerIn: parent; textFormat: Text.PlainText
-                text: root.fmtMs(pa.aimFrac * root.previewDuration)
+                text: I18n.t(root.fmtMs(pa.aimFrac * root.previewDuration))
                 color: root.accentContTx; font.family: root.mono; font.pixelSize: 9
             }
         }
@@ -9281,7 +9282,7 @@ ApplicationWindow {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 2
             Text {
-                textFormat: Text.PlainText; text: "["
+                textFormat: Text.PlainText; text: I18n.t("[")
                 color: tp.err ? root.red : root.accentDim
                 font.family: root.mono; font.pixelSize: 13; font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
@@ -9310,7 +9311,7 @@ ApplicationWindow {
                     id: caret
                     anchors.centerIn: parent
                     textFormat: Text.PlainText
-                    text: tp.loading ? "buffering" : (tp.err ? "✕" : ">")
+                    text: I18n.t(tp.loading ? "buffering" : (tp.err ? "✕" : ">"))
                     color: tp.err ? root.red : root.accent
                     font.family: root.mono; font.pixelSize: 13; font.bold: true
                     opacity: tp.loading ? center.loadPulse : (tp.expanded ? 0 : 1)
@@ -9369,13 +9370,13 @@ ApplicationWindow {
                     Text {
                         textFormat: Text.PlainText
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.fmtMs(root.previewPosition) + " / " + root.fmtMs(root.previewDuration)
+                        text: I18n.t(root.fmtMs(root.previewPosition) + " / " + root.fmtMs(root.previewDuration))
                         color: root.textLo; font.family: root.mono; font.pixelSize: 10
                     }
                 }
             }
             Text {
-                textFormat: Text.PlainText; text: "]"
+                textFormat: Text.PlainText; text: I18n.t("]")
                 color: tp.err ? root.red : root.accentDim
                 font.family: root.mono; font.pixelSize: 13; font.bold: true
                 anchors.verticalCenter: parent.verticalCenter
@@ -9424,7 +9425,7 @@ ApplicationWindow {
             }
             Text {
                 textFormat: Text.PlainText
-                text: pbar.st === "loading" ? "[buffering]" : (pbar.st === "error" ? "PREVIEW FAILED" : pbar.label.toUpperCase())
+                text: I18n.t(pbar.st === "loading" ? "[buffering]" : (pbar.st === "error" ? "PREVIEW FAILED" : pbar.label.toUpperCase()))
                 color: pbar.st === "error" ? root.red : root.accent
                 font.family: pbar.st === "loading" ? root.mono : root.uiFont
                 font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack
@@ -9491,7 +9492,7 @@ ApplicationWindow {
                 textFormat: Text.PlainText
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 width: pbarTimeM.width; horizontalAlignment: Text.AlignRight
-                text: root.fmtMs(root.previewPosition) + " / " + root.fmtMs(root.previewDuration)
+                text: I18n.t(root.fmtMs(root.previewPosition) + " / " + root.fmtMs(root.previewDuration))
                 color: root.textLo; font.family: root.mono; font.pixelSize: 10
             }
             // Scrub track, click seeks, drag scrubs. The DotMatrix fill follows
@@ -9903,13 +9904,13 @@ ApplicationWindow {
             id: dbMetric
             visible: false; spacing: 7
             Item { width: 14; height: 14 }      // the arrow Ico, size 14
-            Text { textFormat: Text.PlainText; text: db.label.toUpperCase(); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { textFormat: Text.PlainText; text: I18n.t(db.label.toUpperCase()); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
         }
         Row {
             id: dbMetricDone
             visible: false; spacing: 7
             Item { width: 14; height: 14 }      // the check Ico, size 14
-            Text { textFormat: Text.PlainText; text: (db.doneNoun !== "" ? db.doneNoun + " " : "") + (root.libraryOn && (db.libPresent || (db.owned ? db.ownInLibrary : root.dlInLibrary)) ? "IN LIBRARY" : "DOWNLOADED"); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { textFormat: Text.PlainText; text: I18n.t((db.doneNoun !== "" ? db.doneNoun + " " : "") + (root.libraryOn && (db.libPresent || (db.owned ? db.ownInLibrary : root.dlInLibrary)) ? "IN LIBRARY" : "DOWNLOADED")); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
         }
         // The longest library-claim label ("PARTIALLY IN LIBRARY" beats "MAYBE
         // IN LIBRARY") is measured for the same reason DOWNLOADED is: the
@@ -9922,7 +9923,7 @@ ApplicationWindow {
             id: dbMetricLib
             visible: false; spacing: 7
             Item { width: 14; height: 14 }
-            Text { textFormat: Text.PlainText; text: "PARTIALLY IN LIBRARY"; font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { textFormat: Text.PlainText; text: I18n.t("PARTIALLY IN LIBRARY"); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
         }
         // The track twin. A track can reach only two claim faces, MAYBE IN
         // LIBRARY and the done label, and the done label is already measured
@@ -9934,7 +9935,7 @@ ApplicationWindow {
             id: dbMetricLibTrack
             visible: false; spacing: 7
             Item { width: 14; height: 14 }
-            Text { textFormat: Text.PlainText; text: "MAYBE IN LIBRARY"; font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { textFormat: Text.PlainText; text: I18n.t("MAYBE IN LIBRARY"); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
         }
         // Queued measures too, now that it carries a cancel X: without it the
         // button grew the moment a click was queued, and in a track list every
@@ -9945,7 +9946,7 @@ ApplicationWindow {
             id: dbMetricQueued
             visible: false; spacing: 7
             Item { width: 12; height: 12 }      // QueueStack, default barW
-            Text { textFormat: Text.PlainText; text: db.queuedLabel; font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { textFormat: Text.PlainText; text: I18n.t(db.queuedLabel); font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack }
             Item { width: 13; height: 13 }      // the cancel X
         }
         radius: root.btnRad
@@ -10168,7 +10169,7 @@ ApplicationWindow {
             }
             Text {
                 textFormat: Text.PlainText
-                text: db.ghostText; color: db.ghostTextColor
+                text: I18n.t(db.ghostText); color: db.ghostTextColor
                 font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -10251,7 +10252,7 @@ ApplicationWindow {
                 // "running" keeps the queued face frozen: the row is riding the
                 // exit belt as the matrix arrives, and letting the text fall
                 // through to the idle label would restart the roll mid-exit.
-                text: db.libGuess ? "MAYBE IN LIBRARY" : db.st === "done" ? ((db.doneNoun !== "" ? db.doneNoun + " " : "") + (root.libraryOn && (db.libPresent || (db.owned ? db.ownInLibrary : root.dlInLibrary)) ? "IN LIBRARY" : "DOWNLOADED")) : db.st === "failed" ? "RETRY" : (db.waiting || db.st === "running") ? db.queuedLabel : db.libPartialClaim ? "PARTIALLY IN LIBRARY" : db.label.toUpperCase()
+                text: I18n.t(db.libGuess ? "MAYBE IN LIBRARY" : db.st === "done" ? ((db.doneNoun !== "" ? db.doneNoun + " " : "") + (root.libraryOn && (db.libPresent || (db.owned ? db.ownInLibrary : root.dlInLibrary)) ? "IN LIBRARY" : "DOWNLOADED")) : db.st === "failed" ? "RETRY" : (db.waiting || db.st === "running") ? db.queuedLabel : db.libPartialClaim ? "PARTIALLY IN LIBRARY" : db.label.toUpperCase())
                 color: db.libGuess ? root.gold : db.st === "done" ? root.accent : db.st === "failed" ? root.red : (db.waiting || db.st === "running") ? root.accentDim : db.libPartialClaim ? root.cyan : root.accent
                 Behavior on color { ColorAnimation { duration: root.hoverMotion ? 420 : 0; easing.type: Easing.InOutQuad } }
                 font.family: root.uiFont; font.pixelSize: 11; font.bold: true; font.letterSpacing: root.btnTrack
@@ -10366,12 +10367,12 @@ ApplicationWindow {
         }
         Text {
             id: odA
-            textFormat: Text.PlainText; text: od.shown
+            textFormat: Text.PlainText; text: I18n.t(od.shown)
             color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true
         }
         Text {
             id: odB
-            textFormat: Text.PlainText; text: ""
+            textFormat: Text.PlainText; text: I18n.t("")
             color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true
             y: -od.height
         }
@@ -10461,7 +10462,7 @@ ApplicationWindow {
                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
                 Text {
                     textFormat: Text.PlainText
-                    text: plRow.isFolder ? model.sub : (model.tracks > 0 ? model.tracks + " tracks" : "Playlist")
+                    text: I18n.t(plRow.isFolder ? model.sub : (model.tracks > 0 ? model.tracks + " tracks" : "Playlist"))
                     color: root.textLo; font.pixelSize: 12
                 }
             }
@@ -10574,8 +10575,8 @@ ApplicationWindow {
                     // whole app at ~30% CPU. At these drift speeds a 20 Hz step
                     // (<0.5 px per tick) is visually identical and repaints 6x less.
                     x: tile.width > 0 ? -Math.round(((wm.t * modelData.k + modelData.ph) % 1) * tileW) : 0
-                    Text { textFormat: Text.PlainText; id: tile; text: modelData.pat.repeat(reps); font.family: root.mono; font.pixelSize: Math.max(2, Math.round(modelData.px * wm.uscale)); color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
-                    Text { textFormat: Text.PlainText; text: modelData.pat.repeat(reps); font.family: root.mono; font.pixelSize: tile.font.pixelSize; color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
+                    Text { textFormat: Text.PlainText; id: tile; text: I18n.t(modelData.pat.repeat(reps)); font.family: root.mono; font.pixelSize: Math.max(2, Math.round(modelData.px * wm.uscale)); color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
+                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.pat.repeat(reps)); font.family: root.mono; font.pixelSize: tile.font.pixelSize; color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
                 }
             }
 
@@ -10669,7 +10670,7 @@ ApplicationWindow {
                     required property var modelData
                     readonly property real ms: wm.idleT * wm.idleLoopSecs * 1000 - modelData.at
                     textFormat: Text.PlainText
-                    text: modelData.shape
+                    text: I18n.t(modelData.shape)
                     x: Math.round((wm.boxW - 2 * wm.inset) * modelData.xf)
                     y: Math.round((wm.boxH - 2 * wm.inset) * modelData.yf)
                     color: "#eafff1"
@@ -10798,7 +10799,7 @@ ApplicationWindow {
             // Kept loaded while icon-only (empty, invisible): its line height is
             // what makes the square square, so it has to keep measuring.
             visible: !sb.iconOnly
-            textFormat: Text.PlainText; text: sb.label
+            textFormat: Text.PlainText; text: I18n.t(sb.label)
             color: sb.danger ? root.red
                  : sb.warn ? root.yellow
                  : (sb.primary ? root.accent : (sbMa.containsMouse ? root.textHi : root.textLo))
@@ -10844,10 +10845,10 @@ ApplicationWindow {
                 RowLayout {
                     Layout.fillWidth: true; spacing: 8
                     Text { textFormat: Text.PlainText; text: gcard.title; color: gcard.highlight ? root.accent : root.textHi; font.pixelSize: 13; font.bold: true }
-                    Text { textFormat: Text.PlainText; visible: gcard.chip !== ""; text: gcard.chip; color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; font.letterSpacing: 0.8 }
+                    Text { textFormat: Text.PlainText; visible: gcard.chip !== ""; text: I18n.t(gcard.chip); color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; font.letterSpacing: 0.8 }
                     Item { Layout.fillWidth: true }
                 }
-                Text { textFormat: Text.PlainText; visible: gcard.desc !== ""; text: gcard.desc; color: root.textLo; font.pixelSize: 11; wrapMode: Text.WordWrap; lineHeight: 1.2; Layout.fillWidth: true }
+                Text { textFormat: Text.PlainText; visible: gcard.desc !== ""; text: I18n.t(gcard.desc); color: root.textLo; font.pixelSize: 11; wrapMode: Text.WordWrap; lineHeight: 1.2; Layout.fillWidth: true }
             }
             Ico { name: "arrow-right"; color: gcard.highlight ? root.accent : root.textDim; size: 15; Layout.alignment: Qt.AlignVCenter }
         }
@@ -10956,8 +10957,8 @@ ApplicationWindow {
                 delegate: Row {
                     required property var modelData
                     y: Math.round(banner.height * modelData.yf) - banner.inset
-                    Text { textFormat: Text.PlainText; id: wtile; text: modelData.pat.repeat(8); font.family: root.mono; font.pixelSize: Math.round(modelData.px * banner.waveScale); color: modelData.col; opacity: modelData.op; font.letterSpacing: -1 }
-                    Text { textFormat: Text.PlainText; text: modelData.pat.repeat(8); font.family: root.mono; font.pixelSize: Math.round(modelData.px * banner.waveScale); color: modelData.col; opacity: modelData.op; font.letterSpacing: -1 }
+                    Text { textFormat: Text.PlainText; id: wtile; text: I18n.t(modelData.pat.repeat(8)); font.family: root.mono; font.pixelSize: Math.round(modelData.px * banner.waveScale); color: modelData.col; opacity: modelData.op; font.letterSpacing: -1 }
+                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.pat.repeat(8)); font.family: root.mono; font.pixelSize: Math.round(modelData.px * banner.waveScale); color: modelData.col; opacity: modelData.op; font.letterSpacing: -1 }
                     NumberAnimation on x {
                         // Only run while the login panel is actually showing (banner
                         // lives on it, visible: !root.signedIn). QML animations don't
@@ -10990,8 +10991,8 @@ ApplicationWindow {
                     id: mqMove
                     anchors.verticalCenter: parent.verticalCenter
                     width: mqMain.implicitWidth; height: mqMain.implicitHeight
-                    Text { textFormat: Text.PlainText; x: 0; y: 1; text: mqMain.text; font: mqMain.font; color: "#0a160d"; opacity: 0.9 }   // shadow for legibility
-                    Text { textFormat: Text.PlainText; id: mqMain; x: 0; y: 0; text: banner.phrase.repeat(8); font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: banner.ink }
+                    Text { textFormat: Text.PlainText; x: 0; y: 1; text: I18n.t(mqMain.text); font: mqMain.font; color: "#0a160d"; opacity: 0.9 }   // shadow for legibility
+                    Text { textFormat: Text.PlainText; id: mqMain; x: 0; y: 0; text: I18n.t(banner.phrase.repeat(8)); font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: banner.ink }
                     NumberAnimation on x {
                         // Same gating as the wave layers: stop once signed in / hidden.
                         running: phraseM.advanceWidth > 0 && !root.signedIn && root.onScreen
@@ -11056,7 +11057,7 @@ ApplicationWindow {
         readonly property color navStatic:    "#aeb4ad"
 
         // hidden metric, reserves width so the label never reflows
-        Text { id: navMetric; visible: false; textFormat: Text.PlainText; text: nt.label; font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
+        Text { id: navMetric; visible: false; textFormat: Text.PlainText; text: I18n.t(nt.label); font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
 
         // idle body: dim phosphor panel; gray label that grays → green
         Rectangle {
@@ -11064,7 +11065,7 @@ ApplicationWindow {
             border.width: 1; border.color: navMa.containsMouse ? nt.navDimHover : nt.navDimBorder
             Behavior on border.color { ColorAnimation { duration: 180 } }
             Text {
-                anchors.centerIn: parent; text: nt.label; textFormat: Text.PlainText
+                anchors.centerIn: parent; text: I18n.t(nt.label); textFormat: Text.PlainText
                 font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack
                 color: navMa.containsMouse ? nt.navTextHi : nt.navText
                 opacity: nt.active ? 0 : 1
@@ -11078,7 +11079,7 @@ ApplicationWindow {
             id: navLit; anchors.fill: parent; radius: root.btnRad; color: root.accentCont
             border.width: 1; border.color: root.accentDim; opacity: 0
             transform: Scale { id: navSc; origin.x: nt.width / 2; origin.y: nt.height / 2; xScale: 0.02; yScale: 0.02 }
-            Text { anchors.centerIn: parent; text: nt.label; textFormat: Text.PlainText; color: root.accent; font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
+            Text { anchors.centerIn: parent; text: I18n.t(nt.label); textFormat: Text.PlainText; color: root.accent; font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
         }
 
         // static: a stack of uneven scan segments that flicker together
@@ -11252,7 +11253,7 @@ ApplicationWindow {
             Text {
                 id: secLabel
                 textFormat: Text.PlainText
-                text: secHead.openable ? secHead.label + "  ›" : secHead.label
+                text: I18n.t(secHead.openable ? secHead.label + "  ›" : secHead.label)
                 color: (secHead.collapsible && secMa.containsMouse) || (secHead.openable && secOpenMa.containsMouse)
                        ? root.textHi : root.textLo
                 font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.9
@@ -11274,7 +11275,7 @@ ApplicationWindow {
             Rectangle {
                 visible: count >= 0; radius: 4; color: "transparent"; border.color: root.border1
                 implicitHeight: 18; implicitWidth: cntT.implicitWidth + 16
-                Text { textFormat: Text.PlainText; id: cntT; anchors.centerIn: parent; text: count; color: root.textDim; font.family: root.mono; font.pixelSize: 11 }
+                Text { textFormat: Text.PlainText; id: cntT; anchors.centerIn: parent; text: I18n.t(count); color: root.textDim; font.family: root.mono; font.pixelSize: 11 }
             }
         }
         MouseArea {
@@ -11306,7 +11307,7 @@ ApplicationWindow {
         Text {
             id: saText
             textFormat: Text.PlainText
-            text: sa.expanded ? "SHOW LESS" : "SHOW ALL " + sa.count
+            text: I18n.t(sa.expanded ? "SHOW LESS" : "SHOW ALL " + sa.count)
             color: saMa.containsMouse ? root.accent : root.accentContTx
             font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.4
             Behavior on color { ColorAnimation { duration: 90 } }
@@ -11484,7 +11485,7 @@ ApplicationWindow {
                 // for the same ownership record. A video is never in the
                 // scan (audio only), so its libPresent is always false and
                 // both faces reduce to libraryOn && dlInLibrary.
-                textFormat: Text.PlainText; text: root.libraryOn && root.dlInLibrary ? "IN LIBRARY" : "DOWNLOADED"
+                textFormat: Text.PlainText; text: I18n.t(root.libraryOn && root.dlInLibrary ? "IN LIBRARY" : "DOWNLOADED")
                 color: root.green; font.family: root.mono; font.pixelSize: 10
             }
         }
@@ -11500,7 +11501,7 @@ ApplicationWindow {
             Text {
                 id: bvtSpec
                 anchors.centerIn: parent
-                textFormat: Text.PlainText; text: bvt.spec
+                textFormat: Text.PlainText; text: I18n.t(bvt.spec)
                 color: root.gold; font.family: root.mono; font.pixelSize: 10
             }
         }
@@ -11512,7 +11513,7 @@ ApplicationWindow {
             Text {
                 id: bvtDur
                 anchors.centerIn: parent
-                textFormat: Text.PlainText; text: bvt.vDuration
+                textFormat: Text.PlainText; text: I18n.t(bvt.vDuration)
                 color: root.textHi; font.family: root.mono; font.pixelSize: 10
             }
         }
@@ -11607,7 +11608,7 @@ ApplicationWindow {
                         id: vTitleTx
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.max(0, Math.min(implicitWidth, parent.avail))
-                        textFormat: Text.PlainText; text: vcell.vcTitle
+                        textFormat: Text.PlainText; text: I18n.t(vcell.vcTitle)
                         color: root.textHi; font.pixelSize: 15; font.bold: true
                         elide: Text.ElideRight; maximumLineCount: 1
                     }
@@ -11649,7 +11650,7 @@ ApplicationWindow {
                         visible: vcell.vcDate !== ""
                         anchors.left: vArtists.right; anchors.leftMargin: 8
                         anchors.baseline: vArtists.baseline
-                        text: "·"; color: root.textDim
+                        text: I18n.t("·"); color: root.textDim
                         font.family: root.mono; font.pixelSize: 11
                     }
                     Text {
@@ -11657,7 +11658,7 @@ ApplicationWindow {
                         visible: vcell.vcDate !== ""
                         anchors.left: vDot.right; anchors.leftMargin: 8
                         anchors.baseline: vArtists.baseline
-                        textFormat: Text.PlainText; text: root.dateText(vcell.vcDate)
+                        textFormat: Text.PlainText; text: I18n.t(root.dateText(vcell.vcDate))
                         color: root.textLo; font.family: root.mono; font.pixelSize: 11
                     }
                 }
@@ -11991,8 +11992,8 @@ ApplicationWindow {
             var t = Date.now()
             if (qb._shownMode === "run" && qb.mode !== "run") qb._runLeft = t
             if (qb.mode === qb._shownMode || qb._shownMode === "" || t - qb._runLeft < 100) {
-                qbWord._live = false; qbWord.target = qb.word; qbWord._live = true
-            } else qbWord.target = qb.word
+                qbWord._live = false; qbWord.target = I18n.t(qb.word); qbWord._live = true
+            } else qbWord.target = I18n.t(qb.word)
             qb._shownMode = qb.mode
         }
         onWordChanged: showWord()
@@ -12013,7 +12014,7 @@ ApplicationWindow {
                 implicitWidth: qbSlotW; implicitHeight: qbMetric.implicitHeight
                 property real qbSlotW: qbWord.implicitWidth
                 Behavior on qbSlotW { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                Text { id: qbMetric; visible: false; textFormat: Text.PlainText; text: "QUEUE"; font: qbWord.font }
+                Text { id: qbMetric; visible: false; textFormat: Text.PlainText; text: I18n.t("QUEUE"); font: qbWord.font }
                 DecryptText {
                     id: qbWord; objectName: "queueButtonWord"; anchors.centerIn: parent; color: qb.tone
                     // The chart reads the percent while running and draws
@@ -12762,7 +12763,7 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 14; spacing: 12
                 Text {
-                    text: "›"; rotation: expanded ? 90 : 0
+                    text: I18n.t("›"); rotation: expanded ? 90 : 0
                     color: expanded ? root.accent : root.textDim; font.pixelSize: 16
                     Layout.preferredWidth: 12; horizontalAlignment: Text.AlignHCenter
                     Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -12776,7 +12777,7 @@ ApplicationWindow {
                     // keeps its layout size and elides only for real overflow.
                     Text {
                         id: abRowTitle
-                        textFormat: Text.PlainText; text: title
+                        textFormat: Text.PlainText; text: I18n.t(title)
                         color: abRowTitleMa.containsMouse ? "#ffffff" : root.textHi
                         font.pixelSize: 14; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true
                         rightPadding: (abRowPill.shown ? abRowPill.width + 8 : 0)
@@ -12897,9 +12898,9 @@ ApplicationWindow {
                     Art { width: 116; height: 116; hoverFx: true; fxKind: "album"; fxId: albumId; url: art }
                     Column {
                         width: parent.width - 132 - abPanelMeta.width - 16; spacing: 6
-                        Text { text: "ALBUM"; color: root.textDim; font.pixelSize: 11 }
+                        Text { text: I18n.t("ALBUM"); color: root.textDim; font.pixelSize: 11 }
                         Text {
-                            textFormat: Text.PlainText; text: title
+                            textFormat: Text.PlainText; text: I18n.t(title)
                             color: abPanelTitleMa.containsMouse ? "#ffffff" : root.textHi
                             font.pixelSize: 21; font.bold: true; width: parent.width; elide: Text.ElideRight
                             MouseArea {
@@ -12936,7 +12937,7 @@ ApplicationWindow {
                                 onTap: function(){ waves.downloadAlbum(albumId) }
                             }
                             Text {
-                                text: "Copy link"; color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                                text: I18n.t("Copy link"); color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.copyShareUrl("album", albumId) }
                             }
                         }
@@ -12951,7 +12952,7 @@ ApplicationWindow {
                 }
                 Text {
                     visible: !root.trackCache[albumId]
-                    text: root.trackCache[albumId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…"
+                    text: I18n.t(root.trackCache[albumId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…")
                     textFormat: Text.PlainText
                     color: root.textLo; font.pixelSize: 13
                 }
@@ -12962,8 +12963,8 @@ ApplicationWindow {
                         visible: ab.trackList.length > 0
                         width: parent.width; height: 40; spacing: 12
                         Check { Layout.alignment: Qt.AlignVCenter; checked: ab.allSelected; onToggled: ab.toggleAll() }
-                        Text { text: "Select all"; color: root.textLo; font.pixelSize: 13 }
-                        Text { textFormat: Text.PlainText; text: "· " + ab.selCount + " of " + ab.trackList.length + " selected"; color: root.textDim; font.pixelSize: 12 }
+                        Text { text: I18n.t("Select all"); color: root.textLo; font.pixelSize: 13 }
+                        Text { textFormat: Text.PlainText; text: I18n.t("· " + ab.selCount + " of " + ab.trackList.length + " selected"); color: root.textDim; font.pixelSize: 12 }
                         Item { Layout.fillWidth: true }
                         Rectangle {
                             Layout.alignment: Qt.AlignVCenter
@@ -12973,7 +12974,7 @@ ApplicationWindow {
                             implicitHeight: dsRow.implicitHeight + root.btnPadV * 2; implicitWidth: dsRow.implicitWidth + root.btnPadH * 2
                             Row { id: dsRow; anchors.centerIn: parent; spacing: 7
                                 Ico { name: "arrow-down"; color: root.accent; size: 14; bold: 10; anchors.verticalCenter: parent.verticalCenter }
-                                Text { text: "DOWNLOAD SELECTED"; color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                                Text { text: I18n.t("DOWNLOAD SELECTED"); color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                             }
                             MouseArea { anchors.fill: parent; enabled: ab.selCount > 0; cursorShape: ab.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: ab.downloadSelected() }
                         }
@@ -12988,7 +12989,7 @@ ApplicationWindow {
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4; spacing: 12
                                 Check { Layout.alignment: Qt.AlignVCenter; checked: ab.sel[modelData.id] === true; onToggled: ab.setSel(modelData.id, !(ab.sel[modelData.id] === true)) }
-                                Text { textFormat: Text.PlainText; text: modelData.num; color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 16; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
+                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.num); color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 16; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
                                 TrackPreview { kind: "track"; pid: modelData.id; Layout.alignment: Qt.AlignVCenter }
                                 Text {
                                     objectName: "trackTitle"
@@ -13005,7 +13006,7 @@ ApplicationWindow {
                                     }
                                 }
                                 PopMeter { value: modelData.popularity }
-                                Text { textFormat: Text.PlainText; text: modelData.duration; color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
+                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
                                 DownIcon {
                                     mediaId: modelData.id
                                     // The panel knows the release these rows
@@ -13114,7 +13115,7 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 14; spacing: 12
                 Text {
-                    text: "›"; rotation: expanded ? 90 : 0
+                    text: I18n.t("›"); rotation: expanded ? 90 : 0
                     color: expanded ? root.accent : root.textDim; font.pixelSize: 16
                     Layout.preferredWidth: 12; horizontalAlignment: Text.AlignHCenter
                     Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -13123,7 +13124,7 @@ ApplicationWindow {
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
                     Text {
-                        textFormat: Text.PlainText; text: title
+                        textFormat: Text.PlainText; text: I18n.t(title)
                         color: pbRowTitleMa.containsMouse ? "#ffffff" : root.textHi
                         font.pixelSize: 14; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true
                         // Title -> the playlist's dedicated page (row click still expands)
@@ -13140,7 +13141,7 @@ ApplicationWindow {
                                                                   : root.hoverPrefetchCancel(prefetchCard)
                         }
                     }
-                    Text { textFormat: Text.PlainText; text: pb.subLabel; color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                    Text { textFormat: Text.PlainText; text: I18n.t(pb.subLabel); color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
                 }
                 DownloadButton { Layout.alignment: Qt.AlignVCenter; mediaId: plId; collectionCheck: true; label: "Download playlist"; onTap: function(){ waves.downloadPlaylist(plId) } }
             }
@@ -13171,9 +13172,9 @@ ApplicationWindow {
                     Art { width: 116; height: 116; hoverFx: true; fxKind: "playlist"; fxId: plId; url: art }
                     Column {
                         width: parent.width - 132; spacing: 6
-                        Text { text: "PLAYLIST"; color: root.textDim; font.pixelSize: 11 }
+                        Text { text: I18n.t("PLAYLIST"); color: root.textDim; font.pixelSize: 11 }
                         Text {
-                            textFormat: Text.PlainText; text: title
+                            textFormat: Text.PlainText; text: I18n.t(title)
                             color: pbPanelTitleMa.containsMouse ? "#ffffff" : root.textHi
                             font.pixelSize: 21; font.bold: true; width: parent.width; elide: Text.ElideRight
                             MouseArea {
@@ -13185,7 +13186,7 @@ ApplicationWindow {
                                 onClicked: root.openPlaylistPage(plId, title, art)
                             }
                         }
-                        Text { textFormat: Text.PlainText; text: pb.subLabel; color: root.textLo; font.pixelSize: 14; width: parent.width; elide: Text.ElideRight }
+                        Text { textFormat: Text.PlainText; text: I18n.t(pb.subLabel); color: root.textLo; font.pixelSize: 14; width: parent.width; elide: Text.ElideRight }
                         Row {
                             spacing: 10; topPadding: 6
                             DownloadButton {
@@ -13193,7 +13194,7 @@ ApplicationWindow {
                                 onTap: function(){ waves.downloadPlaylist(plId) }
                             }
                             Text {
-                                text: "Copy link"; color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                                text: I18n.t("Copy link"); color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.copyShareUrl("playlist", plId) }
                             }
                         }
@@ -13201,7 +13202,7 @@ ApplicationWindow {
                 }
                 Text {
                     visible: !root.playlistTrackCache[plId]
-                    text: root.playlistTrackCache[plId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…"
+                    text: I18n.t(root.playlistTrackCache[plId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…")
                     textFormat: Text.PlainText
                     color: root.textLo; font.pixelSize: 13
                 }
@@ -13212,8 +13213,8 @@ ApplicationWindow {
                         visible: pb.trackList.length > 0
                         width: parent.width; height: 40; spacing: 12
                         Check { Layout.alignment: Qt.AlignVCenter; checked: pb.allSelected; onToggled: pb.toggleAll() }
-                        Text { text: "Select all"; color: root.textLo; font.pixelSize: 13 }
-                        Text { textFormat: Text.PlainText; text: "· " + pb.selCount + " of " + pb.trackList.length + " selected"; color: root.textDim; font.pixelSize: 12 }
+                        Text { text: I18n.t("Select all"); color: root.textLo; font.pixelSize: 13 }
+                        Text { textFormat: Text.PlainText; text: I18n.t("· " + pb.selCount + " of " + pb.trackList.length + " selected"); color: root.textDim; font.pixelSize: 12 }
                         Item { Layout.fillWidth: true }
                         Rectangle {
                             Layout.alignment: Qt.AlignVCenter
@@ -13223,7 +13224,7 @@ ApplicationWindow {
                             implicitHeight: pbDsRow.implicitHeight + root.btnPadV * 2; implicitWidth: pbDsRow.implicitWidth + root.btnPadH * 2
                             Row { id: pbDsRow; anchors.centerIn: parent; spacing: 7
                                 Ico { name: "arrow-down"; color: root.accent; size: 14; bold: 10; anchors.verticalCenter: parent.verticalCenter }
-                                Text { text: "DOWNLOAD SELECTED"; color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                                Text { text: I18n.t("DOWNLOAD SELECTED"); color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                             }
                             MouseArea { anchors.fill: parent; enabled: pb.selCount > 0; cursorShape: pb.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: pb.downloadSelected() }
                         }
@@ -13240,7 +13241,7 @@ ApplicationWindow {
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4; spacing: 12
                                 Check { Layout.alignment: Qt.AlignVCenter; checked: pb.sel[index] !== undefined; onToggled: pb.setSel(index, modelData.kind, pb.sel[index] === undefined) }
-                                Text { textFormat: Text.PlainText; text: modelData.num; color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 24; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
+                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.num); color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 24; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
                                 TrackPreview { kind: modelData.kind; pid: modelData.id; Layout.alignment: Qt.AlignVCenter }
                                 Text {
                                     objectName: "trackTitle"
@@ -13256,7 +13257,7 @@ ApplicationWindow {
                                 }
                                 Text { textFormat: Text.PlainText; text: modelData.artist; color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.maximumWidth: 220 }
                                 PopMeter { value: modelData.popularity }
-                                Text { textFormat: Text.PlainText; text: modelData.duration; color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
+                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
                                 DownIcon {
                                     mediaId: modelData.id
                                     // A playlist row carries its own artist but
@@ -13413,7 +13414,7 @@ ApplicationWindow {
         border.color: root.textLo; border.width: 1
         implicitWidth: 14; implicitHeight: 14
         Text {
-            anchors.centerIn: parent; text: "E"; color: root.textLo
+            anchors.centerIn: parent; text: I18n.t("E"); color: root.textLo
             font.family: root.mono; font.pixelSize: 9; font.bold: true
         }
     }
@@ -13480,7 +13481,7 @@ ApplicationWindow {
             id: ntWord
             anchors.left: ntDot.right; anchors.leftMargin: parent.compact ? 4 : 5
             anchors.verticalCenter: parent.verticalCenter
-            textFormat: Text.PlainText; text: "NEW"
+            textFormat: Text.PlainText; text: I18n.t("NEW")
             color: root.accentContTx
             font.family: root.mono; font.pixelSize: parent.compact ? 10 : 11
             font.bold: true; font.letterSpacing: 0.8
@@ -13525,14 +13526,14 @@ ApplicationWindow {
                                                                                  : root.hoverPrefetchCancel(prefetchCard)
                     }
                 }
-                Text { visible: index < al.artists.length - 1; text: ", "; color: root.textLo; font.pixelSize: al.px }
+                Text { visible: index < al.artists.length - 1; text: I18n.t(", "); color: root.textLo; font.pixelSize: al.px }
             }
         }
-        Text { visible: al.suffix !== ""; textFormat: Text.PlainText; text: " · "; color: root.textLo; font.pixelSize: al.px }
+        Text { visible: al.suffix !== ""; textFormat: Text.PlainText; text: I18n.t(" · "); color: root.textLo; font.pixelSize: al.px }
         Text {
             id: alSuffix
             readonly property bool linkable: al.albumId !== "" && !root.onAlbumPage(al.albumId)
-            visible: al.suffix !== ""; textFormat: Text.PlainText; text: al.suffix
+            visible: al.suffix !== ""; textFormat: Text.PlainText; text: I18n.t(al.suffix)
             color: alSfMa.containsMouse && linkable ? "#ffffff" : root.textLo; font.pixelSize: al.px
             font.underline: alSfMa.containsMouse && linkable
             MouseArea {
@@ -13629,7 +13630,7 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText
                     visible: num > 0
-                    text: num + "."
+                    text: I18n.t(num + ".")
                     // textHi to match the title's resting color (set to the same
                     // value, not bound to the title, which whitens on hover).
                     color: root.textHi
@@ -13657,7 +13658,7 @@ ApplicationWindow {
                     Text {
                         id: trTitle
                         objectName: "trackTitle"
-                        textFormat: Text.PlainText; text: title
+                        textFormat: Text.PlainText; text: I18n.t(title)
                         color: trTitleMa.containsMouse ? "#ffffff" : root.textHi
                         // A step above the 12px subtitle in both size and weight
                         // so the title leads the row (the green artist link used
@@ -13722,8 +13723,8 @@ ApplicationWindow {
                     ArtistLinks { Layout.fillWidth: true; artists: root.artistsById[tId] || []; suffix: album; albumId: trow.albumId }
                 }
                 PopMeter { value: popularity; Layout.alignment: Qt.AlignVCenter }
-                Text { textFormat: Text.PlainText; text: root.dateText(date !== "" ? date : year); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 84; Layout.alignment: Qt.AlignVCenter }
-                Text { textFormat: Text.PlainText; text: duration; color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 40; Layout.alignment: Qt.AlignVCenter }
+                Text { textFormat: Text.PlainText; text: I18n.t(root.dateText(date !== "" ? date : year)); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 84; Layout.alignment: Qt.AlignVCenter }
+                Text { textFormat: Text.PlainText; text: I18n.t(duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 40; Layout.alignment: Qt.AlignVCenter }
                 // Fixed-width slot, badge anchored right so it hugs the button,
                 // short badges (HI-RES) leave the slack on their left, not as a
                 // hole between badge and button. Sized to the widest real badge
@@ -14018,7 +14019,7 @@ ApplicationWindow {
                     artistName: aName
                 }
             }
-            Text { textFormat: Text.PlainText; text: aName; color: root.textHi; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight; width: parent.width; horizontalAlignment: Text.AlignHCenter }
+            Text { textFormat: Text.PlainText; text: I18n.t(aName); color: root.textHi; font.pixelSize: 14; font.bold: true; elide: Text.ElideRight; width: parent.width; horizontalAlignment: Text.AlignHCenter }
             // The meter keeps its line whether the popularity is known yet
             // or not (unlit until it is): a card that grew 20px when the
             // enrichment landed pushed the page's reservations off by that
@@ -14295,10 +14296,10 @@ ApplicationWindow {
                         id: bcPvWord
                         visible: !bcPv.tight
                         textFormat: Text.PlainText
-                        text: bc.pvSt === "" ? "PREVIEW"
+                        text: I18n.t(bc.pvSt === "" ? "PREVIEW"
                             : bc.pvSt === "loading" ? "[buffering]"
                             : bc.pvSt === "error" ? "RETRY"
-                            : root.fmtMs(root.previewPosition)
+                            : root.fmtMs(root.previewPosition))
                         color: bc.pvSt === "error" ? root.red : root.accent
                         font.family: bc.pvSt === "playing" || bc.pvSt === "paused" || bc.pvSt === "loading" ? root.mono : root.uiFont
                         font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
@@ -14321,7 +14322,7 @@ ApplicationWindow {
                         id: bcPvStop
                         textFormat: Text.PlainText
                         visible: bc.pvSt === "playing" || bc.pvSt === "paused"
-                        text: "· STOP"
+                        text: I18n.t("· STOP")
                         color: bcStopMa.containsMouse ? root.red : root.textDim
                         font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack
                         anchors.verticalCenter: parent.verticalCenter
@@ -14358,12 +14359,12 @@ ApplicationWindow {
                 // until it gave up the media noun to fit the line.
                 Text {
                     id: bcDlWordMetric
-                    visible: false; textFormat: Text.PlainText; text: "DOWNLOAD"
+                    visible: false; textFormat: Text.PlainText; text: I18n.t("DOWNLOAD")
                     font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
                 }
                 Text {
                     id: bcDlLibMetric
-                    visible: false; textFormat: Text.PlainText; text: "IN LIBRARY"
+                    visible: false; textFormat: Text.PlainText; text: I18n.t("IN LIBRARY")
                     font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
                 }
                 Text {
@@ -14377,7 +14378,7 @@ ApplicationWindow {
                     // A download BitWave made is the freshest fact this line can
                     // state, so DONE outranks any library verdict; only an idle
                     // card falls through to what the scan found.
-                    text: bc.dlDone ? "DONE" : bc.dlSt === "failed" ? "RETRY" : bc.libWord
+                    text: I18n.t(bc.dlDone ? "DONE" : bc.dlSt === "failed" ? "RETRY" : bc.libWord)
                     color: bc.dlDone ? root.green : bc.dlSt === "failed" ? root.red : bc.libInk
                     font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
                 }
@@ -14393,7 +14394,7 @@ ApplicationWindow {
                     QueueStack { barW: 9; anchors.verticalCenter: parent.verticalCenter }
                     Text {
                         textFormat: Text.PlainText
-                        text: "QUEUED"
+                        text: I18n.t("QUEUED")
                         color: root.accentDim
                         font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
                         anchors.verticalCenter: parent.verticalCenter
@@ -14406,14 +14407,14 @@ ApplicationWindow {
                     DotMatrix { width: 34; rows: 2; dot: 4; gap: 2; pct: Math.max(0, bc.dlPct); finishing: bc.dlPct >= 99.9; anchors.verticalCenter: parent.verticalCenter }
                     Text {
                         textFormat: Text.PlainText
-                        text: bc.dlPct >= 0 ? Math.round(bc.dlPct) + "%" : "…"
+                        text: I18n.t(bc.dlPct >= 0 ? Math.round(bc.dlPct) + "%" : "…")
                         // Reserve the widest label ("100%") so the digit count
                         // changing never shifts the dot bar.
                         width: bcDlMetric.implicitWidth; horizontalAlignment: Text.AlignRight
                         color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true
                         anchors.verticalCenter: parent.verticalCenter
                     }
-                    Text { id: bcDlMetric; visible: false; textFormat: Text.PlainText; text: "100%"; font.family: root.mono; font.pixelSize: 9; font.bold: true }
+                    Text { id: bcDlMetric; visible: false; textFormat: Text.PlainText; text: I18n.t("100%"); font.family: root.mono; font.pixelSize: 9; font.bold: true }
                 }
                 MouseArea {
                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -14678,7 +14679,7 @@ ApplicationWindow {
                             width: (nc.ord > 0 && !nc.sepHidden) ? ncSep.implicitWidth + 12 : 0
                             Text {
                                 id: ncSep; anchors.centerIn: parent
-                                textFormat: Text.PlainText; text: "›"
+                                textFormat: Text.PlainText; text: I18n.t("›")
                                 color: root.textDim; font.pixelSize: 13
                             }
                         }
@@ -14697,7 +14698,7 @@ ApplicationWindow {
                                 Text {
                                     id: ncFoldTx; anchors.centerIn: parent
                                     textFormat: Text.PlainText
-                                    text: nct.folding ? "…" : "›‹"
+                                    text: I18n.t(nct.folding ? "…" : "›‹")
                                     color: ncFoldMa.containsMouse ? root.textHi : root.textLo
                                     font.pixelSize: 12
                                 }
@@ -14725,7 +14726,7 @@ ApplicationWindow {
                                 Behavior on border.color { ColorAnimation { duration: 200 } }
                                 Text {
                                     id: ncTx; anchors.centerIn: parent
-                                    textFormat: Text.PlainText; text: nc.tag
+                                    textFormat: Text.PlainText; text: I18n.t(nc.tag)
                                     color: nc.isLast ? root.accent : root.textLo
                                     Behavior on color { ColorAnimation { duration: 200 } }
                                     font.pixelSize: 12; font.bold: nc.isLast
@@ -14773,7 +14774,7 @@ ApplicationWindow {
             id: rchT
             anchors.centerIn: parent
             textFormat: Text.PlainText
-            text: rch.text
+            text: I18n.t(rch.text)
             color: rch.danger ? root.red : rch.accent ? root.accent : root.textLo
             font.family: root.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.6
         }
@@ -14808,7 +14809,7 @@ ApplicationWindow {
             anchors.left: parent.left; anchors.leftMargin: 9
             anchors.verticalCenter: parent.verticalCenter
             textFormat: Text.PlainText
-            text: root.relTipGroupName(rts.group) + "  \u00b7  " + rts.n
+            text: I18n.t(root.relTipGroupName(rts.group) + "  \u00b7  " + rts.n)
             color: root.textHi
             font.family: root.mono; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.2
         }
@@ -15234,7 +15235,7 @@ ApplicationWindow {
             objectName: "releaseDate"
             anchors.right: parent.right
             textFormat: Text.PlainText
-            text: root.releasesDateLabel(rt.day, root.todayIso)
+            text: I18n.t(root.releasesDateLabel(rt.day, root.todayIso))
             color: rt.upcoming ? root.accent : root.textLo
             font.family: root.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.6
         }
@@ -15250,13 +15251,13 @@ ApplicationWindow {
                     required property int index
                     Text {
                         objectName: "releaseKickWord"
-                        textFormat: Text.PlainText; text: modelData.t
+                        textFormat: Text.PlainText; text: I18n.t(modelData.t)
                         color: modelData.hi ? root.accent : root.textLo
                         font.family: root.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.6
                     }
                     Text {
                         visible: index < rtKick.parts.length - 1
-                        textFormat: Text.PlainText; text: " · "; color: root.textLo
+                        textFormat: Text.PlainText; text: I18n.t(" · "); color: root.textLo
                         font.family: root.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.6
                     }
                 }
@@ -15344,7 +15345,7 @@ ApplicationWindow {
                 Text {
                     id: afComma
                     visible: af.fit ? index < af.fit.shown - 1 || af.more > 0 : index < af.artists.length - 1
-                    textFormat: Text.PlainText; text: af.fit && index === af.fit.shown - 1 ? " " : ", "; color: root.textLo; font.pixelSize: af.px
+                    textFormat: Text.PlainText; text: I18n.t(af.fit && index === af.fit.shown - 1 ? " " : ", "); color: root.textLo; font.pixelSize: af.px
                 }
             }
         }
@@ -15352,7 +15353,7 @@ ApplicationWindow {
             id: afMore
             objectName: "artistFlowMore"
             visible: af.more > 0
-            textFormat: Text.PlainText; text: "+" + af.more + " more"
+            textFormat: Text.PlainText; text: I18n.t("+" + af.more + " more")
             color: root.textLo; font.pixelSize: af.px
             font.underline: afMoreMa.containsMouse
             MouseArea {
@@ -15822,7 +15823,7 @@ ApplicationWindow {
                                 id: acStripPv
                                 anchors.centerIn: parent; spacing: acStrip.gap
                                 Ico { id: acStripPvIco; name: "play"; color: root.accent; size: 11; anchors.verticalCenter: parent.verticalCenter }
-                                Text { id: acStripPvWord; textFormat: Text.PlainText; text: "PREVIEW"; color: root.accent; font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                                Text { id: acStripPvWord; textFormat: Text.PlainText; text: I18n.t("PREVIEW"); color: root.accent; font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                             }
                             MouseArea {
                                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -15836,7 +15837,7 @@ ApplicationWindow {
                                 id: acStripDl
                                 anchors.centerIn: parent; spacing: acStrip.gap
                                 Ico { id: acStripDlIco; name: (acStrip.dlDone || ac.libClaim) ? "check" : "arrow-down"; color: acStrip.stInk; size: (acStrip.dlDone || ac.libClaim) ? 14 : 12; bold: 10; anchors.verticalCenter: parent.verticalCenter }
-                                Text { id: acStripDlWord; textFormat: Text.PlainText; text: acStrip.stWord; color: acStrip.stInk; font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                                Text { id: acStripDlWord; textFormat: Text.PlainText; text: I18n.t(acStrip.stWord); color: acStrip.stInk; font.family: root.uiFont; font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                             }
                             MouseArea {
                                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -16204,7 +16205,7 @@ ApplicationWindow {
             visible: bsec.artStyle && bsec.showHeadline
             textFormat: Text.PlainText
             // "\u203a" marks headlines that open the full listing
-            text: (bsec.sec.title || "More") + (bsec.headlinable ? "  \u203a" : "")
+            text: (bsec.sec.title || I18n.t("More")) + (bsec.headlinable ? I18n.t("  \u203a") : "")
             color: bsecTitleMa.containsMouse ? "#ffffff" : root.textHi
             font.pixelSize: 17; font.bold: true
             width: parent.width; elide: Text.ElideRight
@@ -16312,9 +16313,9 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText
                     anchors.verticalCenter: parent.verticalCenter
-                    text: parent.parent.loadingMore
+                    text: I18n.t(parent.parent.loadingMore
                             ? "Loading more…"
-                            : bsec.items.length + " total"
+                            : bsec.items.length + " total")
                     color: root.textDim; font.family: root.mono; font.pixelSize: 11
                 }
                 Rectangle {
@@ -16755,7 +16756,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText
                     x: -8 - (bt.idx % 5) * 9   // stagger so neighbors don't sync
                     y: Math.round(bt.height * modelData.yf)
-                    text: modelData.pat.repeat(4)
+                    text: I18n.t(modelData.pat.repeat(4))
                     font.family: root.mono; font.pixelSize: modelData.px
                     font.letterSpacing: -1
                     // Foam-bright neutral: tone-on-tone glyphs vanish into the
@@ -16768,7 +16769,7 @@ ApplicationWindow {
                 textFormat: Text.PlainText
                 anchors.right: parent.right; anchors.bottom: parent.bottom
                 anchors.rightMargin: 4; anchors.bottomMargin: -10
-                text: bt.era
+                text: I18n.t(bt.era)
                 font.family: root.mono; font.pixelSize: 54; font.bold: true
                 color: bt.tone[2]; opacity: 0.20
             }
@@ -16843,7 +16844,7 @@ ApplicationWindow {
                         id: catStripPv
                         anchors.centerIn: parent; spacing: 5
                         Ico { name: "play"; color: root.accent; size: 10; anchors.verticalCenter: parent.verticalCenter }
-                        Text { textFormat: Text.PlainText; text: "PREVIEW"; color: root.accent; font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                        Text { textFormat: Text.PlainText; text: I18n.t("PREVIEW"); color: root.accent; font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                     }
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -16857,7 +16858,7 @@ ApplicationWindow {
                         id: catStripDl
                         anchors.centerIn: parent; spacing: 5
                         Ico { name: "arrow-down"; color: root.accent; size: 11; bold: 10; anchors.verticalCenter: parent.verticalCenter }
-                        Text { textFormat: Text.PlainText; text: "DOWNLOAD ALL"; color: root.accent; font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                        Text { textFormat: Text.PlainText; text: I18n.t("DOWNLOAD ALL"); color: root.accent; font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                     }
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -16944,7 +16945,7 @@ ApplicationWindow {
             Text {
                 anchors.centerIn: parent
                 visible: root.libLoadingMore && root.libraryCategory === lv.cat
-                text: "Loading more…"; color: root.textLo; font.pixelSize: 13
+                text: I18n.t("Loading more…"); color: root.textLo; font.pixelSize: 13
             }
         }
     }
@@ -18339,7 +18340,7 @@ ApplicationWindow {
                 WaveMark { id: headerMark }
                 // Wordmark sized to fill the logo box height (sublabel removed).
                 Text {
-                    text: "BITWAVE"; color: root.textHi; font.bold: true; font.letterSpacing: 2.6
+                    text: I18n.t("BITWAVE"); color: root.textHi; font.bold: true; font.letterSpacing: 2.6
                     font.pixelSize: 40
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -18388,12 +18389,12 @@ ApplicationWindow {
                     RowLayout {
                         id: connRow; anchors.centerIn: parent; spacing: 7
                         Rectangle { width: 7; height: 7; radius: 3.5; color: root.signedIn ? root.green : root.textDim }
-                        Text { textFormat: Text.PlainText; text: root.signedIn ? "CONNECTED" : "OFFLINE"; color: root.signedIn ? root.green : root.textDim; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: 1.1 }
+                        Text { textFormat: Text.PlainText; text: I18n.t(root.signedIn ? "CONNECTED" : "OFFLINE"); color: root.signedIn ? root.green : root.textDim; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: 1.1 }
                     }
                 }
                 // sign out, uppercase, red on hover
                 Text {
-                    visible: root.signedIn; text: "SIGN OUT"
+                    visible: root.signedIn; text: I18n.t("SIGN OUT")
                     color: soMa.containsMouse ? root.red : root.textDim
                     font.pixelSize: 12; font.letterSpacing: 0.85
                     MouseArea { id: soMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: waves.logout() }
@@ -18486,7 +18487,7 @@ ApplicationWindow {
                                 TextField {
                                     id: searchField
                                     Layout.fillWidth: true
-                                    placeholderText: "Search, or paste a TIDAL link…"
+                                    placeholderText: I18n.t("Search, or paste a TIDAL link…")
                                     color: searchDecoder.decoding ? root.accent : root.textHi
                                     placeholderTextColor: root.textLo; font.pixelSize: 15
                                     background: Rectangle { color: "transparent" }
@@ -18571,7 +18572,7 @@ ApplicationWindow {
                             background: Rectangle { radius: 8; color: root.surface2; border.color: sortBox.popup.visible ? root.accent : root.outline }
                             contentItem: Text {
                                 textFormat: Text.PlainText
-                                text: sortBox.displayText; color: root.textHi; font.pixelSize: 14
+                                text: I18n.t(sortBox.displayText); color: root.textHi; font.pixelSize: 14
                                 leftPadding: 14; rightPadding: 28; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                             }
                             indicator: ExpandChevron {
@@ -18586,7 +18587,7 @@ ApplicationWindow {
                             }
                             delegate: ItemDelegate {
                                 width: sortBox.width
-                                contentItem: Text { textFormat: Text.PlainText; text: modelData; color: root.textHi; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter }
+                                contentItem: Text { textFormat: Text.PlainText; text: I18n.t(modelData); color: root.textHi; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter }
                                 background: Rectangle { color: highlighted ? root.surface3 : root.surface2 }
                                 highlighted: sortBox.highlightedIndex === index
                             }
@@ -18606,7 +18607,7 @@ ApplicationWindow {
                             color: root.surface2; border.color: root.outline
                             Text {
                                 textFormat: Text.PlainText
-                                anchors.centerIn: parent; text: root.sortAsc ? "↑" : "↓"
+                                anchors.centerIn: parent; text: I18n.t(root.sortAsc ? "↑" : "↓")
                                 color: sortBox.currentIndex === 0 ? root.textDim : root.textHi; font.family: root.mono; font.pixelSize: 18
                             }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.sortAsc = !root.sortAsc; waves.setWavesPref("search_sort_asc", root.sortAsc); root.resortSearch() } }
@@ -18638,7 +18639,7 @@ ApplicationWindow {
                                 Row {
                                     id: chipRow; anchors.centerIn: parent; spacing: 7
                                     Rectangle { width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: tchip.on ? root.accent : root.textDim }
-                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: tchip.modelData[1]; color: tchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
+                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(tchip.modelData[1]); color: tchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
                                 }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.setSearchFilter(tchip.modelData[0]) }
                                 // Cascade in left-to-right the moment results land, decoupled
@@ -18748,7 +18749,7 @@ ApplicationWindow {
                         width: parent.width; spacing: 12
                         Text {
                             width: parent.width; horizontalAlignment: Text.AlignHCenter
-                            text: "Browse could not be loaded"
+                            text: I18n.t("Browse could not be loaded")
                             color: root.textLo; font.pixelSize: 18; topPadding: 80
                         }
                         Rectangle {
@@ -18757,7 +18758,7 @@ ApplicationWindow {
                             implicitHeight: bLandRetryTxt.implicitHeight + root.btnPadV * 2
                             radius: root.btnRad; color: "transparent"; border.color: root.accentDim
                             Text {
-                                id: bLandRetryTxt; anchors.centerIn: parent; text: "RETRY"
+                                id: bLandRetryTxt; anchors.centerIn: parent; text: I18n.t("RETRY")
                                 color: root.accent; font.family: root.uiFont; font.pixelSize: 12
                                 font.bold: true; font.letterSpacing: root.btnTrack
                             }
@@ -18905,7 +18906,7 @@ ApplicationWindow {
                                         // "›" marks the headline as openable, click to see
                                         // the whole cloud as a wrapping grid, like every
                                         // other section headline.
-                                        text: tileGroup.modelData[0] + "  ›"
+                                        text: I18n.t(tileGroup.modelData[0] + "  ›")
                                         color: cloudTitleMa.containsMouse ? "#ffffff" : root.textHi
                                         font.pixelSize: 17; font.bold: true
                                         width: parent.width; elide: Text.ElideRight
@@ -19086,9 +19087,9 @@ ApplicationWindow {
                                 width: parent.width - 180 - 24
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: browseItemHeader.kind === "playlist" ? "PLAYLIST"
+                                    text: I18n.t(browseItemHeader.kind === "playlist" ? "PLAYLIST"
                                           : browseItemHeader.kind === "mix" ? "MIX"
-                                          : browseItemHeader.kind === "album" ? "ALBUM" : ""
+                                          : browseItemHeader.kind === "album" ? "ALBUM" : "")
                                     color: root.textDim; font.pixelSize: 11; font.family: root.uiFont
                                     font.bold: true; font.letterSpacing: 1.5
                                 }
@@ -19100,7 +19101,7 @@ ApplicationWindow {
                                     Text {
                                         id: bihTitle
                                         textFormat: Text.PlainText
-                                        text: browseItemHeader.hd ? (browseItemHeader.hd.title || "") : root.browseTitleHint
+                                        text: I18n.t(browseItemHeader.hd ? (browseItemHeader.hd.title || "") : root.browseTitleHint)
                                         color: root.textHi; font.pixelSize: 26; font.bold: true
                                         width: Math.min(implicitWidth,
                                                         parent.width - (bihNew.shown ? bihNew.width + 10 : 0))
@@ -19123,7 +19124,7 @@ ApplicationWindow {
                                 Text {
                                     id: bihSubtitle
                                     textFormat: Text.PlainText
-                                    text: browseItemHeader.hd ? (browseItemHeader.hd.subtitle || "") : ""
+                                    text: I18n.t(browseItemHeader.hd ? (browseItemHeader.hd.subtitle || "") : "")
                                     // Album subtitles carry the artist, make them read (and act) like a link.
                                     readonly property bool linked: browseItemHeader.hd ? !!browseItemHeader.hd.artist_id : false
                                     color: linked ? root.accentContTx : root.textLo
@@ -19144,7 +19145,7 @@ ApplicationWindow {
                                 Text {
                                     textFormat: Text.PlainText
                                     visible: text !== ""
-                                    text: browseItemHeader.hd ? (browseItemHeader.hd.desc || "") : ""
+                                    text: I18n.t(browseItemHeader.hd ? (browseItemHeader.hd.desc || "") : "")
                                     color: root.textLo; font.pixelSize: 12
                                     width: parent.width; wrapMode: Text.WordWrap
                                     maximumLineCount: 2; elide: Text.ElideRight
@@ -19152,7 +19153,7 @@ ApplicationWindow {
                                 Text {
                                     textFormat: Text.PlainText
                                     visible: text !== ""
-                                    text: browseItemHeader.hd ? (browseItemHeader.hd.stats || "") : ""
+                                    text: I18n.t(browseItemHeader.hd ? (browseItemHeader.hd.stats || "") : "")
                                     color: root.textDim; font.pixelSize: 12; font.family: root.mono
                                 }
                                 Item { width: 1; height: 3 }
@@ -19215,7 +19216,7 @@ ApplicationWindow {
                         width: parent.width; spacing: 12
                         Text {
                             width: parent.width; horizontalAlignment: Text.AlignHCenter
-                            text: "Browse could not be loaded"
+                            text: I18n.t("Browse could not be loaded")
                             color: root.textLo; font.pixelSize: 18; topPadding: 80
                         }
                         Rectangle {
@@ -19224,7 +19225,7 @@ ApplicationWindow {
                             implicitHeight: bDrillRetryTxt.implicitHeight + root.btnPadV * 2
                             radius: root.btnRad; color: "transparent"; border.color: root.accentDim
                             Text {
-                                id: bDrillRetryTxt; anchors.centerIn: parent; text: "RETRY"
+                                id: bDrillRetryTxt; anchors.centerIn: parent; text: I18n.t("RETRY")
                                 color: root.accent; font.family: root.uiFont; font.pixelSize: 12
                                 font.bold: true; font.letterSpacing: root.btnTrack
                             }
@@ -19245,7 +19246,7 @@ ApplicationWindow {
                                  && ((root.browsePage.sections || []).length === 0)
                         width: parent.width; horizontalAlignment: Text.AlignHCenter
                         textFormat: Text.PlainText
-                        text: "Nothing to show here"
+                        text: I18n.t("Nothing to show here")
                         color: root.textLo; font.pixelSize: 18; topPadding: 96
                     }
 
@@ -19332,9 +19333,9 @@ ApplicationWindow {
                     textFormat: Text.PlainText; elide: Text.ElideMiddle
                     // A search that found nothing says so: the invitation left
                     // up read as a search that never started (issue #39).
-                    text: root.searchNoResultsFor !== ""
+                    text: I18n.t(root.searchNoResultsFor !== ""
                           ? "No results for “" + root.searchNoResultsFor + "”"
-                          : "Search for an artist, album, or track to begin"
+                          : "Search for an artist, album, or track to begin")
                     color: root.textLo; font.pixelSize: 22; topPadding: 96
                     // gentle breathing so the empty state feels alive
                     SequentialAnimation on opacity {
@@ -19691,7 +19692,7 @@ ApplicationWindow {
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 2
                                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
-                                Text { textFormat: Text.PlainText; text: model.subtitle ? model.subtitle : "Mix"; color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                                Text { textFormat: Text.PlainText; text: I18n.t(model.subtitle ? model.subtitle : "Mix"); color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
                             }
                             DownloadButton { mediaId: model.id; collectionCheck: true; label: "Download mix"; onTap: function(){ waves.downloadMix(model.id) } }
                         }
@@ -19803,7 +19804,7 @@ ApplicationWindow {
                     }
                     Column {
                         width: parent.width - 170; spacing: 8
-                        Text { text: "ARTIST"; color: root.accent; font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.9; topPadding: 8 }
+                        Text { text: I18n.t("ARTIST"); color: root.accent; font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.9; topPadding: 8 }
                         Text {
                             textFormat: Text.PlainText; text: root.artistData.name || ""
                             color: root.textHi; font.pixelSize: 30; font.bold: true
@@ -19864,20 +19865,20 @@ ApplicationWindow {
                             // onArtistLoaded swaps the view (Back returns here).
                             Text {
                                 visible: !!root.artistData.libraryScoped
-                                text: "View full artist page"
+                                text: I18n.t("View full artist page")
                                 color: root.accent; font.pixelSize: 13; font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.loadArtist(root.artistData.id || "") }
                             }
                             Text {
-                                text: "Copy link"; color: root.textLo; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter
+                                text: I18n.t("Copy link"); color: root.textLo; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.copyShareUrl("artist", root.artistData.id || "") }
                             }
                         }
                         // Collapsed bio preview (never taller than the photo)
                         Text {
                             visible: (root.artistData.bio || "") !== "" && !root.bioExpanded
-                            text: root.artistData.bio || ""
+                            text: I18n.t(root.artistData.bio || "")
                             textFormat: Text.PlainText  // never interpret remote bio as rich text (no auto <img> fetch)
                             color: root.textLo; font.pixelSize: 13; width: parent.width
                             wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
@@ -19885,7 +19886,7 @@ ApplicationWindow {
                         Text {
                             textFormat: Text.PlainText
                             visible: (root.artistData.bio || "") !== ""
-                            text: root.bioExpanded ? "SHOW LESS" : "READ MORE"
+                            text: I18n.t(root.bioExpanded ? "SHOW LESS" : "READ MORE")
                             color: root.accent; font.pixelSize: 12; font.letterSpacing: 0.8
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.bioExpanded = !root.bioExpanded }
                         }
@@ -19894,7 +19895,7 @@ ApplicationWindow {
                 // Full bio appears below the header only when expanded
                 Text {
                     visible: (root.artistData.bio || "") !== "" && root.bioExpanded
-                    text: root.artistData.bio || ""
+                    text: I18n.t(root.artistData.bio || "")
                     textFormat: Text.PlainText  // never interpret remote bio as rich text (no auto <img> fetch)
                     color: root.textLo; font.pixelSize: 13; width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.3
                 }
@@ -20139,7 +20140,7 @@ ApplicationWindow {
                                 width: rhWord.implicitWidth + (rhCount.visible ? rhCount.implicitWidth + 6 : 0); height: parent.height
                                 Text {
                                     id: rhWord
-                                    textFormat: Text.PlainText; text: rh.modelData[1]
+                                    textFormat: Text.PlainText; text: I18n.t(rh.modelData[1])
                                     font.pixelSize: 24; font.bold: true
                                     color: rh.on ? root.textHi : rhMa.containsMouse ? root.textLo : root.textDim
                                     Behavior on color { ColorAnimation { duration: 180 } }
@@ -20149,7 +20150,7 @@ ApplicationWindow {
                                 Text {
                                     id: rhCount
                                     visible: rh.modelData[0] === "manage" && root.releasesFollowed > 0
-                                    textFormat: Text.PlainText; text: root.releasesFollowed
+                                    textFormat: Text.PlainText; text: I18n.t(root.releasesFollowed)
                                     font.family: root.mono; font.pixelSize: 12
                                     color: rh.on ? root.accent : root.textDim
                                     x: rhWord.implicitWidth + 6; y: rhWord.y + 3
@@ -20216,7 +20217,7 @@ ApplicationWindow {
                                 Row {
                                     id: fcRow; anchors.centerIn: parent; spacing: 7
                                     Rectangle { width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: fchip.on ? root.accent : root.textDim }
-                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: fchip.modelData[1]; color: fchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
+                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(fchip.modelData[1]); color: fchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
                                 }
                                 MouseArea {
                                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -20271,7 +20272,7 @@ ApplicationWindow {
                                 Row {
                                     id: rcRow; visible: !rchip.spacer; anchors.centerIn: parent; spacing: 7
                                     Rectangle { visible: !rchip.words; width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: rchip.on ? root.accent : root.textDim }
-                                    Text { id: rcWord; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: rchip.modelData[1]; color: rchip.on || (rchip.words && rcMa.containsMouse) ? root.accent : root.textLo; font.pixelSize: 13 }
+                                    Text { id: rcWord; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(rchip.modelData[1]); color: rchip.on || (rchip.words && rcMa.containsMouse) ? root.accent : root.textLo; font.pixelSize: 13 }
                                 }
                                 MouseArea { id: rcMa; anchors.fill: parent; enabled: !rchip.spacer; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.releasesFilter = rchip.modelData[0] }
                             }
@@ -20282,7 +20283,7 @@ ApplicationWindow {
                         id: relExLabel
                         visible: root.releasesView === "excluded"
                         anchors.verticalCenter: parent.verticalCenter
-                        textFormat: Text.PlainText; text: "Excluded artists"
+                        textFormat: Text.PlainText; text: I18n.t("Excluded artists")
                         color: root.textLo; font.pixelSize: 15; font.bold: true
                         opacity: relChipsBox.cover ? 0 : 1
                         Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -20370,13 +20371,13 @@ ApplicationWindow {
                             color: root.textHi
                             placeholderTextColor: root.textLo
                             font.pixelSize: 14; selectByMouse: true
-                            placeholderText: root.releasesView === "manage" ? "Search artists…"
+                            placeholderText: I18n.t(root.releasesView === "manage" ? "Search artists…"
                                 : root.releasesView === "excluded" ? "Search excluded artists…"
                                 : root.releasesFilter === "album" ? "Search albums…"
                                 : root.releasesFilter === "ep" ? "Search EPs…"
                                 : root.releasesFilter === "single" ? "Search singles…"
                                 : root.releasesFilter === "video" ? "Search music videos…"
-                                : root.releasesFilter === "upcoming" ? "Search upcoming…" : "Search releases…"
+                                : root.releasesFilter === "upcoming" ? "Search upcoming…" : "Search releases…")
                             onTextChanged: root.relSetNeedle(text)
                             // Enter applies now rather than after the pause.
                             onAccepted: { relSearchDebounce.stop(); root.relNeedleApply() }
@@ -20481,9 +20482,9 @@ ApplicationWindow {
                     Text {
                         Layout.fillWidth: true; textFormat: Text.PlainText; elide: Text.ElideRight
                         color: root.textLo; font.pixelSize: 13
-                        text: relImportLine.kind === "more"
+                        text: I18n.t(relImportLine.kind === "more"
                             ? "Your library has " + relImportLine.n + (relImportLine.n === 1 ? " artist" : " artists") + " you have not imported yet."
-                            : relImportLine.n + (relImportLine.n === 1 ? " name" : " names") + " from your library need a look before they can be followed."
+                            : relImportLine.n + (relImportLine.n === 1 ? " name" : " names") + " from your library need a look before they can be followed.")
                     }
                     SpecBtn {
                         objectName: "relImportLineGo"
@@ -20707,7 +20708,7 @@ ApplicationWindow {
                                             x: Math.round((parent.width - width - 12 - relHeadCount.width - relHeadNew.width - (relHeadNew.n > 0 ? 8 : 0)) / 2)
                                             anchors.bottom: parent.bottom; anchors.bottomMargin: 18
                                             textFormat: Text.PlainText
-                                            text: relItem.label
+                                            text: I18n.t(relItem.label)
                                             color: root.textHi; font.pixelSize: 26; font.bold: true; font.letterSpacing: -0.4
                                         }
                                         Text {
@@ -20715,7 +20716,7 @@ ApplicationWindow {
                                             anchors.left: relHeadText.right; anchors.leftMargin: 12
                                             anchors.baseline: relHeadText.baseline
                                             textFormat: Text.PlainText
-                                            text: root.relHeadCountText(relItem.uid, relItem.cnt)
+                                            text: I18n.t(root.relHeadCountText(relItem.uid, relItem.cnt))
                                             color: relItem.uid === "h:new" ? root.accent : root.textDim
                                             font.family: root.mono; font.pixelSize: 12; font.letterSpacing: 0.6
                                         }
@@ -20729,7 +20730,7 @@ ApplicationWindow {
                                             anchors.left: relHeadCount.right; anchors.leftMargin: n > 0 ? 8 : 0
                                             anchors.baseline: relHeadText.baseline
                                             textFormat: Text.PlainText
-                                            text: n > 0 ? "\u00b7 " + n + " just in" : ""
+                                            text: I18n.t(n > 0 ? "\u00b7 " + n + " just in" : "")
                                             color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; font.letterSpacing: 0.6
                                         }
                                         // As heavy as the bar under Releases | Artists
@@ -20860,7 +20861,7 @@ ApplicationWindow {
                                     x: (relFeedCol.width - implicitWidth) / 2; anchors.verticalCenter: parent.verticalCenter
                                     visible: root.releasesLoadingMore || parent.capped
                                     textFormat: Text.PlainText
-                                    text: parent.capped ? "SHOWING THE " + root.relFindRows.length + " NEWEST MATCHES" : "Loading more…"
+                                    text: I18n.t(parent.capped ? "SHOWING THE " + root.relFindRows.length + " NEWEST MATCHES" : "Loading more…")
                                     color: root.textDim; font.family: root.mono; font.pixelSize: 11
                                 }
                             }
@@ -20883,11 +20884,11 @@ ApplicationWindow {
                         id: relEmptyHead
                         width: parent.width; horizontalAlignment: Text.AlignHCenter
                         textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                        text: parent.why === 0 ? "Follow artists to see their new releases"
+                        text: I18n.t(parent.why === 0 ? "Follow artists to see their new releases"
                             : parent.why === 1 ? (root.releasesFilter === "upcoming" ? "Nothing announced yet" : "Nothing under this filter")
                             : parent.why === 2 ? "Checking the artists you follow"
                             : parent.why === 4 ? "No releases match \u201c" + root.relFindAsked + "\u201d"
-                            : "No releases yet"
+                            : "No releases yet")
                         color: root.textLo; font.pixelSize: 22
                         SequentialAnimation on opacity {
                             running: relEmptyHead.visible && root.onScreen; loops: Animation.Infinite
@@ -20898,7 +20899,7 @@ ApplicationWindow {
                     Text {
                         width: parent.width; horizontalAlignment: Text.AlignHCenter
                         textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                        text: parent.why === 0 ? "Search for an artist, or open one and press Follow. Their new albums, EPs and singles"
+                        text: I18n.t(parent.why === 0 ? "Search for an artist, or open one and press Follow. Their new albums, EPs and singles"
                                                  + (root.releasesVideosOn ? " and music videos" : "") + " land here, newest first."
                             : parent.why === 1 ? (root.releasesFilter === "upcoming"
                                                   ? "Releases the artists you follow have dated ahead wait here until their day."
@@ -20908,7 +20909,7 @@ ApplicationWindow {
                             : parent.why === 4 ? (root.releasesFilter === "all"
                                                   ? "The search looks through every release on record from the artists you follow."
                                                   : "Pick All to search every kind of release.")
-                            : "Nothing from the artists you follow in this window. New ones land here as they come out."
+                            : "Nothing from the artists you follow in this window. New ones land here as they come out.")
                         color: root.textDim; font.pixelSize: 13
                     }
                     Row {
@@ -20999,7 +21000,7 @@ ApplicationWindow {
                                     Text {
                                         Layout.fillWidth: true
                                         textFormat: Text.PlainText
-                                        text: raCell.lastDay !== "" ? ("" + (raCell.row.last_title || "")) : "No release on record yet"
+                                        text: I18n.t(raCell.lastDay !== "" ? ("" + (raCell.row.last_title || "")) : "No release on record yet")
                                         color: raCell.lastDay !== "" ? root.textLo : root.textDim; font.pixelSize: 12
                                         elide: Text.ElideRight
                                     }
@@ -21085,7 +21086,7 @@ ApplicationWindow {
                                     Text {
                                         textFormat: Text.PlainText
                                         visible: (sbRow.row.total || 0) > 0
-                                        text: root.relCount(sbRow.row.total || 0, "RELEASE", "RELEASES") + " · SINCE " + (sbRow.row.since || "")
+                                        text: I18n.t(root.relCount(sbRow.row.total || 0, "RELEASE", "RELEASES") + " · SINCE " + (sbRow.row.since || ""))
                                         color: root.textDim; font.family: root.mono; font.pixelSize: 10; font.letterSpacing: 0.6
                                     }
                                 }
@@ -21127,7 +21128,7 @@ ApplicationWindow {
                                     }
                                     Text {
                                         textFormat: Text.PlainText
-                                        text: root.releasesDateLabel("" + sbTile.modelData.day, root.todayIso) + " · " + ("" + (sbTile.modelData.rtype || "")).toUpperCase()
+                                        text: I18n.t(root.releasesDateLabel("" + sbTile.modelData.day, root.todayIso) + " · " + ("" + (sbTile.modelData.rtype || "")).toUpperCase())
                                         color: sbTile.ahead ? root.accent : root.textDim
                                         // Untracked: "09-02-2026 · SINGLE" whole in a 120 px tile.
                                         font.family: root.mono; font.pixelSize: 10
@@ -21140,7 +21141,7 @@ ApplicationWindow {
                             Text {
                                 visible: sbRow.releases.length === 0
                                 anchors.left: sbStrip.left; anchors.verticalCenter: sbStrip.verticalCenter
-                                textFormat: Text.PlainText; text: "No release on record yet"
+                                textFormat: Text.PlainText; text: I18n.t("No release on record yet")
                                 color: root.textDim; font.pixelSize: 13
                             }
                             SpecBtn {
@@ -21261,20 +21262,20 @@ ApplicationWindow {
                             }
                             Text {
                                 textFormat: Text.PlainText
-                                text: ({ library: "FROM YOUR LIBRARY", tidal: "TIDAL FAVORITE", manual: "FOLLOWED BY YOU" })["" + (lgRow.row.origin || "")] || ""
+                                text: I18n.t(({ library: "FROM YOUR LIBRARY", tidal: "TIDAL FAVORITE", manual: "FOLLOWED BY YOU" })["" + (lgRow.row.origin || "")] || "")
                                 color: root.textDim; font.family: root.mono; font.pixelSize: 9; font.letterSpacing: 0.8
                             }
                         }
                         Text {
                             x: relFollowLedger.xAlbums; width: relFollowLedger.wNum; anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight; textFormat: Text.PlainText
-                            text: lgRow.lib.present ? ("" + (lgRow.lib.albums || 0)) : "–"
+                            text: I18n.t(lgRow.lib.present ? ("" + (lgRow.lib.albums || 0)) : "–")
                             color: lgRow.lib.present ? root.green : root.textDim; font.family: root.mono; font.pixelSize: 14; font.bold: true
                         }
                         Text {
                             x: relFollowLedger.xSongs; width: relFollowLedger.wNum; anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight; textFormat: Text.PlainText
-                            text: lgRow.lib.present ? ("" + (lgRow.lib.tracks || 0)) : "–"
+                            text: I18n.t(lgRow.lib.present ? ("" + (lgRow.lib.tracks || 0)) : "–")
                             color: lgRow.lib.present ? root.textHi : root.textDim; font.family: root.mono; font.pixelSize: 14
                         }
                         Item {
@@ -21298,7 +21299,7 @@ ApplicationWindow {
                                 spacing: 4
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: lgRow.lastDay !== "" ? ("" + (lgRow.row.last_title || "")) : "No release on record yet"
+                                    text: I18n.t(lgRow.lastDay !== "" ? ("" + (lgRow.row.last_title || "")) : "No release on record yet")
                                     color: lgRow.lastDay !== "" ? root.textLo : root.textDim; font.pixelSize: 13
                                     elide: Text.ElideRight; width: parent.width
                                 }
@@ -21309,12 +21310,12 @@ ApplicationWindow {
                             x: relFollowLedger.xDate; width: relFollowLedger.wDate; anchors.verticalCenter: parent.verticalCenter
                             spacing: 4; visible: lgRow.lastDay !== ""
                             Text {
-                                textFormat: Text.PlainText; text: root.releasesDateLabel(lgRow.lastDay, root.todayIso)
+                                textFormat: Text.PlainText; text: I18n.t(root.releasesDateLabel(lgRow.lastDay, root.todayIso))
                                 color: root.todayIso !== "" && lgRow.lastDay > root.todayIso ? root.accent : root.textHi
                                 font.family: root.mono; font.pixelSize: 12; font.bold: true
                             }
                             Text {
-                                textFormat: Text.PlainText; text: root.relAgo(lgRow.lastDay)
+                                textFormat: Text.PlainText; text: I18n.t(root.relAgo(lgRow.lastDay))
                                 color: root.textDim; font.family: root.mono; font.pixelSize: 9; font.letterSpacing: 0.8
                             }
                         }
@@ -21323,7 +21324,7 @@ ApplicationWindow {
                         Text {
                             visible: !relFollowLedger.showLatest && lgRow.lastDay === ""
                             x: relFollowLedger.xDate; anchors.verticalCenter: parent.verticalCenter
-                            textFormat: Text.PlainText; text: "NONE YET"
+                            textFormat: Text.PlainText; text: I18n.t("NONE YET")
                             color: root.textDim; font.family: root.mono; font.pixelSize: 12; font.letterSpacing: 0.8
                         }
                         RelTimeline {
@@ -21341,7 +21342,7 @@ ApplicationWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 88; width: Math.min(parent.width - 44, 560); horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                    text: "You are not following anyone yet. Search for an artist, or open one and press Follow."
+                    text: I18n.t("You are not following anyone yet. Search for an artist, or open one and press Follow.")
                     color: root.textLo; font.pixelSize: 16
                 }
                 Text {
@@ -21352,7 +21353,7 @@ ApplicationWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 88; width: Math.min(parent.width - 44, 560); horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                    text: "No artist you follow matches \u201c" + root._relFollowApplied + "\u201d"
+                    text: I18n.t("No artist you follow matches \u201c" + root._relFollowApplied + "\u201d")
                     color: root.textLo; font.pixelSize: 16
                 }
 
@@ -21367,7 +21368,7 @@ ApplicationWindow {
                     visible: root.releasesView === "excluded" && root.releasesExcludedRows.length > 0
                     x: 22; y: 4; width: parent.width - 44
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                    text: "Artists in your library with fewer tracks than the floor in Settings, Library, are not followed by the import. Follow any of them here: a follow you make yourself stays whatever the floor says."
+                    text: I18n.t("Artists in your library with fewer tracks than the floor in Settings, Library, are not followed by the import. Follow any of them here: a follow you make yourself stays whatever the floor says.")
                     color: root.textLo; font.pixelSize: 13
                 }
                 GridView {
@@ -21415,7 +21416,7 @@ ApplicationWindow {
                                 }
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: ("" + (rxCell.first.title || "")) + (rxCell.held.length > 1 ? "  +" + (rxCell.held.length - 1) + " more" : "")
+                                    text: ("" + (rxCell.first.title || "")) + (rxCell.held.length > 1 ? I18n.t("  +") + (rxCell.held.length - 1) + I18n.t(" more") : "")
                                     color: root.textLo; font.pixelSize: 12
                                     elide: Text.ElideRight; width: parent.width
                                 }
@@ -21468,12 +21469,12 @@ ApplicationWindow {
                             Text {
                                 id: seHead
                                 anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.bottomMargin: 12
-                                textFormat: Text.PlainText; text: seRow.letter
+                                textFormat: Text.PlainText; text: I18n.t(seRow.letter)
                                 color: root.textHi; font.pixelSize: 26; font.bold: true; font.letterSpacing: -0.4
                             }
                             Text {
                                 anchors.left: seHead.right; anchors.leftMargin: 12; anchors.baseline: seHead.baseline
-                                textFormat: Text.PlainText; text: root.relCount(seRow.cnt, "artist", "artists")
+                                textFormat: Text.PlainText; text: I18n.t(root.relCount(seRow.cnt, "artist", "artists"))
                                 color: root.textDim; font.family: root.mono; font.pixelSize: 12; font.letterSpacing: 0.6
                             }
                             Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.divider }
@@ -21505,13 +21506,13 @@ ApplicationWindow {
                                         }
                                         Text {
                                             textFormat: Text.PlainText
-                                            text: ("" + (seTile.first.title || "")) + (seTile.held.length > 1 ? "  +" + (seTile.held.length - 1) : "")
+                                            text: ("" + (seTile.first.title || "")) + (seTile.held.length > 1 ? I18n.t("  +") + (seTile.held.length - 1) : "")
                                             color: root.textLo; font.pixelSize: 11
                                             elide: Text.ElideRight; width: parent.width
                                         }
                                         Text {
                                             textFormat: Text.PlainText
-                                            text: [("" + (seTile.row.span || "")), root.relCount(seTile.row.tracks || 0, "TRACK", "TRACKS"), ("" + (seTile.row.best || ""))].filter(function (s) { return s !== "" }).join(" · ")
+                                            text: I18n.t([("" + (seTile.row.span || "")), root.relCount(seTile.row.tracks || 0, "TRACK", "TRACKS"), ("" + (seTile.row.best || ""))].filter(function (s) { return s !== "" }).join(" · "))
                                             color: root.textDim; font.family: root.mono; font.pixelSize: 10; font.letterSpacing: 0.6
                                             elide: Text.ElideRight; width: parent.width
                                         }
@@ -21595,7 +21596,7 @@ ApplicationWindow {
                                 }
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: root.relCount(lxRow.row.albums || 0, "ALBUM", "ALBUMS") + (lxRow.row.span ? " · " + lxRow.row.span : "")
+                                    text: I18n.t(root.relCount(lxRow.row.albums || 0, "ALBUM", "ALBUMS") + (lxRow.row.span ? " · " + lxRow.row.span : ""))
                                     color: root.textDim; font.family: root.mono; font.pixelSize: 9; font.letterSpacing: 0.8
                                 }
                             }
@@ -21615,7 +21616,7 @@ ApplicationWindow {
                                         }
                                         Text {
                                             textFormat: Text.PlainText
-                                            text: [("" + (lxChip.modelData.year || "")), root.relCount(lxChip.modelData.tracks || 0, "TRACK", "TRACKS")].filter(function (s) { return s !== "" }).join(" · ")
+                                            text: I18n.t([("" + (lxChip.modelData.year || "")), root.relCount(lxChip.modelData.tracks || 0, "TRACK", "TRACKS")].filter(function (s) { return s !== "" }).join(" · "))
                                             color: root.textDim; font.family: root.mono; font.pixelSize: 10; font.letterSpacing: 0.6
                                         }
                                     }
@@ -21624,13 +21625,13 @@ ApplicationWindow {
                             Text {
                                 visible: lxRow.held.length > relExcludedLedger.chipFit
                                 x: relExcludedLedger.xTracks - relExcludedLedger.gap - implicitWidth + 8; anchors.verticalCenter: parent.verticalCenter
-                                textFormat: Text.PlainText; text: "+" + (lxRow.held.length - relExcludedLedger.chipFit)
+                                textFormat: Text.PlainText; text: I18n.t("+" + (lxRow.held.length - relExcludedLedger.chipFit))
                                 color: root.textDim; font.family: root.mono; font.pixelSize: 11; font.bold: true
                             }
                             Text {
                                 x: relExcludedLedger.xTracks; width: relExcludedLedger.wNum; anchors.verticalCenter: parent.verticalCenter
                                 horizontalAlignment: Text.AlignRight; textFormat: Text.PlainText
-                                text: "" + (lxRow.row.tracks || 0)
+                                text: I18n.t("" + (lxRow.row.tracks || 0))
                                 color: root.textHi; font.family: root.mono; font.pixelSize: 14; font.bold: true
                             }
                             RelChip {
@@ -21699,9 +21700,9 @@ ApplicationWindow {
                                 readonly property var r1: root.relTipOldest
                                 readonly property string d0: r0 ? "" + r0.day : ""
                                 readonly property string d1: r1 ? "" + r1.day : ""
-                                text: (d0 === d1 ? (r0 && r0.mb && r0.shown ? root.relEntryDate(r0, "") : root.dateText(d0))
+                                text: I18n.t((d0 === d1 ? (r0 && r0.mb && r0.shown ? root.relEntryDate(r0, "") : root.dateText(d0))
                                                  : root.relEntryDate(r1, root.todayIso) + " – " + root.relEntryDate(r0, root.todayIso))
-                                      + "  ·  " + root.relAgo(d0)
+                                      + "  ·  " + root.relAgo(d0))
                                 color: root.todayIso !== "" && d0 > root.todayIso ? root.accent : root.textDim
                                 font.family: root.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.8
                                 elide: Text.ElideRight
@@ -21878,8 +21879,8 @@ ApplicationWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 88; width: Math.min(parent.width - 44, 560); horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                    text: root.libraryOn ? "Every artist in your library clears the floor, or is followed already."
-                                         : "Turn on your library in Settings to see the artists an import leaves out."
+                    text: I18n.t(root.libraryOn ? "Every artist in your library clears the floor, or is followed already."
+                                         : "Turn on your library in Settings to see the artists an import leaves out.")
                     color: root.textLo; font.pixelSize: 16
                 }
                 Text {
@@ -21890,7 +21891,7 @@ ApplicationWindow {
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: 88; width: Math.min(parent.width - 44, 560); horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                    text: "No excluded artist or album matches \u201c" + root._relExApplied + "\u201d"
+                    text: I18n.t("No excluded artist or album matches \u201c" + root._relExApplied + "\u201d")
                     color: root.textLo; font.pixelSize: 16
                 }
             }
@@ -21912,7 +21913,7 @@ ApplicationWindow {
                 Layout.fillWidth: true; Layout.leftMargin: 22; Layout.rightMargin: 22; Layout.topMargin: 2
                 spacing: 14
                 Text {
-                    textFormat: Text.PlainText; text: "My Tidal"; color: root.textHi
+                    textFormat: Text.PlainText; text: I18n.t("My Tidal"); color: root.textHi
                     font.pixelSize: 18; font.bold: true; Layout.alignment: Qt.AlignVCenter
                 }
                 // Wrap the tab strip in a plain Item that carries Layout.fillWidth,
@@ -21940,7 +21941,7 @@ ApplicationWindow {
                                 Row {
                                     id: lcRow; anchors.centerIn: parent; spacing: 7
                                     Rectangle { width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: lchip.on ? root.accent : root.textDim }
-                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: lchip.modelData[1]; color: lchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
+                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(lchip.modelData[1]); color: lchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
                                 }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.loadLib(lchip.modelData[0]) }
                             }
@@ -22093,7 +22094,7 @@ ApplicationWindow {
                     background: Rectangle { radius: 8; color: root.surface2; border.color: libSortBox.popup.visible ? root.accent : root.outline }
                     contentItem: Text {
                         textFormat: Text.PlainText
-                        text: libSortBox.displayText; color: root.textHi; font.pixelSize: 14
+                        text: I18n.t(libSortBox.displayText); color: root.textHi; font.pixelSize: 14
                         leftPadding: 14; rightPadding: 28; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight
                     }
                     indicator: ExpandChevron {
@@ -22104,7 +22105,7 @@ ApplicationWindow {
                     }
                     delegate: ItemDelegate {
                         width: libSortBox.width
-                        contentItem: Text { textFormat: Text.PlainText; text: modelData; color: root.textHi; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter }
+                        contentItem: Text { textFormat: Text.PlainText; text: I18n.t(modelData); color: root.textHi; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter }
                         background: Rectangle { color: highlighted ? root.surface3 : root.surface2 }
                         highlighted: libSortBox.highlightedIndex === index
                     }
@@ -22129,7 +22130,7 @@ ApplicationWindow {
                     color: root.surface2; border.color: root.outline
                     Text {
                         textFormat: Text.PlainText
-                        anchors.centerIn: parent; text: root.libSortGet(root.libraryCategory).asc ? "↑" : "↓"
+                        anchors.centerIn: parent; text: I18n.t(root.libSortGet(root.libraryCategory).asc ? "↑" : "↓")
                         color: root.textHi; font.family: root.mono; font.pixelSize: 18
                     }
                     MouseArea {
@@ -22272,10 +22273,10 @@ ApplicationWindow {
                                     }
                                     Text {
                                         textFormat: Text.PlainText
-                                        text: agPv.pst === "" ? "PREVIEW"
+                                        text: I18n.t(agPv.pst === "" ? "PREVIEW"
                                             : agPv.pst === "loading" ? "[buffering]"
                                             : agPv.pst === "error" ? "RETRY"
-                                            : root.fmtMs(root.previewPosition)
+                                            : root.fmtMs(root.previewPosition))
                                         color: agPv.pst === "error" ? root.red : root.accent
                                         font.family: agPv.pst === "playing" || agPv.pst === "paused" || agPv.pst === "loading" ? root.mono : root.uiFont
                                         font.pixelSize: 10; font.bold: true; font.letterSpacing: root.btnTrack
@@ -22291,7 +22292,7 @@ ApplicationWindow {
                                     Text {
                                         textFormat: Text.PlainText
                                         visible: agPv.pst === "playing" || agPv.pst === "paused"
-                                        text: "· STOP"
+                                        text: I18n.t("· STOP")
                                         color: agStopMa.containsMouse ? root.red : root.textDim
                                         font.family: root.uiFont; font.pixelSize: 9; font.bold: true; font.letterSpacing: root.btnTrack
                                         anchors.verticalCenter: parent.verticalCenter
@@ -22333,7 +22334,7 @@ ApplicationWindow {
                         width: homePane.width; spacing: 20
                         Text {
                             visible: root.homeSections.length > 0
-                            textFormat: Text.PlainText; text: "Recently added"
+                            textFormat: Text.PlainText; text: I18n.t("Recently added")
                             color: root.textHi; font.pixelSize: 20; font.bold: true
                         }
                         Repeater {
@@ -22361,7 +22362,7 @@ ApplicationWindow {
                                         Text {
                                             visible: homeSec.target !== ""
                                             anchors.verticalCenter: headText.verticalCenter
-                                            textFormat: Text.PlainText; text: "›"
+                                            textFormat: Text.PlainText; text: I18n.t("›")
                                             color: headMouse.containsMouse ? root.accent : root.textLo
                                             font.pixelSize: 18
                                         }
@@ -22456,7 +22457,7 @@ ApplicationWindow {
                             color: root.surface2; border.color: root.border1
                             Text {
                                 id: crumbRootTx; anchors.centerIn: parent
-                                textFormat: Text.PlainText; text: "Playlists"
+                                textFormat: Text.PlainText; text: I18n.t("Playlists")
                                 color: root.textLo; font.pixelSize: 12
                             }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.plCrumbTo(-1) }
@@ -22470,7 +22471,7 @@ ApplicationWindow {
                                 spacing: 6
                                 readonly property bool last: index === root.plFolderStack.length - 1
                                 Text {
-                                    textFormat: Text.PlainText; text: "›"
+                                    textFormat: Text.PlainText; text: I18n.t("›")
                                     color: root.textDim; font.pixelSize: 13
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -22536,7 +22537,7 @@ ApplicationWindow {
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 2
                                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
-                                Text { textFormat: Text.PlainText; text: model.subtitle ? model.subtitle : "Mix"; color: root.textLo; font.pixelSize: 12 }
+                                Text { textFormat: Text.PlainText; text: I18n.t(model.subtitle ? model.subtitle : "Mix"); color: root.textLo; font.pixelSize: 12 }
                             }
                             DownloadButton { mediaId: model.id; collectionCheck: true; label: "Download mix"; onTap: function(){ waves.downloadMix(model.id) } }
                         }
@@ -22557,7 +22558,7 @@ ApplicationWindow {
                                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
                                 Text { textFormat: Text.PlainText; text: model.artist; color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
                             }
-                            Text { textFormat: Text.PlainText; text: model.duration; color: root.textLo; font.pixelSize: 12; Layout.preferredWidth: 42 }
+                            Text { textFormat: Text.PlainText; text: I18n.t(model.duration); color: root.textLo; font.pixelSize: 12; Layout.preferredWidth: 42 }
                             DownIcon { mediaId: model.id; onTap: function(){ waves.downloadVideo(model.id) } }
                         }
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; z: -1; onClicked: root.openVideo(model.id, model.title, model.artist) }
@@ -22598,7 +22599,7 @@ ApplicationWindow {
                             color: on ? root.accentCont : "transparent"
                             Text {
                                 id: scText; textFormat: Text.PlainText; anchors.centerIn: parent
-                                text: schip.modelData[1]
+                                text: I18n.t(schip.modelData[1])
                                 color: schip.on ? root.accent : (scMa.containsMouse ? root.textLo : root.textDim)
                                 font.pixelSize: 10; font.family: root.uiFont; font.bold: true
                                 font.letterSpacing: root.btnTrack
@@ -22622,7 +22623,7 @@ ApplicationWindow {
                     }
                 }
                 Text {
-                    id: statusText; textFormat: Text.PlainText; text: waves.status; color: root.textLo; font.family: root.mono; font.pixelSize: 11
+                    id: statusText; textFormat: Text.PlainText; text: I18n.t(waves.status); color: root.textLo; font.family: root.mono; font.pixelSize: 11
                     // While the mini player is up, elide before its left edge so a
                     // long status line never runs underneath the centered player.
                     elide: Text.ElideRight
@@ -22649,8 +22650,8 @@ ApplicationWindow {
                     }
                     Text {
                         textFormat: Text.PlainText
-                        text: root.previewKind !== "" ? "v" + root.appUpdLatest
-                                                      : "UPDATE · v" + root.appUpdLatest + " AVAILABLE"
+                        text: I18n.t(root.previewKind !== "" ? "v" + root.appUpdLatest
+                                                      : "UPDATE · v" + root.appUpdLatest + " AVAILABLE")
                         color: statusUpdMa.containsMouse ? root.goldContTx : root.gold
                         font.family: root.mono; font.pixelSize: 11; font.letterSpacing: 0.5
                         MouseArea {
@@ -22684,7 +22685,7 @@ ApplicationWindow {
                     property string verState: ""
                     Text {
                         textFormat: Text.PlainText
-                        text: "TIDAL · BITWAVE CONSOLE · "
+                        text: I18n.t("TIDAL · BITWAVE CONSOLE · ")
                         color: root.textDim; font.family: root.mono; font.pixelSize: 11; font.letterSpacing: 0.5
                     }
                     Text {
@@ -22694,10 +22695,10 @@ ApplicationWindow {
                         // shove the whole wordmark sideways under the cursor.
                         // The transient check states are allowed to resize, they
                         // follow a deliberate click.
-                        text: statusMark.verState === "checking" ? "CHECKING…"
+                        text: I18n.t(statusMark.verState === "checking" ? "CHECKING…"
                             : statusMark.verState === "current" ? "UP TO DATE"
                             : statusMark.verState === "failed" ? "COULD NOT CHECK"
-                            : "v" + waves.appVersion
+                            : "v" + waves.appVersion)
                         color: statusMark.verState === "current" ? root.accent
                              : statusMark.verState === "failed" ? root.red
                              : verMa.containsMouse ? root.textLo : root.textDim
@@ -22783,7 +22784,7 @@ ApplicationWindow {
                         // readable while a stream loads.
                         anchors.rightMargin: 9 + 18 + 9 + npOut.width + 6
                         textFormat: Text.PlainText
-                        text: "[buffering]"
+                        text: I18n.t("[buffering]")
                         color: root.accent; font.family: root.mono; font.bold: true
                         font.pixelSize: 10
                         // It paints leftward, outside the box, into whatever bar
@@ -22847,7 +22848,7 @@ ApplicationWindow {
                         Text {
                             id: npTitle
                             anchors.verticalCenter: parent.verticalCenter
-                            textFormat: Text.PlainText; text: root.previewNowTitle
+                            textFormat: Text.PlainText; text: I18n.t(root.previewNowTitle)
                             color: npTitleMa.containsMouse && root.previewNowAlbumId !== "" ? "#ffffff" : root.textHi
                             font.family: root.mono; font.pixelSize: 11
                             elide: Text.ElideRight; width: Math.min(implicitWidth, npInfo.titleW)
@@ -22860,7 +22861,7 @@ ApplicationWindow {
                                 onClicked: root.nowOpenAlbum()
                             }
                         }
-                        Text { id: npSep; anchors.verticalCenter: parent.verticalCenter; textFormat: Text.PlainText; text: "·"; color: root.textDim; font.pixelSize: 11 }
+                        Text { id: npSep; anchors.verticalCenter: parent.verticalCenter; textFormat: Text.PlainText; text: I18n.t("·"); color: root.textDim; font.pixelSize: 11 }
                         // Artist credits, each its own clickable name. As many
                         // as fit the room the bar gives them, in order; the rest
                         // fold into a "+N" chip that opens the featured artists
@@ -22907,7 +22908,7 @@ ApplicationWindow {
                                         Text {
                                             visible: index < npArtist.shown - 1
                                             anchors.verticalCenter: parent.verticalCenter
-                                            textFormat: Text.PlainText; text: ", "
+                                            textFormat: Text.PlainText; text: I18n.t(", ")
                                             color: root.textDim; font.family: root.mono; font.pixelSize: 11
                                         }
                                     }
@@ -22933,7 +22934,7 @@ ApplicationWindow {
                         id: npGlyph
                         anchors.centerIn: parent
                         textFormat: Text.PlainText
-                        text: root.previewPlaying ? "||" : ">"
+                        text: I18n.t(root.previewPlaying ? "||" : ">")
                         color: root.accent; font.family: root.mono; font.bold: true
                         font.pixelSize: root.previewPlaying ? 13 : 18
                     }
@@ -22949,7 +22950,7 @@ ApplicationWindow {
                     Text {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                         textFormat: Text.PlainText
-                        text: (npBarHover.hovered || npStopMa.containsMouse) ? "[stop]" : "✕"
+                        text: I18n.t((npBarHover.hovered || npStopMa.containsMouse) ? "[stop]" : "✕")
                         color: root.red; font.family: root.mono; font.bold: true
                         font.pixelSize: (npBarHover.hovered || npStopMa.containsMouse) ? 11 : 12
                     }
@@ -22980,7 +22981,7 @@ ApplicationWindow {
             Text {
                 id: nowAimTx
                 anchors.centerIn: parent; textFormat: Text.PlainText
-                text: root.fmtMs(nowRail.aim * root.previewDuration)
+                text: I18n.t(root.fmtMs(nowRail.aim * root.previewDuration))
                 color: root.accentContTx; font.family: root.mono; font.pixelSize: 10; font.bold: true
             }
         }
@@ -23038,7 +23039,7 @@ ApplicationWindow {
                     width: nowCard.rowW; height: 16
                     Text {
                         x: 10; anchors.verticalCenter: parent.verticalCenter
-                        textFormat: Text.PlainText; text: "FEATURED ARTISTS"
+                        textFormat: Text.PlainText; text: I18n.t("FEATURED ARTISTS")
                         color: root.textHi; font.family: root.mono; font.pixelSize: 10; font.bold: true
                         font.letterSpacing: 0.8
                     }
@@ -23049,7 +23050,7 @@ ApplicationWindow {
                         color: root.accentCont; border.color: root.accentDim
                         Text {
                             id: nowCardN; anchors.centerIn: parent; textFormat: Text.PlainText
-                            text: "+" + nowCard.folded.length
+                            text: I18n.t("+" + nowCard.folded.length)
                             color: root.accentContTx; font.family: root.mono; font.pixelSize: 10; font.bold: true
                         }
                     }
@@ -23246,7 +23247,7 @@ ApplicationWindow {
             anchors.fill: parent; anchors.margins: 16; spacing: 12
             RowLayout {
                 Layout.fillWidth: true
-                Text { text: "Download queue"; color: root.textHi; font.pixelSize: 16; font.bold: true }
+                Text { text: I18n.t("Download queue"); color: root.textHi; font.pixelSize: 16; font.bold: true }
                 Item { Layout.fillWidth: true }
                 // Pause / resume all. Yellow while running (pausing interrupts but
                 // loses nothing), green once paused, where RESUME is the way
@@ -23281,7 +23282,7 @@ ApplicationWindow {
                     onClicked: queueDrawer.close()
                 }
             }
-            Text { textFormat: Text.PlainText; text: queueModel.count + (queueModel.count === 1 ? " item" : " items"); color: root.textLo; font.family: root.mono; font.pixelSize: 12 }
+            Text { textFormat: Text.PlainText; text: I18n.t(queueModel.count + (queueModel.count === 1 ? " item" : " items")); color: root.textLo; font.family: root.mono; font.pixelSize: 12 }
             ListView {
                 id: queueList
                 Layout.fillWidth: true; Layout.fillHeight: true; clip: true; spacing: 0
@@ -23311,11 +23312,11 @@ ApplicationWindow {
                         Text {
                             textFormat: Text.PlainText
                             id: secLbl
-                            text: secItem.section === "completed" ? "COMPLETED · " + root.completedCount
+                            text: I18n.t(secItem.section === "completed" ? "COMPLETED · " + root.completedCount
                                 : secItem.section === "failed" ? "FAILED · " + root.failedCount
                                 : secItem.section === "stopped" ? "STOPPED · " + root.stoppedCount
                                 : secItem.section === "downloading" ? "DOWNLOADING · " + root.downloadingCount
-                                : "QUEUED · " + root.queuedCount
+                                : "QUEUED · " + root.queuedCount)
                             // Brightness tracks how live the section is: the work
                             // happening right now reads near-white, what is only
                             // waiting stays dim, so the eye lands on Downloading
@@ -23371,7 +23372,7 @@ ApplicationWindow {
                                 else waves.clearQueued()
                             }
                         }
-                        Text { textFormat: Text.PlainText; visible: secItem.section === "completed"; text: root.completedCollapsed ? "▸" : "▾"; color: root.accent; font.pixelSize: 11; Layout.alignment: Qt.AlignVCenter }
+                        Text { textFormat: Text.PlainText; visible: secItem.section === "completed"; text: I18n.t(root.completedCollapsed ? "▸" : "▾"); color: root.accent; font.pixelSize: 11; Layout.alignment: Qt.AlignVCenter }
                     }
                     MouseArea { anchors.fill: parent; enabled: secItem.section === "completed"; cursorShape: Qt.PointingHandCursor
                         onClicked: root.completedCollapsed = !root.completedCollapsed }
@@ -23637,7 +23638,7 @@ ApplicationWindow {
                                 }
                                 Text {
                                     visible: qrow.expandable
-                                    text: "›"; rotation: qrow.qexp ? 90 : 0
+                                    text: I18n.t("›"); rotation: qrow.qexp ? 90 : 0
                                     color: (qrow.qexp || cardHover.containsMouse) ? root.accent : root.textDim; font.pixelSize: 13
                                     Layout.alignment: Qt.AlignVCenter; Layout.leftMargin: -5; Layout.rightMargin: -4
                                     Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -23648,7 +23649,7 @@ ApplicationWindow {
                                     Text { textFormat: Text.PlainText; text: model.name; color: root.textHi; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
                                     Text {
                                         textFormat: Text.PlainText  // composed from a remote artist name
-                                        text: {
+                                        text: I18n.t((function() {
                                             var a = model.artist ? model.artist + " · " : ""
                                             if (qrow.st === "queued") return a + "Queued"
                                             // A failure states WHAT failed when the job
@@ -23666,7 +23667,7 @@ ApplicationWindow {
                                                 return a + (qrow.st === "done" ? model.tracks : Math.floor(model.progress / 100 * model.tracks + 1e-6)) + "/" + model.tracks + " tracks"
                                             if (qrow.st === "running") return a + Math.round(model.progress) + "%"
                                             return a + (qrow.st === "done" ? "Done" : qrow.st)
-                                        }
+                                        })())
                                         color: root.textLo; font.family: root.mono; font.pixelSize: 11; elide: Text.ElideRight; Layout.fillWidth: true
                                     }
                                 }
@@ -23680,7 +23681,7 @@ ApplicationWindow {
                                     Row {
                                         id: chipRow; anchors.centerIn: parent; spacing: 6
                                         Ico { name: "check"; color: root.accent; size: 13; anchors.verticalCenter: parent.verticalCenter }
-                                        Text { text: "DONE"; color: root.accent; font.family: root.mono; font.pixelSize: 11; font.bold: true; font.letterSpacing: 0.8; anchors.verticalCenter: parent.verticalCenter }
+                                        Text { text: I18n.t("DONE"); color: root.accent; font.family: root.mono; font.pixelSize: 11; font.bold: true; font.letterSpacing: 0.8; anchors.verticalCenter: parent.verticalCenter }
                                     }
                                     SequentialAnimation {
                                         id: chipPop
@@ -23820,7 +23821,7 @@ ApplicationWindow {
                                     Text {
                                         textFormat: Text.PlainText
                                         visible: qrow.ledgerHolding && !qrow.single && (root.queueTracks[qrow.model.qid] || []).length === 0
-                                        text: "Loading tracks…"; color: root.textDim; font.family: root.mono; font.pixelSize: 10
+                                        text: I18n.t("Loading tracks…"); color: root.textDim; font.family: root.mono; font.pixelSize: 10
                                     }
                                     // What the single's peek is for: the sliver
                                     // answers the hover instead of waiting on a
@@ -23829,7 +23830,7 @@ ApplicationWindow {
                                         objectName: "qSingleNote"
                                         textFormat: Text.PlainText
                                         visible: qrow.ledgerHolding && qrow.single
-                                        text: "Single track, nothing to expand"
+                                        text: I18n.t("Single track, nothing to expand")
                                         color: root.textDim; font.family: root.mono; font.pixelSize: 10
                                     }
                                 // A long collection's ledger can hold tracks that
@@ -23985,7 +23986,7 @@ ApplicationWindow {
                                         height: root.queueLedgerRowH; spacing: 8
                                         Text {
                                             textFormat: Text.PlainText
-                                            text: (td.num || "") + ""
+                                            text: I18n.t((td.num || "") + "")
                                             color: root.textDim; font.family: root.mono; font.pixelSize: 10
                                             Layout.preferredWidth: Math.max(16, Math.ceil(ledgerDigit.advanceWidth * String(qrow.ledgerLen).length))
                                             horizontalAlignment: Text.AlignRight
@@ -24022,7 +24023,7 @@ ApplicationWindow {
                                             // state and no file has landed at it yet.
                                             readonly property bool promised: delivered === "" && tier !== ""
                                             visible: tier !== ""
-                                            text: tier
+                                            text: I18n.t(tier)
                                             color: root.qualFg(tier)
                                             opacity: promised ? 0.45 : 1
                                             Behavior on opacity { NumberAnimation { duration: 260 } }
@@ -24133,7 +24134,7 @@ ApplicationWindow {
                                                         // Mirrors the scramble frames
                                                         // so the fill stays letter-
                                                         // aligned while it decodes.
-                                                        text: dlWord.text; color: root.accent
+                                                        text: I18n.t(dlWord.text); color: root.accent
                                                         font.family: root.mono; font.pixelSize: 10; font.bold: true
                                                     }
                                                 }
@@ -24166,7 +24167,7 @@ ApplicationWindow {
                                                     Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                                     Text {
                                                         textFormat: Text.PlainText
-                                                        text: finWord.text; color: root.accent
+                                                        text: I18n.t(finWord.text); color: root.accent
                                                         font.family: root.mono; font.pixelSize: 10; font.bold: true
                                                     }
                                                 }
@@ -24502,7 +24503,7 @@ ApplicationWindow {
                         Text {
                             id: rvsT
                             anchors.centerIn: parent
-                            textFormat: Text.PlainText; text: rvsBtn.modelData[1]
+                            textFormat: Text.PlainText; text: I18n.t(rvsBtn.modelData[1])
                             color: rvsBtn.on ? root.accent : rvsMa.containsMouse ? root.textHi : root.textLo
                             Behavior on color { ColorAnimation { duration: 200 } }
                             font.pixelSize: 13; font.bold: rvsBtn.on
@@ -24538,10 +24539,10 @@ ApplicationWindow {
                 WelcomeBanner { Layout.fillWidth: true; Layout.preferredHeight: 75 }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
-                    Text { text: "1"; color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; Layout.alignment: Qt.AlignTop }
+                    Text { text: I18n.t("1"); color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; Layout.alignment: Qt.AlignTop }
                     Text {
                         Layout.fillWidth: true; wrapMode: Text.WordWrap
-                        text: "Open the TIDAL login in your browser and sign in."
+                        text: I18n.t("Open the TIDAL login in your browser and sign in.")
                         color: root.textLo; font.pixelSize: 13
                     }
                 }
@@ -24553,10 +24554,10 @@ ApplicationWindow {
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
                     visible: loginPanel.urlOpened
-                    Text { text: "2"; color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; Layout.alignment: Qt.AlignTop }
+                    Text { text: I18n.t("2"); color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; Layout.alignment: Qt.AlignTop }
                     Text {
                         Layout.fillWidth: true; wrapMode: Text.WordWrap
-                        text: "Paste the URL you land on back here."
+                        text: I18n.t("Paste the URL you land on back here.")
                         color: root.textLo; font.pixelSize: 13
                     }
                 }
@@ -24577,7 +24578,7 @@ ApplicationWindow {
                         TextField {
                             id: redirectField
                             Layout.fillWidth: true
-                            placeholderText: "Paste redirect URL here…"
+                            placeholderText: I18n.t("Paste redirect URL here…")
                             color: loginDecoder.decoding ? root.accent : root.textHi
                             placeholderTextColor: root.textLo; font.pixelSize: 13; font.family: root.mono
                             background: Rectangle { color: "transparent" }
@@ -24661,16 +24662,16 @@ ApplicationWindow {
             radius: 14; color: root.surface2; border.color: root.outline
             ColumnLayout {
                 id: fgCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; text: "Choose a download folder" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; text: I18n.t("Choose a download folder") }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "BitWave doesn't have a folder to save downloads to yet. Pick where your music should go, then start the download again."
+                    text: I18n.t("BitWave doesn't have a folder to save downloads to yet. Pick where your music should go, then start the download again.")
                 }
                 SpecBtn { Layout.alignment: Qt.AlignHCenter; primary: true; label: "OPEN DOWNLOAD SETTINGS"; onClicked: { root.folderGateBlocking = false; root.openDownloadSetting() } }
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    textFormat: Text.PlainText; text: "Not now"; color: root.textLo; font.pixelSize: 13
+                    textFormat: Text.PlainText; text: I18n.t("Not now"); color: root.textLo; font.pixelSize: 13
                     MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: root.folderGateBlocking = false }
                 }
             }
@@ -24697,14 +24698,14 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: fnCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Would you like to update your download location?" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("Would you like to update your download location?") }
                 Text { // guard:deliberate-richtext download-nudge-body
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     textFormat: Text.StyledText; linkColor: "#e6ebf0"
                     // The path is a link: clicking it opens the OS file manager at that
                     // folder (backend expands ~ and falls back to the nearest real dir).
-                    text: "Currently downloads are going to the default path <a href=\"reveal\"><tt>~/download</tt></a> the application shipped in v0.1.0, and that caused some issues with users being unable to locate their files, or not realizing they could update the default location for downloads.<br><br>Would you like to keep the current default, or choose a new location?"
+                    text: I18n.t("Currently downloads are going to the default path <a href=\"reveal\"><tt>~/download</tt></a> the application shipped in v0.1.0, and that caused some issues with users being unable to locate their files, or not realizing they could update the default location for downloads.<br><br>Would you like to keep the current default, or choose a new location?")
                     onLinkActivated: function(link) { waves.revealDownloadPath() }
                 }
                 RowLayout {
@@ -24735,7 +24736,7 @@ ApplicationWindow {
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: !root.catDlPrompt ? ""
+                    text: I18n.t(!root.catDlPrompt ? ""
                           : root.catDlPrompt.kind === "favTracks"
                           ? "Download " + root.catDlPrompt.count + (root.catDlPrompt.count === 1 ? " track?" : " tracks?")
                           : root.catDlPrompt.kind === "favAlbums"
@@ -24748,25 +24749,25 @@ ApplicationWindow {
                           ? "Download " + root.catDlPrompt.count + (root.catDlPrompt.count === 1 ? " mix?" : " mixes?")
                           : root.catDlPrompt.kind === "favVideos"
                           ? "Download " + root.catDlPrompt.count + (root.catDlPrompt.count === 1 ? " video?" : " videos?")
-                          : "Download " + root.catDlPrompt.count + (root.catDlPrompt.count === 1 ? " playlist?" : " playlists?")
+                          : "Download " + root.catDlPrompt.count + (root.catDlPrompt.count === 1 ? " playlist?" : " playlists?"))
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     text: !root.catDlPrompt ? ""
                           : root.catDlPrompt.kind === "favTracks"
-                          ? "Every track in My Tidal, filed by your track path setting. Progress shows in the queue."
+                          ? I18n.t("Every track in My Tidal, filed by your track path setting. Progress shows in the queue.")
                           : root.catDlPrompt.kind === "favAlbums"
-                          ? "Every album in My Tidal, each in its own folder, under your album settings. Progress shows in the queue."
+                          ? I18n.t("Every album in My Tidal, each in its own folder, under your album settings. Progress shows in the queue.")
                           : root.catDlPrompt.kind === "favArtists"
-                          ? "The full discography of every artist in My Tidal, under your discography settings. This can be a lot of music. Progress shows in the queue."
+                          ? I18n.t("The full discography of every artist in My Tidal, under your discography settings. This can be a lot of music. Progress shows in the queue.")
                           : root.catDlPrompt.kind === "favPlaylists"
-                          ? "Every playlist in My Tidal, the ones inside folders included, each in its own folder. Progress shows in the queue."
+                          ? I18n.t("Every playlist in My Tidal, the ones inside folders included, each in its own folder. Progress shows in the queue.")
                           : root.catDlPrompt.kind === "favMixes"
-                          ? "Every mix in My Tidal as it is today, each in its own folder. Progress shows in the queue."
+                          ? I18n.t("Every mix in My Tidal as it is today, each in its own folder. Progress shows in the queue.")
                           : root.catDlPrompt.kind === "favVideos"
-                          ? "Every video in My Tidal, filed by your video path setting. Progress shows in the queue."
-                          : "Everything in " + root.catDlPrompt.title + ", each playlist in its own folder. Progress shows in the queue."
+                          ? I18n.t("Every video in My Tidal, filed by your video path setting. Progress shows in the queue.")
+                          : I18n.t("Everything in ") + root.catDlPrompt.title + I18n.t(", each playlist in its own folder. Progress shows in the queue.")
                 }
                 Row {
                     spacing: 8
@@ -24777,7 +24778,7 @@ ApplicationWindow {
                     }
                     Text {
                         textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                        text: "Don't ask again"; color: root.textLo; font.pixelSize: 13
+                        text: I18n.t("Don't ask again"); color: root.textLo; font.pixelSize: 13
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: cdSkip.checked = !cdSkip.checked }
                     }
                 }
@@ -24823,11 +24824,11 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: srCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Reset all settings to default?" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("Reset all settings to default?") }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "Every option in Settings goes back to its factory value, including your download folder and quality choices. You stay signed in, and your downloaded music is not touched."
+                    text: I18n.t("Every option in Settings goes back to its factory value, including your download folder and quality choices. You stay signed in, and your downloaded music is not touched.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -24866,25 +24867,25 @@ ApplicationWindow {
                 id: flacFixCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: root.flacFixResume ? "Resume the last fix?"
-                        : "Write the signature into " + root.flacFixCount + (root.flacFixCount === 1 ? " file?" : " files?")
+                    text: I18n.t(root.flacFixResume ? "Resume the last fix?"
+                        : "Write the signature into " + root.flacFixCount + (root.flacFixCount === 1 ? " file?" : " files?"))
                 }
                 Text {
                     visible: root.flacFixWhere !== ""
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; maximumLineCount: 3; elide: Text.ElideRight
                     color: root.textHi; font.family: root.mono; font.pixelSize: 12
-                    text: root.flacFixWhere
+                    text: I18n.t(root.flacFixWhere)
                 }
                 Text {
                     visible: root.flacFixResume
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "The last fix stopped before it finished. BitWave scans these folders again and writes the signature into the files it did not reach. The files it already signed are skipped."
+                    text: I18n.t("The last fix stopped before it finished. BitWave scans these folders again and writes the signature into the files it did not reach. The files it already signed are skipped.")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "Each file is decoded and checked again first, then its 34-byte FLAC header block is updated in place. The audio is never changed, no file is moved, renamed or deleted, and a file that already carries a signature is never rewritten. A report of every file is saved when it finishes."
+                    text: I18n.t("Each file is decoded and checked again first, then its 34-byte FLAC header block is updated in place. The audio is never changed, no file is moved, renamed or deleted, and a file that already carries a signature is never rewritten. A report of every file is saved when it finishes.")
                 }
                 // The same buttons as the other Settings confirmations (the resets).
                 RowLayout {
@@ -24920,11 +24921,11 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: frCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Reset BitWave completely?" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("Reset BitWave completely?") }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "This signs you out and permanently erases everything BitWave has saved on this computer: all settings, the record of which tracks you own, caches and logs. Your downloaded music files are not touched. BitWave closes when it finishes, and the next launch starts like a brand-new install."
+                    text: I18n.t("This signs you out and permanently erases everything BitWave has saved on this computer: all settings, the record of which tracks you own, caches and logs. Your downloaded music files are not touched. BitWave closes when it finishes, and the next launch starts like a brand-new install.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -24965,16 +24966,16 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: fuCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "Download folder isn't reachable" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("Download folder isn't reachable") }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere
                     color: root.textLo; font.family: root.mono; font.pixelSize: 12
-                    text: root.folderUnreachablePath
+                    text: I18n.t(root.folderUnreachablePath)
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "The folder is set, but writing to it failed just now. If it lives on a network drive or NAS, it may have disconnected while the computer slept. Reconnect it, or choose a different folder. The download is held: BitWave keeps checking and resumes on its own the moment the folder is back."
+                    text: I18n.t("The folder is set, but writing to it failed just now. If it lives on a network drive or NAS, it may have disconnected while the computer slept. Reconnect it, or choose a different folder. The download is held: BitWave keeps checking and resumes on its own the moment the folder is back.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -25034,19 +25035,19 @@ ApplicationWindow {
                     textFormat: Text.PlainText
                     Layout.fillWidth: true
                     color: root.textHi; font.pixelSize: 18; font.bold: true
-                    text: appFfmpeg.ready
+                    text: I18n.t(appFfmpeg.ready
                         ? (ffmpegGate.installedHere ? "Awesome, FFmpeg is installed!" : "Awesome, FFmpeg is already installed!")
-                        : "Set up FFmpeg"
+                        : "Set up FFmpeg")
                 }
                 Text {
                     textFormat: Text.PlainText
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: appFfmpeg.stateKey === "managed"
+                    text: I18n.t(appFfmpeg.stateKey === "managed"
                             ? "Installed and managed by BitWave. Video conversion, FLAC extraction, and downsampling are all available. You can manage or replace FFmpeg anytime in Settings."
                           : appFfmpeg.stateKey === "path"
                             ? "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. BitWave found a copy on your system and can use it as is."
-                          : "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. Without it, those steps are skipped."
+                          : "FFmpeg converts videos, extracts FLAC, and downsamples hi-res audio. Without it, those steps are skipped.")
                 }
 
                 // Status readout: dot + FFMPEG + state, grouped on one line.
@@ -25058,13 +25059,13 @@ ApplicationWindow {
                              : appFfmpeg.stateKey === "managed" ? root.green
                              : appFfmpeg.stateKey === "path" ? root.gold : root.red
                     }
-                    Text { text: "FFMPEG"; color: root.textHi; font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.4 }
+                    Text { text: I18n.t("FFMPEG"); color: root.textHi; font.pixelSize: 12; font.bold: true; font.letterSpacing: 1.4 }
                     Text {
                         textFormat: Text.PlainText
-                        text: appFfmpeg.busy ? "INSTALLING"
+                        text: I18n.t(appFfmpeg.busy ? "INSTALLING"
                             : appFfmpeg.stateKey === "managed" ? ("MANAGED" + (appFfmpeg.status.version ? " · " + appFfmpeg.status.version : ""))
                             : appFfmpeg.stateKey === "path" ? ("SYSTEM" + (appFfmpeg.status.version ? " · " + appFfmpeg.status.version : ""))
-                            : "NOT INSTALLED"
+                            : "NOT INSTALLED")
                         color: appFfmpeg.busy ? root.gold
                              : appFfmpeg.stateKey === "managed" ? root.green
                              : appFfmpeg.stateKey === "path" ? root.gold : root.textDim
@@ -25085,7 +25086,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText
                     visible: appFfmpeg.lifeState === "failed"
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
-                    text: appFfmpeg.failPrefix + appFfmpeg.message; color: root.red; font.pixelSize: 12
+                    text: I18n.t(appFfmpeg.failPrefix + appFfmpeg.message); color: root.red; font.pixelSize: 12
                 }
 
                 // Missing: the choice is two tap cards, no separate confirm.
@@ -25107,7 +25108,7 @@ ApplicationWindow {
                     Layout.fillWidth: true; implicitHeight: ffNoAskTxt.implicitHeight + 2
                     Text {
                         id: ffNoAskTxt; anchors.centerIn: parent
-                        text: "I don't need FFmpeg. Stop showing this at launch."
+                        text: I18n.t("I don't need FFmpeg. Stop showing this at launch.")
                         color: ffNoAskMa.containsMouse ? root.textHi : root.textLo
                         font.pixelSize: 12; font.underline: true
                     }
@@ -25160,11 +25161,11 @@ ApplicationWindow {
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                     textFormat: Text.StyledText; linkColor: root.cyan
                     color: root.textDim; font.pixelSize: 11
-                    text: "Managed builds for " + (appFfmpeg.status.os || "") + "/" + (appFfmpeg.status.arch || "")
+                    text: I18n.t("Managed builds for " + (appFfmpeg.status.os || "") + "/" + (appFfmpeg.status.arch || "")
                           + " come from <a href=\"" + (appFfmpeg.status.source_url || "") + "\">"
                           + (appFfmpeg.status.source || "") + "</a>"
                           + (appFfmpeg.status.source_license ? " · " + appFfmpeg.status.source_license : "")
-                          + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org)."
+                          + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org).")
                     onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                 }
             }
@@ -25309,11 +25310,11 @@ ApplicationWindow {
                 visible: updateToast.face !== "installing"
                 Layout.alignment: Qt.AlignBaseline
                 textFormat: Text.PlainText
-                text: updateToast.face === "ready"
+                text: I18n.t(updateToast.face === "ready"
                       ? (updateToast.swapFailure !== "" ? updateToast.swapFailure + " Restart to try once more."
                                                         : "BitWave v" + updateToast.landedVersion() + " installed")
                     : updateToast.face === "failed" ? "Install failed: " + updateToast.error
-                    : "BitWave v" + updateToast.version + " is available"
+                    : "BitWave v" + updateToast.version + " is available")
                 color: updateToast.face === "failed" ? root.red : root.textHi
                 font.pixelSize: 12; elide: Text.ElideRight
                 Layout.maximumWidth: root.width - 300
@@ -25344,7 +25345,7 @@ ApplicationWindow {
                     : updateToast.face === "ready" ? "RESTART NOW"
                     : "RETRY"
                 property string scr: ""
-                text: scr !== "" ? scr : realLabel
+                text: I18n.t(scr !== "" ? scr : realLabel)
                 color: updateToast.face === "installing" ? root.textDim
                      : utGlitch.running ? Qt.lighter(root.green, 1.0 + 0.45 * (1 - utAct._gt / utGlitch.ticks))
                      : root.green
@@ -25400,7 +25401,7 @@ ApplicationWindow {
                 Layout.leftMargin: 2
                 Layout.alignment: Qt.AlignBaseline
                 textFormat: Text.PlainText
-                text: updateToast.face === "ready" ? "LATER" : "✕"
+                text: I18n.t(updateToast.face === "ready" ? "LATER" : "✕")
                 color: utX.containsMouse ? root.textHi : root.textDim
                 font.family: updateToast.face === "ready" ? root.mono : root.uiFont
                 font.pixelSize: updateToast.face === "ready" ? 10 : 11
@@ -25437,11 +25438,11 @@ ApplicationWindow {
             MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
             ColumnLayout {
                 id: fbCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
-                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: "This download needs FFmpeg" }
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("This download needs FFmpeg") }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "FFmpeg isn't set up, so files would save degraded: FLAC stays wrapped in its stream container, videos aren't converted, and track lengths aren't repaired (strict players can show 0:00). Set it up in Settings with one click, then start the download again, or continue anyway with these limitations."
+                    text: I18n.t("FFmpeg isn't set up, so files would save degraded: FLAC stays wrapped in its stream container, videos aren't converted, and track lengths aren't repaired (strict players can show 0:00). Set it up in Settings with one click, then start the download again, or continue anyway with these limitations.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -25514,7 +25515,7 @@ ApplicationWindow {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "Before you continue"; color: root.textHi; font.pixelSize: 18; font.bold: true
+                    text: I18n.t("Before you continue"); color: root.textHi; font.pixelSize: 18; font.bold: true
                 }
                 Flickable {
                     id: termsBodyFlick
@@ -25542,13 +25543,13 @@ ApplicationWindow {
                         // scrollbar) even with the whole card to spare.
                         bottomPadding: 6
                         color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                        text: "BitWave is a personal, non-commercial tool for accessing your own TIDAL account. By continuing, you agree that:\n\n"
+                        text: I18n.t("BitWave is a personal, non-commercial tool for accessing your own TIDAL account. By continuing, you agree that:\n\n"
                             + "•  You will use BitWave only for lawful, personal, non-commercial purposes, and only with content you are authorized to access.\n"
                             + "•  You will not use BitWave to infringe copyright or to reproduce, distribute, or pirate any content. Respect the rights of artists and rights-holders.\n"
                             + "•  Your use of BitWave may violate TIDAL's Terms of Service. You accept that risk and any consequences to your account, and you are responsible for complying with all laws that apply to you.\n"
                             + "•  BitWave is provided \"as is\", without warranty of any kind, and to the fullest extent permitted by law its developers and contributors accept no liability for any damages arising from it. See sections 15 and 16 of the AGPL-3.0.\n"
                             + "•  You will indemnify and hold harmless the developers and contributors of BitWave against any claim, loss or demand arising from your use of it or your breach of these terms.\n\n"
-                            + "BitWave is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a trademark of its owner, used here only to identify the service BitWave works with."
+                            + "BitWave is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a trademark of its owner, used here only to identify the service BitWave works with.")
                     }
                 }
                 // Privacy promise, emphasized, the closing note of the preamble.
@@ -25556,8 +25557,8 @@ ApplicationWindow {
                 Text { // guard:deliberate-richtext privacy-promise
                     Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.StyledText
-                    text: "BitWave does not collect any information from its users and has no way of knowing how the application is used. "
-                        + "<font color=\"#3dff6e\">Privacy is the foundation of this application.</font>"
+                    text: I18n.t("BitWave does not collect any information from its users and has no way of knowing how the application is used. "
+                        + "<font color=\"#3dff6e\">Privacy is the foundation of this application.</font>")
                     color: root.textHi; font.pixelSize: 13; font.bold: true; lineHeight: 1.3
                 }
                 RowLayout {
@@ -25578,7 +25579,7 @@ ApplicationWindow {
                     Text {
                         Layout.maximumWidth: ackRow.Layout.maximumWidth - ackChk.width - ackRow.spacing
                         wrapMode: Text.WordWrap; textFormat: Text.PlainText
-                        text: "I have read and agree to these terms."
+                        text: I18n.t("I have read and agree to these terms.")
                         color: root.textHi; font.pixelSize: 13
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ackChk.checked = !ackChk.checked }
                     }
@@ -25608,7 +25609,7 @@ ApplicationWindow {
                 Text {
                     Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.PlainText
-                    text: root.termsVersionStamp
+                    text: I18n.t(root.termsVersionStamp)
                     color: root.textDim; font.pixelSize: 11
                 }
             }
@@ -25698,8 +25699,8 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: libraryClaimGate.isOwned ? "You already downloaded this"
-                                                   : "This looks like it is already in your library"
+                    text: I18n.t(libraryClaimGate.isOwned ? "You already downloaded this"
+                                                   : "This looks like it is already in your library")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
@@ -25716,7 +25717,7 @@ ApplicationWindow {
                     // track is (that is what the setting asks for). Either
                     // way a Dolby Atmos file is never replaced by a stereo
                     // download; the engine steps aside to a numbered name.
-                    text: libraryClaimGate.isOwned
+                    text: I18n.t(libraryClaimGate.isOwned
                         ? ((libraryClaimGate.albumTitle !== ""
                               ? "BitWave downloaded “" + libraryClaimGate.albumTitle + "” itself, so this is a record, not a guess."
                               : "BitWave downloaded this itself, so this is a record, not a guess.")
@@ -25738,7 +25739,7 @@ ApplicationWindow {
                                   + " sitting at its exact name is kept, anything else gets its own copy beside it."
                                 : " With “Skip existing” turned off, downloading again replaces a same-named file"
                                   + " unless BitWave can tell it is a different track. A Dolby Atmos file is never"
-                                  + " replaced by a stereo download."))
+                                  + " replaced by a stereo download.")))
                 }
                 // The evidence, so the user can judge the match rather than
                 // take the button's word for it.
@@ -25748,7 +25749,7 @@ ApplicationWindow {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideMiddle
                     color: root.textDim; font.family: root.mono; font.pixelSize: 12
-                    text: libraryClaimGate.folder
+                    text: I18n.t(libraryClaimGate.folder)
                 }
                 // This gate is the only one with no explicit dismiss button
                 // (three CTAs crowd the row), so the way out is spelled out.
@@ -25756,7 +25757,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textDim; font.pixelSize: 12
-                    text: "Click away to leave it alone."
+                    text: I18n.t("Click away to leave it alone.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -25839,22 +25840,22 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: updateOptInGate.freshSetup ? "Stay current with BitWave" : "Want to hear about updates?"
+                    text: I18n.t(updateOptInGate.freshSetup ? "Stay current with BitWave" : "Want to hear about updates?")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: (updateOptInGate.freshSetup
+                    text: I18n.t((updateOptInGate.freshSetup
                             ? "BitWave updates often, and most updates fix problems you would otherwise run into. "
                             : "BitWave never asked before, so you have been running without update checks. ")
-                        + "A once-a-day check tells you when a new version is out. Nothing is downloaded or installed unless you choose it."
+                        + "A once-a-day check tells you when a new version is out. Nothing is downloaded or installed unless you choose it.")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textDim; font.pixelSize: 12; lineHeight: 1.3
-                    text: "You can change this any time in Settings."
+                    text: I18n.t("You can change this any time in Settings.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -25927,7 +25928,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: "FLAC files from earlier versions"
+                    text: I18n.t("FLAC files from earlier versions")
                 }
                 // StyledText for the one bold phrase, lit in textHi: a string
                 // literal plus a palette color, no remote data. The phrase is
@@ -25936,7 +25937,7 @@ ApplicationWindow {
                     textFormat: Text.StyledText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
-                    text: "Some FLAC files saved by earlier versions of BitWave (and by tidal-dl-ng, which BitWave grew from) are missing their audio signature. <b><font color=\"" + root.textHi + "\">The music in them is intact and plays normally</font></b>, but strict tools like flac -t or Music Assistant may flag them. BitWave now adds the signature to everything it saves, and a new check in Settings can find and fix older files for you in a few clicks, without touching the audio. <b><font color=\"" + root.textHi + "\">Fixing them is optional.</font></b>"
+                    text: I18n.t("Some FLAC files saved by earlier versions of BitWave (and by tidal-dl-ng, which BitWave grew from) are missing their audio signature. <b><font color=\"" + root.textHi + "\">The music in them is intact and plays normally</font></b>, but strict tools like flac -t or Music Assistant may flag them. BitWave now adds the signature to everything it saves, and a new check in Settings can find and fix older files for you in a few clicks, without touching the audio. <b><font color=\"" + root.textHi + "\">Fixing them is optional.</font></b>")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
@@ -26012,7 +26013,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true
-                    text: "Follow an artist"
+                    text: I18n.t("Follow an artist")
                 }
                 Rectangle {
                     Layout.fillWidth: true; implicitHeight: 44; radius: 8; color: root.surface
@@ -26025,7 +26026,7 @@ ApplicationWindow {
                             id: followField
                             objectName: "followField"
                             Layout.fillWidth: true
-                            placeholderText: "Artist name…"
+                            placeholderText: I18n.t("Artist name…")
                             color: root.textHi; placeholderTextColor: root.textLo; font.pixelSize: 14
                             background: Rectangle { color: "transparent" }
                             onTextChanged: {
@@ -26042,10 +26043,10 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13
-                    text: followDialog.busy ? "Searching…"
+                    text: I18n.t(followDialog.busy ? "Searching…"
                         : followDialog.failed ? "The search did not go through. Try again in a moment."
                         : followDialog.needle !== "" ? "No artists found."
-                        : "Search TIDAL for an artist. Their new releases will show up in the feed."
+                        : "Search TIDAL for an artist. Their new releases will show up in the feed.")
                 }
                 ListView {
                     id: followList
@@ -26361,9 +26362,9 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true
-                    text: importDialog.stage === "review" && importDialog.fromTray ? "Artists to look at"
+                    text: I18n.t(importDialog.stage === "review" && importDialog.fromTray ? "Artists to look at"
                         : importDialog.stage === "done" ? "Following"
-                        : "Follow your library's artists"
+                        : "Follow your library's artists")
                 }
                 Text {
                     objectName: "importStatus"
@@ -26371,7 +26372,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13
-                    text: {
+                    text: I18n.t((function() {
                         var d = importDialog
                         if (d.stage === "start")
                             return "BitWave finds each artist in your library on TIDAL. Artists you downloaded with BitWave are recognized from their files at once; the rest are searched one a second, so a big library takes a few minutes. Nothing is followed until you say so, and your TIDAL favorites are not changed."
@@ -26397,7 +26398,7 @@ ApplicationWindow {
                         return d.fromTray ? "Nothing left to look at."
                              : d.scanning ? "Every artist found so far is already followed" + (d.skipped > 0 ? " or set aside." : ".")
                              : "Every artist in your library is already followed" + (d.skipped > 0 ? " or set aside." : ".")
-                    }
+                    })())
                 }
                 // The run's progress.
                 Rectangle {
@@ -26415,16 +26416,16 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textDim; font.pixelSize: 12
-                    text: "Your library is still being scanned, so this covers the " + importDialog.artists
+                    text: I18n.t("Your library is still being scanned, so this covers the " + importDialog.artists
                         + (importDialog.artists === 1 ? " artist" : " artists")
-                        + " found so far. The rest are offered on the Releases tab when the scan finishes."
+                        + " found so far. The rest are offered on the Releases tab when the scan finishes.")
                 }
                 Text {
                     visible: importDialog.stage === "start" && importDialog.trayCount > 0
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textDim; font.pixelSize: 12
-                    text: importDialog.trayCount + (importDialog.trayCount === 1 ? " name" : " names") + " from an earlier import still need a look."
+                    text: I18n.t(importDialog.trayCount + (importDialog.trayCount === 1 ? " name" : " names") + " from an earlier import still need a look.")
                 }
                 ListView {
                     id: importList
@@ -26453,7 +26454,7 @@ ApplicationWindow {
                             anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4
                             Text {
                                 Layout.fillWidth: true; textFormat: Text.PlainText
-                                text: idRow.rowData.label + "  " + (idRow.rowData.n || 0)
+                                text: I18n.t(idRow.rowData.label + "  " + (idRow.rowData.n || 0))
                                 color: root.textLo; font.family: root.mono; font.pixelSize: 11; font.bold: true
                                 font.letterSpacing: 1.4
                             }
@@ -26497,10 +26498,10 @@ ApplicationWindow {
                                     }
                                     Text {
                                         Layout.fillWidth: true; textFormat: Text.PlainText; elide: Text.ElideRight
-                                        text: idRow.kind !== "match" ? ""
+                                        text: I18n.t(idRow.kind !== "match" ? ""
                                             : idRow.rowData.reason === "tag" ? "From your files' tags"
                                             : idRow.rowData.reason === "library" ? "Matches your library: " + (idRow.rowData.owned || []).join(", ")
-                                            : (idRow.rowData.albums || 0) + ((idRow.rowData.albums || 0) === 1 ? " album" : " albums") + " in your library"
+                                            : (idRow.rowData.albums || 0) + ((idRow.rowData.albums || 0) === 1 ? " album" : " albums") + " in your library")
                                         color: root.textDim; font.pixelSize: 12
                                     }
                                 }
@@ -26557,7 +26558,7 @@ ApplicationWindow {
                                                     objectName: "importCandidateWhy"
                                                     width: parent.width
                                                     textFormat: Text.PlainText; elide: Text.ElideRight
-                                                    text: importDialog.candidateWhy(cand.modelData)
+                                                    text: I18n.t(importDialog.candidateWhy(cand.modelData))
                                                     color: cand.modelData.checked === true && (cand.modelData.owned_n || 0) > 0
                                                            ? root.textLo : root.textDim
                                                     font.pixelSize: 11
@@ -26663,7 +26664,7 @@ ApplicationWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap
-                    text: "Exit while downloading?"
+                    text: I18n.t("Exit while downloading?")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
@@ -26672,21 +26673,21 @@ ApplicationWindow {
                     // The 0 case is reachable: the last download can finish
                     // while this gate is up. The copy must not read "0
                     // downloads are still running." at that moment.
-                    text: root.activeQueueCount === 0
+                    text: I18n.t(root.activeQueueCount === 0
                         ? "All downloads finished."
                         : root.activeQueueCount === 1
                             ? "A download is still running."
-                            : root.activeQueueCount + " downloads are still running."
+                            : root.activeQueueCount + " downloads are still running.")
                 }
                 Text {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     Layout.topMargin: -8   // the pair reads as one statement, not two paragraphs
-                    text: root.activeQueueCount === 0
+                    text: I18n.t(root.activeQueueCount === 0
                         ? "It is safe to exit now."
                         : "Exiting now ends " + (root.activeQueueCount === 1 ? "it" : "them")
-                            + ", and unfinished tracks will need to be downloaded again."
+                            + ", and unfinished tracks will need to be downloaded again.")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
@@ -26721,7 +26722,7 @@ ApplicationWindow {
                     }
                     Text {
                         textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                        text: "Don't warn me again"; color: root.textLo; font.pixelSize: 13
+                        text: I18n.t("Don't warn me again"); color: root.textLo; font.pixelSize: 13
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: exitSkip.checked = !exitSkip.checked }
                     }
                 }
@@ -26917,7 +26918,7 @@ ApplicationWindow {
                     model: ["B", "I", "T", "W", "A", "V", "E"]
                     Text {
                         id: gs
-                        textFormat: Text.PlainText; text: modelData
+                        textFormat: Text.PlainText; text: I18n.t(modelData)
                         font.family: root.mono; font.pixelSize: 96; font.bold: true
                         color: "#0a160d"; opacity: 0.9 * bootTitle.shown   // shadow
                         transform: Scale { origin.x: gs.width / 2; xScale: gs.text === "W" ? 1.08 : 1 }
@@ -26932,7 +26933,7 @@ ApplicationWindow {
                     model: ["B", "I", "T", "W", "A", "V", "E"]
                     Text {
                         id: gf
-                        textFormat: Text.PlainText; text: modelData
+                        textFormat: Text.PlainText; text: I18n.t(modelData)
                         font.family: root.mono; font.pixelSize: 96; font.bold: true
                         // Softened off flat white: full textHi at this size
                         // read harsh against the dark water.
@@ -26950,7 +26951,7 @@ ApplicationWindow {
             id: bootVer
             property real shown: 0   // faded up by bootIntro, with the wordmark
             textFormat: Text.PlainText
-            text: "v" + waves.appVersion
+            text: I18n.t("v" + waves.appVersion)
             font.family: root.mono; font.pixelSize: 16; font.bold: true; font.letterSpacing: 7
             color: root.accent
             // Right edge aligned under the S: the per-glyph Row carries no

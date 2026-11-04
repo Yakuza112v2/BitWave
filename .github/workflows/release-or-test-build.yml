@@ -1,686 +1,288 @@
+# BitWave: ausschließlich Windows x64 und ARM64.
 name: release-or-test-build
-
-# Builds the BitWave QML app for every platform and, on a version tag, publishes
-# the binaries to a GitHub Release together with a signed checksum manifest the
-# in-app updater verifies before installing. Tag a release on the public repo as
-# `vX.Y.Z`; `test-build` / workflow_dispatch produce unsigned artifacts only.
-
 permissions:
   contents: write
-
 defaults:
   run:
     shell: bash
-
-on:
-  push:
-    tags:
-      - "v*.*.*"
-    branches:
-      - "test-build"
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Publish a GitHub Release at this tag (e.g. v0.1.0). Blank = artifacts only."
-        required: false
-        default: ""
-      only:
-        description: "Comma-separated OS_ARCH legs to build (e.g. macos-intel,macos-apple-silicon,windows-x64; the legacy macOS legs are macos-intel_legacy / macos-apple-silicon_legacy, and naming one also runs its regular macOS leg because the filter is a substring match). Blank = all eight. Cannot be combined with release_tag: a release must carry every platform."
-        required: false
-        default: ""
-
-# A tagged push builds the matrix and publishes a Release; a manual run with
-# release_tag does the same under that tag, which is the supported fallback when
-# a tag-push event does not reliably fire the build.
-# The concurrency group makes a rerun cancel the prior long build instead of
-# double-spending Actions minutes.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 env:
-  ASSET_EXTENSION: ".zip"
-  OUT_NAME_FILE: "bitwave"
-  ARCH_MACOS_X64: "macos-intel"
-  ARCH_MACOS_ARM64: "macos-apple-silicon"
-  # Legacy macOS flavor (pyside6 6.9.3, floor 12.0) for macOS 12 through 14;
-  # the regular macOS zips require 15 (the locked PySide6's real floor, see
-  # pyproject.toml). Underscore before "legacy" on purpose: pre-dual-build
-  # updaters in the field pick between assets by NAME SORT, and ".zip" sorts
-  # before "_legacy.zip", so every old updater (all of which run on macOS 15+,
-  # no earlier release could launch below that) keeps resolving to the regular
-  # bundle. A hyphen would sort the legacy bundle first and downgrade them.
-  ARCH_MACOS_X64_LEGACY: "macos-intel_legacy"
-  ARCH_MACOS_ARM64_LEGACY: "macos-apple-silicon_legacy"
-  ARCH_LINUX_X64: "linux-x64"
-  ARCH_LINUX_ARM64: "linux-arm64"
-  ARCH_WINDOWS_X64: "windows-x64"
-  ARCH_WINDOWS_ARM64: "windows-arm64"
-
+  ASSET_EXTENSION: .zip
+  OUT_NAME_FILE: bitwave
+  ARCH_WINDOWS_X64: windows-x64
+  ARCH_WINDOWS_ARM64: windows-arm64
 jobs:
   compute:
-    # Workaround to be able to use env vars in the matrix.
-    # A tag or test-build push starts a build on the public repo only: the
-    # private dev mirror meters Actions minutes. A manual run still works
-    # anywhere. Every other job needs this one, so skipping it skips them all.
     if: github.repository == 'Yakuza112v2/BitWave' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       ASSET_EXTENSION: ${{ env.ASSET_EXTENSION }}
       OUT_NAME_FILE: ${{ env.OUT_NAME_FILE }}
-      ARCH_MACOS_X64: ${{ env.ARCH_MACOS_X64 }}
-      ARCH_MACOS_ARM64: ${{ env.ARCH_MACOS_ARM64 }}
-      ARCH_MACOS_X64_LEGACY: ${{ env.ARCH_MACOS_X64_LEGACY }}
-      ARCH_MACOS_ARM64_LEGACY: ${{ env.ARCH_MACOS_ARM64_LEGACY }}
-      ARCH_LINUX_X64: ${{ env.ARCH_LINUX_X64 }}
-      ARCH_LINUX_ARM64: ${{ env.ARCH_LINUX_ARM64 }}
       ARCH_WINDOWS_X64: ${{ env.ARCH_WINDOWS_X64 }}
       ARCH_WINDOWS_ARM64: ${{ env.ARCH_WINDOWS_ARM64 }}
     steps:
-      - name: Compute outputs
-        run: |
-          echo "ASSET_EXTENSION=${{ env.ASSET_EXTENSION }}" >> $GITHUB_OUTPUT
-          echo "OUT_NAME_FILE=${{ env.OUT_NAME_FILE }}" >> $GITHUB_OUTPUT
-          echo "ARCH_MACOS_X64=${{ env.ARCH_MACOS_X64 }}" >> $GITHUB_OUTPUT
-          echo "ARCH_MACOS_ARM64=${{ env.ARCH_MACOS_ARM64 }}" >> $GITHUB_OUTPUT
-          echo "ARCH_MACOS_X64_LEGACY=${{ env.ARCH_MACOS_X64_LEGACY }}" >> $GITHUB_OUTPUT
-          echo "ARCH_MACOS_ARM64_LEGACY=${{ env.ARCH_MACOS_ARM64_LEGACY }}" >> $GITHUB_OUTPUT
-          echo "ARCH_LINUX_X64=${{ env.ARCH_LINUX_X64 }}" >> $GITHUB_OUTPUT
-          echo "ARCH_LINUX_ARM64=${{ env.ARCH_LINUX_ARM64 }}" >> $GITHUB_OUTPUT
-          echo "ARCH_WINDOWS_X64=${{ env.ARCH_WINDOWS_X64 }}" >> $GITHUB_OUTPUT
-          echo "ARCH_WINDOWS_ARM64=${{ env.ARCH_WINDOWS_ARM64 }}" >> $GITHUB_OUTPUT
-      # A published Release ships binaries with the updater config baked in; if
-      # REPO or the signing public key are blank, every copy is permanently unable
-      # to auto-update and can't be fixed after download. Fail the whole run early
-      # (before spending build minutes) so that can't happen by accident. Only
-      # gates real releases; test-build / artifact-only runs are unaffected.
-      - name: Check out (release-config guard)
-        if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
-        uses: actions/checkout@v4
-      - name: Guard, a published release must be able to self-update
-        if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
-        run: |
-          grep -Eq '^REPO = "[^"]+"' waves/waves_ui/updater.py \
-            || { echo "::error::updater.REPO is empty; a published build could never auto-update. Set REPO before tagging a release."; exit 1; }
-          grep -Eq '^UPDATE_PUBLIC_KEY = "[^"]+"' waves/waves_ui/signing.py \
-            || { echo "::error::signing.UPDATE_PUBLIC_KEY is empty; shipped updates could not be signature-verified. Embed UPDATE_PUBLIC_KEY before tagging a release."; exit 1; }
-          echo "Updater is configured; release build may proceed."
-      # The version compiled INTO the binary must equal the release tag, or the
-      # shipped build reports an old version while the signed manifest advertises
-      # the new one; every updater then re-offers the "new" release forever
-      # because the installed binary keeps reporting the old number. Guard both
-      # the tag-push and dispatch+release_tag paths against a forgotten bump.
-      - name: Guard, release tag matches __version__
-        if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
-        env:
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-        run: |
-          TAG_VERSION="${RELEASE_TAG#v}"
-          CODE_VERSION="$(grep -m1 '__version__' waves/waves_ui/__init__.py | tr -d ' "' | cut -d'=' -f2)"
-          if [ "$TAG_VERSION" != "$CODE_VERSION" ]; then
-            echo "::error::release tag '$RELEASE_TAG' (version '$TAG_VERSION') does not match waves/waves_ui/__init__.py __version__ '$CODE_VERSION'. Bump __version__ to match the tag before releasing."
-            exit 1
-          fi
-          echo "Version $CODE_VERSION matches release tag $RELEASE_TAG."
-      # A dispatch naming a tag publishes a signed, live Release, and the `only`
-      # filter is honored by every per-leg step including the asset uploads: the
-      # two together published a release holding one platform's zip and a
-      # manifest covering only it, so every field updater on the other platforms
-      # saw a latest release with no asset for it and silently stopped offering
-      # updates. `only` is for re-cutting a leg as an ARTIFACT run; refused here
-      # rather than discovered once the Release is already public.
-      - name: Guard, a release builds every platform
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.only != '' }}
-        run: |
-          echo "::error::release_tag and only cannot be combined: a release must carry every platform's asset. Leave only blank to publish, or drop release_tag to re-cut one leg as an artifact."
+    - name: Compute outputs
+      run: |
+        echo "ASSET_EXTENSION=${{ env.ASSET_EXTENSION }}" >> $GITHUB_OUTPUT
+        echo "OUT_NAME_FILE=${{ env.OUT_NAME_FILE }}" >> $GITHUB_OUTPUT
+        echo "ARCH_WINDOWS_X64=${{ env.ARCH_WINDOWS_X64 }}" >> $GITHUB_OUTPUT
+        echo "ARCH_WINDOWS_ARM64=${{ env.ARCH_WINDOWS_ARM64 }}" >> $GITHUB_OUTPUT
+    - name: Check out (release-config guard)
+      if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
+        'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+      uses: actions/checkout@v4
+    - name: Guard, a published release must be able to self-update
+      if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
+        'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+      run: |
+        grep -Eq '^REPO = "[^"]+"' waves/waves_ui/updater.py \
+          || { echo "::error::updater.REPO is empty; a published build could never auto-update. Set REPO before tagging a release."; exit 1; }
+        grep -Eq '^UPDATE_PUBLIC_KEY = "[^"]+"' waves/waves_ui/signing.py \
+          || { echo "::error::signing.UPDATE_PUBLIC_KEY is empty; shipped updates could not be signature-verified. Embed UPDATE_PUBLIC_KEY before tagging a release."; exit 1; }
+        echo "Updater is configured; release build may proceed."
+    - name: Guard, release tag matches __version__
+      if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
+        'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+      env:
+        RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+      run: |
+        TAG_VERSION="${RELEASE_TAG#v}"
+        CODE_VERSION="$(grep -m1 '__version__' waves/waves_ui/__init__.py | tr -d ' "' | cut -d'=' -f2)"
+        if [ "$TAG_VERSION" != "$CODE_VERSION" ]; then
+          echo "::error::release tag '$RELEASE_TAG' (version '$TAG_VERSION') does not match waves/waves_ui/__init__.py __version__ '$CODE_VERSION'. Bump __version__ to match the tag before releasing."
           exit 1
-      # A manual release may be dispatched from any ref; only publish binaries
-      # from a commit that is already on the release line. Otherwise a release
-      # could ship from an unmerged feature branch, and (since target_commitish
-      # points the created tag at the built commit) the public tag would name
-      # code that was never reviewed onto the release line.
-      - name: Guard, dispatch release commit is on the default branch
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
-        env:
-          # The repository's OWN default branch, never a hard-coded name. A
-          # fork or mirror may call its line `master` while this repo's only
-          # branch is `main`, and a hard-coded `git fetch origin master` died
-          # here with "couldn't find remote ref", failing this job under
-          # `bash -e` and skipping every build leg. That killed the manual
-          # dispatch fallback exactly when it is needed, which is when a tag
-          # push has not fired the build.
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          git fetch --quiet origin "$DEFAULT_BRANCH"
-          if ! git merge-base --is-ancestor "${{ github.sha }}" "origin/$DEFAULT_BRANCH"; then
-            echo "::error::commit ${{ github.sha }} is not on $DEFAULT_BRANCH; refusing to publish a release from an unmerged ref. Merge into $DEFAULT_BRANCH first, then dispatch the release."
-            exit 1
-          fi
-          echo "Dispatched commit is on $DEFAULT_BRANCH; release build may proceed."
-
+        fi
+        echo "Version $CODE_VERSION matches release tag $RELEASE_TAG."
+    - name: Guard, a release builds both Windows architectures
+      if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.only
+        != '' }}
+      run: |
+        echo "::error::Bei einem Release muss only leer bleiben, damit beide Windows-Varianten veröffentlicht werden."
+        exit 1
+    - name: Guard, dispatch release commit is on the default branch
+      if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+      env:
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        git fetch --quiet origin "$DEFAULT_BRANCH"
+        if ! git merge-base --is-ancestor "${{ github.sha }}" "origin/$DEFAULT_BRANCH"; then
+          echo "::error::commit ${{ github.sha }} is not on $DEFAULT_BRANCH; refusing to publish a release from an unmerged ref. Merge into $DEFAULT_BRANCH first, then dispatch the release."
+          exit 1
+        fi
+        echo "Dispatched commit is on $DEFAULT_BRANCH; release build may proceed."
   create-release:
-    # Create the draft Release exactly once, before the build matrix starts.
-    # Each platform leg used to independently ask softprops/action-gh-release
-    # to "find or create" the Release by tag; running six of those at once is
-    # a race, more than one leg can find nothing and create its own, splitting
-    # the platform assets across duplicate drafts (observed on v0.1.2: two
-    # drafts both tagged v0.1.2, assets scattered between them). Creating the
-    # Release here, ahead of the matrix, removes the race: every leg's own
-    # upload step (further below) then finds this one unambiguous Release by
-    # tag instead of racing to create it.
-    needs: ["compute"]
-    if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+    needs:
+    - compute
+    if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch'
+      && github.event.inputs.release_tag != '') }}
     runs-on: ubuntu-24.04
     steps:
-      - name: Create the Release (empty draft, assets attached by the matrix)
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-          # Point a not-yet-existing tag at the exact commit that was built,
-          # not the default branch tip. Ignored when the tag already exists (a
-          # tag push), which is the common release path.
-          target_commitish: ${{ github.sha }}
-          # Keep the Release a DRAFT while binaries upload; the sign-manifest
-          # job flips it live only after SHA256SUMS.sig is attached, so a
-          # user's (fail-closed) updater never sees a published-but-unsigned
-          # release.
-          draft: true
-
+    - name: Create the Release (empty draft, assets attached by the matrix)
+      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+        target_commitish: ${{ github.sha }}
+        draft: true
   build:
-    needs: ["compute", "create-release"]
-    # create-release is skipped outright on a non-release run (test-build /
-    # a dispatch with no release_tag), which is fine; but if it's supposed to
-    # run and fails, don't burn eight legs' worth of build minutes on a
-    # release that has nowhere to land. (Hyphenated job id, so bracket syntax:
-    # dot notation would parse "create-release" as a subtraction.)
-    if: always() && needs.compute.result == 'success' && needs['create-release'].result != 'failure' && needs['create-release'].result != 'cancelled' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/test-build' || github.event_name == 'workflow_dispatch')
+    needs:
+    - compute
+    - create-release
+    if: always() && needs.compute.result == 'success' && needs['create-release'].result != 'failure' && needs['create-release'].result
+      != 'cancelled' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/test-build' || github.event_name
+      == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macOS legs ship a zip of the trimmed BitWave.app: both a manual
-          # unzip-and-drag install and the exact shape the in-app updater extracts.
-          # Both legs build on runners NEWER than the oldest macOS we support
-          # (WAVES_MACOS_MIN in the Makefile), so nothing here can ever prove a
-          # bundle runs on that floor. The "Assert macOS version floor" step
-          # below checks it statically instead: every shipped Mach-O must not
-          # demand anything newer (issue #14: PySide6 6.10 wheels smuggled in
-          # macOS 15-only libraries, so older systems got a silent Dock bounce).
-          - os: "macos-15-intel"
-            TARGET: "macos-15-intel"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_MACOS_X64}}
-            MACOS_FLOOR: "15.0"
-            # Intel Homebrew lives at /usr/local, whose lib dir overlaps Nuitka's
-            # macOS dependency-scan paths: it sees both the unversioned
-            # /usr/local/lib/libcrypto.dylib symlink AND the openssl@3 keg's real
-            # libcrypto.3.dylib and aborts ("problem with dependency scan ...").
-            # Deleting only the stray unversioned symlinks leaves one canonical
-            # path (the keg), which is what Python's _ssl actually links, so TLS
-            # still works and Nuitka still bundles a working libcrypto/libssl.
-            # arm64 does not abort, but it silently bundles BOTH the versioned
-            # libraries and their unversioned symlink twins (5.7 MB dead), so
-            # its legs run the same pre-clean against /opt/homebrew. Trailing
-            # ';' (not '&&') so a no-op rm never short-circuits the build chain.
-            CMD_BUILD: >
-              ls -l /usr/local/lib/libcrypto* /usr/local/lib/libssl* || true;
-              rm -f /usr/local/lib/libcrypto*.dylib /usr/local/lib/libssl*.dylib || true;
-              source $VENV &&
-              poetry run make gui-waves &&
-              cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
-              cd ..
-          - os: "macos-14"
-            TARGET: "macos-14 M1"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_MACOS_ARM64}}
-            MACOS_FLOOR: "15.0"
-            CMD_BUILD: >
-              ls -l /opt/homebrew/lib/libcrypto* /opt/homebrew/lib/libssl* || true;
-              rm -f /opt/homebrew/lib/libcrypto*.dylib /opt/homebrew/lib/libssl*.dylib || true;
-              source $VENV &&
-              poetry run make gui-waves &&
-              cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
-              cd ..
-          # Legacy macOS flavor for macOS 12 through 14 (see the env note on the
-          # _LEGACY names): the locked PySide6 is overlaid with 6.9.3, the newest
-          # release whose macOS binaries honor their macOS 12 wheel tag, and the
-          # floor drops to 12.0 (WAVES_MACOS_MIN is ?= in the Makefile, so the
-          # env override reaches Nuitka's MACOSX_DEPLOYMENT_TARGET and the
-          # Info.plist declaration). --force-reinstall --no-deps: exactly these
-          # four wheels swap, everything else stays as the lock resolved it.
-          - os: "macos-15-intel"
-            TARGET: "macos-15-intel legacy"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_MACOS_X64_LEGACY}}
-            MACOS_FLOOR: "12.0"
-            CMD_BUILD: >
-              ls -l /usr/local/lib/libcrypto* /usr/local/lib/libssl* || true;
-              rm -f /usr/local/lib/libcrypto*.dylib /usr/local/lib/libssl*.dylib || true;
-              source $VENV &&
-              poetry run pip install --force-reinstall --no-deps
-              pyside6==6.9.3 pyside6-addons==6.9.3 pyside6-essentials==6.9.3 shiboken6==6.9.3 &&
-              WAVES_MACOS_MIN=12.0 poetry run make gui-waves &&
-              cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_X64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
-              cd ..
-          - os: "macos-14"
-            TARGET: "macos-14 M1 legacy"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_MACOS_ARM64_LEGACY}}
-            MACOS_FLOOR: "12.0"
-            CMD_BUILD: >
-              ls -l /opt/homebrew/lib/libcrypto* /opt/homebrew/lib/libssl* || true;
-              rm -f /opt/homebrew/lib/libcrypto*.dylib /opt/homebrew/lib/libssl*.dylib || true;
-              source $VENV &&
-              poetry run pip install --force-reinstall --no-deps
-              pyside6==6.9.3 pyside6-addons==6.9.3 pyside6-essentials==6.9.3 shiboken6==6.9.3 &&
-              WAVES_MACOS_MIN=12.0 poetry run make gui-waves &&
-              cd dist &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_MACOS_ARM64_LEGACY}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave.app -x "*.DS_Store" &&
-              cd ..
-          # Linux legs ship BOTH a zip of the standalone tree and a single-file
-          # AppImage of the same tree (tools/build_appimage.sh); the in-app
-          # updater keeps each install on its own format.
-          # Built on the oldest still-supported Ubuntu LTS: the bundle links the
-          # build host's glibc, so a 24.04 build (glibc 2.39) will not start on
-          # 22.04, Debian 12 or anything else older. Raise this only when 22.04
-          # leaves support. ARM64 stays on 24.04: every PySide6 aarch64 wheel
-          # is manylinux_2_39, so Qt itself needs glibc 2.39 there.
-          - os: "ubuntu-22.04"
-            TARGET: "ubuntu-22.04"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_LINUX_X64}}
-            CMD_BUILD: >
-              source $VENV &&
-              poetry run make gui-waves-linux &&
-              cd dist &&
-              mv waves.dist BitWave &&
-              bash ../tools/bundle_xcb_libs.sh BitWave &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
-              bash ../tools/build_appimage.sh BitWave ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_X64}}.AppImage &&
-              cd ..
-          - os: "ubuntu-24.04-arm"
-            TARGET: "ubuntu-24.04-arm"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_LINUX_ARM64}}
-            CMD_BUILD: >
-              source $VENV &&
-              poetry run make gui-waves-linux &&
-              cd dist &&
-              mv waves.dist BitWave &&
-              bash ../tools/bundle_xcb_libs.sh BitWave &&
-              zip -9 -ry ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
-              bash ../tools/build_appimage.sh BitWave ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_LINUX_ARM64}}.AppImage &&
-              cd ..
-          - os: "windows-2022"
-            TARGET: "windows-2022"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_X64}}
-            CMD_BUILD: >
-              choco install zip make -y &&
-              source $VENV &&
-              poetry run make gui-waves-windows &&
-              cd dist &&
-              mv waves.dist BitWave &&
-              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
-              cd ..
-          - os: "windows-11-arm"
-            TARGET: "windows-11-arm"
-            OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}
-            CMD_BUILD: >
-              choco install zip make -y &&
-              source $VENV &&
-              poetry run make gui-waves-windows &&
-              cd dist &&
-              mv waves.dist BitWave &&
-              zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave &&
-              cd ..
+        - os: windows-2022
+          TARGET: windows-2022
+          OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_X64}}
+          CMD_BUILD: |
+            choco install zip make -y && source $VENV && poetry run make gui-waves-windows && cd dist && mv waves.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
+        - os: windows-11-arm
+          TARGET: windows-11-arm
+          OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}
+          CMD_BUILD: |
+            choco install zip make -y && source $VENV && poetry run make gui-waves-windows && cd dist && mv waves.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
     runs-on: ${{ matrix.os }}
     steps:
-      # Skip checkout + setup on legs the `only` filter excludes, so a targeted
-      # dispatch (e.g. only=windows-x64) does not spin the other legs (notably the
-      # 10x-billed macOS runners) through a full poetry install just to build
-      # nothing. Releases and test-build pushes leave `only` blank, so every leg
-      # still runs. Same guard the build / smoke / checksum / upload steps use.
-      - name: Check out
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
-        uses: actions/checkout@v4
-      - name: Set up the environment
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
-        uses: ./.github/actions/setup-poetry-env
-      # Qt's xcb platform plugin links xcb-util libraries a stock desktop may
-      # lack (libxcb-cursor0 is not installed by default on Ubuntu 22.04), so
-      # tools/bundle_xcb_libs.sh copies them into the Linux tree. Install them
-      # here so it has something to copy.
-      - name: Install X11 helper libraries to bundle
-        if: ${{ runner.os == 'Linux' && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends patchelf libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-util1 libxcb-xkb1 libxcb-xinerama0 libxcb-xinput0 libxcb-randr0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0
-      - name: Build BitWave for ${{matrix.TARGET}}
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
-        run: ${{matrix.CMD_BUILD}}
-      # Smoke-launch the freshly built+trimmed bundle headlessly BEFORE it is
-      # hashed and release-signed. trim_qt_bundle.sh strips aggressively; without
-      # this, the first time a trimmed bundle ever runs is on a user's machine.
-      # We launch offscreen with a short deadline and require a clean startup:
-      # if the process dies before the deadline (a broken bundle / missing Qt
-      # module at import) the job fails; a process still alive at the deadline is
-      # a healthy launch and we terminate it. Runs on every build (release or
-      # test) so a bad trim is caught before anything is published. Conservative
-      # by design: no interaction, no display, no network.
-      #
-      # ARM runners can't natively execute a cross-arch build, so smoke-launch is
-      # skipped there; native x64 legs cover the
-      # trim on each OS.
-      # The trimmed bundle links the system's GL stack (Nuitka does not bundle
-      # it); desktop installs have it, but GitHub's headless runner images may
-      # not (ubuntu-24.04 dropped libEGL). Install just enough to launch
-      # offscreen; this mirrors a user's desktop, it is not shipped.
-      - name: Install Linux GL runtime for smoke-launch
-        if: ${{ runner.os == 'Linux' && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) && !endsWith(matrix.OS_ARCH, '-arm64') }}
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends libegl1 libgl1 libopengl0 libxkbcommon0 libfontconfig1 libpulse0 libasound2 xvfb
-      - name: Smoke-launch trimmed bundle
-        if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) && !endsWith(matrix.OS_ARCH, '-arm64') }}
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QT_OPENGL: software
-        run: |
-          set -u
-          case "${{ matrix.OS_ARCH }}" in
-            macos-*)   BIN="dist/BitWave.app/Contents/MacOS/BitWave" ;;
-            windows-*) BIN="dist/BitWave/BitWave.exe" ;;
-            *)         BIN="dist/BitWave/BitWave" ;;
-          esac
-          if [ ! -e "$BIN" ]; then
-            echo "::error::smoke-launch: built binary '$BIN' not found"; exit 1
-          fi
-          echo "Smoke-launching $BIN (offscreen)…"
-          "$BIN" &
-          APP_PID=$!
-          ok=0
-          # Poll for ~15s: success = still alive (a healthy long-running GUI);
-          # failure = exited early with a non-zero status.
-          for _ in $(seq 1 15); do
-            sleep 1
-            if ! kill -0 "$APP_PID" 2>/dev/null; then
-              wait "$APP_PID"; rc=$?
-              if [ "$rc" -eq 0 ]; then ok=1; else
-                echo "::error::smoke-launch: $BIN exited early with status $rc (trimmed bundle fails to start)"; exit 1
-              fi
-              break
+    - name: Check out
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH) }}
+      uses: actions/checkout@v4
+    - name: Set up the environment
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH) }}
+      uses: ./.github/actions/setup-poetry-env
+    - name: Build BitWave for ${{matrix.TARGET}}
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH) }}
+      run: ${{matrix.CMD_BUILD}}
+    - name: Smoke-launch trimmed bundle
+      if: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH)) && !endsWith(matrix.OS_ARCH, '-arm64') }}
+      env:
+        QT_QPA_PLATFORM: offscreen
+        QT_OPENGL: software
+      run: |
+        set -u
+        BIN="dist/BitWave/BitWave.exe"
+        if [ ! -e "$BIN" ]; then
+          echo "::error::smoke-launch: built binary '$BIN' not found"; exit 1
+        fi
+        echo "Smoke-launching $BIN (offscreen)…"
+        "$BIN" &
+        APP_PID=$!
+        ok=0
+        # Poll for ~15s: success = still alive (a healthy long-running GUI);
+        # failure = exited early with a non-zero status.
+        for _ in $(seq 1 15); do
+          sleep 1
+          if ! kill -0 "$APP_PID" 2>/dev/null; then
+            wait "$APP_PID"; rc=$?
+            if [ "$rc" -eq 0 ]; then ok=1; else
+              echo "::error::smoke-launch: $BIN exited early with status $rc (trimmed bundle fails to start)"; exit 1
             fi
-          done
-          if kill -0 "$APP_PID" 2>/dev/null; then
-            echo "smoke-launch: still running after startup window; healthy."
-            kill "$APP_PID" 2>/dev/null || true
-            wait "$APP_PID" 2>/dev/null || true
-            ok=1
+            break
           fi
-          [ "$ok" -eq 1 ] || { echo "::error::smoke-launch: $BIN never reached a healthy state"; exit 1; }
-      # The offscreen smoke never loads Qt's xcb platform plugin, which is the
-      # one a Linux desktop uses and the one that failed the AppImage catalog
-      # test (missing libxcb-cursor0 / libxkbcommon-x11 on a stock Ubuntu
-      # 22.04). Launch once more under a virtual X server with the loader's
-      # trace on: the app must stay up, and the xcb helper libraries it binds
-      # must be the copies tools/bundle_xcb_libs.sh put in the tree, not the
-      # build host's (which has them all installed, so a plain launch would
-      # pass even when the copies are unused).
-      - name: Smoke-launch under X11 with the bundled xcb libraries
-        if: ${{ runner.os == 'Linux' && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) && !endsWith(matrix.OS_ARCH, '-arm64') }}
-        env:
-          QT_QPA_PLATFORM: xcb
-          QT_OPENGL: software
-          LD_DEBUG: libs
-          LD_DEBUG_OUTPUT: /tmp/waves-ld
-        run: |
-          set -u
-          BIN="dist/BitWave/BitWave"
-          xvfb-run -a "$BIN" > /tmp/waves-xcb.log 2>&1 &
-          APP_PID=$!
-          for _ in $(seq 1 15); do
-            sleep 1
-            if ! kill -0 "$APP_PID" 2>/dev/null; then
-              echo "::error::xcb smoke-launch: $BIN exited early"; tail -n 40 /tmp/waves-xcb.log; exit 1
-            fi
-          done
+        done
+        if kill -0 "$APP_PID" 2>/dev/null; then
+          echo "smoke-launch: still running after startup window; healthy."
           kill "$APP_PID" 2>/dev/null || true
           wait "$APP_PID" 2>/dev/null || true
-          if grep -q "Could not load the Qt platform plugin" /tmp/waves-xcb.log; then
-            echo "::error::xcb smoke-launch: the xcb platform plugin did not load"; tail -n 40 /tmp/waves-xcb.log; exit 1
-          fi
-          TREE="$(cd dist/BitWave && pwd -P)"
-          # The loader prints the copy through the plugin's own rpath
-          # (<tree>/PySide6/qt-plugins/platforms/../../../lib...), so match
-          # the tree prefix and the file name, not the direct path.
-          for lib in libxcb-cursor.so.0 libxkbcommon-x11.so.0; do
-            if ! grep -h "calling init: $TREE/.*/$lib\$" /tmp/waves-ld.* >/dev/null 2>&1; then
-              echo "::error::xcb smoke-launch: $lib was not loaded from the bundle"; grep -h "$lib" /tmp/waves-ld.* | head -n 5; exit 1
-            fi
-          done
-          echo "xcb smoke-launch: up for 15s, libxcb-cursor and libxkbcommon-x11 loaded from the bundle."
-      # The smoke-launch above runs on the build host itself, so it can never
-      # catch a bundle that demands a newer macOS than a user's machine has.
-      # This step checks the version floor statically instead: every file in
-      # the bundle that is a Mach-O (Qt libraries ship flattened WITHOUT an
-      # extension, so scan everything) must not require anything newer than
-      # the leg's MACOS_FLOOR (15.0 regular, 12.0 legacy; the same values the
-      # legs feed WAVES_MACOS_MIN), and Info.plist must declare exactly that
-      # value so an unsupported system shows a clear "requires macOS X" dialog
-      # instead of a Dock bounce. A dependency bump that smuggles in
-      # newer-floor binaries fails here instead of shipping a bundle whose
-      # plist lies (issue #14: PySide6 6.10 wheels are tagged macOS 13 but
-      # contain macOS 15-only libraries).
-      - name: Assert macOS version floor
-        if: ${{ startsWith(matrix.OS_ARCH, 'macos-') && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
-        run: |
-          set -eu
-          MIN="${{ matrix.MACOS_FLOOR }}"
-          [ -n "$MIN" ] || { echo "::error::floor-assert: this macOS leg declares no MACOS_FLOOR in the matrix"; exit 1; }
-          PLIST="dist/BitWave.app/Contents/Info.plist"
-          DECLARED="$(plutil -extract LSMinimumSystemVersion raw "$PLIST" 2>/dev/null || true)"
-          if [ "$DECLARED" != "$MIN" ]; then
-            echo "::error::floor-assert: Info.plist LSMinimumSystemVersion is '${DECLARED:-missing}', expected '$MIN'"; exit 1
-          fi
-          min_of() {  # print the macOS floor a Mach-O file demands (empty if not Mach-O)
-            # -arch all: a universal file carries one load-command set PER SLICE
-            # and otool defaults to the host slice only; the floor is the most
-            # demanding slice, so collect every version and keep the highest.
-            otool -arch all -l "$1" 2>/dev/null | awk '
-              /LC_BUILD_VERSION/ {b=1; m=0}
-              /LC_VERSION_MIN_MACOSX/ {m=1; b=0}
-              b && /minos/ {print $2; b=0}
-              m && $1 == "version" {print $2; m=0}' | sort -V | tail -1
-          }
-          FAIL=0
-          SCANNED=0
-          while IFS= read -r F; do
-            V="$(min_of "$F")"
-            [ -n "$V" ] || continue
-            SCANNED=$((SCANNED + 1))
-            if [ "$(printf '%s\n%s\n' "$MIN" "$V" | sort -V | tail -1)" != "$MIN" ]; then
-              echo "::error::floor-assert: $F demands macOS $V, above the declared floor $MIN"; FAIL=1
-            fi
-          done < <(find dist/BitWave.app -type f)
-          [ "$SCANNED" -gt 0 ] || { echo "::error::floor-assert: no Mach-O files found under dist/BitWave.app"; exit 1; }
-          [ "$FAIL" -eq 0 ] || exit 1
-          echo "floor-assert: all $SCANNED Mach-O files honor the macOS $MIN floor."
-      # The AppImage wraps AppRun + the runtime AROUND the already-smoked tree,
-      # so launch the finished file itself too (x64 only, same reason as above;
-      # --appimage-extract-and-run because runners have no FUSE).
-      - name: Smoke-launch AppImage
-        if: ${{ runner.os == 'Linux' && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) && !endsWith(matrix.OS_ARCH, '-arm64') }}
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QT_OPENGL: software
-        run: |
-          set -u
-          APPIMG="dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}.AppImage"
-          if [ ! -e "$APPIMG" ]; then
-            echo "::error::smoke-launch: built AppImage '$APPIMG' not found"; exit 1
-          fi
-          echo "Smoke-launching $APPIMG (offscreen)…"
-          "$APPIMG" --appimage-extract-and-run &
-          APP_PID=$!
-          ok=0
-          for _ in $(seq 1 15); do
-            sleep 1
-            if ! kill -0 "$APP_PID" 2>/dev/null; then
-              wait "$APP_PID"; rc=$?
-              if [ "$rc" -eq 0 ]; then ok=1; else
-                echo "::error::smoke-launch: $APPIMG exited early with status $rc"; exit 1
-              fi
-              break
-            fi
-          done
-          if kill -0 "$APP_PID" 2>/dev/null; then
-            echo "smoke-launch: AppImage still running after startup window; healthy."
-            kill "$APP_PID" 2>/dev/null || true
-            wait "$APP_PID" 2>/dev/null || true
-            ok=1
-          fi
-          [ "$ok" -eq 1 ] || { echo "::error::smoke-launch: $APPIMG never reached a healthy state"; exit 1; }
-      - name: Checksum
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
-        # Portable per-asset SHA256 (no coreutils dependency on Windows). The
-        # line is "<hex>  <filename>": coreutils sha256sum format, which the
-        # signed SHA256SUMS manifest and the in-app updater both parse. Linux
-        # legs carry a second asset (the AppImage); the loop hashes whichever
-        # of the leg's assets exist.
-        run: |
-          cd dist
-          BASE="${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}"
-          for ASSET in "${BASE}${{needs.compute.outputs.ASSET_EXTENSION}}" "${BASE}.AppImage"; do
-            [ -e "$ASSET" ] || continue
-            python -c "import hashlib,sys; p=sys.argv[1]; open(p+'.sha256','w',newline=chr(10)).write(hashlib.sha256(open(p,'rb').read()).hexdigest()+'  '+p+chr(10))" "$ASSET"
-            cat "$ASSET.sha256"
-          done
-      - name: Upload checksum artifact
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
-        # Tiny per-asset checksums collected by the sign job into one manifest
-        # (the glob picks up the AppImage's sidecar on the linux legs).
-        uses: actions/upload-artifact@v4
-        with:
-          name: sha256-${{matrix.OS_ARCH}}
-          path: ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}*.sha256
-      - name: Upload Build Artifact (workflow_dispatch / test-build)
-        if: ${{ (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/test-build') && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}
-          path: |
-            ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}${{needs.compute.outputs.ASSET_EXTENSION}}
-            ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}.AppImage
-      - name: Upload Release Asset
-        # Publish only when a release is actually being made: a tag PUSH (not a
-        # dispatch that merely happens to run on a tag ref), OR a dispatch that
-        # supplies release_tag. A dispatch with a blank release_tag builds
-        # artifacts only ("Blank = artifacts only").
-        # The create-release job already made this Release (draft, empty)
-        # before any matrix leg started, so every leg here finds the same
-        # unambiguous Release by tag and just appends its two files, instead
-        # of racing to create it themselves.
-        if: ${{ ((github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '')) && (github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          fail_on_unmatched_files: true
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-          target_commitish: ${{ github.sha }}
-          draft: true
-          # One glob per leg: zip + .sha256 everywhere, plus the AppImage and
-          # its .sha256 on the linux legs. Each leg's OS_ARCH prefix is unique,
-          # so a leg can only ever attach its own files.
-          files: |
-            ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}*
-
+          ok=1
+        fi
+        [ "$ok" -eq 1 ] || { echo "::error::smoke-launch: $BIN never reached a healthy state"; exit 1; }
+    - name: Checksum
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH) }}
+      run: |
+        cd dist
+        BASE="${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}"
+        for ASSET in "${BASE}${{needs.compute.outputs.ASSET_EXTENSION}}"; do
+          [ -e "$ASSET" ] || continue
+          python -c "import hashlib,sys; p=sys.argv[1]; open(p+'.sha256','w',newline=chr(10)).write(hashlib.sha256(open(p,'rb').read()).hexdigest()+'  '+p+chr(10))" "$ASSET"
+          cat "$ASSET.sha256"
+        done
+    - name: Upload checksum artifact
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
+        matrix.OS_ARCH) }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: sha256-${{matrix.OS_ARCH}}
+        path: ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}*.sha256
+    - name: Upload Build Artifact (workflow_dispatch / test-build)
+      if: ${{ (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/test-build') && (github.event_name !=
+        'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}
+        path: ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}${{needs.compute.outputs.ASSET_EXTENSION}}
+    - name: Upload Release Asset
+      if: ${{ ((github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
+        'workflow_dispatch' && github.event.inputs.release_tag != '')) && (github.event_name != 'workflow_dispatch' || github.event.inputs.only
+        == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
+      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        fail_on_unmatched_files: true
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+        target_commitish: ${{ github.sha }}
+        draft: true
+        files: |
+          ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}*
   sign-manifest:
-    # Runs for any release (a tag PUSH or a dispatch+release_tag): gather every
-    # per-asset checksum into one SHA256SUMS manifest, sign it with the Ed25519
-    # release key (CI secret BITWAVE_SIGNING_KEY), and publish SHA256SUMS +
-    # SHA256SUMS.sig, then flip the Release live. The app verifies the signature
-    # against the public key baked into the binary before trusting any hash, so a
-    # tampered release can't slip a malicious build past the updater.
-    needs: ["compute", "build"]
-    if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') }}
+    needs:
+    - compute
+    - build
+    if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch'
+      && github.event.inputs.release_tag != '') }}
     runs-on: ubuntu-24.04
     steps:
-      - name: Check out
-        uses: actions/checkout@v4
-      - name: Set up the environment
-        uses: ./.github/actions/setup-poetry-env
-      - name: Collect per-asset checksums
-        uses: actions/download-artifact@v4
-        with:
-          pattern: sha256-*
-          merge-multiple: true
-          path: sums
-      - name: Build SHA256SUMS manifest
-        # Bind the release version INTO the signed manifest (the `# waves-version`
-        # line) so the updater's downgrade protection rests on authenticated data,
-        # not the unsigned GitHub API tag. The '#' line is ignored by hash parsers
-        # but is covered by the signature.
-        env:
-          # Use the dispatched release_tag when this is a manual release; on a
-          # tag push github.ref_name IS the tag. Never the branch name.
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-        run: |
-          { echo "# waves-version: ${RELEASE_TAG}"; cat sums/*.sha256 | LC_ALL=C sort -k2; } > SHA256SUMS
-          echo "----- SHA256SUMS -----"; cat SHA256SUMS
-      - name: Sign SHA256SUMS
-        env:
-          BITWAVE_SIGNING_KEY: ${{ secrets.BITWAVE_SIGNING_KEY }}
-        run: |
-          if [ -n "$BITWAVE_SIGNING_KEY" ]; then
-            source $VENV
-            poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
-          else
-            echo "::error::BITWAVE_SIGNING_KEY is not set; a tagged release MUST be signed or the in-app updater (fail-closed) will refuse every update. Add the BITWAVE_SIGNING_KEY secret before tagging."
-            exit 1
-          fi
-      # The Release body comes from CHANGELOG.md: the section whose heading is
-      # exactly "## <tag> (date)". Missing section = empty body + a warning,
-      # never a failed release.
-      - name: Extract release notes from CHANGELOG.md
-        env:
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-        run: |
-          awk -v tag="$RELEASE_TAG" '
-            # Match the tag as any field on a "## " heading, so an optional emoji
-            # accent (e.g. "## 🌊 v0.1.1 (date)") does not shift it off field 2.
-            /^## / { on = 0; for (i = 2; i <= NF; i++) if ($i == tag) on = 1; next }
-            on && (started || NF) { started = 1; print }
-          ' CHANGELOG.md > RELEASE_NOTES.md
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "::warning::CHANGELOG.md has no '## ${RELEASE_TAG}' section; the Release body carries only the Verify footer."
-          fi
-          # The Verify footer: every asset's expected hash next to the download,
-          # the release public key and the copyable check, generated from the
-          # manifest just signed so the page can never disagree with it.
+    - name: Check out
+      uses: actions/checkout@v4
+    - name: Set up the environment
+      uses: ./.github/actions/setup-poetry-env
+    - name: Collect per-asset checksums
+      uses: actions/download-artifact@v4
+      with:
+        pattern: sha256-*
+        merge-multiple: true
+        path: sums
+    - name: Build SHA256SUMS manifest
+      env:
+        RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+      run: |
+        { echo "# waves-version: ${RELEASE_TAG}"; cat sums/*.sha256 | LC_ALL=C sort -k2; } > SHA256SUMS
+        echo "----- SHA256SUMS -----"; cat SHA256SUMS
+    - name: Sign SHA256SUMS
+      env:
+        BITWAVE_SIGNING_KEY: ${{ secrets.BITWAVE_SIGNING_KEY }}
+      run: |
+        if [ -n "$BITWAVE_SIGNING_KEY" ]; then
           source $VENV
-          { echo; poetry run python tools/release_verify_notes.py SHA256SUMS; } >> RELEASE_NOTES.md
-          echo "----- RELEASE_NOTES.md -----"; cat RELEASE_NOTES.md
-      - name: Set release notes body
-        # The build job creates the Release (as a bodyless draft) before this job
-        # runs, and softprops/action-gh-release does NOT overwrite the body of an
-        # already-existing release, so its body_path below is silently ignored.
-        # Set the notes explicitly here, while the release is still a draft.
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-        run: |
-          if [ -s RELEASE_NOTES.md ]; then
-            gh release edit "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --notes-file RELEASE_NOTES.md
-          fi
-      - name: Publish manifest + signature
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          fail_on_unmatched_files: false
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-          body_path: RELEASE_NOTES.md
-          # This runs only after signing succeeded, so flipping draft→false here is
-          # what makes the fully-signed Release visible to users. If signing failed
-          # the job stops before this step and the Release stays a draft (invisible
-          # to the updater) rather than going out unsigned.
-          draft: false
-          files: |
-            SHA256SUMS
-            SHA256SUMS.sig
+          poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
+        else
+          echo "::error::BITWAVE_SIGNING_KEY is not set; a tagged release MUST be signed or the in-app updater (fail-closed) will refuse every update. Add the BITWAVE_SIGNING_KEY secret before tagging."
+          exit 1
+        fi
+    - name: Extract release notes from CHANGELOG.md
+      env:
+        RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+      run: |
+        awk -v tag="$RELEASE_TAG" '
+          # Match the tag as any field on a "## " heading, so an optional emoji
+          # accent (e.g. "## 🌊 v0.1.1 (date)") does not shift it off field 2.
+          /^## / { on = 0; for (i = 2; i <= NF; i++) if ($i == tag) on = 1; next }
+          on && (started || NF) { started = 1; print }
+        ' CHANGELOG.md > RELEASE_NOTES.md
+        if [ ! -s RELEASE_NOTES.md ]; then
+          echo "::warning::CHANGELOG.md has no '## ${RELEASE_TAG}' section; the Release body carries only the Verify footer."
+        fi
+        # The Verify footer: every asset's expected hash next to the download,
+        # the release public key and the copyable check, generated from the
+        # manifest just signed so the page can never disagree with it.
+        source $VENV
+        { echo; poetry run python tools/release_verify_notes.py SHA256SUMS; } >> RELEASE_NOTES.md
+        echo "----- RELEASE_NOTES.md -----"; cat RELEASE_NOTES.md
+    - name: Set release notes body
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+      run: |
+        if [ -s RELEASE_NOTES.md ]; then
+          gh release edit "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --notes-file RELEASE_NOTES.md
+        fi
+    - name: Publish manifest + signature
+      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        fail_on_unmatched_files: false
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
+        body_path: RELEASE_NOTES.md
+        draft: false
+        files: |
+          SHA256SUMS
+          SHA256SUMS.sig
+'on':
+  push:
+    tags:
+    - v*.*.*
+    branches:
+    - test-build
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release unter diesem Tag veröffentlichen, z. B. v0.2.2. Leer = nur Testpakete.
+        required: false
+        default: ''
+      only:
+        description: 'Testbuild: windows-x64 oder windows-arm64. Leer = beide Windows-Varianten. Bei einem Release leer lassen.'
+        required: false
+        default: ''

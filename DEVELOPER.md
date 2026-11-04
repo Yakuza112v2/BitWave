@@ -1,151 +1,25 @@
-# Developer guide
+# Entwicklung von BitWave
 
-A short orientation for anyone who wants to read or change the BitWave code.
-Ten minutes here saves an afternoon of reverse-engineering.
+BitWave ist eine eigenständige Windows-App auf Grundlage von Waves. Das interne Python-Paket heißt weiterhin `waves`. Oberfläche, Anwendungsdaten, Signierung und Veröffentlichungen gehören zu BitWave.
 
-## Architecture at a glance
+## Aufbau
 
-```
-┌─────────────────────────────  BitWave (GUI)  ─────────────────────────────┐
-│                                                                         │
-│  qml/Main.qml ── the entire main window (views, cards, queue, player)   │
-│  qml/SettingsPage.qml ── schema-driven settings editor                  │
-│        │                                    ▲                           │
-│        │ calls slots on `waves`             │ signals (queued,          │
-│        ▼ (context property)                 │ GUI-thread delivery)      │
-│  backend.py ── WavesBridge(QObject): every slot QML can call,           │
-│        │       every signal QML listens to (the library half lives      │
-│        │       in the bridge_library.py mixin)                          │
-│        │                                                                │
-│        ├── threadpool (QThreadPool): search, artist pages, metadata     │
-│        └── dl_pool   (QThreadPool, 1 thread): the ONE download job in   │
-│                                     flight; queued rows wait as specs   │
-└────────┼────────────────────────────────────────────────────────────────┘
-         ▼ imports, unchanged
-   waves engine ──── Settings, Tidal (auth/session), Download
-                     (streaming, FLAC extraction, tagging)
-```
+- `waves/waves_ui/app.py`: Start der Qt-Anwendung, deutsche Standardsprache und Fenster.
+- `waves/waves_ui/backend.py`: Verbindung zwischen QML-Oberfläche, TIDAL und Downloads.
+- `waves/waves_ui/bridge_library.py`: Musiksammlung und Abgleich vorhandener Dateien.
+- `waves/waves_ui/qml/Main.qml`: Hauptfenster, Suche, Warteschlange und Wiedergabe.
+- `waves/waves_ui/qml/SettingsPage.qml`: Einstellungen aus dem Backend-Schema.
+- `waves/waves_ui/qml/Deutsch.js`: deutsche Übersetzungen; `deutsch.tsv` enthält den lesbaren Katalog.
+- `waves/waves_ui/updater.py` und `signing.py`: Updates aus dem BitWave-Repository und Signaturprüfung.
 
-One process, one window, one bridge object. QML never talks to TIDAL and
-Python never builds UI.
+## Lokale Arbeit
 
-## Package layout and the engine/UI seam
+Python 3.12 oder 3.13 und Poetry verwenden. Abhängigkeiten mit `poetry install --all-extras --with dev` installieren. Die Oberfläche startet mit `poetry run python -m waves.waves_ui`. Tests laufen mit `poetry run pytest`; `poetry check --lock` prüft die Paketdefinition.
 
-BitWave began as a fork of Tidaler and now maintains its own engine: the
-download engine modules at the top of the `waves` package descend from the
-upstream code (with many fixes of our own), and everything UI-specific lives
-in `waves/waves_ui/`. The engine/UI split is a hard seam: engine modules stay
-close to their inherited shape and UI-owned behavior lands in `waves_ui`
-subclasses and helpers, which keeps the engine easy to audit. User-facing
-state lives in its own `BitWave` folder, independent of the package name
-(`~/.config/BitWave` on Linux, `~/Library/Application Support/BitWave` on macOS,
-`%APPDATA%\BitWave` on Windows; see `__config_dirname__` in
-`waves/__init__.py`).
+Die Oberfläche übersetzt Beschriftungen und Meldungen beim Anzeigen. TIDAL-Titel, Künstlernamen, Albumtitel, Dateipfade und technische Kennungen dürfen dabei nicht verändert werden. Neue Oberflächentexte im deutschen Katalog ergänzen und die QML-Ladetests ausführen.
 
-## Threading model
+## Windows-Pakete und Updates
 
-- The **GUI thread** runs Qt's event loop, all QML, and every signal
-  handler. Bridge state (`_objs`, caches) is only mutated here; `_queue`
-  rows are also touched by download workers under `_queue_lock`, and QML
-  hears about it through the coalesced GUI-thread flush
-  (`_flush_queue_changes`).
-- **`threadpool`** runs short blocking work: login, search, album tracks,
-  artist pages, browse pages.
-- **`dl_pool`** runs the one download job in flight (queue items are
-  serial; track-level parallelism lives inside the engine's per-collection
-  executor, sized by the "concurrent downloads" setting). Rows behind it
-  wait as lightweight specs until `_pump_queue` builds their job, so a
-  backlog of any size holds no Workers, no Download objects and no relays.
+`make build-windows` erstellt das Windows-Paket. Der Veröffentlichungsablauf baut ausschließlich Windows x64 und Windows ARM64. Hilfsaufgaben dürfen auf anderen GitHub-Runnern laufen; daraus entstehen keine weiteren App-Versionen. Details stehen in `BITWAVE_RELEASE.md`.
 
-The pattern for anything slow, used by every slot in `backend.py`:
-
-```python
-@Slot(str)
-def doThing(self, arg: str) -> None:      # called from QML
-    def work():
-        result = something_blocking(arg)   # worker thread
-        self.thingLoaded.emit(result)      # Qt queues this to the GUI thread
-    self.threadpool.start(Worker(work))
-```
-
-Signals emitted from a worker are delivered on the GUI thread automatically
-(queued connection), which is why the bridge never needs locks around
-QML-facing state.
-
-## Where state lives
-
-| State                                                     | Owner                                                                    | Why                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
-| View routing, filters, scroll positions, preview UI state | `Main.qml` root properties                                               | UI transients; die with the window                 |
-| Download queue, live tidalapi objects, page caches        | `WavesBridge` (see its class docstring)                                  | Must survive view switches and feed multiple views |
-| User preferences                                          | engine `Settings` (`settings.json`) plus `waves.json` for GUI-only prefs | Persisted across runs                              |
-| Login token                                               | engine `Tidal` (`token.json`)                                            | Owned by the engine                                |
-
-## Worked example: adding a feature end to end
-
-Say you want a "share link" action on album cards:
-
-1. **Bridge slot** (`backend.py`): add `@Slot(str)` `def shareAlbum(self,
-album_id)`, look the album up in `self._objs["album"]`, do the work on
-   `self.threadpool` via `Worker`, emit a new signal with the result.
-2. **Signal**: declare it near the other signals with a comment saying what
-   it carries and when it fires (see `BRIDGE.md` in `waves/waves_ui/`).
-3. **QML**: add a `function onShareAlbum(...)` handler inside Main.qml's
-   `Connections { target: waves }` block, and call `waves.shareAlbum(id)`
-   from the card's control line.
-4. **Conventions**: reuse the shared components (ArtistLinks, DotMatrix,
-   button spec constants on the root item) so the new surface matches the
-   rest of the app, and keep any dynamic `Text` as `Text.PlainText` (a test
-   enforces this).
-
-## Testing and verification
-
-```bash
-poetry run pytest                     # unit tests, incl. the QML guards
-poetry run python -m waves.waves_ui   # run the app from source
-make gui-waves                        # Nuitka build -> dist/waves.app
-```
-
-Updating a checkout across the package rename (`tidaler/` to `waves/`)? Run
-`pip uninstall tidaler` in the old venv, then re-run `poetry install` (or
-`pip install -e ".[gui]"`). A stale editable install keeps `import tidaler`
-resolving against dead code, and without the `waves` distribution installed
-the app treats the run as a dev environment and opens against the separate
-`BitWave-dev` config folder, which looks like being signed out.
-
-The QML plain-text guard test fails if any dynamic `Text` in Main.qml can
-render rich text (remote strings must never inject markup).
-
-The launch water (the wave video behind the launch screen) shares the GUI
-thread with the interface, and the GUI thread waits for the interpreter lock
-whenever any Python runs, so a job dispatched before `bootRevealed` competes
-with the picture for every frame it holds the lock. Two things keep it
-smooth: `tests/test_boot_quiet_window.py` allowlists every job that may run
-before the reveal (a new boot job fails the test until it is added with its
-reason), and `tools/launch_probe.py` measures a real launch with Qt's own
-render-loop log, no Python on the measured path, and prints a verdict:
-
-```bash
-poetry run python tools/launch_probe.py        # 12 s, gaps over 45 ms
-```
-
-Run it twice (the first launch after a build is colder) before and after
-anything that touches the boot path. The library walk itself runs in a child
-process (`waves/library_worker.py`, started by `waves/waves_ui/library_proc.py`)
-for the same reason: off the GUI thread was never enough, off the interpreter
-is what the picture needs.
-
-`tests/conftest.py` points `XDG_CONFIG_HOME` at a throwaway directory at
-import time, before any test module loads, so the whole suite (subprocess
-scenarios included) resolves its config out of a sandbox. Never resolve a path
-from `path_config_base()` in a test without that sandbox: a `WavesBridge`
-writes `waves.json` in `__init__`, so an unsandboxed test overwrites the real
-settings of whoever runs the suite. Patching a loader to return defaults is not
-enough while the writer still knows the real path.
-
-## More detail
-
-- `waves/waves_ui/README.md`: layout, key concepts, architecture notes.
-- `waves/waves_ui/BRIDGE.md`: reference for every bridge signal and slot
-  pattern.
-- `WavesBridge`'s class docstring in `backend.py`: the state model.
+Der private Signierschlüssel gehört ausschließlich in das Actions-Geheimnis `BITWAVE_SIGNING_KEY`. Er darf niemals im Quellcode, Paket oder Protokoll auftauchen. Der öffentliche Prüfschlüssel liegt in `signing.py` und in der deutschen Anleitung.

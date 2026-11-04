@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=BitWave
-Comment=Save music from your own TIDAL account for offline listening
-Exec=BitWave
-Icon=bitwave
-Terminal=false
-Categories=AudioVideo;Audio;Music;

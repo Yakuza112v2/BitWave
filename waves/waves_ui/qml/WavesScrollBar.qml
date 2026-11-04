@@ -1,3 +1,4 @@
+import "Deutsch.js" as I18n
 import QtQuick
 import QtQuick.Controls.Basic
 
@@ -70,7 +71,7 @@ ScrollBar {
                 x: gb.width - 3 - width / 2 - 1
                 y: Math.round((index + 0.5) * gb.pitch - height / 2)
                 textFormat: Text.PlainText
-                text: "·"
+                text: I18n.t("·")
                 color: lit && gb.pressed ? gb.accentSoft : gb.accent
                 font.family: gb.mono; font.pixelSize: 14; font.bold: true
                 opacity: lit ? 1.0 : 0.16
@@ -94,7 +95,7 @@ ScrollBar {
                 id: gbText
                 anchors.centerIn: parent
                 textFormat: Text.PlainText
-                text: gb.section
+                text: I18n.t(gb.section)
                 color: gb.textHi; font.family: gb.mono; font.pixelSize: 11; font.bold: true
                 font.letterSpacing: 0.6
             }

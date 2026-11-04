@@ -1,49 +1,46 @@
 # BitWave
 
-A native desktop app for saving music from your own TIDAL account for offline listening, maintained by [Yakuza112v2](https://github.com/Yakuza112v2).
+BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen TIDAL-Konto. Betreuung: [Yakuza112v2](https://github.com/Yakuza112v2).
 
-BitWave is based on [Waves by iamprivacy](https://github.com/iamprivacy/Waves). The original license, authorship notices and project history are retained. See [UPSTREAM_README.md](UPSTREAM_README.md) for upstream features and acknowledgments.
+Das Projekt basiert auf [Waves von iamprivacy](https://github.com/iamprivacy/Waves). Lizenz, Urheberhinweise und bisherige Entwicklungshistorie bleiben erhalten. Die ursprüngliche Projektbeschreibung steht als historischer Nachweis in [UPSTREAM_README.md](UPSTREAM_README.md).
 
 ## Downloads
 
-Official BitWave releases: <https://github.com/Yakuza112v2/BitWave/releases>.
+BitWave wird ausschließlich für **Windows** veröffentlicht.
 
-| Platform | Downloads |
+| Windows-System | Download |
 | --- | --- |
-| Windows | `bitwave_windows-x64.zip`, `bitwave_windows-arm64.zip` |
-| macOS 15+ | `bitwave_macos-intel.zip`, `bitwave_macos-apple-silicon.zip` |
-| macOS 12–14 | `bitwave_macos-intel_legacy.zip`, `bitwave_macos-apple-silicon_legacy.zip` |
-| Linux | `bitwave_linux-x64.zip`, `bitwave_linux-arm64.zip`, corresponding `.AppImage` files |
+| Intel/AMD, 64 Bit | `bitwave_windows-x64.zip` |
+| ARM, 64 Bit | `bitwave_windows-arm64.zip` |
 
-Extract the archive and launch **BitWave**. A paid TIDAL account is required. Sign in with your own account on first launch. Use downloads only where you have permission to do so.
+Die offiziellen Downloads findest du unter [Releases](https://github.com/Yakuza112v2/BitWave/releases). Entpacke das gesamte ZIP-Archiv und starte `BitWave.exe` im enthaltenen Ordner. Für die Anmeldung und Musikwiedergabe benötigst du ein kostenpflichtiges TIDAL-Konto. Speichere nur Inhalte, zu deren Nutzung du berechtigt bist.
 
-## Independent settings
+## Eigene Einstellungen
 
-BitWave starts with its own settings, sign-in, cache and update directory. It does not import or modify Waves profiles.
-
-- Windows: `%APPDATA%/BitWave`
-- macOS: `~/Library/Application Support/BitWave`
-- Linux: `~/.config/BitWave`
-
-Source checkouts use `BitWave-dev`. `XDG_CONFIG_HOME` overrides the base directory on every platform.
+BitWave startet eigenständig. Einstellungen, Anmeldung, Zwischenspeicher und Update-Daten werden nicht aus Waves übernommen. Der normale Datenordner ist `%APPDATA%\BitWave`. Ein nicht installiert ausgeführter Entwicklungsstand verwendet `BitWave-dev`. `XDG_CONFIG_HOME` kann den Basisordner für Tests überschreiben.
 
 ## Updates
 
-The app's optional update check uses **Yakuza112v2/BitWave**. Release manifests are signed with BitWave's own Ed25519 key and checked before installation. Unsigned, modified or downgraded updates are refused.
+Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-The repository is private during migration. Public in-app updates become available after it is made public and the first signed BitWave release is published. Existing Waves installations remain separate and must install BitWave explicitly.
+Während der Umstellung bleibt das Repository privat. Öffentliche App-Updates sind verfügbar, sobald das Repository öffentlich ist und ein signiertes BitWave-Release veröffentlicht wurde. Bestehende Waves-Installationen bleiben eigenständig; BitWave wird separat installiert.
 
-## Verify a download
+## Download prüfen
 
-Optional, for anyone who wants to check a download before the first launch. Every release carries two small files next to the builds: `SHA256SUMS`, one line per asset with its SHA-256, and `SHA256SUMS.sig`, an Ed25519 signature over that file made with the BitWave release key. The release page also prints each asset's hash in its **Verify** section. This is the public half of the release key, compiled into every build and checked by the in-app updater before it installs anything:
+Lade zusammen mit dem ZIP-Archiv die Dateien `SHA256SUMS` und `SHA256SUMS.sig` herunter. Vergleiche unter PowerShell die Prüfsumme deines Downloads mit der entsprechenden Zeile in der Liste:
+
+```powershell
+(Get-FileHash .\bitwave_windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+Select-String -Path SHA256SUMS -Pattern bitwave_windows-x64.zip
+```
+
+Die beiden Prüfsummen müssen identisch sein. Die Signatur lässt sich zusätzlich mit Git Bash und OpenSSL 3 überprüfen. Dieser öffentliche Schlüssel ist auch fest in der App hinterlegt:
 
 ```
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAjQFMgwjIhp1dbcCAy31oUy4jX3E80+28Fb+MpQ+nZJA=
 -----END PUBLIC KEY-----
 ```
-
-**macOS or Linux**, from a folder holding the zip, `SHA256SUMS` and `SHA256SUMS.sig`. The signature step needs OpenSSL 3. Most current Linux distributions ship it; on macOS the built-in `openssl` is LibreSSL, which cannot check it, so install OpenSSL 3 with `brew install openssl@3` and run the third command with `$(brew --prefix openssl@3)/bin/openssl` in place of `openssl`:
 
 ```bash
 printf '%s\n' '-----BEGIN PUBLIC KEY-----' 'MCowBQYDK2VwAyEAjQFMgwjIhp1dbcCAy31oUy4jX3E80+28Fb+MpQ+nZJA=' '-----END PUBLIC KEY-----' > bitwave-release.pem
@@ -52,32 +49,27 @@ openssl pkeyutl -verify -pubin -inkey bitwave-release.pem -rawin -in SHA256SUMS 
 grep -v '^#' SHA256SUMS | tr -d '\r' | shasum -a 256 --ignore-missing -c -
 ```
 
-The third command must print `Signature Verified Successfully` and the last one `<asset>: OK` for the zip you downloaded (on a system without `shasum`, use `sha256sum` in its place). Any other output means the file does not match this release: delete it and download it again.
+Die Signaturprüfung muss `Signature Verified Successfully` ausgeben. Die Prüfsummenprüfung muss für das heruntergeladene Archiv `OK` melden. Bei einer Abweichung darf die Datei nicht verwendet werden.
 
-**Windows** (PowerShell), from the same folder, with `bitwave_windows-x64.zip` replaced by the zip you downloaded:
+## Aus dem Quellcode starten
+
+Benötigt werden Windows und Python 3.12 oder 3.13.
 
 ```powershell
-(Get-FileHash .\bitwave_windows-x64.zip -Algorithm SHA256).Hash.ToLower()
-Select-String -Path SHA256SUMS -Pattern bitwave_windows-x64.zip
-```
-
-The two hashes must be identical. To also check the signature on Windows, run the macOS/Linux commands in Git Bash, which ships OpenSSL.
-
-## Run from source
-
-Requires Python 3.12 or 3.13.
-
-```sh
 poetry install --all-extras --with dev
 poetry run python -m waves.waves_ui
 ```
 
-The internal Python package remains `waves` to keep imports and bundled resources stable. The installed distribution and application are BitWave.
+Der interne Python-Paketname bleibt aus Kompatibilitätsgründen `waves`. Anwendung und installierbares Projekt heißen BitWave.
 
-## Publish a release
+## Windows-Paket erstellen
 
-See [BITWAVE_RELEASE.md](BITWAVE_RELEASE.md) for the signing setup and release steps. Platform builds run through GitHub Actions. BitWave does not currently publish a Homebrew, Scoop or winget package.
+```bash
+poetry run make build-windows
+```
 
-## License and credits
+Die automatischen Windows-Builds laufen über GitHub Actions. Die Einrichtung der Signierung und die Veröffentlichung sind in [BITWAVE_RELEASE.md](BITWAVE_RELEASE.md) beschrieben.
 
-[AGPL-3.0-only](LICENSE). Based on Waves by iamprivacy, which grew out of Tidal-DL-NG and Tidaler. Original copyright notices and third-party acknowledgments are retained. Not affiliated with TIDAL.
+## Lizenz und Danksagung
+
+[AGPL-3.0-only](LICENSE). Grundlage ist Waves von iamprivacy, das auf Tidal-DL-NG und Tidaler zurückgeht. Die ursprünglichen Urheberhinweise und Danksagungen bleiben erhalten. BitWave ist kein offizielles TIDAL-Produkt.

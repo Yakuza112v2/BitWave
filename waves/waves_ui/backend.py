@@ -2494,8 +2494,8 @@ def _names_line(names: list) -> str:
     if len(uniq) == 1:
         return uniq[0]
     if len(uniq) == 2:
-        return f"{uniq[0]} and {uniq[1]}"
-    return f"{uniq[0]}, {uniq[1]} and {len(uniq) - 2} more"
+        return f"{uniq[0]} und {uniq[1]}"
+    return f"{uniq[0]}, {uniq[1]} und {len(uniq) - 2} weitere"
 
 
 def _downloads_word(n: int) -> str:
@@ -2515,12 +2515,12 @@ def _downloads_banner(
     if not nd and not nf:
         return "", ""
     if not nf:
-        title = "Download finished" if nd == 1 else f"{_downloads_word(nd)} finished"
+        title = "Download abgeschlossen" if nd == 1 else f"{_downloads_word(nd)} abgeschlossen"
         return title, _names_line(done)
     if not nd:
-        title = "Download failed" if nf == 1 else f"{_downloads_word(nf)} failed"
+        title = "Download fehlgeschlagen" if nf == 1 else f"{_downloads_word(nf)} fehlgeschlagen"
         return title, _names_line(failed)
-    return f"{_downloads_word(nd)} finished, {nf} failed", _names_line(failed)
+    return f"{_downloads_word(nd)} abgeschlossen, {nf} fehlgeschlagen", _names_line(failed)
 
 
 def _queue_banner(done: int, failed: int) -> tuple[str, str]:
@@ -2530,10 +2530,10 @@ def _queue_banner(done: int, failed: int) -> tuple[str, str]:
     if done <= 0 and failed <= 0:
         return "", ""
     if failed <= 0:
-        return "All downloads finished", f"{_downloads_word(done)} done"
+        return "Alle Downloads abgeschlossen", f"{_downloads_word(done)} abgeschlossen"
     if done <= 0:
-        return f"{_downloads_word(failed)} failed", "Retry them from the queue"
-    return "Downloads finished", f"{done} done, {failed} failed"
+        return f"{_downloads_word(failed)} fehlgeschlagen", "Erneut über die Warteschlange versuchen"
+    return "Downloads abgeschlossen", f"{done} abgeschlossen, {failed} fehlgeschlagen"
 
 
 def _fmt_duration(seconds: int | None) -> str:
@@ -7915,7 +7915,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 "GET",
                 "home/feed/static",
                 base_url=session.config.api_v2_location,
-                params={"deviceType": "BROWSER", "locale": session.locale, "platform": "WEB"},
+                params={"deviceType": "BROWSER", "locale": "de_DE", "platform": "WEB"},
             ).json()
             # A private parser instance for the same reason as _browse_fetch:
             # the shared session.page mutates itself on every parse.
@@ -8305,7 +8305,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     j = page.request.request(
                         "GET",
                         data_path,
-                        params={"deviceType": "BROWSER", "locale": "en_US", "offset": offset, "limit": 50},
+                        params={"deviceType": "BROWSER", "locale": "de_DE", "offset": offset, "limit": 50},
                     ).json()
                     raw = j.get("items") or []
                     cat = page.page_category.parse({"type": mod_type, "title": title, "pagedList": {"items": raw}})
@@ -13797,8 +13797,8 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         if before or not self._waves_pref_bool("notify_enabled"):
             return
         self._notify_send(
-            "Notifications are on",
-            "BitWave will announce new releases, finished downloads and updates here.",
+            "Benachrichtigungen eingeschaltet",
+            "BitWave meldet hier Neuerscheinungen, abgeschlossene Downloads und Updates.",
             "settings: test banner handed to the OS",
             test=True,
         )
@@ -13826,8 +13826,8 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             return
         latest = str(latest)
         self._notify_send(
-            f"BitWave {latest} is available",
-            "Install it from Settings, Updates.",
+            f"BitWave {latest} ist verfügbar",
+            "Installation unter Einstellungen → Updates.",
             "updates: update banner handed to the OS",
             on_sent=lambda: self._emit_from_worker("_updateBannerSent", latest),
         )
@@ -15702,7 +15702,7 @@ class WavesBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 j = page.request.request(
                     "GET",
                     data_path,
-                    params={"deviceType": "BROWSER", "locale": "en_US", "offset": offset, "limit": 50},
+                    params={"deviceType": "BROWSER", "locale": "de_DE", "offset": offset, "limit": 50},
                 ).json()
                 raw = j.get("items") or []
                 cat = page.page_category.parse({"type": mod_type, "title": "", "pagedList": {"items": raw}})

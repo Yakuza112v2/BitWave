@@ -1,3 +1,4 @@
+import "Deutsch.js" as I18n
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
@@ -925,13 +926,13 @@ Item {
         Behavior on border.color { ColorAnimation { duration: page.openMs } }
         Text {
             x: 8; anchors.verticalCenter: parent.verticalCenter
-            text: "ON"; color: page.accent; font.family: page.mono; font.pixelSize: 8; font.bold: true; font.letterSpacing: 1
+            text: I18n.t("ON"); color: page.accent; font.family: page.mono; font.pixelSize: 8; font.bold: true; font.letterSpacing: 1
             opacity: tg.checked ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: page.openMs } }
         }
         Text {
             anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter
-            text: "OFF"; color: page.textDim; font.family: page.mono; font.pixelSize: 8; font.bold: true; font.letterSpacing: 1
+            text: I18n.t("OFF"); color: page.textDim; font.family: page.mono; font.pixelSize: 8; font.bold: true; font.letterSpacing: 1
             opacity: tg.checked ? 0 : 1
             Behavior on opacity { NumberAnimation { duration: page.openMs } }
         }
@@ -991,7 +992,7 @@ Item {
             spacing: 3
             Text {
                 id: tbTitle
-                textFormat: Text.PlainText; text: tb.title; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium
+                textFormat: Text.PlainText; text: I18n.t(tb.title); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium
                 wrapMode: Text.WordWrap; maximumLineCount: tb.compact ? 3 : 2; elide: Text.ElideRight
                 Layout.fillWidth: true
                 Layout.topMargin: page.tileTitleNudge
@@ -1002,16 +1003,16 @@ Item {
             Text {
                 visible: tb.helpShown
                 textFormat: Text.PlainText
-                text: tb.help; color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
-                wrapMode: Text.WordWrap; maximumLineCount: Math.max(1, tb.helpLines)
+                text: I18n.t(tb.help); color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
+                wrapMode: Text.WordWrap; maximumLineCount: Math.max(8, tb.helpLines)
                 elide: Text.ElideRight; Layout.fillWidth: true
             }
         }
         Text {
             id: tbMeasure
             visible: false; width: tbCol.width
-            textFormat: Text.PlainText; text: tb.help; font.pixelSize: 12; lineHeight: 1.15
-            wrapMode: Text.WordWrap; maximumLineCount: Math.max(1, tb.helpCap)
+            textFormat: Text.PlainText; text: I18n.t(tb.help); font.pixelSize: 12; lineHeight: 1.15
+            wrapMode: Text.WordWrap; maximumLineCount: Math.max(8, tb.helpCap)
         }
         SToggle {
             objectName: "tileSwitch"
@@ -1072,7 +1073,7 @@ Item {
                 Text {
                     x: olChk.x + olChk.width + 8; anchors.verticalCenter: parent.verticalCenter
                     width: olTag.x - x - 8; elide: Text.ElideRight
-                    textFormat: Text.PlainText; text: olRow.modelData.label
+                    textFormat: Text.PlainText; text: I18n.t(olRow.modelData.label)
                     color: olRow.modelData.missing ? page.textDim : page.mix(page.textLo, page.accentContTx, olRow.k)
                     font.pixelSize: 12; font.weight: Font.Medium
                 }
@@ -1083,8 +1084,8 @@ Item {
                     anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(implicitWidth, olRow.width * 0.45); elide: Text.ElideRight
                     textFormat: Text.PlainText
-                    text: olRow.modelData.missing ? "NOT CONNECTED" : olRow.modelData["default"] ? "DEFAULT"
-                        : olRow.modelData.value === "" ? olRow.modelData.sub : ""
+                    text: I18n.t(olRow.modelData.missing ? "NOT CONNECTED" : olRow.modelData["default"] ? "DEFAULT"
+                        : olRow.modelData.value === "" ? olRow.modelData.sub : "")
                     color: olRow.modelData.missing ? page.gold : page.textDim
                     font.family: page.mono; font.pixelSize: olRow.modelData.value === "" && !olRow.modelData.missing ? 10 : 9
                 }
@@ -1121,7 +1122,7 @@ Item {
             Text {
                 id: ckTxt
                 anchors.verticalCenter: parent.verticalCenter
-                textFormat: Text.PlainText; text: ck.label
+                textFormat: Text.PlainText; text: I18n.t(ck.label)
                 // Hugs its label, but elides when a layout gives it less.
                 width: Math.min(implicitWidth, Math.max(0, ck.width - 34))
                 elide: Text.ElideRight
@@ -1204,14 +1205,14 @@ Item {
                         x: ch.ladder ? 31 : 12; anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
                         Text {
-                            textFormat: Text.PlainText; text: page.optMain(chSeg.modelData.label)
+                            textFormat: Text.PlainText; text: I18n.t(page.optMain(chSeg.modelData.label))
                             color: chSeg.sel ? page.accent : chMa.containsMouse ? page.textHi : page.textLo
                             font.pixelSize: 12; font.weight: Font.DemiBold
                             Behavior on color { ColorAnimation { duration: 160 } }
                         }
                         Text {
                             visible: text !== ""
-                            textFormat: Text.PlainText; text: page.optSub(chSeg.modelData.label)
+                            textFormat: Text.PlainText; text: I18n.t(page.optSub(chSeg.modelData.label))
                             color: chSeg.sel ? page.accentDim : page.textDim
                             font.family: page.mono; font.pixelSize: 9; font.letterSpacing: 0.4
                         }
@@ -1301,7 +1302,7 @@ Item {
             Text {
                 id: stTxt
                 anchors.centerIn: parent
-                textFormat: Text.PlainText; text: st.value.toFixed(st.decimals)
+                textFormat: Text.PlainText; text: I18n.t(st.value.toFixed(st.decimals))
                 color: page.accent; font.family: page.mono; font.pixelSize: 16; font.bold: true
             }
             SequentialAnimation {
@@ -1391,9 +1392,9 @@ Item {
             anchors.leftMargin: 16; anchors.rightMargin: 14; anchors.topMargin: page.tilePadT; spacing: 14
             ColumnLayout {
                 Layout.fillWidth: true; Layout.alignment: Qt.AlignTop; spacing: 3
-                Text { textFormat: Text.PlainText; text: act.autoField ? act.autoField.label : ""; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
+                Text { textFormat: Text.PlainText; text: I18n.t(act.autoField ? act.autoField.label : ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
                 Text {
-                    text: "Notifies only; nothing downloads until you click Update. The check sends none of your data."
+                    text: I18n.t("Notifies only; nothing downloads until you click Update. The check sends none of your data.")
                     color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
                     wrapMode: Text.WordWrap; maximumLineCount: 3; elide: Text.ElideRight; Layout.fillWidth: true
                 }
@@ -1442,7 +1443,7 @@ Item {
         id: pv
         property string path: ""
         spacing: 5
-        Text { text: "↳"; color: page.accentDim; font.family: page.mono; font.pixelSize: 11; textFormat: Text.PlainText }
+        Text { text: I18n.t("↳"); color: page.accentDim; font.family: page.mono; font.pixelSize: 11; textFormat: Text.PlainText }
         Repeater {
             model: pv.path.split("/")
             delegate: Row {
@@ -1450,7 +1451,7 @@ Item {
                 required property int index
                 spacing: 5
                 Text {
-                    text: modelData
+                    text: I18n.t(modelData)
                     textFormat: Text.PlainText
                     color: modelData.indexOf("{") >= 0 ? page.gold
                          : index === pv.path.split("/").length - 1 ? page.textLo : page.textDim
@@ -1458,7 +1459,7 @@ Item {
                 }
                 Text {
                     visible: index < pv.path.split("/").length - 1
-                    text: "›"
+                    text: I18n.t("›")
                     color: page.accentDim; font.family: page.mono; font.pixelSize: 11
                 }
             }
@@ -1693,7 +1694,7 @@ Item {
                     Item { width: 1; height: railGroup.index === 0 ? 2 : 12 }
                     Text {
                         textFormat: Text.PlainText
-                        x: 10; text: railGroup.modelData.head; color: page.textDim
+                        x: 10; text: I18n.t(railGroup.modelData.head); color: page.textDim
                         font.family: page.mono; font.pixelSize: 10; font.letterSpacing: 1.4
                         bottomPadding: 4
                     }
@@ -1744,7 +1745,7 @@ Item {
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     textFormat: Text.PlainText
-                                    text: railItem.g ? railItem.g.group : ""
+                                    text: I18n.t(railItem.g ? railItem.g.group : "")
                                     color: railItem.sel ? page.accent : page.textHi
                                     font.pixelSize: 13; font.weight: railItem.sel ? Font.DemiBold : Font.Normal
                                     // A wide font (DejaVu on Linux) set bold for the pick
@@ -1886,19 +1887,19 @@ Item {
                 width: fMeas.implicitWidth + 9
                 height: fMeas.implicitHeight
                 // hidden width probe for the "[love]" replacement
-                Text { id: fLovedMeas; visible: false; text: "[love]"; font.family: page.mono; font.pixelSize: 11 }
+                Text { id: fLovedMeas; visible: false; text: I18n.t("[love]"); font.family: page.mono; font.pixelSize: 11 }
                 Row { id: fMeas; visible: false
-                    Text { text: "made with "; font.family: page.mono; font.pixelSize: 11 }
+                    Text { text: I18n.t("made with "); font.family: page.mono; font.pixelSize: 11 }
                     Item { width: footer.slotW; height: footer.heartH }
-                    Text { text: " by ";       font.family: page.mono; font.pixelSize: 11 }
-                    Text { text: "iamprivacy"; font.family: page.mono; font.pixelSize: 11 }
+                    Text { text: I18n.t(" by ");       font.family: page.mono; font.pixelSize: 11 }
+                    Text { text: I18n.t("iamprivacy"); font.family: page.mono; font.pixelSize: 11 }
                 }
                 Row {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 0
                     Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                           text: "made with ".substring(0, footer.visFor(0, 10)); color: page.accent; font.family: page.mono; font.pixelSize: 11 }
+                           text: I18n.t("made with ").substring(0, footer.visFor(0, 10)); color: page.accent; font.family: page.mono; font.pixelSize: 11 }
                     Item { width: footer.slotW; height: footer.heartH; anchors.verticalCenter: parent.verticalCenter
                         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                         Canvas {
@@ -1919,7 +1920,7 @@ Item {
                         // stays until the mess is gone and the credit retypes
                         Text {
                             anchors.centerIn: parent
-                            text: "[love]"; color: page.accent
+                            text: I18n.t("[love]"); color: page.accent
                             font.family: page.mono; font.pixelSize: 11
                             opacity: footer.heartGibbed ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 280 } }
@@ -1933,9 +1934,9 @@ Item {
                             onClicked: footer.gibHeart() }
                     }
                     Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter
-                           text: " by ".substring(0, footer.visFor(11, 4)); color: page.accent; font.family: page.mono; font.pixelSize: 11 }
+                           text: I18n.t(" by ").substring(0, footer.visFor(11, 4)); color: page.accent; font.family: page.mono; font.pixelSize: 11 }
                     Item { implicitWidth: fGh.implicitWidth; implicitHeight: fGh.implicitHeight; anchors.verticalCenter: parent.verticalCenter
-                        Text { id: fGh; textFormat: Text.PlainText; text: "iamprivacy".substring(0, footer.visFor(15, 10))
+                        Text { id: fGh; textFormat: Text.PlainText; text: I18n.t("iamprivacy".substring(0, footer.visFor(15, 10)))
                                color: fGhMA.containsMouse ? page.textHi : page.gold
                                font.family: page.mono; font.pixelSize: 11
                                font.underline: fGhMA.containsMouse }
@@ -2033,7 +2034,7 @@ Item {
                 x: mug.width + 7
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
-                text: "BitWave on GitHub"
+                text: I18n.t("BitWave on GitHub")
                 color: Qt.tint(coffee.yellow, Qt.rgba(coffee.yellowHot.r, coffee.yellowHot.g, coffee.yellowHot.b, coffee.h))
                 font.family: page.uiFont; font.pixelSize: 14; font.bold: true
             }
@@ -2063,7 +2064,7 @@ Item {
                     id: backR; spacing: 8
                     // No back arrow / back-on-click: you reach Settings from the nav,
                     // and CANCEL / SAVE (right) close it. Title only.
-                    Text { text: "Settings"; color: page.textHi; font.pixelSize: 22; font.bold: true }
+                    Text { text: I18n.t("Settings"); color: page.textHi; font.pixelSize: 22; font.bold: true }
                 }
             }
             Row {
@@ -2073,7 +2074,7 @@ Item {
                     // Nothing typed, nothing to throw away: reads as inert
                     // rather than as a way out of the page.
                     opacity: page.dirty ? 1 : 0.4
-                    Text { id: cancelTxt; anchors.centerIn: parent; text: "CANCEL"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                    Text { id: cancelTxt; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                     MouseArea {
                         anchors.fill: parent; enabled: page.dirty
                         cursorShape: page.dirty ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -2088,7 +2089,7 @@ Item {
                     width: saveTxt.width + page.btnPadH * 2; height: saveTxt.height + page.btnPadV * 2; radius: page.btnRad
                     color: page.accentCont; opacity: canSave ? 1 : 0.4
                     border.color: page.accentDim; border.width: 1
-                    Text { id: saveTxt; anchors.centerIn: parent; text: "SAVE CHANGES"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                    Text { id: saveTxt; anchors.centerIn: parent; text: I18n.t("SAVE CHANGES"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                     MouseArea {
                         anchors.fill: parent; enabled: saveBtn.canSave
                         cursorShape: saveBtn.canSave ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -2190,14 +2191,14 @@ Item {
                                 color: page.ff.stateKey === "managed" ? page.green
                                      : page.ff.stateKey === "path" ? page.gold : page.red
                             }
-                            Text { text: "FFMPEG"; color: page.textHi; font.pixelSize: 13; font.bold: true; font.letterSpacing: 1.4; Layout.alignment: Qt.AlignVCenter }
+                            Text { text: I18n.t("FFMPEG"); color: page.textHi; font.pixelSize: 13; font.bold: true; font.letterSpacing: 1.4; Layout.alignment: Qt.AlignVCenter }
                             Item { Layout.fillWidth: true }
                             Rectangle {
                                 visible: page.ff.updateAvailable && !page.ff.busy
                                 Layout.alignment: Qt.AlignVCenter
                                 radius: 5; color: page.goldCont; border.color: page.gold
                                 implicitWidth: updT.implicitWidth + 14; implicitHeight: 19
-                                Text { id: updT; textFormat: Text.PlainText; anchors.centerIn: parent; text: "UPDATE"; color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
+                                Text { id: updT; textFormat: Text.PlainText; anchors.centerIn: parent; text: I18n.t("UPDATE"); color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
                             }
                             Rectangle {
                                 visible: page.ff.stateKey !== "missing"
@@ -2207,8 +2208,8 @@ Item {
                                 Text {
                                     textFormat: Text.PlainText
                                     id: chipTxt; anchors.centerIn: parent
-                                    text: (page.ff.stateKey === "managed" ? "MANAGED" : "SYSTEM")
-                                          + (page.ff.status.version ? " · " + page.ff.status.version : "")
+                                    text: I18n.t((page.ff.stateKey === "managed" ? "MANAGED" : "SYSTEM")
+                                          + (page.ff.status.version ? " · " + page.ff.status.version : ""))
                                     color: page.ff.stateKey === "managed" ? page.greenCont : page.goldCont
                                     font.family: page.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.4
                                 }
@@ -2220,15 +2221,15 @@ Item {
                             textFormat: Text.PlainText
                             Layout.fillWidth: true; wrapMode: Text.WordWrap
                             color: page.textLo; font.pixelSize: 13
-                            text: page.ff.stateKey === "managed"
+                            text: I18n.t(page.ff.stateKey === "managed"
                                     ? "Installed and managed by BitWave."
                                   : page.ff.stateKey === "path"
                                     ? "Using the FFmpeg already on your system."
-                                  : "FFmpeg is not installed."
+                                  : "FFmpeg is not installed.")
                         }
                         Text {
                             Layout.fillWidth: true; wrapMode: Text.WordWrap
-                            text: "Used to convert videos to MP4, extract FLAC from MP4 containers, and downsample hi-res audio. Without it those steps are skipped."
+                            text: I18n.t("Used to convert videos to MP4, extract FLAC from MP4 containers, and downsample hi-res audio. Without it those steps are skipped.")
                             color: page.textDim; font.pixelSize: 12
                         }
 
@@ -2246,7 +2247,7 @@ Item {
                             textFormat: Text.PlainText
                             visible: page.ff.lifeState === "failed"
                             Layout.fillWidth: true; wrapMode: Text.WordWrap
-                            text: page.ff.failPrefix + page.ff.message
+                            text: I18n.t(page.ff.failPrefix + page.ff.message)
                             color: page.red; font.pixelSize: 12
                         }
 
@@ -2257,7 +2258,7 @@ Item {
                             Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2; Layout.preferredHeight: ffInstTxt.implicitHeight + page.btnPadV * 2
                             implicitWidth: ffInstTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad
                             color: page.accentCont; border.width: 1; border.color: page.accentDim
-                            Text { id: ffInstTxt; anchors.centerIn: parent; text: "INSTALL FFMPEG"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                            Text { id: ffInstTxt; anchors.centerIn: parent; text: I18n.t("INSTALL FFMPEG"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.install() }
                         }
 
@@ -2304,9 +2305,9 @@ Item {
                                 }
                                 ColumnLayout {
                                     Layout.fillWidth: true; spacing: 2
-                                    Text { text: "Let BitWave manage FFmpeg instead"; color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium; Layout.fillWidth: true }
+                                    Text { text: I18n.t("Let BitWave manage FFmpeg instead"); color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium; Layout.fillWidth: true }
                                     Text {
-                                        text: "Then you can update it in one click whenever you want. Most system installs have no built-in update path."
+                                        text: I18n.t("Then you can update it in one click whenever you want. Most system installs have no built-in update path.")
                                         color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; lineHeight: 1.3; Layout.fillWidth: true
                                     }
                                 }
@@ -2318,7 +2319,7 @@ Item {
                                     // "SWITCH TO MANAGED", not "INSTALL": FFmpeg is already
                                     // on the system here, this changes who provides it,
                                     // and "install" reads like something is missing.
-                                    Text { id: ffMgdTxt; anchors.centerIn: parent; text: "SWITCH TO MANAGED"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: ffMgdTxt; anchors.centerIn: parent; text: I18n.t("SWITCH TO MANAGED"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.install() }
                                 }
                             }
@@ -2329,7 +2330,7 @@ Item {
                             visible: page.ff.busy
                             Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2; Layout.preferredHeight: ffCanTxt.implicitHeight + page.btnPadV * 2
                             implicitWidth: ffCanTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad; color: "transparent"; border.color: page.red
-                            Text { id: ffCanTxt; anchors.centerIn: parent; text: "CANCEL"; color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                            Text { id: ffCanTxt; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.cancel() }
                         }
 
@@ -2342,11 +2343,11 @@ Item {
                             textFormat: Text.StyledText
                             linkColor: page.cyan
                             color: page.textDim; font.pixelSize: 11
-                            text: "Managed builds for " + (page.ff.status.os || "") + "/" + (page.ff.status.arch || "")
+                            text: I18n.t("Managed builds for " + (page.ff.status.os || "") + "/" + (page.ff.status.arch || "")
                                   + " come from <a href=\"" + (page.ff.status.source_url || "") + "\">"
                                   + (page.ff.status.source || "") + "</a>"
                                   + (page.ff.status.source_license ? " · " + page.ff.status.source_license : "")
-                                  + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org)."
+                                  + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org).")
                             onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                         }
                     }
@@ -2365,7 +2366,7 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true; spacing: 8
                                 Rectangle { width: 7; height: 7; radius: 4; color: page.green }
-                                Text { text: "FFMPEG"; color: page.textHi; font.pixelSize: 13; font.bold: true; font.letterSpacing: 1.4 }
+                                Text { text: I18n.t("FFMPEG"); color: page.textHi; font.pixelSize: 13; font.bold: true; font.letterSpacing: 1.4 }
                                 Text {
                                     textFormat: Text.PlainText
                                     Layout.fillWidth: true; elide: Text.ElideRight
@@ -2374,15 +2375,15 @@ Item {
                                     color: page.ff.updateAvailable ? page.gold : page.textDim
                                     font.pixelSize: page.ff.updateAvailable ? 14 : 12
                                     font.weight: page.ff.updateAvailable ? Font.DemiBold : Font.Normal
-                                    text: page.ff.updateAvailable ? "update available"
-                                        : "installed and managed by BitWave"
+                                    text: I18n.t(page.ff.updateAvailable ? "update available"
+                                        : "installed and managed by BitWave")
                                 }
                                 Rectangle {
                                     visible: page.ff.updateAvailable && !page.ff.busy
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: 5; color: page.goldCont; border.color: page.gold
                                     implicitWidth: ffUpdT.implicitWidth + 14; implicitHeight: 19
-                                    Text { id: ffUpdT; textFormat: Text.PlainText; anchors.centerIn: parent; text: "UPDATE"; color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
+                                    Text { id: ffUpdT; textFormat: Text.PlainText; anchors.centerIn: parent; text: I18n.t("UPDATE"); color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
                                 }
                                 Rectangle {
                                     Layout.alignment: Qt.AlignVCenter
@@ -2391,7 +2392,7 @@ Item {
                                     Text {
                                         textFormat: Text.PlainText
                                         id: ffChipTxt; anchors.centerIn: parent
-                                        text: "MANAGED" + (page.ff.status.version ? " · " + page.ff.status.version : "")
+                                        text: I18n.t("MANAGED" + (page.ff.status.version ? " · " + page.ff.status.version : ""))
                                         color: page.greenCont
                                         font.family: page.mono; font.pixelSize: 10; font.bold: true; font.letterSpacing: 0.4
                                     }
@@ -2399,7 +2400,7 @@ Item {
                             }
                             Text {
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: "Used to convert videos to MP4, extract FLAC from MP4 containers, and downsample hi-res audio. Without it those steps are skipped."
+                                text: I18n.t("Used to convert videos to MP4, extract FLAC from MP4 containers, and downsample hi-res audio. Without it those steps are skipped.")
                                 color: page.textDim; font.pixelSize: 12
                             }
 
@@ -2416,7 +2417,7 @@ Item {
                                 textFormat: Text.PlainText
                                 visible: page.ff.lifeState === "failed"
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: page.ff.failPrefix + page.ff.message
+                                text: I18n.t(page.ff.failPrefix + page.ff.message)
                                 color: page.red; font.pixelSize: 12
                             }
 
@@ -2432,7 +2433,7 @@ Item {
                                     color: page.accentCont; border.color: page.accentDim
                                     Text {
                                         textFormat: Text.PlainText
-                                        id: ffPrimTxt; anchors.centerIn: parent; text: ffPrimary.label.toUpperCase()
+                                        id: ffPrimTxt; anchors.centerIn: parent; text: I18n.t(ffPrimary.label.toUpperCase())
                                         color: page.accent
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -2446,7 +2447,7 @@ Item {
                                     visible: !page.ff.busy
                                     implicitWidth: ffRemTxt.implicitWidth + page.btnPadH * 2; implicitHeight: ffRemTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     color: page.redCont; border.color: Qt.alpha(page.red, 0.55)
-                                    Text { id: ffRemTxt; anchors.centerIn: parent; text: "REMOVE"; color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: ffRemTxt; anchors.centerIn: parent; text: I18n.t("REMOVE"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.remove() }
                                 }
                                 // Cancel while busy
@@ -2454,18 +2455,18 @@ Item {
                                     visible: page.ff.busy
                                     implicitWidth: ffCanTxt2.implicitWidth + page.btnPadH * 2; implicitHeight: ffCanTxt2.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     color: "transparent"; border.color: page.red
-                                    Text { id: ffCanTxt2; anchors.centerIn: parent; text: "CANCEL"; color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: ffCanTxt2; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.cancel() }
                                 }
                                 // Transient confirmation after a check finds nothing new.
                                 Text {
                                     visible: page.ff.upToDate && !page.ff.updateAvailable && !page.ff.checking
-                                    text: "✓ Up to date"; color: page.green; font.pixelSize: 12
+                                    text: I18n.t("✓ Up to date"); color: page.green; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                                 Text {
                                     visible: page.ff.checkFailed && !page.ff.updateAvailable && !page.ff.checking
-                                    text: "✗ Could not check"; color: page.red; font.pixelSize: 12
+                                    text: I18n.t("✗ Could not check"); color: page.red; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                             }
@@ -2477,11 +2478,11 @@ Item {
                                 textFormat: Text.StyledText
                                 linkColor: page.cyan
                                 color: page.textDim; font.pixelSize: 11
-                                text: "Managed builds for " + (page.ff.status.os || "") + "/" + (page.ff.status.arch || "")
+                                text: I18n.t("Managed builds for " + (page.ff.status.os || "") + "/" + (page.ff.status.arch || "")
                                       + " come from <a href=\"" + (page.ff.status.source_url || "") + "\">"
                                       + (page.ff.status.source || "") + "</a>"
                                       + (page.ff.status.source_license ? " · " + page.ff.status.source_license : "")
-                                      + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org)."
+                                      + ". Thank you to the maintainers. FFmpeg © the FFmpeg project (ffmpeg.org).")
                                 onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                             }
                         }
@@ -2538,7 +2539,7 @@ Item {
                                     width: 7; height: 7; radius: 4
                                     color: page.auUpdate ? page.gold : (auCard.st === "ready" ? page.green : page.textDim)
                                 }
-                                Text { textFormat: Text.PlainText; text: "BitWave " + (auCard.cur || ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                Text { textFormat: Text.PlainText; text: I18n.t("BitWave " + (auCard.cur || "")); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 Text {
                                     textFormat: Text.PlainText
                                     Layout.fillWidth: true; elide: Text.ElideRight
@@ -2547,7 +2548,7 @@ Item {
                                     color: page.auUpdate ? page.gold : page.textDim
                                     font.pixelSize: page.auUpdate ? 14 : 12
                                     font.weight: page.auUpdate ? Font.DemiBold : Font.Normal
-                                    text: auCard.st === "not_configured"
+                                    text: I18n.t(auCard.st === "not_configured"
                                             ? "automatic updates aren't available in this build"
                                           : auCard.st === "source"
                                             ? ("from source" + (page.auUpdate ? " · v" + page.auLatest + " available" : " · up to date"))
@@ -2555,19 +2556,19 @@ Item {
                                             ? ("via " + (page.appUp.channel_label || "a package manager")
                                                + (page.auUpdate ? " · v" + page.auLatest + " available" : " · up to date"))
                                           : (page.auUpdate ? "v" + page.auLatest + " available"
-                                             : (page.auDone ? "installed; restart to finish" : "up to date"))
+                                             : (page.auDone ? "installed; restart to finish" : "up to date")))
                                 }
                                 Rectangle {
                                     visible: page.auUpdate && !page.auBusy
                                     radius: 4; color: "#2a2008"; border.color: page.gold
                                     implicitWidth: auBadge.implicitWidth + 14; implicitHeight: 18
-                                    Text { id: auBadge; anchors.centerIn: parent; text: "UPDATE"; color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
+                                    Text { id: auBadge; anchors.centerIn: parent; text: I18n.t("UPDATE"); color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true }
                                 }
                             }
                             Text {
                                 textFormat: Text.PlainText
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: auCard.st !== "managed"
+                                text: I18n.t(auCard.st !== "managed"
                                     ? "Checks the public releases page and only notifies you; sends none of your data."
                                     : auCard.canInstall
                                       ? ("This copy is managed by " + (page.appUp.channel_label || "a package manager")
@@ -2575,7 +2576,7 @@ Item {
                                          + (page.appUp.update_hint ? " (" + page.appUp.update_hint + ")" : "") + " for you.")
                                       : ("This copy updates through " + (page.appUp.channel_label || "its package manager")
                                          + (page.appUp.update_hint ? " (" + page.appUp.update_hint + ")" : "")
-                                         + "; checks here only notify you.")
+                                         + "; checks here only notify you."))
                                 color: page.textDim; font.pixelSize: 12
                             }
 
@@ -2594,7 +2595,7 @@ Item {
                                 textFormat: Text.PlainText
                                 visible: page.auState === "failed"
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: "Update failed: " + page.auMsg
+                                text: I18n.t("Update failed: " + page.auMsg)
                                 color: page.red; font.pixelSize: 12
                             }
                             // The last restart did not land (the helper could not
@@ -2604,7 +2605,7 @@ Item {
                                 textFormat: Text.PlainText
                                 visible: page.auDone && (page.appUp.swap_failure || "") !== ""
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: (page.appUp.swap_failure || "") + " Restart to try once more."
+                                text: I18n.t((page.appUp.swap_failure || "") + " Restart to try once more.")
                                 color: page.red; font.pixelSize: 12
                             }
 
@@ -2634,7 +2635,7 @@ Item {
                                     border.color: auPrimary.accent ? page.accentDim : page.outline
                                     Text {
                                         textFormat: Text.PlainText
-                                        id: auPrimTxt; anchors.centerIn: parent; text: auPrimary.label.toUpperCase()
+                                        id: auPrimTxt; anchors.centerIn: parent; text: I18n.t(auPrimary.label.toUpperCase())
                                         color: auPrimary.accent ? page.accent : page.textLo
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -2655,20 +2656,20 @@ Item {
                                     visible: page.auBusy
                                     implicitWidth: auCanTxt.implicitWidth + page.btnPadH * 2; implicitHeight: auCanTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     color: "transparent"; border.color: page.red
-                                    Text { id: auCanTxt; anchors.centerIn: parent; text: "CANCEL"; color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: auCanTxt; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.cancelAppUpdate() }
                                 }
 
                                 // Transient confirmation after a check finds nothing new.
                                 Text {
                                     visible: page.auUpToDate && !page.auUpdate && !page.auBusy && !page.auChecking
-                                    text: "✓ Up to date"; color: page.green; font.pixelSize: 12
+                                    text: I18n.t("✓ Up to date"); color: page.green; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                                 // And the honest word when the check never got an answer.
                                 Text {
                                     visible: page.auCheckFailed && !page.auUpdate && !page.auBusy && !page.auChecking
-                                    text: "✗ Could not check"; color: page.red; font.pixelSize: 12
+                                    text: I18n.t("✗ Could not check"); color: page.red; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
 
@@ -2679,7 +2680,7 @@ Item {
                                     textFormat: Text.StyledText
                                     linkColor: page.cyan
                                     color: page.textDim; font.pixelSize: 11
-                                    text: "<a href=\"" + (page.appUp.releases_url || "") + "\">releases &amp; changelog</a>"
+                                    text: I18n.t("<a href=\"" + (page.appUp.releases_url || "") + "\">releases &amp; changelog</a>")
                                     onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                                 }
                             }
@@ -2736,7 +2737,7 @@ Item {
                                          : (flacCard.st.phase === "done" || flacCard.st.phase === "cancelled") && !page.flacStale() ? page.green
                                          : page.textDim
                                 }
-                                Text { text: "FLAC signatures"; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                Text { text: I18n.t("FLAC signatures"); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 // Wraps rather than elides: the end of the line can be
                                 // the part that matters (folders a scan could not open).
                                 Text {
@@ -2747,7 +2748,7 @@ Item {
                                             || page.flacMissed() > 0 || page.flacResumable()) ? page.gold
                                          : page.textDim
                                     font.pixelSize: 12
-                                    text: page.flacNote()
+                                    text: I18n.t(page.flacNote())
                                 }
                             }
                             // While a run is on: the share of files worked through
@@ -2769,12 +2770,12 @@ Item {
                                     textFormat: Text.PlainText
                                     visible: text !== ""
                                     color: page.textDim; font.pixelSize: 12
-                                    text: page.flacTimeLeft()
+                                    text: I18n.t(page.flacTimeLeft())
                                 }
                             }
                             Text {
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: "A FLAC file saved without its audio signature plays fine but fails strict checks (flac -t, Music Assistant). Scan reads the headers in your BitWave library or a custom location below and writes a report. Fix adds the missing signature to those files, 34 header bytes each, and never changes the audio or touches a file that already has one. A file that has not changed since an earlier check is not read again unless Recheck all is on."
+                                text: I18n.t("A FLAC file saved without its audio signature plays fine but fails strict checks (flac -t, Music Assistant). Scan reads the headers in your BitWave library or a custom location below and writes a report. Fix adds the missing signature to those files, 34 header bytes each, and never changes the audio or touches a file that already has one. A file that has not changed since an earlier check is not read again unless Recheck all is on.")
                                 color: page.textDim; font.pixelSize: 12
                             }
                             // The folder choice, written straight to the backend's
@@ -2798,7 +2799,7 @@ Item {
                                     radius: page.btnRad
                                     color: !flacCard.chosen ? page.accentCont : "transparent"
                                     border.color: !flacCard.chosen ? page.accentDim : page.outline
-                                    Text { id: flacSegW; anchors.centerIn: parent; text: "BITWAVE LIBRARY"; color: !flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacSegW; anchors.centerIn: parent; text: I18n.t("BITWAVE LIBRARY"); color: !flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.flacCheckSetSource("waves") }
                                 }
                                 Rectangle {
@@ -2807,7 +2808,7 @@ Item {
                                     radius: page.btnRad
                                     color: flacCard.chosen ? page.accentCont : "transparent"
                                     border.color: flacCard.chosen ? page.accentDim : page.outline
-                                    Text { id: flacSegF; anchors.centerIn: parent; text: "CUSTOM LOCATION"; color: flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacSegF; anchors.centerIn: parent; text: I18n.t("CUSTOM LOCATION"); color: flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea {
                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         // No folder picked yet: go straight to the dialog,
@@ -2830,8 +2831,8 @@ Item {
                                         font.family: page.mono; font.pixelSize: 13
                                         readonly property string wavesList: (flacCard.src.waves || []).join(", ")
                                         color: (flacCard.chosen ? flacCard.src.folder : wavesList) ? page.textHi : page.textDim
-                                        text: flacCard.chosen ? (flacCard.src.folder || "No folder chosen")
-                                                              : (wavesList || "No download folder is set")
+                                        text: I18n.t(flacCard.chosen ? (flacCard.src.folder || "No folder chosen")
+                                                              : (wavesList || "No download folder is set"))
                                     }
                                 }
                                 // BROWSE as on every other folder field (SAVE CHANGES vocabulary).
@@ -2840,7 +2841,7 @@ Item {
                                     implicitWidth: flacBrwTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacBrwTxt.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad; color: page.accentCont; border.color: page.accentDim
-                                    Text { id: flacBrwTxt; anchors.centerIn: parent; text: "BROWSE"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacBrwTxt; anchors.centerIn: parent; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea {
                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         onClicked: {
@@ -2863,7 +2864,7 @@ Item {
                                     Text {
                                         id: flacScanTxt; anchors.centerIn: parent
                                         textFormat: Text.PlainText
-                                        text: flacCard.running ? "CANCEL" : "SCAN"
+                                        text: I18n.t(flacCard.running ? "CANCEL" : "SCAN")
                                         color: flacCard.running ? page.textLo : page.accent
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -2884,7 +2885,7 @@ Item {
                                     implicitWidth: flacRepTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacRepTxt.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad; color: "transparent"; border.color: page.outline
-                                    Text { id: flacRepTxt; anchors.centerIn: parent; text: "VIEW REPORTS"; color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: flacRepTxt; anchors.centerIn: parent; text: I18n.t("VIEW REPORTS"); color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.flacCheckRevealReports() }
                                 }
                                 // FIX N FILES: only after a scan found files without a signature.
@@ -2896,7 +2897,7 @@ Item {
                                     Text {
                                         id: flacFixTxt; anchors.centerIn: parent
                                         textFormat: Text.PlainText
-                                        text: "FIX " + page.flacNum(flacCard.fixable) + (flacCard.fixable === 1 ? " FILE" : " FILES")
+                                        text: I18n.t("FIX " + page.flacNum(flacCard.fixable) + (flacCard.fixable === 1 ? " FILE" : " FILES"))
                                         color: page.gold
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -2916,7 +2917,7 @@ Item {
                                     radius: page.btnRad; color: page.goldCont; border.color: Qt.alpha(page.gold, 0.6)
                                     Text {
                                         id: flacResTxt; anchors.centerIn: parent
-                                        text: "RESUME LAST FIX"
+                                        text: I18n.t("RESUME LAST FIX")
                                         color: page.gold
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -2954,7 +2955,7 @@ Item {
                                         Text {
                                             id: flacDeepTxt
                                             Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                            text: "Deep check: decode to find damage (slow)"
+                                            text: I18n.t("Deep check: decode to find damage (slow)")
                                             color: page.textDim; font.pixelSize: 12
                                         }
                                     }
@@ -2979,7 +2980,7 @@ Item {
                                         Text {
                                             id: flacRecheckTxt
                                             Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                            text: "Recheck all: read unchanged files too"
+                                            text: I18n.t("Recheck all: read unchanged files too")
                                             color: page.textDim; font.pixelSize: 12
                                         }
                                     }
@@ -3006,10 +3007,10 @@ Item {
                             anchors.leftMargin: 14; anchors.rightMargin: 14; spacing: 12
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 2
-                                Text { text: "Start over"; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                Text { text: I18n.t("Start over"); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 Text {
                                     Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                    text: "Put every setting back to its default, or wipe everything BitWave has saved on this computer. Downloaded music is never touched."
+                                    text: I18n.t("Put every setting back to its default, or wipe everything BitWave has saved on this computer. Downloaded music is never touched.")
                                     color: page.textDim; font.pixelSize: 12
                                 }
                             }
@@ -3020,7 +3021,7 @@ Item {
                                 color: page.accentCont; border.color: page.accentDim
                                 Text {
                                     id: rstDefTxt; anchors.centerIn: parent
-                                    text: "RESET ALL SETTINGS"; color: page.accent
+                                    text: I18n.t("RESET ALL SETTINGS"); color: page.accent
                                     font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                 }
                                 MouseArea {
@@ -3035,7 +3036,7 @@ Item {
                                 color: page.redCont; border.color: Qt.alpha(page.red, 0.55)
                                 Text {
                                     id: rstAppTxt; anchors.centerIn: parent
-                                    text: "RESET APPLICATION"; color: page.red
+                                    text: I18n.t("RESET APPLICATION"); color: page.red
                                     font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                 }
                                 MouseArea {
@@ -3074,17 +3075,17 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true; spacing: 8
                                 Rectangle { width: 7; height: 7; radius: 4; color: dgCard.vbOn ? page.green : page.textDim }
-                                Text { text: "Diagnostic report"; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                Text { text: I18n.t("Diagnostic report"); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                 Text {
                                     textFormat: Text.PlainText
                                     Layout.fillWidth: true; elide: Text.ElideRight
                                     color: page.textDim; font.pixelSize: 12
-                                    text: dgCard.vbOn ? "verbose logging on" : "logging warnings only"
+                                    text: I18n.t(dgCard.vbOn ? "verbose logging on" : "logging warnings only")
                                 }
                             }
                             Text {
                                 Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                text: "Bundles recent activity and error logs into one text file, ready to attach to a bug report. Personal details are always removed."
+                                text: I18n.t("Bundles recent activity and error logs into one text file, ready to attach to a bug report. Personal details are always removed.")
                                 color: page.textDim; font.pixelSize: 12
                             }
                             RowLayout {
@@ -3097,7 +3098,7 @@ Item {
                                     Text {
                                         textFormat: Text.PlainText
                                         id: dgPrimTxt; anchors.centerIn: parent
-                                        text: (page.diagBusy ? "Exporting…" : "Export report").toUpperCase()
+                                        text: I18n.t((page.diagBusy ? "Exporting…" : "Export report").toUpperCase())
                                         color: page.accent
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
@@ -3126,17 +3127,17 @@ Item {
                                     visible: page.diagPath !== "" && !page.diagBusy
                                     implicitWidth: dgShowTxt.implicitWidth + page.btnPadH * 2; implicitHeight: dgShowTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     color: "transparent"; border.color: page.outline
-                                    Text { id: dgShowTxt; anchors.centerIn: parent; text: "SHOW FILE"; color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    Text { id: dgShowTxt; anchors.centerIn: parent; text: I18n.t("SHOW FILE"); color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: waves.revealDiagnostics(page.diagPath) }
                                 }
                                 Text {
                                     visible: page.diagPath !== "" && !page.diagBusy
-                                    text: "✓ Saved"; color: page.green; font.pixelSize: 12
+                                    text: I18n.t("✓ Saved"); color: page.green; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                                 Text {
                                     visible: page.diagFailed
-                                    text: "Export failed"; color: page.red; font.pixelSize: 12
+                                    text: I18n.t("Export failed"); color: page.red; font.pixelSize: 12
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                             }
@@ -3157,9 +3158,9 @@ Item {
                                 Layout.fillWidth: true; spacing: 13
                                 ColumnLayout {
                                     Layout.fillWidth: true; Layout.alignment: Qt.AlignTop; spacing: 3
-                                    Text { textFormat: Text.PlainText; text: dgCard.dfVerbose ? dgCard.dfVerbose.label : ""; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
+                                    Text { textFormat: Text.PlainText; text: I18n.t(dgCard.dfVerbose ? dgCard.dfVerbose.label : ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
                                     Text {
-                                        text: "Logs detailed activity to help diagnose slowdowns, freezes and crashes. Turn on, reproduce the problem, then export."
+                                        text: I18n.t("Logs detailed activity to help diagnose slowdowns, freezes and crashes. Turn on, reproduce the problem, then export.")
                                         color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
                                         wrapMode: Text.WordWrap; maximumLineCount: 4; elide: Text.ElideRight; Layout.fillWidth: true
                                     }
@@ -3187,9 +3188,9 @@ Item {
                                 Layout.fillWidth: true; spacing: 13
                                 ColumnLayout {
                                     Layout.fillWidth: true; Layout.alignment: Qt.AlignTop; spacing: 3
-                                    Text { textFormat: Text.PlainText; text: dgCard.dfRedact ? dgCard.dfRedact.label : ""; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
+                                    Text { textFormat: Text.PlainText; text: I18n.t(dgCard.dfRedact ? dgCard.dfRedact.label : ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
                                     Text {
-                                        text: "Exports always remove usernames, paths, addresses and tokens. This also hides searches and titles, which can make bugs harder to reproduce."
+                                        text: I18n.t("Exports always remove usernames, paths, addresses and tokens. This also hides searches and titles, which can make bugs harder to reproduce.")
                                         color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
                                         wrapMode: Text.WordWrap; maximumLineCount: 4; elide: Text.ElideRight; Layout.fillWidth: true
                                     }
@@ -3281,7 +3282,7 @@ Item {
                                 Layout.fillWidth: true; spacing: 2
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: page.railCrumb(card.modelData.id) + "  \u203a"
+                                    text: I18n.t(page.railCrumb(card.modelData.id) + "  \u203a")
                                     color: page.textDim; font.family: page.uiFont; font.pixelSize: 12; font.weight: Font.Medium
                                     Layout.bottomMargin: -1
                                 }
@@ -3292,7 +3293,7 @@ Item {
                                     Layout.fillWidth: true; spacing: 12
                                     Text {
                                         textFormat: Text.PlainText
-                                        text: card.modelData.group; color: page.textHi
+                                        text: I18n.t(card.modelData.group); color: page.textHi
                                         font.pixelSize: 20; font.weight: Font.DemiBold
                                         Layout.fillWidth: card.masterF === null; elide: Text.ElideRight
                                     }
@@ -3311,7 +3312,7 @@ Item {
                                 Text {
                                     textFormat: Text.PlainText
                                     visible: text !== ""
-                                    text: card.modelData.desc !== undefined ? card.modelData.desc : ""
+                                    text: I18n.t(card.modelData.desc !== undefined ? card.modelData.desc : "")
                                     color: page.textDim; font.pixelSize: 12
                                     wrapMode: Text.WordWrap; Layout.fillWidth: true
                                 }
@@ -3319,7 +3320,7 @@ Item {
                                     objectName: "sectionMasterNote"
                                     textFormat: Text.PlainText
                                     visible: text !== ""
-                                    text: card.masterF !== null ? page.masterNote(card.masterF) : ""
+                                    text: I18n.t(card.masterF !== null ? page.masterNote(card.masterF) : "")
                                     color: card.masterOff ? page.textLo : page.accent; font.pixelSize: 12
                                     wrapMode: Text.WordWrap; Layout.fillWidth: true
                                 }
@@ -3429,7 +3430,7 @@ Item {
                                             Text {
                                                 textFormat: Text.PlainText
                                                 id: mapLabel
-                                                text: mapCard.modelData.label; color: page.textHi
+                                                text: I18n.t(mapCard.modelData.label); color: page.textHi
                                                 font.pixelSize: 14; font.weight: Font.Medium
                                             }
                                             // Same per-field Restore default as the value rows,
@@ -3441,7 +3442,7 @@ Item {
                                                 visible: mapCard.modelData.default_value !== undefined
                                                 anchors.verticalCenter: mapLabel.verticalCenter
                                                 textFormat: Text.PlainText
-                                                text: changed ? "Use recommended" : "Recommended"
+                                                text: I18n.t(changed ? "Use recommended" : "Recommended")
                                                 color: !changed ? page.textDim
                                                                 : mapDefaultMa.containsMouse ? page.accent : page.accentDim
                                                 opacity: changed ? 1 : 0.5
@@ -3463,7 +3464,7 @@ Item {
                                             textFormat: Text.PlainText
                                             visible: modelData.help !== ""
                                             width: parent.width
-                                            text: modelData.help; color: page.textDim; font.pixelSize: 12
+                                            text: I18n.t(modelData.help); color: page.textDim; font.pixelSize: 12
                                             wrapMode: Text.WordWrap
                                         }
 
@@ -3487,14 +3488,14 @@ Item {
                                                 x: 12; y: 10; width: parent.width - 24; spacing: 6
                                                 Text {
                                                     textFormat: Text.PlainText
-                                                    text: "New: recommended stand-ins"
+                                                    text: I18n.t("New: recommended stand-ins")
                                                     color: page.accent; font.pixelSize: 13; font.weight: Font.Medium
                                                 }
                                                 Text {
                                                     width: parent.width; wrapMode: Text.WordWrap
                                                     textFormat: Text.PlainText
-                                                    text: "BitWave can write these five characters instead of removing them. "
-                                                          + "Folders already on disk keep the names they have; this applies to new downloads."
+                                                    text: I18n.t("BitWave can write these five characters instead of removing them. "
+                                                          + "Folders already on disk keep the names they have; this applies to new downloads.")
                                                     color: page.textDim; font.pixelSize: 12
                                                 }
                                                 // One pill per proposal. Run as bare text they blur
@@ -3517,19 +3518,19 @@ Item {
                                                                 Text {
                                                                     anchors.verticalCenter: parent.verticalCenter
                                                                     textFormat: Text.PlainText
-                                                                    text: parent.parent.modelData
+                                                                    text: I18n.t(parent.parent.modelData)
                                                                     color: page.textHi
                                                                     font.family: page.mono; font.pixelSize: 12
                                                                 }
                                                                 Text {
                                                                     anchors.verticalCenter: parent.verticalCenter
                                                                     textFormat: Text.PlainText
-                                                                    text: "→"; color: page.accent; font.pixelSize: 11
+                                                                    text: I18n.t("→"); color: page.accent; font.pixelSize: 11
                                                                 }
                                                                 Text {
                                                                     anchors.verticalCenter: parent.verticalCenter
                                                                     textFormat: Text.PlainText
-                                                                    text: mapCard.modelData.default_value[parent.parent.modelData]
+                                                                    text: I18n.t(mapCard.modelData.default_value[parent.parent.modelData])
                                                                     color: page.textHi
                                                                     font.family: page.mono; font.pixelSize: 12
                                                                 }
@@ -3541,7 +3542,7 @@ Item {
                                                     width: parent.width; elide: Text.ElideRight
                                                     topPadding: 2
                                                     textFormat: Text.PlainText
-                                                    text: "Mercury: Act 1  →  Mercury · Act 1"
+                                                    text: I18n.t("Mercury: Act 1  →  Mercury · Act 1")
                                                     color: page.textDim; font.family: page.mono; font.pixelSize: 11
                                                 }
                                                 Row {
@@ -3555,7 +3556,7 @@ Item {
                                                         radius: page.btnRad
                                                         color: page.accentCont; border.color: page.accentDim
                                                         Text {
-                                                            id: offUseTxt; anchors.centerIn: parent; text: "USE THESE"
+                                                            id: offUseTxt; anchors.centerIn: parent; text: I18n.t("USE THESE")
                                                             color: page.accent; font.pixelSize: 13; font.family: page.uiFont
                                                             font.bold: true; font.letterSpacing: page.btnTrack
                                                         }
@@ -3573,7 +3574,7 @@ Item {
                                                         radius: page.btnRad
                                                         color: "transparent"; border.color: page.outline
                                                         Text {
-                                                            id: offKeepTxt; anchors.centerIn: parent; text: "KEEP REMOVING THEM"
+                                                            id: offKeepTxt; anchors.centerIn: parent; text: I18n.t("KEEP REMOVING THEM")
                                                             color: page.textDim; font.pixelSize: 13; font.family: page.uiFont
                                                             font.bold: true; font.letterSpacing: page.btnTrack
                                                         }
@@ -3594,7 +3595,7 @@ Item {
                                                         radius: page.btnRad
                                                         color: "transparent"; border.color: page.outline
                                                         Text {
-                                                            id: offOwnTxt; anchors.centerIn: parent; text: "SET MY OWN"
+                                                            id: offOwnTxt; anchors.centerIn: parent; text: I18n.t("SET MY OWN")
                                                             color: page.textDim; font.pixelSize: 13; font.family: page.uiFont
                                                             font.bold: true; font.letterSpacing: page.btnTrack
                                                         }
@@ -3615,7 +3616,7 @@ Item {
                                         Text {
                                             textFormat: Text.PlainText
                                             topPadding: 2
-                                            text: (mapCol.expanded ? "▾  " : "▸  ") + "Set one per character"
+                                            text: I18n.t((mapCol.expanded ? "▾  " : "▸  ") + "Set one per character")
                                             color: page.accent; font.pixelSize: 12
                                             MouseArea {
                                                 anchors.fill: parent; anchors.margins: -4
@@ -3647,13 +3648,13 @@ Item {
                                                         anchors.verticalCenter: parent.verticalCenter
                                                         width: 14
                                                         textFormat: Text.PlainText
-                                                        text: charRow.ch; color: page.textHi
+                                                        text: I18n.t(charRow.ch); color: page.textHi
                                                         font.family: page.mono; font.pixelSize: 13
                                                     }
                                                     Text {
                                                         anchors.verticalCenter: parent.verticalCenter
                                                         textFormat: Text.PlainText
-                                                        text: "→"
+                                                        text: I18n.t("→")
                                                         // Accent marks the characters carrying a
                                                         // stand-in of their own; the rest read as
                                                         // the plumbing they are.
@@ -3671,9 +3672,9 @@ Item {
                                                         // An empty box says what the character
                                                         // becomes anyway: the general stand-in, or
                                                         // nothing at all when there is none.
-                                                        placeholderText: charRow.overridden
+                                                        placeholderText: I18n.t(charRow.overridden
                                                                          ? "none"
-                                                                         : (page.generalStandIn() === "" ? "none" : page.generalStandIn())
+                                                                         : (page.generalStandIn() === "" ? "none" : page.generalStandIn()))
                                                         invalid: page.mapCharDirty(charRow.fieldData, charRow.ch)
                                                         onEdited: function(t){ page.mapSet(charRow.fieldData, charRow.ch, t) }
                                                         // A whole table staged at once (the offer strip,
@@ -3783,14 +3784,14 @@ Item {
                                                 x: bandCheck.width + 10; width: parent.width - x; spacing: 2
                                                 Text {
                                                     textFormat: Text.PlainText; width: parent.width; elide: Text.ElideRight
-                                                    text: fieldRow.modelData.child_label !== undefined ? fieldRow.modelData.child_label : ""
+                                                    text: I18n.t(fieldRow.modelData.child_label !== undefined ? fieldRow.modelData.child_label : "")
                                                     color: page.mix(page.textHi, page.accentContTx, fieldRow.bandK)
                                                     font.pixelSize: 13
                                                 }
                                                 Text {
                                                     textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap
                                                     visible: text !== ""
-                                                    text: fieldRow.modelData.child_help !== undefined ? fieldRow.modelData.child_help : ""
+                                                    text: I18n.t(fieldRow.modelData.child_help !== undefined ? fieldRow.modelData.child_help : "")
                                                     color: page.textDim; font.pixelSize: 12
                                                 }
                                             }
@@ -3859,7 +3860,7 @@ Item {
                                                 Flow {
                                                     Layout.fillWidth: true
                                                     spacing: 10
-                                                    Text { id: inlineLabel; textFormat: Text.PlainText; text: modelData.label; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                                    Text { id: inlineLabel; textFormat: Text.PlainText; text: I18n.t(modelData.label); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
                                                     // Same per-field Restore default link as the
                                                     // full-width str rows (see strDefaultLink).
                                                     Text {
@@ -3869,7 +3870,7 @@ Item {
                                                         visible: modelData.inline === true && modelData.default_value !== undefined
                                                         height: inlineLabel.height; verticalAlignment: Text.AlignVCenter
                                                         textFormat: Text.PlainText
-                                                        text: changed ? "Restore default" : "Default"
+                                                        text: I18n.t(changed ? "Restore default" : "Default")
                                                         color: !changed ? page.textDim
                                                                         : inlineDefaultMa.containsMouse ? page.accent : page.accentDim
                                                         opacity: changed ? 1 : 0.5
@@ -3889,7 +3890,7 @@ Item {
                                                         }
                                                     }
                                                 }
-                                                Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: modelData.help; color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                                                Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: I18n.t(modelData.help); color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                                             }
                                             // A pick of several: one checkbox per option,
                                             // each hugging its label (the tiles' nested
@@ -3975,7 +3976,7 @@ Item {
                                                 }
                                                 Text {
                                                     anchors.verticalCenter: parent.verticalCenter; opacity: rangeRow.on ? 1 : 0.4
-                                                    textFormat: Text.PlainText; text: modelData.mid || ""; color: page.textLo; font.pixelSize: 12
+                                                    textFormat: Text.PlainText; text: I18n.t(modelData.mid || ""); color: page.textLo; font.pixelSize: 12
                                                 }
                                                 SStepper {
                                                     anchors.verticalCenter: parent.verticalCenter
@@ -4015,8 +4016,8 @@ Item {
                                                 columns: width - coverChoice.implicitWidth - 14 < page.rowWordsMinW ? 1 : 2
                                                 ColumnLayout {
                                                     Layout.fillWidth: true; spacing: 2
-                                                    Text { textFormat: Text.PlainText; text: modelData.label; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
-                                                    Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: modelData.help; color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                                                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.label); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                                    Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: I18n.t(modelData.help); color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                                                 }
                                                 SChoice {
                                                     id: coverChoice
@@ -4029,7 +4030,7 @@ Item {
                                             }
                                             Text {
                                                 textFormat: Text.PlainText
-                                                text: (coverCol.expanded ? "▾  " : "▸  ") + "Separate cover.jpg size"
+                                                text: I18n.t((coverCol.expanded ? "▾  " : "▸  ") + "Separate cover.jpg size")
                                                 color: page.accent; font.pixelSize: 12
                                                 MouseArea { anchors.fill: parent; anchors.margins: -4; cursorShape: Qt.PointingHandCursor; onClicked: coverCol.expanded = !coverCol.expanded }
                                             }
@@ -4039,8 +4040,8 @@ Item {
                                                 columns: width - coverFileChoice.implicitWidth - 14 < page.rowWordsMinW ? 1 : 2
                                                 ColumnLayout {
                                                     Layout.fillWidth: true; spacing: 2
-                                                    Text { textFormat: Text.PlainText; text: modelData.file_label ? modelData.file_label : "Separate cover.jpg size"; color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium }
-                                                    Text { text: "Size of the saved cover.jpg. \"Same as embedded\" matches the size above."; color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                                                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.file_label ? modelData.file_label : "Separate cover.jpg size"); color: page.textHi; font.pixelSize: 13; font.weight: Font.Medium }
+                                                    Text { text: I18n.t("Size of the saved cover.jpg. \"Same as embedded\" matches the size above."); color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                                                 }
                                                 SChoice {
                                                     id: coverFileChoice
@@ -4133,7 +4134,7 @@ Item {
                                                     SToggle { anchors.verticalCenter: parent.verticalCenter; checked: libraryCol.enabledE }
                                                     Text {
                                                         anchors.verticalCenter: parent.verticalCenter
-                                                        text: "Scan a music library"
+                                                        text: I18n.t("Scan a music library")
                                                         color: libTglMouse.containsMouse ? page.textHi : page.textLo
                                                         font.pixelSize: 14; font.weight: Font.Medium
                                                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -4144,7 +4145,7 @@ Item {
                                                     Text {
                                                         anchors.verticalCenter: parent.verticalCenter
                                                         visible: !libraryCol.enabledE
-                                                        text: "no folder is scanned and no badges show"
+                                                        text: I18n.t("no folder is scanned and no badges show")
                                                         color: page.textDim; font.pixelSize: 12
                                                     }
                                                 }
@@ -4165,7 +4166,7 @@ Item {
                                                     Text {
                                                         id: expTxt; anchors.centerIn: parent
                                                         textFormat: Text.PlainText
-                                                        text: "EXPERIMENTAL"
+                                                        text: I18n.t("EXPERIMENTAL")
                                                         color: page.gold; font.family: page.mono; font.pixelSize: 10; font.bold: true
                                                     }
                                                 }
@@ -4182,13 +4183,13 @@ Item {
                                             // skip-existing off is FOR.
                                             Text {
                                                 textFormat: Text.PlainText
-                                                visible: modelData.help !== ""; text: modelData.help; color: page.textDim; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
+                                                visible: modelData.help !== ""; text: I18n.t(modelData.help); color: page.textDim; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
                                                 opacity: libraryCol.enabledE ? 1 : 0.4
                                                 Behavior on opacity { NumberAnimation { duration: 160 } }
                                             }
                                             Text {
                                                 textFormat: Text.PlainText
-                                                text: "Matching is new, so a badge can still be wrong. A future version will support upgrading what you already have."
+                                                text: I18n.t("Matching is new, so a badge can still be wrong. A future version will support upgrading what you already have.")
                                                 color: page.textDim; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap
                                                 opacity: libraryCol.enabledE ? 1 : 0.4
                                                 Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -4228,7 +4229,7 @@ Item {
                                                     color: !libraryCol.separate ? page.accentCont : "transparent"
                                                     border.color: !libraryCol.separate ? page.accent : (segDlMouse.containsMouse ? page.accentDim : page.outline)
                                                     Layout.row: 0; Layout.column: 0
-                                                    Text { id: segDl; anchors.centerIn: parent; textFormat: Text.PlainText; text: "MY DOWNLOAD FOLDER"; color: !libraryCol.separate || segDlMouse.containsMouse ? page.accent : page.textHi; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: segDl; anchors.centerIn: parent; textFormat: Text.PlainText; text: I18n.t("MY DOWNLOAD FOLDER"); color: !libraryCol.separate || segDlMouse.containsMouse ? page.accent : page.textHi; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea { id: segDlMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("library_source", "download") }
                                                 }
                                                 Rectangle {
@@ -4236,7 +4237,7 @@ Item {
                                                     color: libraryCol.separate ? page.accentCont : "transparent"
                                                     border.color: libraryCol.separate ? page.accent : (segSepMouse.containsMouse ? page.accentDim : page.outline)
                                                     Layout.row: 0; Layout.column: 1
-                                                    Text { id: segSep; anchors.centerIn: parent; textFormat: Text.PlainText; text: "A SEPARATE FOLDER"; color: libraryCol.separate || segSepMouse.containsMouse ? page.accent : page.textHi; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: segSep; anchors.centerIn: parent; textFormat: Text.PlainText; text: I18n.t("A SEPARATE FOLDER"); color: libraryCol.separate || segSepMouse.containsMouse ? page.accent : page.textHi; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea { id: segSepMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.setv("library_source", "separate") }
                                                 }
                                                 SText {
@@ -4257,7 +4258,7 @@ Item {
                                                     opacity: libraryCol.folderE !== "" ? 0.6 : 1
                                                     Behavior on opacity { NumberAnimation { duration: 160 } }
                                                     Layout.row: libFolderRow.roomy ? 0 : 1; Layout.column: 3
-                                                    Text { id: brwTxt; anchors.centerIn: parent; textFormat: Text.PlainText; text: "BROWSE"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: brwTxt; anchors.centerIn: parent; textFormat: Text.PlainText; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                                         onClicked: {
@@ -4311,7 +4312,7 @@ Item {
                                                     Text {
                                                         textFormat: Text.PlainText
                                                         id: startTxt; anchors.centerIn: parent
-                                                        text: libraryCol.scanning ? "SCANNING" : "RESCAN"
+                                                        text: I18n.t(libraryCol.scanning ? "SCANNING" : "RESCAN")
                                                         color: scanBtn.lit ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                                     }
                                                     MouseArea {
@@ -4335,9 +4336,9 @@ Item {
                                                 textFormat: Text.PlainText
                                                 visible: libraryCol.enabledE && !libraryCol.scannable && !libraryCol.scanning
                                                 width: parent.width; wrapMode: Text.WordWrap
-                                                text: libraryCol.libDirty && libraryCol.root !== ""
+                                                text: I18n.t(libraryCol.libDirty && libraryCol.root !== ""
                                                       ? "SAVE CHANGES applies this and starts the scan."
-                                                      : (libraryCol.separate ? "Choose a folder, then SAVE CHANGES." : "Set a download folder in Downloads, then SAVE CHANGES.")
+                                                      : (libraryCol.separate ? "Choose a folder, then SAVE CHANGES." : "Set a download folder in Downloads, then SAVE CHANGES."))
                                                 // Near-white, not the dim gray the card's static help uses:
                                                 // this line is the one telling you the card is waiting on
                                                 // YOU, so it has to out-read the prose above it.
@@ -4359,7 +4360,7 @@ Item {
                                                 textFormat: Text.PlainText
                                                 font.pixelSize: 13; font.weight: Font.Medium
                                                 color: page.gold
-                                                text: libraryCol.scanning
+                                                text: I18n.t(libraryCol.scanning
                                                       ? page.libScanNote()
                                                       : page.libraryScanStatus === "unreadable"
                                                       ? (Qt.platform.os === "osx"
@@ -4369,7 +4370,7 @@ Item {
                                                       ? "This folder isn't available right now. If it lives on an external drive or NAS, connect it and reopen Settings."
                                                       : page.libraryScanStatus === "error"
                                                       ? "The last scan did not finish. Try Rescan again; if it keeps failing, export diagnostics from the Diagnostics section."
-                                                      : page.libTruncationNote()
+                                                      : page.libTruncationNote())
                                             }
                                             // The download buttons' dot matrix in the download buttons'
                                             // clothes: the same green-filled, green-edged pill a running
@@ -4394,7 +4395,7 @@ Item {
                                                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                                                         font.pixelSize: 13; font.weight: Font.Medium
                                                         color: page.gold
-                                                        text: page.libScanNote()
+                                                        text: I18n.t(page.libScanNote())
                                                     }
                                                     Text {
                                                         visible: (page.libraryScanProgress.artist || "") !== "" || (page.libraryScanProgress.album || "") !== ""
@@ -4408,7 +4409,7 @@ Item {
                                                         font.pixelSize: 12; font.family: page.mono
                                                         color: page.textLo
                                                         text: (page.libraryScanProgress.artist || "?")
-                                                              + ((page.libraryScanProgress.album || "") !== "" ? " · " + page.libraryScanProgress.album : "")
+                                                              + ((page.libraryScanProgress.album || "") !== "" ? I18n.t(" · ") + page.libraryScanProgress.album : "")
                                                     }
                                                 }
                                                 // The bar itself, in the running download button's clothes.
@@ -4420,8 +4421,8 @@ Item {
                                                     Text {
                                                         id: scanDotsPct
                                                         textFormat: Text.PlainText
-                                                        text: page.libScanReading
-                                                              ? Math.floor(100 * page.libraryScanProgress.done / Math.max(1, page.libraryScanProgress.total)) + "%" : ""
+                                                        text: I18n.t(page.libScanReading
+                                                              ? Math.floor(100 * page.libraryScanProgress.done / Math.max(1, page.libraryScanProgress.total)) + "%" : "")
                                                         color: page.accent; font.family: page.mono; font.pixelSize: 11; font.bold: true
                                                         anchors.right: parent.right; anchors.rightMargin: 12
                                                         anchors.verticalCenter: parent.verticalCenter
@@ -4527,8 +4528,8 @@ Item {
                                                 Behavior on opacity { NumberAnimation { duration: 160 } }
                                                 ColumnLayout {
                                                     Layout.fillWidth: true; spacing: 2
-                                                    Text { textFormat: Text.PlainText; text: "Follow artists with at least " + libraryCol.minTracksE + (libraryCol.minTracksE === 1 ? " track" : " tracks"); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
-                                                    Text { textFormat: Text.PlainText; text: "Artists with fewer tracks in your library are left out of the import. You can still follow them by hand."; color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                                                    Text { textFormat: Text.PlainText; text: I18n.t("Follow artists with at least " + libraryCol.minTracksE + (libraryCol.minTracksE === 1 ? " track" : " tracks")); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
+                                                    Text { textFormat: Text.PlainText; text: I18n.t("Artists with fewer tracks in your library are left out of the import. You can still follow them by hand."); color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                                                 }
                                                 SStepper {
                                                     objectName: "libFloorStepper"
@@ -4537,7 +4538,7 @@ Item {
                                                     minimum: 1; maximum: 999; step: 1; decimals: 0
                                                     onChanged: function(v){ page.setv("releases_import_min_tracks", v) }
                                                 }
-                                                Text { textFormat: Text.PlainText; Layout.alignment: Qt.AlignVCenter; text: "tracks"; color: page.textLo; font.pixelSize: 13 }
+                                                Text { textFormat: Text.PlainText; Layout.alignment: Qt.AlignVCenter; text: I18n.t("tracks"); color: page.textLo; font.pixelSize: 13 }
                                             }
                                             // Follows from earlier imports that the saved floor would
                                             // leave out today: offered for unfollowing in one go, so a
@@ -4548,9 +4549,9 @@ Item {
                                                 width: parent.width; spacing: 14
                                                 Text {
                                                     Layout.fillWidth: true; textFormat: Text.PlainText; wrapMode: Text.WordWrap
-                                                    text: page.libraryFloorExcess + (page.libraryFloorExcess === 1 ? " artist" : " artists")
+                                                    text: I18n.t(page.libraryFloorExcess + (page.libraryFloorExcess === 1 ? " artist" : " artists")
                                                           + " followed from your library " + (page.libraryFloorExcess === 1 ? "has" : "have")
-                                                          + " fewer than " + page.libraryMinTracksLive + " tracks."
+                                                          + " fewer than " + page.libraryMinTracksLive + " tracks.")
                                                     color: page.textLo; font.pixelSize: 12
                                                 }
                                                 // The Browse… button's clothes: this page has no SpecBtn.
@@ -4560,7 +4561,7 @@ Item {
                                                     color: page.surface2; border.color: page.border1
                                                     Text {
                                                         id: libFloorTxt; anchors.centerIn: parent; textFormat: Text.PlainText
-                                                        text: "UNFOLLOW " + (page.libraryFloorExcess === 1 ? "IT" : "THEM")
+                                                        text: I18n.t("UNFOLLOW " + (page.libraryFloorExcess === 1 ? "IT" : "THEM"))
                                                         color: page.textLo; font.family: page.mono; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.2
                                                     }
                                                     MouseArea {
@@ -4582,7 +4583,7 @@ Item {
                                                 Text {
                                                     textFormat: Text.PlainText
                                                     id: strLabel
-                                                    text: modelData.label; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium
+                                                    text: I18n.t(modelData.label); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium
                                                 }
                                                 // Puts just THIS field back to what a fresh install
                                                 // ships with, so a mangled template doesn't cost you
@@ -4596,7 +4597,7 @@ Item {
                                                     visible: modelData.default_value !== undefined
                                                     anchors.verticalCenter: strLabel.verticalCenter
                                                     textFormat: Text.PlainText
-                                                    text: changed ? "Restore default" : "Default"
+                                                    text: I18n.t(changed ? "Restore default" : "Default")
                                                     color: !changed ? page.textDim
                                                                     : strDefaultMa.containsMouse ? page.accent : page.accentDim
                                                     opacity: changed ? 1 : 0.5
@@ -4628,7 +4629,7 @@ Item {
                                                     }
                                                 }
                                             }
-                                            Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: modelData.help; color: page.textDim; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap }
+                                            Text { textFormat: Text.PlainText; visible: modelData.help !== ""; text: I18n.t(modelData.help); color: page.textDim; font.pixelSize: 12; width: parent.width; wrapMode: Text.WordWrap }
                                             Row {
                                                 width: parent.width; spacing: 8
                                                 SText {
@@ -4650,7 +4651,7 @@ Item {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     color: page.accentCont
                                                     border.color: page.accentDim; border.width: 1
-                                                    Text { id: browseTxt; anchors.centerIn: parent; text: "BROWSE"; color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                                    Text { id: browseTxt; anchors.centerIn: parent; text: I18n.t("BROWSE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                                         onClicked: {
@@ -4707,7 +4708,7 @@ Item {
                                 property var groups: []
                                 Text {
                                     textFormat: Text.PlainText
-                                    text: (tokRef.expanded ? "▾  " : "▸  ") + "Want to know more about these paths and tags?"
+                                    text: I18n.t((tokRef.expanded ? "▾  " : "▸  ") + "Want to know more about these paths and tags?")
                                     color: page.accent; font.pixelSize: 12
                                     MouseArea {
                                         anchors.fill: parent; anchors.margins: -4; cursorShape: Qt.PointingHandCursor
@@ -4738,18 +4739,18 @@ Item {
                                                 Rectangle { x: 8; width: 3; height: 11; radius: 1.5; anchors.verticalCenter: parent.verticalCenter; color: page.accent }
                                                 Text {
                                                     x: 19; anchors.verticalCenter: parent.verticalCenter
-                                                    text: tokGroup.modelData.group.toUpperCase()
+                                                    text: I18n.t(tokGroup.modelData.group.toUpperCase())
                                                     textFormat: Text.PlainText
                                                     color: page.textHi; font.family: page.mono; font.pixelSize: 12; font.letterSpacing: 1
                                                 }
                                                 Text {
                                                     x: 256; anchors.verticalCenter: parent.verticalCenter
-                                                    text: "WHAT IT IS"
+                                                    text: I18n.t("WHAT IT IS")
                                                     color: page.textLo; font.family: page.mono; font.pixelSize: 10; font.letterSpacing: 1
                                                 }
                                                 Text {
                                                     anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
-                                                    text: "EXAMPLE"
+                                                    text: I18n.t("EXAMPLE")
                                                     color: page.textLo; font.family: page.mono; font.pixelSize: 10; font.letterSpacing: 1
                                                 }
                                             }
@@ -4779,7 +4780,7 @@ Item {
                                                         id: tokName
                                                         x: 8; anchors.verticalCenter: parent.verticalCenter
                                                         width: Math.min(implicitWidth, 218)
-                                                        text: tokRow.modelData.token
+                                                        text: I18n.t(tokRow.modelData.token)
                                                         textFormat: Text.PlainText
                                                         color: page.accent; font.family: page.mono; font.pixelSize: 11; elide: Text.ElideRight
                                                     }
@@ -4806,7 +4807,7 @@ Item {
                                                         Text {
                                                             visible: tokRow.copied
                                                             anchors.centerIn: parent
-                                                            text: "✓"; color: page.accent; font.family: page.mono; font.pixelSize: 12
+                                                            text: I18n.t("✓"); color: page.accent; font.family: page.mono; font.pixelSize: 12
                                                         }
                                                         MouseArea {
                                                             id: tokCopyMa
@@ -4821,13 +4822,13 @@ Item {
                                                     }
                                                     Text {
                                                         x: 256; width: parent.width - 256 - 200 - 16; anchors.verticalCenter: parent.verticalCenter
-                                                        text: tokRow.modelData.desc
+                                                        text: I18n.t(tokRow.modelData.desc)
                                                         textFormat: Text.PlainText
                                                         color: page.textDim; font.pixelSize: 11; elide: Text.ElideRight
                                                     }
                                                     Text {
                                                         width: 200; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
-                                                        text: tokRow.modelData.sample
+                                                        text: I18n.t(tokRow.modelData.sample)
                                                         textFormat: Text.PlainText
                                                         horizontalAlignment: Text.AlignRight
                                                         color: page.textLo; font.family: page.mono; font.pixelSize: 11; elide: Text.ElideRight
@@ -4997,7 +4998,7 @@ Item {
                                             help: flagTile.modelData.help
                                             helpShown: flagTile.modelData.help !== "" && !flagTile.blocked
                                             helpLines: page.tileHelpLines(flagFlow.cols === 3, flagTile.compact)
-                                            Text { visible: flagTile.hint !== ""; textFormat: Text.PlainText; text: flagTile.hint; color: page.gold; font.pixelSize: 11; Layout.fillWidth: true }
+                                            Text { visible: flagTile.hint !== ""; textFormat: Text.PlainText; text: I18n.t(flagTile.hint); color: page.gold; font.pixelSize: 11; Layout.fillWidth: true }
                                         }
                                         // The sub-option strip, flush along the bottom edge inside
                                         // the tile's outline: it fades in and settles 8 px, the
@@ -5023,7 +5024,7 @@ Item {
                                                         anchors.verticalCenter: parent.verticalCenter
                                                         width: stripFace.width - (flagTile.compact ? 26 : 30) - 21
                                                         textFormat: Text.PlainText; elide: Text.ElideRight
-                                                        text: flagTile.modelData.child_label !== undefined ? flagTile.modelData.child_label : ""
+                                                        text: I18n.t(flagTile.modelData.child_label !== undefined ? flagTile.modelData.child_label : "")
                                                         color: page.mix(page.textLo, page.accentContTx, flagTile.stripK)
                                                         font.pixelSize: 12; font.weight: Font.Medium
                                                     }
@@ -5097,7 +5098,7 @@ Item {
         Row {
             id: toastRow; anchors.centerIn: parent; spacing: 8
             Ico { name: "check"; color: page.green; size: 16 }
-            Text { text: "Changes saved"; color: page.green; font.pixelSize: 14; font.bold: true }
+            Text { text: I18n.t("Changes saved"); color: page.green; font.pixelSize: 14; font.bold: true }
         }
     }
 
