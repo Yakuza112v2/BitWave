@@ -38,7 +38,7 @@ Item {
     property bool onScreen: true
     // The palette default mirrors the app token, like ExpandChevron and LedBar
     // do, so the component stands alone in a lab without a root to read.
-    property color accent: "#3dff6e"
+    property color accent: "#00d8d0"
 
     // The copy, in one place.
     readonly property string phrase: "Reading the wire…"

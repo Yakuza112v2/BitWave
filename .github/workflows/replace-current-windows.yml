@@ -1,0 +1,93 @@
+name: Geprüftes Windows-Paket ersetzen
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: Erfolgreicher Windows-Build für das neue Paket
+        required: true
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: replace-bitwave-021
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUILD_RUN: ${{ inputs.build_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build und Quellstand prüfen
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_RUN" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN" > run.json
+          python - <<'PY'
+          import json, os
+          r=json.load(open('run.json'))
+          assert r['repository']['full_name']==os.environ['GITHUB_REPOSITORY']
+          assert r['conclusion']=='success' and r['status']=='completed'
+          assert r['head_branch']=='main' and r['event']=='workflow_dispatch'
+          assert r['path']=='.github/workflows/release-or-test-build.yml'
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('SOURCE_COMMIT='+r['head_sha']+'\n')
+          PY
+      - name: Geprüften Quellcode auswählen
+        shell: bash
+        run: |
+          git merge-base --is-ancestor "$SOURCE_COMMIT" origin/main
+          git checkout --detach "$SOURCE_COMMIT"
+          gh run download "$BUILD_RUN" -R "$GITHUB_REPOSITORY" --name bitwave_windows-x64 --dir downloads
+      - uses: ./.github/actions/setup-poetry-env
+        with:
+          python-version: '3.13'
+      - name: Download-Inhalt prüfen und signieren
+        shell: bash
+        env:
+          BITWAVE_SIGNING_KEY: ${{ secrets.BITWAVE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          poetry run python - <<'PY'
+          import hashlib, pathlib, tomllib, zipfile
+          from bitwave.bitwave_ui import __version__
+          from bitwave.bitwave_ui.signing import verify
+          assert __version__=='0.2.1'
+          archive=pathlib.Path('downloads/bitwave_windows-x64.zip')
+          with zipfile.ZipFile(archive) as z:
+              assert tomllib.loads(z.read('BitWave/pyproject.toml').decode())['project']['version']=='0.2.1'
+              for source in pathlib.Path('bitwave/ui').glob('icon*'):
+                  if source.suffix in {'.png','.ico'}:
+                      assert z.read('BitWave/ui/'+source.name)==source.read_bytes(),source.name
+              for source in pathlib.Path('bitwave/bitwave_ui/qml').iterdir():
+                  if source.suffix not in {'.qml','.js','.tsv','.png'}: continue
+                  data=z.read('BitWave/bitwave_ui/qml/'+source.name)
+                  expected=source.read_bytes()
+                  if source.suffix!='.png':
+                      data=data.replace(b'\r\n',b'\n'); expected=expected.replace(b'\r\n',b'\n')
+                  assert data==expected,source.name
+          digest=hashlib.sha256(archive.read_bytes()).hexdigest()
+          pathlib.Path('downloads/bitwave_windows-x64.zip.sha256').write_bytes((digest+'  bitwave_windows-x64.zip\n').encode())
+          pathlib.Path('SHA256SUMS').write_bytes(('# bitwave-version: v0.2.1\n'+digest+'  bitwave_windows-x64.zip\n').encode())
+          print('Logo, türkise Oberfläche, Playlist-Ansicht und Version im ZIP geprüft.')
+          PY
+          poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
+          poetry run python - <<'PY'
+          from pathlib import Path
+          from bitwave.bitwave_ui.signing import verify
+          assert verify(Path('SHA256SUMS').read_bytes(),Path('SHA256SUMS.sig').read_text())
+          print('BitWave-Signatur erfolgreich geprüft.')
+          PY
+          awk '/^## / { on=($2=="v0.2.1"); next } on { print }' CHANGELOG.md > RELEASE_NOTES.md
+          printf '\n[Download prüfen](https://github.com/Yakuza112v2/BitWave#download-prüfen)\n' >> RELEASE_NOTES.md
+      - name: Vorhandene Version 0.2.1 ersetzen
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v0.2.1" -f sha="$SOURCE_COMMIT" -F force=true
+          gh release upload v0.2.1 -R "$GITHUB_REPOSITORY" downloads/bitwave_windows-x64.zip downloads/bitwave_windows-x64.zip.sha256 SHA256SUMS SHA256SUMS.sig --clobber
+          gh release edit v0.2.1 -R "$GITHUB_REPOSITORY" --title 'BitWave 0.2.1' --notes-file RELEASE_NOTES.md --target "$SOURCE_COMMIT" --draft=false --latest

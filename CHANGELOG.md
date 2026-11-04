@@ -4,6 +4,10 @@
 
 **BitWave by Yakuza112**
 
+- Türkise Texte, Umrandungen, Schalter und aktive Zustände passend zur Logo-Welle.
+- Neu zu einer Playlist hinzugefügte Titel erhalten beim nächsten Öffnen eine Neu-Markierung, unabhängig von ihrem Erscheinungsdatum.
+- Die Markierung bleibt während dieses Besuchs sichtbar und verschwindet beim darauffolgenden Öffnen. Später hinzugefügte Titel werden erneut markiert.
+- Beim ersten Öffnen einer Playlist wird ihr Ausgangsstand gespeichert. Dieser Vergleich bleibt auch nach einem App-Neustart erhalten.
 - Neues BitWave-Logo im Fenster, in der App und an der Programmdatei.
 - Fenstertitel: „BitWave by Yakuza112“.
 - „Durchsuchen“ bei der Auswahl des Download-Ordners, der Musiksammlung und von FFmpeg.

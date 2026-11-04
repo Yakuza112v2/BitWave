@@ -632,6 +632,7 @@ _FACTORY_WIPE_FILES = (
     "token.json.tmp",
     "bitwave.json",
     "bitwave.json.tmp",
+    "playlist-visits.json",
     # Every store file (sqlite and JSON) and its sidecars, from the one list
     # in bitwave.db: the library scan cache (a listing of the whole music
     # folder), the follow list and the releases the sweep saw (a per-artist
@@ -6639,6 +6640,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                         self._set_status(_TRACKS_FETCH_FAILED)
                         self.playlistTracksLoaded.emit(playlist_id, [])
                     return
+            _complete = False
             try:
                 # complete=False (ceiling hit) is fine for BROWSING: showing
                 # the first 10000 rows beats showing none. Downloads are the
@@ -6676,6 +6678,8 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 out = []
             if gen != self._browse_gen:
                 return  # logged out mid-fetch; the rows belong to the dead session
+            for row in out:
+                row["playlist_complete"] = _complete
             self.playlistTracksLoaded.emit(playlist_id, self._dress_panel_rows(out))
             devlog.done("playlist", f"tracks id={playlist_id}", devlog.clock() - t0, n=len(out))
 
@@ -8542,6 +8546,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 with self._browse_lock:  # Mix construction parses via the shared session.page
                     obj = session.mix(media_id)
             self._remember(kind, media_id, obj)
+        playlist_complete = False
         desc = ""
         artist_id = ""
         album_artist = ""
@@ -8557,7 +8562,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         elif kind == "playlist":
             # Browsing surface: a ceiling-truncated page is still
             # worth rendering (see loadPlaylistTracks).
-            tracks, _complete = _all_playlist_items(obj)
+            tracks, playlist_complete = _all_playlist_items(obj)
         else:
             tracks = list(obj.tracks(limit=200) or [])
         if kind == "playlist":
@@ -8657,6 +8662,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             sections = [{"rowKind": "tracks", "title": n_label if items else "Tracks", "items": items}]
         payload = {
             "key": key,
+            "playlist_complete": playlist_complete,
             "title": name_builder_title(obj),
             "header": {
                 "kind": kind,
@@ -8801,7 +8807,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             if gen != self._browse_gen:
                 return  # cross-account stale load, drop silently (see loadBrowse)
             self._browse_loading.discard(key)
-            has_items = not payload["error"] and any(s["items"] for s in payload["sections"])
+            has_items = not payload["error"] and (any(s["items"] for s in payload["sections"]) or payload.get("playlist_complete") is True)
             # The disk snapshot is re-serialized and fsynced whole, so it runs
             # AFTER the page has been handed over and the spinner is off: it is
             # a next-launch convenience and nothing on screen waits for it.
@@ -11725,6 +11731,26 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # streams from the bundle (as it always has); every later one is local.
         QtCore.QTimer.singleShot(15_000, lambda: self.threadpool.start(Worker(copy)))
         return QtCore.QUrl.fromLocalFile(src).toString()
+
+    @Slot(str, str, "QVariantList", bool, result="QVariantList")
+    def playlistVisitNewRows(self, playlist_id, visit, rows, complete):
+        from .playlist_visits import PlaylistVisits
+        account = self._cache_user_id()
+        if getattr(self, "_factory_reset", False) or not account:
+            return [False] * len(rows)
+        store = getattr(self, "_playlist_visits", None)
+        if store is None:
+            store = self._playlist_visits = PlaylistVisits(pathlib.Path(self.settings.file_path).parent / "playlist-visits.json")
+        try:
+            return store.mark(account, playlist_id, visit, rows, complete)
+        except OSError:
+            logger.warning("Could not save playlist visit", exc_info=True)
+            return [False] * len(rows)
+
+    @Slot(str)
+    def refreshPlaylistVisit(self, playlist_id):
+        self._item_fetch_ts.pop("item:playlist:" + playlist_id, None)
+        self.refreshBrowseItem("playlist", playlist_id)
 
     @Slot(str, result="QVariant")
     def bitwavePref(self, key: str):

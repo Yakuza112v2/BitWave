@@ -14,9 +14,9 @@ Rectangle {
     property string mono: ""    // monospace family for the label
 
     // BitWave palette (defaults mirror the app tokens; override if they diverge)
-    property color accent:     "#3dff6e"
-    property color accentCont: "#06210f"
-    property color accentDim:  "#22a64a"
+    property color accent:     "#00d8d0"
+    property color accentCont: "#062529"
+    property color accentDim:  "#168c93"
 
     implicitHeight: 30; radius: 8
     color: accentCont; border.width: 1; border.color: accentDim
@@ -92,7 +92,7 @@ Rectangle {
     Rectangle {
         anchors.centerIn: parent
         width: ledLabel.implicitWidth + 14; height: ledLabel.implicitHeight + 4
-        radius: 4; color: "#0a120c"; opacity: 0.78
+        radius: 4; color: "#0a1518"; opacity: 0.78
         visible: bar.label !== ""
     }
     Text {
@@ -101,6 +101,6 @@ Rectangle {
         textFormat: Text.PlainText
         text: I18n.t(bar.label)
         color: bar.accent; font.family: bar.mono; font.pixelSize: 11; font.bold: true
-        style: Text.Outline; styleColor: "#a0060f09"
+        style: Text.Outline; styleColor: "#a0061417"
     }
 }

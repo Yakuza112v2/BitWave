@@ -44,4 +44,6 @@ jobs:
           tests/test_update_check_teardown.py
           tests/test_update_check_failure_wording.py
           tests/test_qml_loads.py
+          tests/test_playlist_visits.py
+          tests/test_playlist_visit_qml.py
           tests/test_offscreen_qt_is_usable.py

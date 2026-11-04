@@ -25,8 +25,8 @@ ScrollBar {
     property Item beside: null
 
     // BitWave palette (defaults mirror the app tokens; override if they diverge)
-    property color accent:     "#3dff6e"
-    property color accentSoft: "#9dffbe"
+    property color accent:     "#00d8d0"
+    property color accentSoft: "#a1fff6"
     property color surfaceHi:  "#22262e"
     property color outline:    "#3a3f49"
     property color textHi:     "#e6e8ec"

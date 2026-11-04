@@ -171,8 +171,8 @@ ApplicationWindow {
     // ---- Console palette (phosphor-green CRT, dark only) ----------------
     // Legacy names kept (values repointed) so every existing binding recolours
     // for free; new tokens add the gold / cyan / outline / surface-tier ideas.
-    readonly property color accent:       "#3dff6e"   // phosphor green (primary)
-    readonly property color accentText:   "#03210e"   // ink on a green fill
+    readonly property color accent:       "#00d8d0"   // phosphor green (primary)
+    readonly property color accentText:   "#032225"   // ink on a green fill
     readonly property color surface:      "#15181d"   // primary card surface
     readonly property color surface2:     "#191c22"   // hover / nested
     readonly property color border1:      "#262a31"   // default card border (outline-variant)
@@ -187,19 +187,19 @@ ApplicationWindow {
     readonly property color surfaceHi:    "#22262e"   // toast
     readonly property color outline:      "#3a3f49"   // strong border (search / qtag / switch)
     readonly property color divider:      "#22262d"
-    readonly property color accentDim:    "#22a64a"   // terminal-button border
-    readonly property color accentCont:   "#06210f"   // active chip / nav bg
-    readonly property color accentContTx: "#86ffaa"   // text on accent container
+    readonly property color accentDim:    "#168c93"   // terminal-button border
+    readonly property color accentCont:   "#062529"   // active chip / nav bg
+    readonly property color accentContTx: "#8af4ed"   // text on accent container
     readonly property color gold:         "#ffb01f"   // HI-RES / VIDEO tier + meter mid band
     readonly property color goldDim:      "#b07d18"
     readonly property color goldCont:     "#2a2008"
     readonly property color goldContTx:   "#ffd27a"
     readonly property color yellow:       "#ffd83d"   // queue PAUSE (gold reads orange beside it)
     readonly property color yellowCont:   "#272206"
-    readonly property color green:        "#3ef08a"   // LOSSLESS tier + done state
-    readonly property color greenDim:     "#2aa862"
-    readonly property color greenCont:    "#08230f"
-    readonly property color greenContTx:  "#8bf0b8"
+    readonly property color green:        "#40ded4"   // LOSSLESS tier + done state
+    readonly property color greenDim:     "#299c9a"
+    readonly property color greenCont:    "#08282a"
+    readonly property color greenContTx:  "#98eee7"
     // "In your library" ownership badge: amber, deliberately distinct from the
     // green on-disk owned tag so the two ownership signals never blur.
     readonly property color libAccent:   "#e5a00d"
@@ -228,11 +228,11 @@ ApplicationWindow {
     readonly property real   btnBorderW: 1.5
     readonly property int    btnPadH:  10             // label padding, left/right
     readonly property int    btnPadV:  5              // label padding, top/bottom
-    readonly property color accentSoft:   "#9dffbe"   // CRT flash / phosphor highlight
+    readonly property color accentSoft:   "#a1fff6"   // CRT flash / phosphor highlight
     // Nav-tab idle ("dimmed phosphor display"): a gray label on a faint green
     // panel that warms to green as the tab powers on (see NavTab).
-    readonly property color navIdleBg:       "#0b140f"
-    readonly property color navIdleBorder:   "#1f3d2a"
+    readonly property color navIdleBg:       "#0b171a"
+    readonly property color navIdleBorder:   "#1f4248"
     readonly property color navIdleText:     "#8f949e"
 
     // ---- View routing --------------------------------------------------
@@ -242,6 +242,31 @@ ApplicationWindow {
     property string filterType: "all"     // search-results chip: all/artists/albums/...
     property var trackCache: ({})         // albumId -> [tracks], filled by albumTracksLoaded
     property var playlistTrackCache: ({}) // playlistId -> [rows], filled by playlistTracksLoaded
+    property int playlistVisitSeq: 0
+    property string playlistMarkedId: ""
+    property var playlistFreshMask: []
+    readonly property string activePlaylistId: browseOpen && !artistOpen && !settingsOpen && !libraryOpen && !releasesOpen
+        && browsePage && browsePage.key === browsePageKey && browsePage.header && browsePage.header.kind === "playlist"
+        ? "" + browsePage.header.id : ""
+    onActivePlaylistIdChanged: {
+        playlistMarkedId = activePlaylistId
+        playlistFreshMask = []
+        if (activePlaylistId === "") return
+        ++playlistVisitSeq
+        updatePlaylistNewRows()
+        if (!root._browsePageWire) {
+            var id = activePlaylistId
+            Qt.callLater(function() { if (root.activePlaylistId === id) bitwave.refreshPlaylistVisit(id) })
+        }
+    }
+    function updatePlaylistNewRows() {
+        if (!activePlaylistId || playlistMarkedId !== activePlaylistId || !browsePage || browsePage.error) return
+        var rows = []
+        ;(browsePage.sections || []).forEach(function(section) { rows = rows.concat(section.items || []) })
+        playlistFreshMask = bitwave.playlistVisitNewRows(activePlaylistId, "page:" + playlistVisitSeq,
+            rows, browsePage.playlist_complete === true)
+    }
+
     property var artistsById: ({})        // artistId -> name, for link resolution
     property bool artistOpen: false
     property bool settingsOpen: false
@@ -1820,6 +1845,7 @@ ApplicationWindow {
     // this album, pointing at the wrong folder, so hang it off the property
     // itself: every assignment re-resolves, and nothing has to remember to.
     onBrowsePageChanged: {
+        root.updatePlaylistNewRows()
         root._resolveLibraryPresence()
         // Only a page off the wire builds behind the veil (onBrowsePageLoaded
         // arms it before assigning). Every other assignment (Back, a history
@@ -6949,7 +6975,7 @@ ApplicationWindow {
             id: artTerm
             anchors.fill: parent
             radius: artRoot.radius
-            color: "#04140a"
+            color: "#04191d"
             border.width: 1
             border.color: artRoot.artState === "failed" ? root.red : root.accentDim
             Behavior on border.color { ColorAnimation { duration: 350 } }
@@ -8898,7 +8924,7 @@ ApplicationWindow {
                 id: paTerm
                 anchors.fill: parent
                 radius: width / 2
-                color: "#04140a"
+                color: "#04191d"
                 border.width: 1
                 border.color: pa.artState === "failed" ? root.red : root.accentDim
                 Behavior on border.color { ColorAnimation { duration: 350 } }
@@ -9012,7 +9038,7 @@ ApplicationWindow {
                 preferredRendererType: Shape.CurveRenderer
                 // dim track (full circle)
                 ShapePath {
-                    strokeColor: "#293dff6e"
+                    strokeColor: "#2900d8d0"
                     strokeWidth: 3.2; fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
                     PathAngleArc {
@@ -10541,7 +10567,7 @@ ApplicationWindow {
         // Rectangle itself is rectangular and leaves the corner triangles exposed.
         readonly property int inset: 3
         width: boxW; height: boxH; radius: 8
-        color: "#04140a"; border.color: root.accentDim; border.width: 1
+        color: "#04191d"; border.color: root.accentDim; border.width: 1
 
         Item {
             id: wmClip
@@ -10609,7 +10635,7 @@ ApplicationWindow {
                                                 : 150 + Math.random() * 2100
                         pauseT.restart()
                     }
-                    color: "#eafff1"
+                    color: "#eafffc"
                     font.family: root.mono
                     font.bold: true
                     lineHeight: 0.78
@@ -10648,7 +10674,7 @@ ApplicationWindow {
                 // Sheet flash for the big center strike: the whole clip blinks
                 // faintly white during that bolt's full-flash beat.
                 anchors.fill: parent
-                color: "#eafff1"
+                color: "#eafffc"
                 readonly property real ms: wm.idleT * wm.idleLoopSecs * 1000 - 9600
                 opacity: wm.storm || ms < 140 || ms >= 280 ? 0 : ms < 210 ? 0.13 : 0.05
             }
@@ -10673,7 +10699,7 @@ ApplicationWindow {
                     text: I18n.t(modelData.shape)
                     x: Math.round((wm.boxW - 2 * wm.inset) * modelData.xf)
                     y: Math.round((wm.boxH - 2 * wm.inset) * modelData.yf)
-                    color: "#eafff1"
+                    color: "#eafffc"
                     font.family: root.mono
                     font.bold: true
                     font.pixelSize: Math.max(4, Math.round(modelData.px * wm.uscale))
@@ -10938,7 +10964,7 @@ ApplicationWindow {
         readonly property string phrase: title + "    •    "
 
         implicitWidth: 404; implicitHeight: 75; radius: 8
-        color: "#04140a"; border.color: root.accentDim; border.width: 1
+        color: "#04191d"; border.color: root.accentDim; border.width: 1
 
         Item {
             id: bclip
@@ -10991,7 +11017,7 @@ ApplicationWindow {
                     id: mqMove
                     anchors.verticalCenter: parent.verticalCenter
                     width: mqMain.implicitWidth; height: mqMain.implicitHeight
-                    Text { textFormat: Text.PlainText; x: 0; y: 1; text: I18n.t(mqMain.text); font: mqMain.font; color: "#0a160d"; opacity: 0.9 }   // shadow for legibility
+                    Text { textFormat: Text.PlainText; x: 0; y: 1; text: I18n.t(mqMain.text); font: mqMain.font; color: "#0a1b1e"; opacity: 0.9 }   // shadow for legibility
                     Text { textFormat: Text.PlainText; id: mqMain; x: 0; y: 0; text: I18n.t(banner.phrase.repeat(8)); font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: banner.ink }
                     NumberAnimation on x {
                         // Same gating as the wave layers: stop once signed in / hidden.
@@ -11006,7 +11032,7 @@ ApplicationWindow {
             // static: the phrase centered, bitwave moving behind it
             Item {
                 anchors.fill: parent; visible: !banner.marquee
-                Text { textFormat: Text.PlainText; anchors.centerIn: parent; anchors.verticalCenterOffset: 1; text: banner.title; font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: "#0a160d"; opacity: 0.9 }   // shadow
+                Text { textFormat: Text.PlainText; anchors.centerIn: parent; anchors.verticalCenterOffset: 1; text: banner.title; font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: "#0a1b1e"; opacity: 0.9 }   // shadow
                 Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: banner.title; font.family: banner.titleFamily; font.pixelSize: banner.titleSize; font.bold: banner.bold; color: banner.ink }
             }
 
@@ -11016,8 +11042,8 @@ ApplicationWindow {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 30
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: "#04140a" }
-                    GradientStop { position: 1.0; color: "#0004140a" }
+                    GradientStop { position: 0.0; color: "#04191d" }
+                    GradientStop { position: 1.0; color: "#0004191d" }
                 }
             }
             Rectangle {
@@ -11025,8 +11051,8 @@ ApplicationWindow {
                 anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 30
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: "#0004140a" }
-                    GradientStop { position: 1.0; color: "#04140a" }
+                    GradientStop { position: 0.0; color: "#0004191d" }
+                    GradientStop { position: 1.0; color: "#04191d" }
                 }
             }
         }
@@ -11049,9 +11075,9 @@ ApplicationWindow {
 
         // Colors for the CRT look. accent/accentCont/accentDim/accentSoft are
         // shared app tokens; the dim phosphor-panel tones are local to this look.
-        readonly property color navDimBg:     "#0b140f"
-        readonly property color navDimBorder: "#1f3d2a"
-        readonly property color navDimHover:  "#2c5c3e"
+        readonly property color navDimBg:     "#0b171a"
+        readonly property color navDimBorder: "#1f4248"
+        readonly property color navDimHover:  "#2c6267"
         readonly property color navText:      "#8f949e"
         readonly property color navTextHi:    "#bcc1c9"
         readonly property color navStatic:    "#aeb4ad"
@@ -13086,7 +13112,12 @@ ApplicationWindow {
 
         function toggle() {
             var e = Object.assign({}, root.expandedPlaylists)
-            if (e[plId]) { delete e[plId]; folding = true }
+            if (e[plId]) {
+                delete e[plId]; folding = true
+                var cache = Object.assign({}, root.playlistTrackCache)
+                if (cache[plId]) cache[plId] = cache[plId].map(function(row) { return Object.assign({}, row, {playlist_new: false}) })
+                root.playlistTrackCache = cache
+            }
             else { e[plId] = true; folding = false; bitwave.loadPlaylistTracks(plId) }
             root.expandedPlaylists = e
             var key = plId
@@ -13256,6 +13287,7 @@ ApplicationWindow {
                                         x: Math.min(parent.contentWidth + 6, parent.width - parent.rightPadding + 6)
                                     }
                                 }
+                                NewTag { shown: modelData.playlist_new === true; settled: false; Layout.alignment: Qt.AlignVCenter }
                                 Text { textFormat: Text.PlainText; text: modelData.artist; color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.maximumWidth: 220 }
                                 PopMeter { value: modelData.popularity }
                                 Text { textFormat: Text.PlainText; text: I18n.t(modelData.duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
@@ -13559,6 +13591,8 @@ ApplicationWindow {
         property string art: ""
         property string year: ""
         property string date: ""
+        property bool playlistRow: false
+        property bool playlistFresh: false
         property string duration: ""
         property int durationSec: 0      // raw seconds, the presence matcher's duration witness
         // TIDAL's explicit flag as the track dict carries it (a track's own
@@ -13621,9 +13655,9 @@ ApplicationWindow {
                 visible: hi; anchors.fill: parent; radius: 10
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0;  color: "#e006210f" }
-                    GradientStop { position: 0.45; color: "#7006210f" }
-                    GradientStop { position: 1.0;  color: "#0006210f" }
+                    GradientStop { position: 0.0;  color: "#e0062529" }
+                    GradientStop { position: 0.45; color: "#70062529" }
+                    GradientStop { position: 1.0;  color: "#00062529" }
                 }
             }
             RowLayout {
@@ -13714,7 +13748,7 @@ ApplicationWindow {
                         // cannot say.
                         NewTag {
                             id: trNew
-                            shown: trow.kind !== "video" && root.isNewRelease(trow.date)
+                            shown: trow.playlistRow ? trow.playlistFresh : (trow.kind !== "video" && root.isNewRelease(trow.date))
                             settled: trDl.st === "done"
                             anchors.verticalCenter: parent.verticalCenter
                             x: trPill.shown ? trPill.x + trPill.width + 6
@@ -16525,6 +16559,8 @@ ApplicationWindow {
                     sourceComponent: TrackRow {
                         id: btr
                         width: btrLd.width
+                        playlistRow: !bsec.landing && root.activePlaylistId !== ""
+                        playlistFresh: playlistRow && root.playlistFreshMask[(btrLd.row.num || 1) - 1] === true
                         tId: btrLd.row.id; kind: btrLd.row.kind || "track"
                         title: btrLd.row.title; artistName: btrLd.row.artist || ""; artistId: btrLd.row.artist_id || ""
                         album: btrLd.row.album || ""; art: btrLd.row.art || ""; year: "" + (btrLd.row.year || ""); date: btrLd.row.date || ""
@@ -17895,6 +17931,7 @@ ApplicationWindow {
             // page can arrive. Re-resolve here too for the one case that is not
             // a change: a revalidate re-emitting the SAME page object.
             root._resolveLibraryPresence()
+            root.updatePlaylistNewRows()
         }
         // The local library-presence index (re)built: re-query for the album on
         // screen so the badge appears/updates with no reload.
@@ -18105,7 +18142,14 @@ ApplicationWindow {
         // array is truthy, so it hid "Loading tracks…" and left a blank panel
         // that no re-expand ever retried.
         function onAlbumTracksLoaded(id, tracks) { var c = Object.assign({}, root.trackCache); c[id] = tracks.length ? tracks : null; root.trackCache = c }
-        function onPlaylistTracksLoaded(id, tracks) { var c = Object.assign({}, root.playlistTrackCache); c[id] = tracks.length ? tracks : null; root.playlistTrackCache = c }
+        function onPlaylistTracksLoaded(id, tracks) {
+            if (!root.expandedPlaylists[id] || root.browseOpen || root.artistOpen || root.settingsOpen || root.libraryOpen || root.releasesOpen) return
+            var flags = bitwave.playlistVisitNewRows(id, "inline:" + (++root.playlistVisitSeq), tracks,
+                tracks.length > 0 && tracks[0].playlist_complete === true)
+            var c = Object.assign({}, root.playlistTrackCache)
+            c[id] = tracks.length ? tracks.map(function(row, i) { return Object.assign({}, row, {playlist_new: flags[i] === true}) }) : null
+            root.playlistTrackCache = c
+        }
         function onArtistMetaLoaded(id, pop) {
             for (var i = 0; i < artistsModel.count; ++i) {
                 if (artistsModel.get(i).id === id) { artistsModel.setProperty(i, "popularity", pop); break }
@@ -20638,7 +20682,7 @@ ApplicationWindow {
                             x: gutter - ear
                             width: relFeedList.width - 2 * gutter + 2 * ear
                             y: spanTop; height: spanBottom - spanTop
-                            radius: 16; color: "#121c16"
+                            radius: 16; color: "#122024"
                             Connections {
                                 target: releasesModel
                                 function onDataChanged() { Qt.callLater(relJustInPanel.place) }
@@ -25569,7 +25613,7 @@ ApplicationWindow {
                     Layout.fillWidth: true; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
                     textFormat: Text.StyledText
                     text: I18n.t("BitWave does not collect any information from its users and has no way of knowing how the application is used. "
-                        + "<font color=\"#3dff6e\">Privacy is the foundation of this application.</font>")
+                        + "<font color=\"#00d8d0\">Privacy is the foundation of this application.</font>")
                     color: root.textHi; font.pixelSize: 13; font.bold: true; lineHeight: 1.3
                 }
                 RowLayout {
@@ -26931,7 +26975,7 @@ ApplicationWindow {
                         id: gs
                         textFormat: Text.PlainText; text: I18n.t(modelData)
                         font.family: root.mono; font.pixelSize: 96; font.bold: true
-                        color: "#0a160d"; opacity: 0.9 * bootTitle.shown   // shadow
+                        color: "#0a1b1e"; opacity: 0.9 * bootTitle.shown   // shadow
                         transform: Scale { origin.x: gs.width / 2; xScale: gs.text === "W" ? 1.08 : 1 }
                     }
                 }

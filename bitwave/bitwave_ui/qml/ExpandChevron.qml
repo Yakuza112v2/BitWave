@@ -22,8 +22,8 @@ Item {
     property bool showTile: true       // soft background tile (off for bare carets)
     property real closedAngle: -90     // glyph rotation while closed
     property real openAngle: 0         // glyph rotation while open
-    property color stroke: "#3dff6e"   // accent
-    property color openBg: "#06210f"   // accent container (open tint)
+    property color stroke: "#00d8d0"   // accent
+    property color openBg: "#062529"   // accent container (open tint)
     property color hoverBg: "#1d2128"  // surface3 (hover wash while collapsed)
     implicitWidth: tile; implicitHeight: tile
 

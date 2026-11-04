@@ -15,7 +15,7 @@ Item {
     property real gap: 2
     property int maxCols: 0
     property bool pulse: true
-    property color onColor: "#3dff6e"
+    property color onColor: "#00d8d0"
     readonly property int cols: {
         var c = Math.max(1, Math.floor((width + gap) / (dot + gap)))
         return (maxCols > 0 && c > maxCols) ? maxCols : c

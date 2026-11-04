@@ -11,7 +11,7 @@ import QtQuick.Shapes
 Item {
     id: ico
     property string name: "play"
-    property color color: "#3dff6e"
+    property color color: "#00d8d0"
     property real size: 16
     property real bold: 0          // extra outline stroke (256-space) to embolden
     implicitWidth: size; implicitHeight: size

@@ -423,7 +423,7 @@ Exports always remove usernames, paths, addresses and tokens. This also hides se
 Logs detailed activity to help diagnose slowdowns, freezes and crashes. Turn on, reproduce the problem, then export.	Protokolliert Details zur Untersuchung von Verzögerungen, Hängern und Abstürzen. Einschalten, den Fehler nachstellen und anschließend den Bericht exportieren.
 BitWave is not affiliated with, endorsed by, or sponsored by TIDAL. TIDAL is a trademark of its owner, used here only to identify the service BitWave works with.	BitWave ist nicht mit TIDAL verbunden und wird von TIDAL weder unterstützt noch gesponsert. TIDAL ist eine Marke des jeweiligen Inhabers und wird hier nur zur Bezeichnung des verwendeten Dienstes genannt.
 BitWave does not collect any information from its users and has no way of knowing how the application is used. 	BitWave erfasst keine Informationen über seine Nutzer und kann nicht nachvollziehen, wie die App verwendet wird. 
-<font color="#3dff6e">Privacy is the foundation of this application.</font>	<font color="#3dff6e">Datenschutz ist die Grundlage dieser App.</font>
+<font color="#00d8d0">Privacy is the foundation of this application.</font>	<font color="#00d8d0">Datenschutz ist die Grundlage dieser App.</font>
 BitWave is a personal, non-commercial tool for accessing your own TIDAL account. By continuing, you agree that:\n\n	BitWave ist ein persönliches Werkzeug für den nicht kommerziellen Zugriff auf dein eigenes TIDAL-Konto. Mit dem Fortfahren stimmst du zu, dass:\n\n
 Welcome to BitWave	Willkommen bei BitWave
 New	Neu

@@ -10,7 +10,7 @@ import QtQuick
 // Burst points are offsets from the canvas center.
 Canvas {
     id: fx
-    property var colors: ["#3dff6e", "#e6e8ec", "#ffb01f", "#56c8d8"]
+    property var colors: ["#00d8d0", "#e6e8ec", "#ffb01f", "#56c8d8"]
     property int cell: 3                 // one "bit", in px
     // { at: ms after fire(), x, y: burst point from center, c: colors index }
     property var shows: [
