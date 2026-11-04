@@ -39,3 +39,11 @@ def test_windows_release_targets_only():
     assert "linux" not in json.dumps(matrices).lower()
     assert "macos" not in json.dumps(matrices).lower()
     assert "windows" in json.dumps(matrices).lower()
+
+
+def test_german_notifications_keep_music_names():
+    from waves.waves_ui.backend import _downloads_banner, _queue_banner
+    from waves.waves_ui.bridge_releases import _releases_banner
+    assert _downloads_banner(["Home"], []) == ("Download abgeschlossen", "Home")
+    assert _queue_banner(2, 1) == ("Downloads abgeschlossen", "2 abgeschlossen, 1 fehlgeschlagen")
+    assert _releases_banner(1, [{"artist": "Future", "title": "Home"}]) == ("Neu von Future", "Home")

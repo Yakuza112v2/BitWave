@@ -289,7 +289,7 @@ def _run_scenario() -> int:
             if not body.isEnabled() or body.opacity() < 0.99:
                 failures.append(f"the body did not wake with the master on (opacity {body.opacity():.2f})")
             note = visible_named("sectionMasterNote")
-            if note is None or "test banner" not in str(note.property("text")):
+            if note is None or "Testbenachrichtigung" not in str(note.property("text")):
                 failures.append("the staged master does not say SAVE sends a test banner")
             # What SAVE CHANGES records (the real save would send the banner):
             # once it is saved, the note must stop asking for a save.
@@ -299,7 +299,7 @@ def _run_scenario() -> int:
             q("settingsPage.savedVals = Object.assign({}, settingsPage.savedVals, settingsPage.editMap)")
             settle(300)
             note = visible_named("sectionMasterNote")
-            if note is not None and "test banner" in str(note.property("text")):
+            if note is not None and "Testbenachrichtigung" in str(note.property("text")):
                 failures.append("after SAVE the master still says SAVE sends a test banner")
         q("settingsPage.editMap = ({})")
         q("settingsPage.savedVals = ({})")

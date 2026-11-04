@@ -27,6 +27,9 @@ jobs:
       - name: Check independent identity, signing, updates and QML
         run: >-
           poetry run pytest -q
+          tests/test_settings_fit.py
+          tests/test_notify_downloads.py
+          tests/test_releases_backend.py
           tests/test_bitwave_german.py
           tests/test_bitwave_identity.py
           tests/test_config_path.py

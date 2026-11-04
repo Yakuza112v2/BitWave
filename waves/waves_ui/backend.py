@@ -2499,7 +2499,7 @@ def _names_line(names: list) -> str:
 
 
 def _downloads_word(n: int) -> str:
-    return f"{n} download" + ("" if n == 1 else "s")
+    return f"{n} Download" + ("" if n == 1 else "s")
 
 
 def _downloads_banner(

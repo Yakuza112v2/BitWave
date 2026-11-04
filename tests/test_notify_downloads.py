@@ -114,21 +114,21 @@ def _end(s, name, status, qid=None):
 
 def test_downloads_banner_wording():
     assert _downloads_banner([], []) == ("", "")
-    assert _downloads_banner(["Album A"], []) == ("Download finished", "Album A")
-    assert _downloads_banner(["A", "B"], []) == ("2 downloads finished", "A and B")
-    assert _downloads_banner(["A", "B", "C", "A"], []) == ("4 downloads finished", "A, B and 1 more")
-    assert _downloads_banner([], ["Album X"]) == ("Download failed", "Album X")
-    assert _downloads_banner([], ["X", "Y", "Z"]) == ("3 downloads failed", "X, Y and 1 more")
+    assert _downloads_banner(["Album A"], []) == ("Download abgeschlossen", "Album A")
+    assert _downloads_banner(["A", "B"], []) == ("2 Downloads abgeschlossen", "A und B")
+    assert _downloads_banner(["A", "B", "C", "A"], []) == ("4 Downloads abgeschlossen", "A, B und 1 weitere")
+    assert _downloads_banner([], ["Album X"]) == ("Download fehlgeschlagen", "Album X")
+    assert _downloads_banner([], ["X", "Y", "Z"]) == ("3 Downloads fehlgeschlagen", "X, Y und 1 weitere")
     # A mixed banner names the failures, the part worth a look.
-    assert _downloads_banner(["A", "B", "C"], ["X"]) == ("3 downloads finished, 1 failed", "X")
+    assert _downloads_banner(["A", "B", "C"], ["X"]) == ("3 Downloads abgeschlossen, 1 fehlgeschlagen", "X")
 
 
 def test_queue_banner_wording():
     assert _queue_banner(0, 0) == ("", "")
-    assert _queue_banner(1, 0) == ("All downloads finished", "1 download done")
-    assert _queue_banner(12, 0) == ("All downloads finished", "12 downloads done")
-    assert _queue_banner(0, 2) == ("2 downloads failed", "Retry them from the queue")
-    assert _queue_banner(9, 3) == ("Downloads finished", "9 done, 3 failed")
+    assert _queue_banner(1, 0) == ("Alle Downloads abgeschlossen", "1 Download abgeschlossen")
+    assert _queue_banner(12, 0) == ("Alle Downloads abgeschlossen", "12 Downloads abgeschlossen")
+    assert _queue_banner(0, 2) == ("2 Downloads fehlgeschlagen", "Erneut über die Warteschlange versuchen")
+    assert _queue_banner(9, 3) == ("Downloads abgeschlossen", "9 abgeschlossen, 3 fehlgeschlagen")
 
 
 # ----- counting ended rows -------------------------------------------------- #
@@ -156,7 +156,7 @@ def test_every_mode_sends_one_coalesced_banner():
     _end(s, "B", "done")
     _end(s, "X", "failed")
     s._on_dl_notify()
-    assert s._notifier.sent == [("2 downloads finished, 1 failed", "X")]
+    assert s._notifier.sent == [("2 Downloads abgeschlossen, 1 fehlgeschlagen", "X")]
     assert s._dl_notify_done == [] and s._dl_notify_failed == []
 
 
@@ -176,7 +176,7 @@ def test_every_mode_keeps_failures_quiet_while_the_switch_is_off():
     _end(s, "A", "done")
     _end(s, "X", "failed")
     s._on_dl_notify()
-    assert s._notifier.sent == [("Download finished", "A")]
+    assert s._notifier.sent == [("Download abgeschlossen", "A")]
 
 
 def test_queue_mode_leaves_the_coalesced_banner_to_the_drain():
@@ -194,7 +194,7 @@ def test_queue_mode_banners_once_the_queue_runs_dry():
     for status in ("done", "done", "failed"):
         _end(s, "row", status)
     s._notify_queue_idle()
-    assert s._notifier.sent == [("Downloads finished", "2 done, 1 failed")]
+    assert s._notifier.sent == [("Downloads abgeschlossen", "2 abgeschlossen, 1 fehlgeschlagen")]
     # The counters reset with the banner: the next run answers for itself.
     assert (s._dl_queue_done, s._dl_queue_failed) == (0, 0)
     s._notify_queue_idle()
@@ -213,7 +213,7 @@ def test_queue_mode_keeps_failures_quiet_while_the_switch_is_off():
     _end(s, "A", "done")
     _end(s, "X", "failed")
     s._notify_queue_idle()
-    assert s._notifier.sent == [("All downloads finished", "1 download done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "1 Download abgeschlossen")]
     # Nothing but failures and the switch off: no banner at all.
     _end(s, "Y", "failed")
     s._notify_queue_idle()
@@ -239,7 +239,7 @@ def test_never_mode_still_names_failures_while_the_switch_is_on():
     _end(s, "A", "done")
     _end(s, "X", "failed")
     s._on_dl_notify()
-    assert s._notifier.sent == [("Download failed", "X")]
+    assert s._notifier.sent == [("Download fehlgeschlagen", "X")]
     s._notify_queue_idle()
     assert len(s._notifier.sent) == 1
 
@@ -259,7 +259,7 @@ def test_never_mode_with_the_switch_off_sends_nothing():
 def test_update_banner_fires_once_per_version():
     s = _stub()
     s._notify_app_update("0.3.0")
-    assert s._notifier.sent == [("BitWave 0.3.0 is available", "Install it from Settings, Updates.")]
+    assert s._notifier.sent == [("BitWave 0.3.0 ist verfügbar", "Installation unter Einstellungen → Updates.")]
     assert s._waves_prefs["notify_update_seen"] == "0.3.0"
     s._notify_app_update("0.3.0")
     assert len(s._notifier.sent) == 1
@@ -349,7 +349,7 @@ def test_arming_the_master_switch_sends_one_test_banner():
     s._waves_prefs["notify_enabled"] = True
     s._notify_master_armed(False)
     assert s._notifier.sent == [
-        ("Notifications are on", "BitWave will announce new releases, finished downloads and updates here.")
+        ("Benachrichtigungen eingeschaltet", "BitWave meldet hier Neuerscheinungen, abgeschlossene Downloads und Updates.")
     ]
     # Every later save in the visit resubmits the same True: no second one.
     s._notify_master_armed(True)
@@ -369,7 +369,7 @@ def test_in_front_off_holds_banners_only_while_waves_is_in_front():
     _end(s, "B", "done")
     s._on_dl_notify()
     s._notify_app_update("0.3.0")
-    assert [t for t, _m in s._notifier.sent] == ["Download finished", "BitWave 0.3.0 is available"]
+    assert [t for t, _m in s._notifier.sent] == ["Download abgeschlossen", "BitWave 0.3.0 ist verfügbar"]
 
 
 def test_the_test_banner_ignores_the_in_front_switch():
@@ -378,7 +378,7 @@ def test_the_test_banner_ignores_the_in_front_switch():
     s._notify_master_armed = _bind(s, "_notify_master_armed")
     s._waves_prefs["notify_enabled"] = True
     s._notify_master_armed(False)
-    assert [t for t, _m in s._notifier.sent] == ["Notifications are on"]
+    assert [t for t, _m in s._notifier.sent] == ["Benachrichtigungen eingeschaltet"]
 
 
 def test_apply_settings_arms_from_the_edge():
@@ -448,7 +448,7 @@ def test_stop_leaves_the_drain_banner_quiet():
     # The next run answers only for itself.
     _end(s, "row", "done")
     s._maybe_notify_idle()
-    assert s._notifier.sent == [("All downloads finished", "1 download done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "1 Download abgeschlossen")]
 
 
 def test_stop_forgets_the_run():
@@ -465,7 +465,7 @@ def test_a_retried_failure_leaves_the_run_count():
     s._notify_forget_retried([2])  # RETRY dropped row 2
     _end(s, "X", "done", qid=3)  # and its retry landed
     s._notify_queue_idle()
-    assert s._notifier.sent == [("All downloads finished", "2 downloads done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "2 Downloads abgeschlossen")]
 
 
 def test_a_retry_that_fails_again_still_counts_once():
@@ -475,7 +475,7 @@ def test_a_retry_that_fails_again_still_counts_once():
     s._notify_forget_retried([2])  # a second press over the same row
     _end(s, "X", "failed", qid=3)
     s._notify_queue_idle()
-    assert s._notifier.sent == [("1 download failed", "Retry them from the queue")]
+    assert s._notifier.sent == [("1 Download fehlgeschlagen", "Erneut über die Warteschlange versuchen")]
 
 
 def test_a_retry_of_an_old_run_leaves_this_run_alone():
@@ -485,7 +485,7 @@ def test_a_retry_of_an_old_run_leaves_this_run_alone():
     _end(s, "Y", "failed", qid=5)
     s._notify_forget_retried([2])  # RETRY over the older failure
     s._notify_queue_idle()
-    assert s._notifier.sent[-1] == ("1 download failed", "Retry them from the queue")
+    assert s._notifier.sent[-1] == ("1 Download fehlgeschlagen", "Erneut über die Warteschlange versuchen")
 
 
 def test_a_retry_inside_the_window_is_not_named_as_failed():
@@ -497,7 +497,7 @@ def test_a_retry_inside_the_window_is_not_named_as_failed():
     s._notify_forget_retried([2])
     _end(s, "X", "done", qid=3)
     s._on_dl_notify()
-    assert s._notifier.sent == [("2 downloads finished", "A and X")]
+    assert s._notifier.sent == [("2 Downloads abgeschlossen", "A und X")]
 
 
 def test_replayed_holds_that_all_refuse_settle_the_run():
@@ -511,7 +511,7 @@ def test_replayed_holds_that_all_refuse_settle_the_run():
     s._pending_lock = threading.Lock()
     s._pending_downloads = [("m1", lambda: None)]
     _bind(s, "_run_pending_downloads")()
-    assert s._notifier.sent == [("All downloads finished", "1 download done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "1 Download abgeschlossen")]
     assert (s._dl_queue_done, s._dl_queue_failed) == (0, 0)
 
 
@@ -531,13 +531,13 @@ def test_every_mode_counts_past_the_kept_names():
     assert len(s._dl_notify_done) == _DL_NOTIFY_KEEP
     s._on_dl_notify()
     title, _ = s._notifier.sent[0]
-    assert title == f"{_DL_NOTIFY_KEEP + 300} downloads finished"
+    assert title == f"{_DL_NOTIFY_KEEP + 300} Downloads abgeschlossen"
     assert (s._dl_notify_done_n, s._dl_notify_failed_n) == (0, 0)
 
 
 def test_downloads_banner_takes_true_counts():
-    assert _downloads_banner(["A"], [], 800, 0) == ("800 downloads finished", "A")
-    assert _downloads_banner(["A"], ["X"], 800, 40) == ("800 downloads finished, 40 failed", "X")
+    assert _downloads_banner(["A"], [], 800, 0) == ("800 Downloads abgeschlossen", "A")
+    assert _downloads_banner(["A"], ["X"], 800, 40) == ("800 Downloads abgeschlossen, 40 fehlgeschlagen", "X")
 
 
 # ----- when the queue counts as finished ------------------------------------- #
@@ -558,7 +558,7 @@ def test_the_drain_banner_waits_for_a_truly_idle_queue():
         assert s._notifier.sent == [], attr
         setattr(s, attr, idle)
     s._maybe_notify_idle()
-    assert s._notifier.sent == [("All downloads finished", "1 download done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "1 Download abgeschlossen")]
 
 
 def test_a_job_ending_into_the_next_row_sends_nothing():
@@ -581,7 +581,7 @@ def test_a_job_ending_into_the_next_row_sends_nothing():
     s._queue[2] = {"qid": 2, "name": "B", "status": "done"}
     s._next_qid = None
     _bind(s, "_on_job_finished")(2)
-    assert s._notifier.sent == [("All downloads finished", "2 downloads done")]
+    assert s._notifier.sent == [("Alle Downloads abgeschlossen", "2 Downloads abgeschlossen")]
 
 
 def test_idleness_without_a_job_ending_is_noticed():

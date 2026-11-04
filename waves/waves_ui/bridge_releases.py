@@ -272,22 +272,19 @@ def _is_rate_limit(exc: BaseException) -> bool:
 
 
 def _releases_banner(count: int, items: list) -> tuple[str, str]:
-    """The banner for ``count`` new releases; ``items`` are {artist, title,
-    rtype} for (the first few hundred of) them. One release names itself,
-    one artist names the artist, several name at most two."""
+    """Deutsche Hinweise; Künstlernamen und Werktitel bleiben unverändert."""
     artists = list(dict.fromkeys(a for a in (str(i.get("artist") or "").strip() for i in items) if a))
     if count == 1 and items:
-        kind = _REL_KIND_WORD.get(str(items[0].get("rtype") or "").lower(), "release")
-        title = f"New {kind} from {artists[0]}" if artists else f"New {kind}"
-        return title, str(items[0].get("title") or "").strip() or "From an artist you follow"
+        title = f"Neu von {artists[0]}" if artists else "Neue Veröffentlichung"
+        return title, str(items[0].get("title") or "").strip() or "Von einem abonnierten Künstler"
     if len(artists) == 1:
-        return f"New from {artists[0]}", f"{count} new releases"
-    title = f"{count} new release" + ("" if count == 1 else "s")
+        return f"Neu von {artists[0]}", f"{count} neue Veröffentlichungen"
+    title = "Neue Veröffentlichung" if count == 1 else f"{count} neue Veröffentlichungen"
     if not artists:
-        return title, "From artists you follow"
+        return title, "Von abonnierten Künstlern"
     if len(artists) == 2:
-        return title, f"From {artists[0]} and {artists[1]}"
-    return title, f"From {artists[0]}, {artists[1]} and {len(artists) - 2} more"
+        return title, f"Von {artists[0]} und {artists[1]}"
+    return title, f"Von {artists[0]}, {artists[1]} und {len(artists) - 2} weiteren"
 
 
 def _releases_fresh_known(seen: set, kept, today: str) -> dict:

@@ -12634,18 +12634,19 @@ ApplicationWindow {
     component DecryptText: Text {
         id: dt
         property string target: ""
+        readonly property string renderedTarget: I18n.t(target)
         property int _step: 0
         property bool _live: false
         readonly property string glyphs: "#%&*+=<>/\\~"
         textFormat: Text.PlainText
         font.family: root.mono
-        Component.onCompleted: { text = target; _live = true }
-        onTargetChanged: if (_live) replay(); else text = target
+        Component.onCompleted: { text = renderedTarget; _live = true }
+        onTargetChanged: if (_live) replay(); else text = renderedTarget
         function replay() { _step = 0; dtTimer.restart(); _frame() }
         function _frame() {
             var out = ""
-            for (var i = 0; i < target.length; ++i)
-                out += i < _step ? target.charAt(i) : glyphs.charAt(Math.floor(Math.random() * glyphs.length))
+            for (var i = 0; i < renderedTarget.length; ++i)
+                out += i < _step ? renderedTarget.charAt(i) : glyphs.charAt(Math.floor(Math.random() * glyphs.length))
             text = out
         }
         Timer {
@@ -12653,7 +12654,7 @@ ApplicationWindow {
             interval: 28; repeat: true
             onTriggered: {
                 dt._step++
-                if (dt._step > dt.target.length) { dt.text = dt.target; stop() }
+                if (dt._step > dt.renderedTarget.length) { dt.text = dt.renderedTarget; stop() }
                 else dt._frame()
             }
         }

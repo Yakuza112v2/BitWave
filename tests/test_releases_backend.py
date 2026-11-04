@@ -3,7 +3,7 @@
 The store is covered by test_follow_store.py; here the Qt layer over it: a
 step fetches one artist's newest releases with sibling ids and tells a rate
 limit from a failed section, the pacer picks the stalest follow and backs
-off on a 429, a step with new releases arms the notification and the
+off on a 429, a step with neue Veröffentlichungen arms the notification and the
 auto-download, and the gates (signed in AND revealed) open and close it.
 
 Qt-free and hermetic, in the style of test_ownership_ask.py: the real,
@@ -557,7 +557,7 @@ def test_notify_fires_once_per_minute_and_honors_the_pref(tmp_path):
     s._rel_notify_pending = 3
     s._rel_notify_items = [{"artist": "A", "title": "x"}, {"artist": "B", "title": "y"}, {"artist": "A", "title": "z"}]
     _bind(s, "_on_rel_notify")()
-    assert s._notifier.sent == [("3 new releases", "From A and B")]
+    assert s._notifier.sent == [("3 neue Veröffentlichungen", "Von A und B")]
     assert s._rel_notify_pending == 0 and s._rel_notify_items == []
     s._rel_notify_pending = 2
     s._rel_notify_items = [{"artist": "A", "title": "x"}]
@@ -570,15 +570,15 @@ def test_notify_fires_once_per_minute_and_honors_the_pref(tmp_path):
 
 def test_banner_wording():
     b = rel._releases_banner
-    assert b(1, [{"artist": "Lorde", "title": "Virgin", "rtype": "album"}]) == ("New album from Lorde", "Virgin")
-    assert b(1, [{"artist": "Lorde", "title": "Hammer", "rtype": "SINGLE"}]) == ("New single from Lorde", "Hammer")
-    assert b(1, [{"artist": "Lorde", "title": "", "rtype": "ep"}]) == ("New EP from Lorde", "From an artist you follow")
-    assert b(1, [{"artist": "", "title": "X", "rtype": ""}]) == ("New release", "X")
-    assert b(1, []) == ("1 new release", "From artists you follow")
-    assert b(2, [{"artist": "Lorde"}, {"artist": "Lorde"}]) == ("New from Lorde", "2 new releases")
+    assert b(1, [{"artist": "Lorde", "title": "Virgin", "rtype": "album"}]) == ("Neu von Lorde", "Virgin")
+    assert b(1, [{"artist": "Lorde", "title": "Hammer", "rtype": "SINGLE"}]) == ("Neu von Lorde", "Hammer")
+    assert b(1, [{"artist": "Lorde", "title": "", "rtype": "ep"}]) == ("Neu von Lorde", "Von einem abonnierten Künstler")
+    assert b(1, [{"artist": "", "title": "X", "rtype": ""}]) == ("Neue Veröffentlichung", "X")
+    assert b(1, []) == ("Neue Veröffentlichung", "Von abonnierten Künstlern")
+    assert b(2, [{"artist": "Lorde"}, {"artist": "Lorde"}]) == ("Neu von Lorde", "2 neue Veröffentlichungen")
     many = [{"artist": n} for n in ("A", "B", "C", "D", "B")]
-    assert b(5, many) == ("5 new releases", "From A, B and 2 more")
-    assert b(9, []) == ("9 new releases", "From artists you follow")
+    assert b(5, many) == ("5 neue Veröffentlichungen", "Von A, B und 2 weiteren")
+    assert b(9, []) == ("9 neue Veröffentlichungen", "Von abonnierten Künstlern")
 
 
 def test_notify_sends_on_the_shared_pool_and_logs_only_a_handover(tmp_path, caplog):
@@ -588,8 +588,8 @@ def test_notify_sends_on_the_shared_pool_and_logs_only_a_handover(tmp_path, capl
     log.addHandler(caplog.handler)
     try:
         with caplog.at_level("INFO", logger="waves.notify"):
-            _bind(s, "_releases_notify")("New album from Lorde", "Virgin")
-        assert s._notifier.sent == [("New album from Lorde", "Virgin")]
+            _bind(s, "_releases_notify")("Neu von Lorde", "Virgin")
+        assert s._notifier.sent == [("Neu von Lorde", "Virgin")]
         assert "notification handed to the OS" in caplog.text
         # No title or artist reaches the log, only that a banner went out.
         assert "Lorde" not in caplog.text and "Virgin" not in caplog.text
@@ -2238,7 +2238,7 @@ def test_a_step_reads_videos_takes_the_first_answer_in_silently_then_announces(t
     assert len(calls) == 2 and [(r["id"], r["kind"]) for r in out["fresh"]] == [("8", "video")]
     _bind(s, "_on_rel_step_done")(out)
     assert s._rel_notify_items == [{"artist": "Artist", "title": "New clip", "rtype": "video"}]
-    assert rel._releases_banner(1, s._rel_notify_items) == ("New video from Artist", "New clip")
+    assert rel._releases_banner(1, s._rel_notify_items) == ("Neu von Artist", "New clip")
 
 
 def test_hidden_videos_are_never_read_nor_shown(tmp_path):
