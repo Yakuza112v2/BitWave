@@ -1,11 +1,10 @@
 """BitWave must not read Waves profiles or install upstream releases."""
 
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 from waves import __config_dirname__, name_app, name_package
-from waves.waves_ui import updater
-from waves.waves_ui import signing
+from waves.waves_ui import signing, updater
 
 
 def test_profile_and_distribution_are_independent():

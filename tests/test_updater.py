@@ -1570,7 +1570,11 @@ class _FakeProc:
 def _managed_up(monkeypatch, proc, latest=None):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
+    monkeypatch.setattr(
+        u,
+        "managed_upgrade_command",
+        lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"],
+    )
     monkeypatch.setattr(u.subprocess, "Popen", lambda *a, **k: proc)
     up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     up.latest = (lambda *a, **k: latest) if latest is not None else (lambda *a, **k: None)
@@ -1589,7 +1593,11 @@ def test_managed_upgrade_runs_brew_and_reports_done(monkeypatch):
     )
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
+    monkeypatch.setattr(
+        u,
+        "managed_upgrade_command",
+        lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"],
+    )
 
     def fake_popen(argv, **kw):
         argv_seen["argv"] = argv
@@ -1645,7 +1653,11 @@ def test_managed_upgrade_abort_cancels(monkeypatch):
 def test_status_can_managed_install_tracks_brew_presence(monkeypatch):
     monkeypatch.setattr(u, "is_frozen", lambda: True)
     monkeypatch.setattr(u, "managed_channel", lambda: "homebrew-cask")
-    monkeypatch.setattr(u, "managed_upgrade_command", lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"])
+    monkeypatch.setattr(
+        u,
+        "managed_upgrade_command",
+        lambda channel: ["/opt/homebrew/bin/brew", "upgrade", "--cask", "example/bitwave/bitwave"],
+    )
     up = AppUpdater("/tmp/x", "1.0.0", repo="owner/BitWave")
     st = up.status()
     assert st["state"] == "managed" and st["can_managed_install"] is True and st["can_self_install"] is False
