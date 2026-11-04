@@ -55,11 +55,11 @@ jobs:
           exit 1
         fi
         echo "Version $CODE_VERSION matches release tag $RELEASE_TAG."
-    - name: Guard, a release builds both Windows architectures
+    - name: Guard, selected release architecture is supported
       if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.only
-        != '' }}
+        != '' && github.event.inputs.only != 'windows-x64' && github.event.inputs.only != 'windows-arm64' }}
       run: |
-        echo "::error::Bei einem Release muss only leer bleiben, damit beide Windows-Varianten veröffentlicht werden."
+        echo "::error::only muss leer, windows-x64 oder windows-arm64 sein."
         exit 1
     - name: Guard, dispatch release commit is on the default branch
       if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
@@ -157,6 +157,11 @@ jobs:
           ok=1
         fi
         [ "$ok" -eq 1 ] || { echo "::error::smoke-launch: $BIN never reached a healthy state"; exit 1; }
+    - name: Prüfen, dass Logo und Texte im fertigen Paket aktuell sind
+      if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
+      run: |
+        source $VENV
+        poetry run python tools/verify_windows_bundle.py dist/BitWave
     - name: Checksum
       if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
         matrix.OS_ARCH) }}
@@ -248,7 +253,7 @@ jobs:
         # the release public key and the copyable check, generated from the
         # manifest just signed so the page can never disagree with it.
         source $VENV
-        { echo; poetry run python tools/release_verify_notes.py SHA256SUMS; } >> RELEASE_NOTES.md
+        { echo; echo '<details><summary>Download prüfen</summary>'; echo; poetry run python tools/release_verify_notes.py SHA256SUMS; echo; echo '</details>'; } >> RELEASE_NOTES.md
         echo "----- RELEASE_NOTES.md -----"; cat RELEASE_NOTES.md
     - name: Set release notes body
       env:
@@ -266,6 +271,7 @@ jobs:
         fail_on_unmatched_files: false
         tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
         body_path: RELEASE_NOTES.md
+        make_latest: true
         draft: false
         files: |
           SHA256SUMS
@@ -279,10 +285,10 @@ jobs:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Release unter diesem Tag veröffentlichen, z. B. v0.2.2. Leer = nur Testpakete.
+        description: Release unter diesem Tag veröffentlichen, z. B. v0.2.1. Leer = nur Testpakete.
         required: false
         default: ''
       only:
-        description: 'Testbuild: windows-x64 oder windows-arm64. Leer = beide Windows-Varianten. Bei einem Release leer lassen.'
+        description: 'windows-x64 oder windows-arm64. Leer = beide Windows-Varianten.'
         required: false
         default: ''

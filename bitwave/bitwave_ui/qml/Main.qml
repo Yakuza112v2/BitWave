@@ -30,7 +30,7 @@ ApplicationWindow {
     // Never allow a width that clips the header: the top bar's content
     // (logo, wordmark, nav tabs, queue, connection pill, sign out) sets the
     // real floor. headerRow reports 0 until it is laid out, hence the max.
-    minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 44)
+    minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 139)
     minimumHeight: 560
     title: "BitWave by Yakuza112"
     color: bg
@@ -18338,7 +18338,17 @@ ApplicationWindow {
                 id: headerRow
                 anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
                 height: 56; anchors.leftMargin: 22; anchors.rightMargin: 22; spacing: 12
-                WaveMark { id: headerMark }
+                Rectangle {
+                    id: headerMark
+                    implicitWidth: 38; implicitHeight: 38; radius: 8
+                    color: "#eef5fa"
+                    Image {
+                        anchors.fill: parent; anchors.margins: 2
+                        source: "bitwave-logo.png"
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+                }
                 // Wordmark sized to fill the logo box height (sublabel removed).
                 Text {
                     text: I18n.t("BITWAVE"); color: root.textHi; font.bold: true; font.letterSpacing: 2.6
