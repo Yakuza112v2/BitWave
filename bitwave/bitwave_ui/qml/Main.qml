@@ -32,7 +32,7 @@ ApplicationWindow {
     // real floor. headerRow reports 0 until it is laid out, hence the max.
     minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 44)
     minimumHeight: 560
-    title: I18n.t("BitWave")
+    title: "BitWave by Yakuza112"
     color: bg
 
     // ---- Album-art hover tilt knobs (iteration; final home = settings) --

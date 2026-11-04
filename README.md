@@ -1,5 +1,7 @@
 # BitWave
 
+<img src="bitwave/ui/icon512.png" alt="BitWave-Logo" width="160">
+
 BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen TIDAL-Konto. Betreuung: [Yakuza112v2](https://github.com/Yakuza112v2).
 
 ## Downloads
@@ -21,7 +23,7 @@ BitWave startet eigenständig. Der normale Datenordner ist `%APPDATA%\BitWave`. 
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-Während der Umstellung bleibt das Repository privat. Öffentliche App-Updates sind verfügbar, sobald das Repository öffentlich ist und ein signiertes BitWave-Release veröffentlicht wurde. 
+Das Repository und die signierten Windows-Releases sind öffentlich verfügbar.
 
 ## Download prüfen
 
