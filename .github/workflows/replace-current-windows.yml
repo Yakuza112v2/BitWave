@@ -5,6 +5,9 @@ on:
       build_run:
         description: Erfolgreicher Windows-Build für das neue Paket
         required: true
+      qml_commit:
+        description: Optionaler geprüfter Quellstand mit ausschließlich QML- und Teständerungen
+        required: false
 permissions:
   contents: write
   actions: read
@@ -18,6 +21,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_RUN: ${{ inputs.build_run }}
+      QML_COMMIT: ${{ inputs.qml_commit }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,6 +47,34 @@ jobs:
           git merge-base --is-ancestor "$SOURCE_COMMIT" origin/main
           git checkout --detach "$SOURCE_COMMIT"
           gh run download "$BUILD_RUN" -R "$GITHUB_REPOSITORY" --name bitwave_windows-x64 --dir downloads
+          if [ -n "$QML_COMMIT" ]; then
+            [[ "$QML_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+            git merge-base --is-ancestor "$QML_COMMIT" origin/main
+            git merge-base --is-ancestor "$SOURCE_COMMIT" "$QML_COMMIT"
+            git diff --name-only "$SOURCE_COMMIT" "$QML_COMMIT" > qml-changes.txt
+            python - <<'PY'
+          from pathlib import Path
+          changes=Path('qml-changes.txt').read_text().splitlines()
+          assert changes
+          assert all((p.startswith('bitwave/bitwave_ui/qml/') and p.endswith('.qml')) or p.startswith('tests/') for p in changes), changes
+          PY
+            git checkout --detach "$QML_COMMIT"
+            echo "SOURCE_COMMIT=$QML_COMMIT" >> "$GITHUB_ENV"
+            python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          archive=Path('downloads/bitwave_windows-x64.zip')
+          updated=archive.with_suffix('.new.zip')
+          with zipfile.ZipFile(archive) as old, zipfile.ZipFile(updated,'w') as new:
+              for entry in old.infolist():
+                  data=old.read(entry)
+                  if entry.filename.startswith('BitWave/bitwave_ui/qml/') and entry.filename.endswith('.qml'):
+                      source=Path('bitwave/bitwave_ui/qml') / Path(entry.filename).name
+                      data=source.read_bytes()
+                  new.writestr(entry,data)
+          updated.replace(archive)
+          PY
+          fi
       - uses: ./.github/actions/setup-poetry-env
         with:
           python-version: '3.13'
