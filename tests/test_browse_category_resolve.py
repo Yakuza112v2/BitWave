@@ -18,7 +18,7 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -39,11 +39,11 @@ class _InlinePool:
 
 
 class _ResolveStub:
-    resolvePlaylistCategory = WavesBridge.resolvePlaylistCategory
-    _cached_category = WavesBridge._cached_category
-    _cache_category = WavesBridge._cache_category
-    _CATEGORY_PL_TTL = WavesBridge._CATEGORY_PL_TTL
-    _CATEGORY_PL_MAX = WavesBridge._CATEGORY_PL_MAX
+    resolvePlaylistCategory = BitWaveBridge.resolvePlaylistCategory
+    _cached_category = BitWaveBridge._cached_category
+    _cache_category = BitWaveBridge._cache_category
+    _CATEGORY_PL_TTL = BitWaveBridge._CATEGORY_PL_TTL
+    _CATEGORY_PL_MAX = BitWaveBridge._CATEGORY_PL_MAX
 
     def __init__(self, page):
         self._page = page

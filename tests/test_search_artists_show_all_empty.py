@@ -36,7 +36,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_FLOATED = 1  # the label showed over a page with no artists on it
@@ -49,7 +49,7 @@ _EXIT_PRECONDITION = 78
 def test_the_artists_show_all_label_needs_artists():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-artists-showall-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-artists-showall-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -92,20 +92,20 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     # The state the bug needs, and the only state it needs: someone expanded
     # the ARTISTS row in an earlier session. Written BEFORE the QML loads,
     # because searchArtistsExpanded reads the pref once at creation.
-    bridge.setWavesPref("search_sec_artists_expanded", True)
+    bridge.setBitWavePref("search_sec_artists_expanded", True)
 
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

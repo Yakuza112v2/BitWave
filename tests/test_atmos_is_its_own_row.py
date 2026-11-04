@@ -34,7 +34,7 @@ from types import SimpleNamespace
 from tidalapi.album import Album
 from tidalapi.media import AudioMode, Quality, Track
 
-from waves.waves_ui import backend
+from bitwave.bitwave_ui import backend
 
 ATMOS = AudioMode.dolby_atmos.value
 
@@ -69,11 +69,11 @@ def _track(tid, title, modes, *, quality=Quality.high_lossless):
 
 
 def _bridge():
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=Quality.hi_res_lossless))
-    b._waves_prefs = {"explicit_mode": "explicit"}
+    b._bitwave_prefs = {"explicit_mode": "explicit"}
     for name in ("_album_key", "_track_key", "_max_quality_rank", "_dedup_albums", "_dedup_tracks"):
-        setattr(b, name, getattr(backend.WavesBridge, name).__get__(b, backend.WavesBridge))
+        setattr(b, name, getattr(backend.BitWaveBridge, name).__get__(b, backend.BitWaveBridge))
     return b
 
 

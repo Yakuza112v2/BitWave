@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from _dispatch_stub import arm_notify
 from tidalapi.album import Album
 
-from waves.waves_ui.backend import _LIBRARY_PAGE, WavesBridge
+from bitwave.bitwave_ui.backend import _LIBRARY_PAGE, BitWaveBridge
 
 
 class _Signal:
@@ -36,7 +36,7 @@ class _InlinePool:
 
 
 class _ArtistBumpStub:
-    _bump_artist_group = WavesBridge._bump_artist_group
+    _bump_artist_group = BitWaveBridge._bump_artist_group
 
     def __init__(self, groups: dict):
         self._artist_groups = groups
@@ -67,7 +67,7 @@ def test_a_shared_album_credits_every_artist_group():
 
 
 class _BlockGateStub:
-    _download = WavesBridge._download
+    _download = BitWaveBridge._download
 
     def __init__(self):
         self._logged_in = True
@@ -90,7 +90,7 @@ def test_the_block_gate_returns_the_button_to_idle():
 
 
 class _DismissStub:
-    dismissDownloadFolderNudge = WavesBridge.dismissDownloadFolderNudge
+    dismissDownloadFolderNudge = BitWaveBridge.dismissDownloadFolderNudge
 
     def __init__(self, pending):
         self._pending_lock = Lock()
@@ -105,7 +105,7 @@ class _DismissStub:
         self._redownload_overrides: set = set()
         self._library_claim_overrides: set = set()
         self._merge_plans: dict = {}
-        self._release_abandoned_hold = WavesBridge._release_abandoned_hold.__get__(self, type(self))
+        self._release_abandoned_hold = BitWaveBridge._release_abandoned_hold.__get__(self, type(self))
         # Abandoning a held download settles its rollup now, or a discography
         # whose members were all held could never finish
         # (test_wholefile_audit_2026_08_31). These tests are about the buttons,
@@ -151,9 +151,9 @@ class _FlakyArtist:
 
 
 class _LoadArtistStub:
-    loadArtist = WavesBridge.loadArtist
-    _start_artist_build = WavesBridge._start_artist_build
-    _artist_art_summary = staticmethod(WavesBridge._artist_art_summary)
+    loadArtist = BitWaveBridge.loadArtist
+    _start_artist_build = BitWaveBridge._start_artist_build
+    _artist_art_summary = staticmethod(BitWaveBridge._artist_art_summary)
 
     def __init__(self, artist, cached=None):
         self._artist = artist
@@ -251,13 +251,13 @@ class _AlbumTracksStub:
     def _set_status(self, text):  # a failed fetch now says so
         pass
 
-    loadAlbumTracks = WavesBridge.loadAlbumTracks
-    _start_album_tracks_fetch = WavesBridge._start_album_tracks_fetch
-    _record_album_members = WavesBridge._record_album_members
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    loadAlbumTracks = BitWaveBridge.loadAlbumTracks
+    _start_album_tracks_fetch = BitWaveBridge._start_album_tracks_fetch
+    _record_album_members = BitWaveBridge._record_album_members
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self, album):
         self._album_tracks_cache: dict = {}
@@ -326,9 +326,9 @@ class _Favorites:
 
 
 class _FavStub:
-    _favorite_ids = WavesBridge._favorite_ids
-    _all_favorites = WavesBridge._all_favorites  # the pager _favorite_ids delegates to
-    _FAV_IDS_TTL = WavesBridge._FAV_IDS_TTL
+    _favorite_ids = BitWaveBridge._favorite_ids
+    _all_favorites = BitWaveBridge._all_favorites  # the pager _favorite_ids delegates to
+    _FAV_IDS_TTL = BitWaveBridge._FAV_IDS_TTL
 
     def __init__(self, favorites):
         self._fav_ids: dict = {}
@@ -364,13 +364,13 @@ def test_a_failed_first_favorites_load_is_not_cached():
 
 
 class _LoadLibStub:
-    loadLibrary = WavesBridge.loadLibrary
-    _lib_status = WavesBridge._lib_status
-    _lib_count = staticmethod(WavesBridge._lib_count)
+    loadLibrary = BitWaveBridge.loadLibrary
+    _lib_status = BitWaveBridge._lib_status
+    _lib_count = staticmethod(BitWaveBridge._lib_count)
     # The emit dresses its rows (no presence slots here, so they pass through).
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
 
     def __init__(self, page=None, fail=False):
         self._logged_in = True
@@ -427,12 +427,12 @@ def _release(aid):
 
 
 class _ReleasesStub:
-    _artist_releases = WavesBridge._artist_releases
+    _artist_releases = BitWaveBridge._artist_releases
 
     def __init__(self, prefs):
         self._prefs = prefs
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return bool(self._prefs.get(key, False))
 
 
@@ -491,9 +491,9 @@ def test_a_creditless_release_stub_is_kept():
 
 
 class _DownloadArtistStub:
-    downloadArtist = WavesBridge.downloadArtist
-    _ffmpeg_gate_holds = WavesBridge._ffmpeg_gate_holds
-    _stash_pending_download = WavesBridge._stash_pending_download
+    downloadArtist = BitWaveBridge.downloadArtist
+    _ffmpeg_gate_holds = BitWaveBridge._ffmpeg_gate_holds
+    _stash_pending_download = BitWaveBridge._stash_pending_download
 
     def __init__(self):
         self._dl = object()

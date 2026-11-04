@@ -13,10 +13,10 @@ import pathlib
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import waves.download as download_module
-from waves.download import Download, _staging_path
-from waves.helper.folders import apply_folder_path
-from waves.helper.path import (
+import bitwave.download as download_module
+from bitwave.download import Download, _staging_path
+from bitwave.helper.folders import apply_folder_path
+from bitwave.helper.path import (
     PATH_LENGTH_MAX,
     path_file_sanitize,
     path_file_uniquify,
@@ -142,7 +142,7 @@ class TestTheVariantScanSpellsNamesTheWayTheyAreWritten:
         ids = {base.name: "123", trimmed.name: "456"}
 
         dl = _make_download(tmp_path)
-        with patch("waves.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
+        with patch("bitwave.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
             found = dl._existing_same_item_at(base, _track(456))
 
         assert found == trimmed, "the copy the writer produced is the copy the scan finds"
@@ -158,7 +158,7 @@ class TestAZeroByteVariantIsNotEvidence:
         (tmp_path / "Intro_01.flac").write_bytes(b"")  # interrupted write
 
         dl = _make_download(tmp_path)
-        with patch("waves.download.read_item_id", return_value="111"):
+        with patch("bitwave.download.read_item_id", return_value="111"):
             found = dl._existing_same_item_at(tmp_path / "Intro.flac", _track(222))
 
         assert found is None, "track 222 still downloads; an empty file is not it"
@@ -203,9 +203,9 @@ class TestTheAnswerIsThePathNotABool:
         dl._record_name_written(src, "111")
 
         with (
-            patch("waves.download.read_item_id", side_effect=lambda p: ids.get(pathlib.Path(p).name, "")),
+            patch("bitwave.download.read_item_id", side_effect=lambda p: ids.get(pathlib.Path(p).name, "")),
             patch(
-                "waves.download.format_path_media",
+                "bitwave.download.format_path_media",
                 return_value="Tracks/Song",
             ),
         ):

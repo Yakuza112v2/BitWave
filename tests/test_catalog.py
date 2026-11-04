@@ -1,4 +1,4 @@
-"""waves.catalog: one read-only view over every store file."""
+"""bitwave.catalog: one read-only view over every store file."""
 
 from __future__ import annotations
 
@@ -8,12 +8,12 @@ import threading
 
 import pytest
 
-from waves import db
-from waves.catalog import Catalog
-from waves.follows import FollowStore
-from waves.library_index import LibraryIndex
-from waves.mb_service import MBService
-from waves.ownership import OwnershipStore
+from bitwave import db
+from bitwave.catalog import Catalog
+from bitwave.follows import FollowStore
+from bitwave.library_index import LibraryIndex
+from bitwave.mb_service import MBService
+from bitwave.ownership import OwnershipStore
 
 
 @pytest.fixture
@@ -96,8 +96,8 @@ def test_library_artists_joins_the_library_lookup(config):
         cat = Catalog(str(config), library_file=lambda: lib._path)
         rows = cat.query("SELECT key, artist, albums, tracks, mbid FROM library_artists ORDER BY key")
         assert rows == [("bjork", "Björk", 3, 31, "mbid-b"), ("other", "Other", 1, 4, "")]
-        assert cat.query("SELECT waves_name_key(?)", ("Guns N’ Roses",)) == cat.query(
-            "SELECT waves_name_key(?)", ("guns n' roses",)
+        assert cat.query("SELECT bitwave_name_key(?)", ("Guns N’ Roses",)) == cat.query(
+            "SELECT bitwave_name_key(?)", ("guns n' roses",)
         )
     finally:
         _close(lib, rel, own, mb)
@@ -203,16 +203,16 @@ def test_every_catalog_schema_is_a_registered_store():
 def test_the_reset_closes_the_catalog_before_any_store_or_file():
     import inspect
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    body = inspect.getsource(WavesBridge.factoryReset)
+    body = inspect.getsource(BitWaveBridge.factoryReset)
     closed = body.index("cat.close()")
     assert closed < body.index("self._ownership.close()")
     assert closed < body.index("for name in _FACTORY_WIPE_FILES")
 
 
 def test_a_folder_name_with_uri_characters_still_attaches(tmp_path):
-    from waves.catalog import _ro_uri
+    from bitwave.catalog import _ro_uri
 
     config = tmp_path / "odd ?name #1 %20"
     config.mkdir()

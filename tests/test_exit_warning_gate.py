@@ -14,7 +14,7 @@ WHAT THIS FENCES OFF
 2. Both buttons must do exactly what they say: KEEP DOWNLOADING only closes
    the gate, EXIT ANYWAY confirms then calls root.close(), and only those two
    persist the "don't warn me again" checkbox.
-3. The mute flag lives in QSettings (the "setup" block), NOT waves.json.
+3. The mute flag lives in QSettings (the "setup" block), NOT bitwave.json.
 4. The gate re-arms per attempt: opening resets confirmed and the checkbox,
    so a canceled exit warns again next time.
 """
@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def _src() -> str:
@@ -64,9 +64,9 @@ def test_buttons_do_what_they_say():
     assert "onOpenChanged: if (open) { confirmed = false; exitSkip.checked = false }" in body
 
 
-def test_mute_flag_lives_in_qsettings_not_waves_json():
+def test_mute_flag_lives_in_qsettings_not_bitwave_json():
     src = _src()
-    # In the "setup" Settings block: waves.json is written wholesale, a new
+    # In the "setup" Settings block: bitwave.json is written wholesale, a new
     # key there would be pinned into every existing user's file.
     setup = re.search(r'id: setupSettings; category: "setup"(.*?)\n    \}', src, re.S)
     assert setup, "the setup Settings block must exist"

@@ -18,14 +18,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves import matching
-from waves.library_index import (
+from bitwave import matching
+from bitwave.library_index import (
     LibraryIndex,
     _advisory_word,
     _flat_set_declared,
     _marker_word,
 )
-from waves.matching import decide_presence, decide_track_presence, presence_key, track_key
+from bitwave.matching import decide_presence, decide_track_presence, presence_key, track_key
 
 # ---- helpers ------------------------------------------------------------------
 
@@ -247,10 +247,10 @@ def test_a_single_disc_release_still_completes_itself():
 def test_flat_set_declared_reads_both_conventions():
     picard = [(1, 10)] * 10 + [(2, 10)] * 10
     assert _flat_set_declared(picard, 20) == 20
-    waves_complete = [(1, 20)] * 10 + [(2, 20)] * 10
-    assert _flat_set_declared(waves_complete, 20) == 0  # ambiguous: TIDAL's count decides
-    waves_short = [(1, 20)] * 8 + [(2, 20)] * 7
-    assert _flat_set_declared(waves_short, 15) == 20
+    bitwave_complete = [(1, 20)] * 10 + [(2, 20)] * 10
+    assert _flat_set_declared(bitwave_complete, 20) == 0  # ambiguous: TIDAL's count decides
+    bitwave_short = [(1, 20)] * 8 + [(2, 20)] * 7
+    assert _flat_set_declared(bitwave_short, 15) == 20
     unequal = [(1, 10)] * 10 + [(2, 12)] * 12
     assert _flat_set_declared(unequal, 22) == 22
     silent_disc = [(1, 10)] * 10 + [(2, 0)] * 10
@@ -274,7 +274,7 @@ def test_a_flat_picard_set_declares_the_whole_release(tmp_path):
     assert r["sure"] is True and r["full"] is True and r["partial"] is False
 
 
-def test_a_flat_waves_set_short_a_few_tracks_is_not_complete(tmp_path):
+def test_a_flat_bitwave_set_short_a_few_tracks_is_not_complete(tmp_path):
     lib = _mk(tmp_path, "lib", [])
     names = [f"{i:02d}.flac" for i in range(1, 16)]
     _mk(tmp_path, "lib/A/Album", names)
@@ -481,7 +481,7 @@ def test_a_cache_that_never_stamped_a_version_is_rekeyed_once(tmp_path):
 
 # ---- The bridge gates -----------------------------------------------------------
 
-bridge_library = pytest.importorskip("waves.waves_ui.bridge_library")
+bridge_library = pytest.importorskip("bitwave.bitwave_ui.bridge_library")
 LibraryMixin = bridge_library.LibraryMixin
 
 

@@ -11,9 +11,9 @@ import json
 
 import pytest
 
-from waves import config as config_mod
-from waves.config import BaseConfig, _replace_with_retry
-from waves.model.cfg import Settings as ModelSettings
+from bitwave import config as config_mod
+from bitwave.config import BaseConfig, _replace_with_retry
+from bitwave.model.cfg import Settings as ModelSettings
 
 
 class _Cfg(BaseConfig):

@@ -42,7 +42,7 @@ WHAT IS PINNED HERE
 
 Everything below is observed from the real methods (the real
 ``_sibling_editions``, the real ``_get_artist``, the real
-``downloadAlbumBestOfBoth``) bound onto a bare ``WavesBridge`` carcass. Nothing
+``downloadAlbumBestOfBoth``) bound onto a bare ``BitWaveBridge`` carcass. Nothing
 is asserted by construction.
 
 One thing is worth stating plainly. The click's worker funnels every failure
@@ -63,7 +63,7 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.album import Album
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 ARTIST_ID = 7
 _ARTIST_CREDIT = SimpleNamespace(name="Halcyon Drift", id=ARTIST_ID)
@@ -171,7 +171,7 @@ class _GaveUpBecause(logging.Handler):
 
 @contextlib.contextmanager
 def _watching_failures():
-    log = logging.getLogger("waves")
+    log = logging.getLogger("bitwave")
     handler = _GaveUpBecause()
     was_level, was_disabled = log.level, log.disabled
     log.setLevel(logging.ERROR)
@@ -194,8 +194,8 @@ class _InlinePool:
 
 
 def _bridge(session):
-    """A bare WavesBridge carcass carrying only the fields the scan touches."""
-    bridge = WavesBridge.__new__(WavesBridge)
+    """A bare BitWaveBridge carcass carrying only the fields the scan touches."""
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge._objs = {"artist": {}, "album": {}}
     bridge._objs_lock = Lock()
     bridge._objs_max = 32
@@ -215,7 +215,7 @@ def _clicking_bridge(session, album):
     bridge._scans_in_flight = 0
     bridge._scan_count_lock = Lock()
     bridge.scanningChanged = _Signal()
-    bridge._waves_prefs = {"explicit_mode": "explicit"}
+    bridge._bitwave_prefs = {"explicit_mode": "explicit"}
     bridge.downloadState = _Signal()
     bridge._albumsQueued = _Signal()
     bridge._status = ""

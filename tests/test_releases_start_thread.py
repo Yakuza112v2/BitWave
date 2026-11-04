@@ -13,7 +13,7 @@ import pytest
 
 QtCore = pytest.importorskip("PySide6.QtCore")
 
-from waves.waves_ui.bridge_releases import ReleasesMixin  # noqa: E402
+from bitwave.bitwave_ui.bridge_releases import ReleasesMixin  # noqa: E402
 
 
 class _Host(QtCore.QObject):

@@ -27,8 +27,8 @@ from unittest.mock import patch
 
 from _dispatch_stub import arm_dispatch
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge, _JobSpec
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge, _JobSpec
 
 
 class _Signal:
@@ -73,7 +73,7 @@ class _Stub:
         self._queue_index = {1: self._queue[0]}
         self._queue_lock = Lock()
         self.settings = SimpleNamespace(
-            data=SimpleNamespace(download_base_path="/tmp/waves-out", download_delay=False, downloads_concurrent_max=2)
+            data=SimpleNamespace(download_base_path="/tmp/bitwave-out", download_delay=False, downloads_concurrent_max=2)
         )
         self.dl = _Download()
         self.dl_pool = _InlinePool()
@@ -135,7 +135,7 @@ def _run(*, stop_during_the_probe: bool) -> _Stub:
     stub = _Stub(stop_during_the_probe)
     spec = _JobSpec(_media(), "album", "Album", "{title}", True, "m1", None)
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
     return stub
 
 

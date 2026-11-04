@@ -37,13 +37,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_fade_parks_the_first_landing_and_applies_it_after():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-fade-park-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-fade-park-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -62,7 +62,7 @@ def test_fade_parks_the_first_landing_and_applies_it_after():
 
 
 def _run_scenario() -> int:
-    # THIS checkout's waves, not the venv's editable install.
+    # THIS checkout's bitwave, not the venv's editable install.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     try:
         from PySide6.QtCore import QEventLoop, QTimer, QUrl
@@ -74,13 +74,13 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    class _QuietBridge(WavesBridge):
+    class _QuietBridge(BitWaveBridge):
         # Same silencing as test_boot_handover_gate: payloads in this scenario
         # are driven by hand, never by a real fetch.
         def loadBrowse(self) -> None:
@@ -88,7 +88,7 @@ def _run_scenario() -> int:
 
     engine = QQmlApplicationEngine()
     bridge = _QuietBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

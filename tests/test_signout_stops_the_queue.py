@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _bridge(tmp_path) -> MagicMock:
@@ -39,7 +39,7 @@ def _order(bridge: MagicMock) -> list[str]:
 def test_signing_out_stops_the_downloads(tmp_path):
     bridge = _bridge(tmp_path)
 
-    WavesBridge.logout(bridge)
+    BitWaveBridge.logout(bridge)
 
     assert bridge.stopAll.called, "the queue was left running on the account being signed out of"
 
@@ -47,7 +47,7 @@ def test_signing_out_stops_the_downloads(tmp_path):
 def test_the_stop_comes_before_the_session_is_torn_down(tmp_path):
     bridge = _bridge(tmp_path)
 
-    WavesBridge.logout(bridge)
+    BitWaveBridge.logout(bridge)
     order = _order(bridge)
 
     assert order.index("stopAll") < order.index("tidal.logout"), "the aborts must be set while the session lives"
@@ -58,7 +58,7 @@ def test_signing_out_still_says_so(tmp_path):
     # The stop sets its own status; the sign-out's is the one that must stand.
     bridge = _bridge(tmp_path)
 
-    WavesBridge.logout(bridge)
+    BitWaveBridge.logout(bridge)
 
     assert bridge._set_status.call_args.args == ("Signed out",)
 
@@ -71,7 +71,7 @@ def test_signing_out_drops_the_queues_kept_objects_and_the_scan_marks(tmp_path):
     bridge._job_objs = {"7": object()}
     bridge._merge_scanned = {"7"}
 
-    WavesBridge.logout(bridge)
+    BitWaveBridge.logout(bridge)
 
     assert bridge._job_objs == {}, "a RETRY on the next account would download under the old token"
     assert bridge._merge_scanned == set()

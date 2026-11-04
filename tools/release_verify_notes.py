@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sys
 
-from waves.waves_ui.signing import parse_sha256sums, public_key_pem
+from bitwave.bitwave_ui.signing import parse_sha256sums, public_key_pem
 
 README_VERIFY_URL = "https://github.com/Yakuza112v2/BitWave#download-prüfen"
 

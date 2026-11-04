@@ -28,12 +28,12 @@ from tidalapi.artist import Artist
 from tidalapi.media import Track, Video
 from tidalapi.playlist import Playlist
 
-from waves.helper.tidal import search_results_all
-from waves.waves_ui import backend
+from bitwave.helper.tidal import search_results_all
+from bitwave.bitwave_ui import backend
 
 
 def _bridge():
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._album_dict = lambda a: {"id": "al", "title": "A"}
     b._track_dict = lambda t: {"id": "tr", "title": "T"}
     b._video_dict = lambda v: {"id": "vi", "title": "V"}
@@ -89,9 +89,9 @@ def test_the_result_count_is_the_lists_only_never_the_pin():
         "mixes": [],
         "top": {"kind": "album", "id": "al", "title": "A", "artist": "x"},
     }
-    assert backend.WavesBridge._search_total(payload) == 6
+    assert backend.BitWaveBridge._search_total(payload) == 6
     payload["top"] = None
-    assert backend.WavesBridge._search_total(payload) == 6
+    assert backend.BitWaveBridge._search_total(payload) == 6
 
 
 # --------------------------------------------------------------------------- #

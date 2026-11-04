@@ -43,13 +43,13 @@ _EXIT_PRECONDITION = 78
 _MAX_GAP_MS = 300
 _SAMPLE_MS = 25
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_version_drains_before_the_wordmark_zooms():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-boot-drain-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-boot-drain-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -70,7 +70,7 @@ def test_the_version_drains_before_the_wordmark_zooms():
 
 
 def _run_scenario() -> int:
-    # THIS checkout's waves, not the venv's editable install.
+    # THIS checkout's bitwave, not the venv's editable install.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     try:
         from PySide6.QtCore import QEventLoop, QTimer, QUrl
@@ -82,15 +82,15 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -127,7 +127,7 @@ def _run_scenario() -> int:
     q("bootTitle.zoom = 1")
     q("bootTitle.shown = 1")
     q("bootVer.shown = 1")
-    q("bootVer.text = 'v' + waves.appVersion")
+    q("bootVer.text = 'v' + bitwave.appVersion")
     settle(120)
     if not q("bootVer.text").strip() or q("bootTitle.zoom") != 1:
         print("could not restore the launch frame", file=sys.stderr)

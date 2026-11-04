@@ -16,9 +16,9 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.model.cfg import HelpSettings
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import _ARTIST_VIDEO_PAGE, _FLAG_FIELDS, WavesBridge
+from bitwave.model.cfg import HelpSettings
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import _ARTIST_VIDEO_PAGE, _FLAG_FIELDS, BitWaveBridge
 
 _KEY = "video_download"
 
@@ -28,7 +28,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
@@ -40,9 +40,9 @@ def _schema_stub():
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub._ffmpeg_flag_prefs = {}
     stub.ffmpegState = lambda: {"status": "none", "source": "none", "path": ""}
     stub._user_ffmpeg_path = lambda: ""
@@ -51,7 +51,7 @@ def _schema_stub():
 
 
 def _sections_by_id():
-    return {s["id"]: s for s in WavesBridge.settingsSchema(_schema_stub())}
+    return {s["id"]: s for s in BitWaveBridge.settingsSchema(_schema_stub())}
 
 
 def test_the_toggle_lives_with_the_discography_sources():
@@ -107,7 +107,7 @@ class _Artist:
 
 
 class _DiscoStub:
-    downloadArtist = WavesBridge.downloadArtist
+    downloadArtist = BitWaveBridge.downloadArtist
 
     def __init__(self, artist, video_download: bool):
         self._dl = object()
@@ -156,7 +156,7 @@ class _DiscoStub:
     def _dedup_videos(self, videos):
         return list(videos)
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return False
 
     def _merge_pref_on(self):
@@ -244,7 +244,7 @@ def test_a_failed_video_fetch_refuses_the_whole_scan():
 def _migration_stub(stored: bool, stamped: bool):
     stub = _schema_stub()
     stub.settings.data.video_download = stored
-    stub._waves_prefs["video_flag_migrated"] = stamped
+    stub._bitwave_prefs["video_flag_migrated"] = stamped
     stub._settings_saves = 0
     stub._pref_saves = 0
 
@@ -255,7 +255,7 @@ def _migration_stub(stored: bool, stamped: bool):
         stub._pref_saves += 1
 
     stub.settings.save = _save_settings
-    stub._save_waves_prefs = _save_prefs
+    stub._save_bitwave_prefs = _save_prefs
     stub._migrate_video_flag = _bind(stub, "_migrate_video_flag")
     return stub
 
@@ -268,7 +268,7 @@ def test_a_leftover_inert_era_true_is_cleared_once_and_stamped():
     stub._migrate_video_flag()
     assert stub.settings.data.video_download is False
     assert stub._settings_saves == 1, "the cleared flag must persist"
-    assert stub._waves_prefs["video_flag_migrated"] is True
+    assert stub._bitwave_prefs["video_flag_migrated"] is True
     assert stub._pref_saves == 1, "the stamp must persist"
 
 
@@ -277,7 +277,7 @@ def test_an_already_off_value_is_stamped_without_a_settings_write():
     stub._migrate_video_flag()
     assert stub.settings.data.video_download is False
     assert stub._settings_saves == 0, "nothing to clear, nothing to write"
-    assert stub._waves_prefs["video_flag_migrated"] is True
+    assert stub._bitwave_prefs["video_flag_migrated"] is True
 
 
 def test_the_stamp_makes_it_one_time_so_a_conscious_opt_in_survives():

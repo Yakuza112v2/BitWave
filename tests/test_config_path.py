@@ -16,8 +16,8 @@ import os
 
 import pytest
 
-import waves.helper.path as path_helper
-from waves import __config_dirname__
+import bitwave.helper.path as path_helper
+from bitwave import __config_dirname__
 
 
 @pytest.fixture(autouse=True)

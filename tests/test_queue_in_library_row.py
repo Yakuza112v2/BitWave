@@ -28,7 +28,7 @@ from threading import Lock
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -46,7 +46,7 @@ class _Signal:
 
 class _Stub:
     def __init__(self):
-        from waves.waves_ui import backend
+        from bitwave.bitwave_ui import backend
 
         self._job_tracks = {}
         # The ledger merge also overlays an expansion's predicted skips
@@ -68,7 +68,7 @@ class _Stub:
         self._own_pool = type("P", (), {"start": lambda self_, w: None})()
         self.settings = type("S", (), {"data": type("D", (), {"download_base_path": ""})()})()
         for name in ("_track_lifecycle", "_queue_item", "_queue_mark_changed", "_merge_queue_tracks"):
-            setattr(self, name, getattr(backend.WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(backend.BitWaveBridge, name).__get__(self, _Stub))
 
 
 def test_the_registry_keeps_the_owned_copy_and_how_it_was_found():
@@ -89,7 +89,7 @@ def test_the_registry_keeps_the_owned_copy_and_how_it_was_found():
 def test_drawer_row_keeps_the_tier_and_colors_the_word():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-inlib-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-inlib-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -123,15 +123,15 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

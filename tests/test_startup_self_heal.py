@@ -26,10 +26,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from waves.config import BaseConfig
-from waves.download import Download
-from waves.model.cfg import Settings as ModelSettings
-from waves.waves_ui import app as waves_app
+from bitwave.config import BaseConfig
+from bitwave.download import Download
+from bitwave.model.cfg import Settings as ModelSettings
+from bitwave.bitwave_ui import app as bitwave_app
 
 
 # --------------------------------------------------------------------------- #
@@ -150,16 +150,16 @@ def test_the_migration_breadcrumb_is_logged_after_diagnostics_are_installed():
     come after it. Logged any earlier it was dropped at the root default (INFO)
     or reached stderr only (WARNING), which a packaged build cannot show, and it
     never reached the ring, the disk log or an exported bundle."""
-    source = inspect.getsource(waves_app.waves_activate)
-    at_bridge = source.index("WavesBridge(tidal=tidal)")
+    source = inspect.getsource(bitwave_app.bitwave_activate)
+    at_bridge = source.index("BitWaveBridge(tidal=tidal)")
     at_breadcrumb = source.index("_log_config_migration()")
 
     assert at_breadcrumb > at_bridge, "the migration outcome is logged before any handler exists"
 
 
 class _Catcher(logging.Handler):
-    """Attached to waves.config itself, not to the root: diagnostics.install
-    stops the waves tree propagating, and whether it has run depends on what
+    """Attached to bitwave.config itself, not to the root: diagnostics.install
+    stops the bitwave tree propagating, and whether it has run depends on what
     else the session touched, so caplog sees nothing when it has."""
 
     def __init__(self):
@@ -171,7 +171,7 @@ class _Catcher(logging.Handler):
 
 
 def _breadcrumbs(fn):
-    logger = logging.getLogger("waves.config")
+    logger = logging.getLogger("bitwave.config")
     catcher = _Catcher()
     level, logger.level = logger.level, logging.INFO
     logger.addHandler(catcher)
@@ -184,7 +184,7 @@ def _breadcrumbs(fn):
 
 
 def test_the_breadcrumb_says_what_happened_and_never_where(monkeypatch):
-    from waves.helper import path as path_helper
+    from bitwave.helper import path as path_helper
 
     # By level NUMBER: the diagnostics install renames WARNING to "WARN".
     for outcome, level, word in (
@@ -193,7 +193,7 @@ def test_the_breadcrumb_says_what_happened_and_never_where(monkeypatch):
     ):
         monkeypatch.setattr(path_helper, "CONFIG_MIGRATION", outcome)
 
-        records = _breadcrumbs(waves_app._log_config_migration)
+        records = _breadcrumbs(bitwave_app._log_config_migration)
 
         assert len(records) == 1
         assert records[0].levelno == level
@@ -203,8 +203,8 @@ def test_the_breadcrumb_says_what_happened_and_never_where(monkeypatch):
 
 
 def test_no_breadcrumb_when_nothing_was_migrated(monkeypatch):
-    from waves.helper import path as path_helper
+    from bitwave.helper import path as path_helper
 
     monkeypatch.setattr(path_helper, "CONFIG_MIGRATION", "")
 
-    assert _breadcrumbs(waves_app._log_config_migration) == []
+    assert _breadcrumbs(bitwave_app._log_config_migration) == []

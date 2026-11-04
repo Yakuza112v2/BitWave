@@ -9,7 +9,7 @@ import zipfile
 
 import pytest
 
-from waves.waves_ui import ffmpeg_manager as fm
+from bitwave.bitwave_ui import ffmpeg_manager as fm
 
 
 # --------------------------------------------------------------------------- #

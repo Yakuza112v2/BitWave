@@ -17,9 +17,9 @@ from pathlib import Path
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import _ARTIST_VIDEO_PAGE, _VIDEOS_GROUP_PREFIX, WavesBridge
+from bitwave.bitwave_ui.backend import _ARTIST_VIDEO_PAGE, _VIDEOS_GROUP_PREFIX, BitWaveBridge
 
-QML = (Path(__file__).parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+QML = (Path(__file__).parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 class _Signal:
@@ -53,7 +53,7 @@ class _Artist:
 
 
 class _Stub:
-    downloadArtistVideos = WavesBridge.downloadArtistVideos
+    downloadArtistVideos = BitWaveBridge.downloadArtistVideos
 
     def __init__(self, artist, video_download: bool = False):
         self._dl = object()
@@ -180,7 +180,7 @@ def test_the_videos_header_carries_the_download_all_button():
     assert head, "artist VIDEOS SectionHeader not found"
     block = head.group(0)
     assert '"vids:" + root.artistData.id' in block
-    assert "waves.downloadArtistVideos(root.artistData.id)" in block
+    assert "bitwave.downloadArtistVideos(root.artistData.id)" in block
 
 
 def test_the_header_trailing_slot_outranks_the_collapse_target():

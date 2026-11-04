@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pathlib
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_QML_SRC = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "SettingsPage.qml"
+_QML_SRC = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "SettingsPage.qml"
 
 
 class _Stub:
@@ -22,36 +22,36 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _prefs_stub():
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     return stub
 
 
 def test_section_pref_defaults_to_untouched():
-    prefs = _prefs_stub()._waves_prefs
+    prefs = _prefs_stub()._bitwave_prefs
     assert prefs["settings_section"] == ""
     # The accordion's per-section record is gone with the accordion.
     assert "settings_open_sections" not in prefs
 
 
 def test_no_section_ships_forced_open():
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     forced = [s["id"] for s in schema if s.get("open") is True]
     assert forced == [], "no section carries the old accordion's open flag"
 
 
 def test_the_section_survives_a_round_trip():
     stub = _prefs_stub()
-    stub._save_waves_prefs = lambda: None
+    stub._save_bitwave_prefs = lambda: None
     stub._factory_reset = False
-    _bind(stub, "setWavesPref")("settings_section", "pacing")
-    assert stub._waves_prefs["settings_section"] == "pacing"
+    _bind(stub, "setBitWavePref")("settings_section", "pacing")
+    assert stub._bitwave_prefs["settings_section"] == "pacing"
 
 
 def _schema_stub():
@@ -60,8 +60,8 @@ def _schema_stub():
     Built on a fresh defaults-only config, never the machine's own, so the
     test can't depend on (or print) the user's real settings.
     """
-    from waves.model.cfg import HelpSettings
-    from waves.model.cfg import Settings as CfgSettings
+    from bitwave.model.cfg import HelpSettings
+    from bitwave.model.cfg import Settings as CfgSettings
 
     class _Cfg:
         data = CfgSettings()
@@ -85,14 +85,14 @@ def test_the_page_restores_and_records_the_section():
     # Read on load, and only an id the rail lists is taken.
     load = src[src.index("function loadSection()") :]
     load = load[: load.index("\n    }\n")]
-    assert 'waves.wavesPref("settings_section")' in load
+    assert 'bitwave.bitwavePref("settings_section")' in load
     assert "if (railHas(v)) curSec = v" in load
     # After the schema, so a section it leaves out is never restored.
     assert "Component.onCompleted: { refreshSchema(); loadSection();" in src
     # Written on every real change of section, deep links included.
     show = src[src.index("function showSection(id)") :]
     show = show[: show.index("\n    }\n")]
-    assert 'waves.setWavesPref("settings_section", id)' in show
+    assert 'bitwave.setBitWavePref("settings_section", id)' in show
     # A deep link goes through showSection, never around it.
     jump = src[src.index("function jumpToCard(cardId)") :]
     jump = jump[: jump.index("\n    }\n")]

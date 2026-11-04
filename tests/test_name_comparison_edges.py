@@ -21,8 +21,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from tidalapi.media import Track
 
-from waves.download import Download
-from waves.helper.path import name_comparison_key, path_file_uniquify
+from bitwave.download import Download
+from bitwave.helper.path import name_comparison_key, path_file_uniquify
 
 
 def _case_insensitive(tmp_path: pathlib.Path) -> bool:
@@ -152,7 +152,7 @@ class TestTheNumberedCopyScanMatchesTheSameWay:
 
             return ids["NFD"] if "_01" in name else ids["NFC"]
 
-        with patch("waves.download.read_item_id", _read_item_id):
+        with patch("bitwave.download.read_item_id", _read_item_id):
             assert dl._existing_same_item_at(base, _track(456)) == sibling
 
 

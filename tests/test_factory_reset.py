@@ -4,7 +4,7 @@ Two behaviors, tested against method-bound stubs (the window-geometry tests'
 pattern) so no display or live bridge is needed:
 
 * ``_factory_default_values`` produces a value for every schema key, shaped
-  the way applySettings expects (enums by name, prefs from the waves.json
+  the way applySettings expects (enums by name, prefs from the bitwave.json
   defaults), and never touches housekeeping keys.
 * ``factoryReset`` wipes the whole config directory except the
   installer-owned ``install_channel`` sentinel, latches the persistence
@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import os
 
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui.backend import _FIRST_RUN_OVERRIDES, WavesBridge
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui.backend import _FIRST_RUN_OVERRIDES, BitWaveBridge
 
 
 class _Stub:
@@ -24,7 +24,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 # --------------------------------------------------------------------------- #
@@ -32,8 +32,8 @@ def _bind(stub, name):
 # --------------------------------------------------------------------------- #
 def _values_stub():
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    # A canned schema: one engine enum field, one engine flag, one waves
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    # A canned schema: one engine enum field, one engine flag, one bitwave
     # pref, one composite carrying file_key + child_key, and one unknown key
     # that must be skipped rather than crash.
     stub.settingsSchema = lambda: [
@@ -76,7 +76,7 @@ def test_factory_defaults_cover_schema_keys_in_apply_shape():
     assert isinstance(values["quality_audio"], str)
     # First-run override wins over the stock dataclass default.
     assert values["video_download"] is _FIRST_RUN_OVERRIDES["video_download"]
-    # BitWave pref comes from the waves.json defaults.
+    # BitWave pref comes from the bitwave.json defaults.
     assert values["explicit_mode"] == "explicit"
     # Composite sub-keys are resolved too.
     assert "metadata_cover_file_dimension" in values
@@ -175,15 +175,15 @@ def _run_factory_reset(base, monkeypatch):
     return stub, original_store
 
 
-def test_factory_reset_wipes_waves_files_and_keeps_install_channel(tmp_path, monkeypatch):
+def test_factory_reset_wipes_bitwave_files_and_keeps_install_channel(tmp_path, monkeypatch):
     base = tmp_path / "cfg"
     base.mkdir()
     for name in (
         "settings.json",
         "settings.json.bak",
         "token.json",
-        "waves.json",
-        "waves.json.tmp",
+        "bitwave.json",
+        "bitwave.json.tmp",
         "page_cache.json",
         "browse_tile_art.json",
         "ownership.sqlite3",
@@ -208,8 +208,8 @@ def test_factory_reset_wipes_waves_files_and_keeps_install_channel(tmp_path, mon
         "mbarbiter.sqlite3-shm",
         "crash.log",
         "crash.log.1",
-        "waves_dev.log",
-        "waves_dev.log.3",
+        "bitwave_dev.log",
+        "bitwave_dev.log.3",
         "app.log",
     ):
         (base / name).write_text("x")
@@ -327,7 +327,7 @@ def test_factory_reset_takes_every_flac_report_and_nothing_else_there(tmp_path, 
     """The FLAC check's reports, a second one in the same second included
     (named with a counter), go with the reset; any other name in the
     reports folder is the user's and stays."""
-    from waves import flac_verify
+    from bitwave import flac_verify
 
     base = tmp_path / "cfg"
     reports = base / backend_mod.REPORTS_DIR
@@ -361,7 +361,7 @@ def test_factory_reset_cannot_touch_foreign_files(tmp_path, monkeypatch):
     base.mkdir()
     (base / "settings.json").write_text("x")
     (base / "vacation-notes.txt").write_text("precious")
-    (base / "waves_dev.log.backup").write_text("precious")  # not the numeric rotation pattern
+    (base / "bitwave_dev.log.backup").write_text("precious")  # not the numeric rotation pattern
     (base / "tax-records").mkdir()
     (base / "tax-records" / "2025.pdf").write_text("precious")
     (base / "bin").mkdir()
@@ -373,7 +373,7 @@ def test_factory_reset_cannot_touch_foreign_files(tmp_path, monkeypatch):
     assert not (base / "settings.json").exists()
     assert not (base / "bin" / "ffmpeg").exists()
     assert (base / "vacation-notes.txt").read_text() == "precious"
-    assert (base / "waves_dev.log.backup").read_text() == "precious"
+    assert (base / "bitwave_dev.log.backup").read_text() == "precious"
     assert (base / "tax-records" / "2025.pdf").read_text() == "precious"
     assert (base / "bin" / "my-own-tool").read_text() == "precious", "foreign file in bin survives"
     assert (base / "bin").is_dir(), "a non-empty bin is kept, never force-removed"
@@ -403,7 +403,7 @@ def test_factory_reset_wipe_has_no_recursive_delete():
     allowed in factoryReset."""
     import inspect
 
-    src = inspect.getsource(WavesBridge.factoryReset)
+    src = inspect.getsource(BitWaveBridge.factoryReset)
     assert "rmtree" not in src, "recursive deletion must never enter factoryReset"
     assert "walk(" not in src, "directory walking must never enter factoryReset"
 
@@ -411,10 +411,10 @@ def test_factory_reset_wipe_has_no_recursive_delete():
 def test_factory_reset_freeze_blocks_pref_saves(tmp_path):
     stub = _Stub()
     stub._factory_reset = True
-    stub._waves_prefs_path = str(tmp_path / "waves.json")
-    stub._waves_prefs = {"explicit_mode": "explicit"}
-    _bind(stub, "_save_waves_prefs")()
-    assert not os.path.exists(stub._waves_prefs_path), "no pref file may re-appear after the wipe"
+    stub._bitwave_prefs_path = str(tmp_path / "bitwave.json")
+    stub._bitwave_prefs = {"explicit_mode": "explicit"}
+    _bind(stub, "_save_bitwave_prefs")()
+    assert not os.path.exists(stub._bitwave_prefs_path), "no pref file may re-appear after the wipe"
 
 
 # --------------------------------------------------------------------------- #

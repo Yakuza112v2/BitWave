@@ -34,8 +34,8 @@ from typing import ClassVar
 
 from conftest import _InlineWriter
 
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import WavesBridge
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # The managed binary sits under the account's own Application Support folder, so
 # the path is identity-bearing. That is the whole reason it must never reach the
@@ -48,7 +48,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _bridge():
@@ -213,7 +213,7 @@ def test_no_bare_settings_save_outside_the_guarded_helper():
     more in ``__init__`` under the same nothing-injected-yet reasoning: the
     video-template migration, and the one-time video_download force-off.
     """
-    source = inspect.getsource(WavesBridge)
+    source = inspect.getsource(BitWaveBridge)
     bare = len(re.findall(r"self\.settings\.save\(\)", source))
     assert bare == 3, (
         f"found {bare} bare self.settings.save() calls, expected 3 "
@@ -232,10 +232,10 @@ def test_no_bare_settings_save_outside_the_guarded_helper():
     )
 
     for name in ("_apply_first_run_defaults", "__init__"):
-        method_src = inspect.getsource(getattr(WavesBridge, name))
+        method_src = inspect.getsource(getattr(BitWaveBridge, name))
         assert "self.settings.save()" in method_src, f"{name} no longer saves; update this guard"
     for name in ("_save_settings", "applySettings"):
-        method_src = inspect.getsource(getattr(WavesBridge, name))
+        method_src = inspect.getsource(getattr(BitWaveBridge, name))
         assert "self._submit_settings_write()" in method_src, f"{name} no longer saves; update this guard"
 
 
@@ -283,7 +283,7 @@ def _apply_bridge(save_hook=None):
         "_restore_ffmpeg_path",
         "_ffmpeg_source_label",
         "_user_ffmpeg_path",
-        "_waves_pref_bool",
+        "_bitwave_pref_bool",
         "_notify_master_armed",
         "_save_settings",
         "_submit_settings_write",
@@ -306,7 +306,7 @@ def _apply_bridge(save_hook=None):
     stub.confirmCategoryDlChanged = _Signal()
     stub.ffmpegStatusChanged = _Signal()
     # applySettings reads these three to decide whether a library setting moved.
-    stub._waves_prefs = {"library_enabled": False, "library_source": "", "library_folder": ""}
+    stub._bitwave_prefs = {"library_enabled": False, "library_source": "", "library_folder": ""}
     stub._ffmpeg = type("_F", (), {"is_installed": staticmethod(lambda: True)})()
     stub._library_root = lambda: None
     stub._logged_in = False  # keeps _init_download out of it

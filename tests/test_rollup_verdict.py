@@ -1,5 +1,5 @@
 """The one verdict behind the DOWNLOADED / IN LIBRARY state on every album,
-playlist and mix card: ``WavesBridge._rollup_verdict`` (backend.py), reached
+playlist and mix card: ``BitWaveBridge._rollup_verdict`` (backend.py), reached
 through ``collectionOwnership`` and ``collectionOwnershipFor``.
 
 The stake is the quality conjunct. A member is only counted as "owned" for the
@@ -12,11 +12,11 @@ Two layers:
 
   * the pure roll-up, called unbound on a Qt-free stub whose ownershipOf is a
     plain dict lookup, one test per branch of the loop, and
-  * one wire test through the REAL ownershipOf on a WavesBridge carcass with a
+  * one wire test through the REAL ownershipOf on a BitWaveBridge carcass with a
     real OwnershipStore, so the stored quality_rank is what decides the verdict
     (not a dict the test invented).
 
-These import WavesBridge, so they collect only in the full runtime venv
+These import BitWaveBridge, so they collect only in the full runtime venv
 (PySide6 present), like tests/test_ownership_bridge.py.
 """
 
@@ -25,8 +25,8 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.ownership import OwnershipStore
-from waves.waves_ui.backend import WavesBridge
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 OWNED_CURRENT = {"owned": True, "up_to_date": True}
 OWNED_STALE = {"owned": True, "up_to_date": False}
@@ -38,8 +38,8 @@ def _bind_rollup(stub) -> None:
     """The real rollup, unbound, on a stub that states only its ownershipOf
     answers: _rollup_verdict reads through _rollup_scan (one walk answers the
     verdict and the records the detail needs), so both are bound."""
-    stub._rollup_scan = WavesBridge._rollup_scan.__get__(stub, _LookupStub)
-    stub._rollup_verdict = WavesBridge._rollup_verdict.__get__(stub, _LookupStub)
+    stub._rollup_scan = BitWaveBridge._rollup_scan.__get__(stub, _LookupStub)
+    stub._rollup_verdict = BitWaveBridge._rollup_verdict.__get__(stub, _LookupStub)
 
 
 class _LookupStub:
@@ -60,7 +60,7 @@ def _verdict(answers: dict, ids=None) -> str:
     """The REAL _rollup_verdict, unbound, over the given per-member answers."""
     stub = _LookupStub(answers)
     _bind_rollup(stub)
-    return WavesBridge._rollup_verdict(stub, list(answers) if ids is None else ids)
+    return BitWaveBridge._rollup_verdict(stub, list(answers) if ids is None else ids)
 
 
 # --------------------------------------------------------------------------- #
@@ -117,12 +117,12 @@ def test_collection_ownership_for_stringifies_ids_and_rolls_up():
     the store keys ids as strings, so the slot must stringify before asking."""
     stub = _LookupStub({"10": OWNED_CURRENT, "20": OWNED_CURRENT})
     _bind_rollup(stub)
-    assert WavesBridge.collectionOwnershipFor(stub, [10, 20]) == "owned"
+    assert BitWaveBridge.collectionOwnershipFor(stub, [10, 20]) == "owned"
     assert stub.asked == ["10", "20"], "ids must reach ownershipOf as strings"
     stub = _LookupStub({"10": OWNED_CURRENT, "20": OWNED_STALE})
     _bind_rollup(stub)
-    assert WavesBridge.collectionOwnershipFor(stub, [10, 20]) == "no"
-    assert WavesBridge.collectionOwnershipFor(stub, []) == "no"
+    assert BitWaveBridge.collectionOwnershipFor(stub, [10, 20]) == "no"
+    assert BitWaveBridge.collectionOwnershipFor(stub, []) == "no"
 
 
 # --------------------------------------------------------------------------- #
@@ -134,10 +134,10 @@ class _InlinePool:
 
 
 def _bridge(store, *, quality):
-    """The real ownershipOf/_rollup_verdict on a WavesBridge carcass (the same
+    """The real ownershipOf/_rollup_verdict on a BitWaveBridge carcass (the same
     shape tests/test_atmos_ownership_scale.py builds), so up_to_date is
     computed by production against the real _target_quality_rank."""
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._ownership = store
     b._own_cache = {}
     b._own_lock = Lock()
@@ -156,7 +156,7 @@ def _bridge(store, *, quality):
         "_rollup_scan",
         "collectionOwnershipFor",
     ):
-        setattr(b, name, getattr(WavesBridge, name).__get__(b, WavesBridge))
+        setattr(b, name, getattr(BitWaveBridge, name).__get__(b, BitWaveBridge))
     return b
 
 
@@ -211,7 +211,7 @@ def test_a_member_stored_below_the_target_rank_un_says_the_album(tmp_path):
 def _detail(answers: dict, ids=None) -> dict:
     stub = _LookupStub(answers)
     _bind_rollup(stub)
-    return WavesBridge._rollup_detail(stub, list(answers) if ids is None else ids)
+    return BitWaveBridge._rollup_detail(stub, list(answers) if ids is None else ids)
 
 
 def _at(folder, inside):

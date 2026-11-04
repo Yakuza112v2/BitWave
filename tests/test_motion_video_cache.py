@@ -18,8 +18,8 @@ from __future__ import annotations
 
 from conftest import _InlinePool
 
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _stub(tmp_path, src_path):
@@ -34,7 +34,7 @@ def _stub(tmp_path, src_path):
 
 
 def _url(stub):
-    return WavesBridge.motionVideoUrl(stub)
+    return BitWaveBridge.motionVideoUrl(stub)
 
 
 def _immediate_single_shot(monkeypatch):
@@ -47,7 +47,7 @@ def test_first_ask_serves_the_bundle_and_stages_a_local_copy(tmp_path, monkeypat
     _immediate_single_shot(monkeypatch)
     src = tmp_path / "bundle" / "wave_loop.mp4"
     src.parent.mkdir()
-    src.write_bytes(b"waves" * 100)
+    src.write_bytes(b"bitwave" * 100)
     s = _stub(tmp_path, src)
 
     first = _url(s)
@@ -94,7 +94,7 @@ def test_the_staging_never_runs_on_the_calling_thread_by_default(tmp_path):
     # deferral is the contract (boot must not pay for the staging read).
     src = tmp_path / "bundle" / "wave_loop.mp4"
     src.parent.mkdir()
-    src.write_bytes(b"waves")
+    src.write_bytes(b"bitwave")
     s = _stub(tmp_path, src)
     assert _url(s).endswith("bundle/wave_loop.mp4")
     assert not (tmp_path / "config" / "motion_bg").exists(), "the copy must be deferred, not inline"

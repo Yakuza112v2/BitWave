@@ -21,15 +21,15 @@ from logging.handlers import QueueHandler, RotatingFileHandler
 
 
 def _fresh(monkeypatch, tmp_path):
-    monkeypatch.delenv("WAVES_DEBUG", raising=False)
-    for name in ("waves.waves_ui.devlog", "waves.waves_ui.diagnostics"):
+    monkeypatch.delenv("BITWAVE_DEBUG", raising=False)
+    for name in ("bitwave.bitwave_ui.devlog", "bitwave.bitwave_ui.diagnostics"):
         sys.modules.pop(name, None)
-    shared = (logging.getLogger("waves"), logging.getLogger())
+    shared = (logging.getLogger("bitwave"), logging.getLogger())
     saved = {lg: (list(lg.handlers), lg.propagate, lg.level) for lg in shared}
     for lg in shared:
         for h in list(lg.handlers):
             lg.removeHandler(h)
-    diagnostics = importlib.import_module("waves.waves_ui.diagnostics")
+    diagnostics = importlib.import_module("bitwave.bitwave_ui.diagnostics")
     log_path = diagnostics.install(str(tmp_path))
     assert log_path is not None
     return diagnostics, log_path, shared, saved
@@ -45,7 +45,7 @@ def _restore(diagnostics, shared, saved):
             lg.addHandler(h)
         lg.propagate = propagate
         lg.setLevel(level)
-    sys.modules.pop("waves.waves_ui.diagnostics", None)
+    sys.modules.pop("bitwave.bitwave_ui.diagnostics", None)
 
 
 def test_loggers_hold_a_queue_not_the_file_and_the_line_still_lands_scrubbed(monkeypatch, tmp_path):
@@ -55,7 +55,7 @@ def test_loggers_hold_a_queue_not_the_file_and_the_line_still_lands_scrubbed(mon
             kinds = [type(h) for h in lg.handlers]
             assert RotatingFileHandler not in kinds, "the disk writer must not sit on the caller's thread"
             assert QueueHandler in kinds
-        logging.getLogger("waves.probe").warning("copy failed for /Users/somebody/Music/x.flac (marker-A)")
+        logging.getLogger("bitwave.probe").warning("copy failed for /Users/somebody/Music/x.flac (marker-A)")
         diagnostics.flush_disk_log()
         deadline = time.monotonic() + 3.0
         text = ""
@@ -73,8 +73,8 @@ def test_loggers_hold_a_queue_not_the_file_and_the_line_still_lands_scrubbed(mon
 def test_an_error_still_carries_its_breadcrumb_trail_to_disk(monkeypatch, tmp_path):
     diagnostics, log_path, shared, saved = _fresh(monkeypatch, tmp_path)
     try:
-        logging.getLogger("waves.probe").info("crumb-B happened first")
-        logging.getLogger("waves.probe").error("then this broke (marker-C)")
+        logging.getLogger("bitwave.probe").info("crumb-B happened first")
+        logging.getLogger("bitwave.probe").error("then this broke (marker-C)")
         diagnostics.flush_disk_log()
         deadline = time.monotonic() + 3.0
         text = ""

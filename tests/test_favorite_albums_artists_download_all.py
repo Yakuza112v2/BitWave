@@ -25,7 +25,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.waves_ui.backend import (
+from bitwave.bitwave_ui.backend import (
     _ARTIST_ROLLUP_MEMBER,
     _FAV_ALBUMS_GROUP_ID,
     _FAV_ARTISTS_GROUP_ID,
@@ -33,11 +33,11 @@ from waves.waves_ui.backend import (
     _FAV_PLAYLISTS_GROUP_ID,
     _FAV_VIDEOS_GROUP_ID,
     _LIBRARY_PAGE,
-    WavesBridge,
+    BitWaveBridge,
     _ScanStopped,
 )
 
-QML = (Path(__file__).parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+QML = (Path(__file__).parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 class _Signal:
@@ -85,20 +85,20 @@ class _Favorites:
 
 
 class _Stub:
-    downloadFavoriteAlbums = WavesBridge.downloadFavoriteAlbums
-    downloadFavoriteArtists = WavesBridge.downloadFavoriteArtists
-    resolveFavoriteAlbums = WavesBridge.resolveFavoriteAlbums
-    resolveFavoriteArtists = WavesBridge.resolveFavoriteArtists
-    _enqueue_artists = WavesBridge._enqueue_artists
-    _enqueue_collections = WavesBridge._enqueue_collections
-    downloadFavoritePlaylists = WavesBridge.downloadFavoritePlaylists
-    downloadFavoriteMixes = WavesBridge.downloadFavoriteMixes
-    downloadFavoriteVideos = WavesBridge.downloadFavoriteVideos
-    resolveFavoritePlaylists = WavesBridge.resolveFavoritePlaylists
-    _all_favorites = WavesBridge._all_favorites
-    _bump_folder_group = WavesBridge._bump_folder_group
-    _bump_artist_group = WavesBridge._bump_artist_group
-    _reap_stranded_groups = WavesBridge._reap_stranded_groups
+    downloadFavoriteAlbums = BitWaveBridge.downloadFavoriteAlbums
+    downloadFavoriteArtists = BitWaveBridge.downloadFavoriteArtists
+    resolveFavoriteAlbums = BitWaveBridge.resolveFavoriteAlbums
+    resolveFavoriteArtists = BitWaveBridge.resolveFavoriteArtists
+    _enqueue_artists = BitWaveBridge._enqueue_artists
+    _enqueue_collections = BitWaveBridge._enqueue_collections
+    downloadFavoritePlaylists = BitWaveBridge.downloadFavoritePlaylists
+    downloadFavoriteMixes = BitWaveBridge.downloadFavoriteMixes
+    downloadFavoriteVideos = BitWaveBridge.downloadFavoriteVideos
+    resolveFavoritePlaylists = BitWaveBridge.resolveFavoritePlaylists
+    _all_favorites = BitWaveBridge._all_favorites
+    _bump_folder_group = BitWaveBridge._bump_folder_group
+    _bump_artist_group = BitWaveBridge._bump_artist_group
+    _reap_stranded_groups = BitWaveBridge._reap_stranded_groups
 
     def __init__(self, favorites, claimed: set | None = None, lists=None, tree=None):
         self._lists = lists or {"playlists": [], "mixes": []}
@@ -160,7 +160,7 @@ class _Stub:
     def _dedup_albums(self, albums):
         return list(albums)
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return False
 
     def _library_bulk_skip_on(self):
@@ -253,7 +253,7 @@ def test_artists_a_stop_mid_scan_registers_nothing(monkeypatch):
 
         return check
 
-    monkeypatch.setattr("waves.waves_ui.backend._stop_check_for", stop_check_for)
+    monkeypatch.setattr("bitwave.bitwave_ui.backend._stop_check_for", stop_check_for)
     stub = _Stub(_Favorites(artists=_artists(2)))
     stub.downloadFavoriteArtists()
     assert stub._artistsQueued.emits == [] and stub._folder_groups == {}
@@ -308,8 +308,8 @@ def test_the_reaper_keeps_the_rollup_while_a_discography_is_alive():
 class _ArtistScanStub:
     """Just enough bridge for downloadArtist to end without queueing."""
 
-    downloadArtist = WavesBridge.downloadArtist
-    _bump_folder_group = WavesBridge._bump_folder_group
+    downloadArtist = BitWaveBridge.downloadArtist
+    _bump_folder_group = BitWaveBridge._bump_folder_group
 
     def __init__(self, artist):
         self._dl = object()
@@ -348,7 +348,7 @@ class _ArtistScanStub:
     def _dedup_albums(self, albums):
         return list(albums)
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return False
 
     def _library_bulk_skip_on(self):
@@ -417,9 +417,9 @@ def test_resolve_counts_albums_and_artists():
 def test_the_qml_is_wired(cat, btn, gid, resolve, slot, kind):
     block = re.search(rf'Item \{{\s*visible: root\.libraryCategory === "{cat}".*?objectName: "{btn}"', QML, re.S)
     assert block, f"the {cat} DOWNLOAD ALL button must live inside the {cat}-only Item"
-    assert f'mediaId: "{gid}"' in QML and f"waves.{resolve}()" in QML
+    assert f'mediaId: "{gid}"' in QML and f"bitwave.{resolve}()" in QML
     gate = re.search(r"id: catDlGate.*?label: \"CANCEL\"", QML, re.S)
-    assert gate and f'p.kind === "{kind}"' in gate.group(0) and f"waves.{slot}()" in gate.group(0)
+    assert gate and f'p.kind === "{kind}"' in gate.group(0) and f"bitwave.{slot}()" in gate.group(0)
     logout = re.search(r"onLoggedInChanged.*?root\.catDlPrompt = null\s*\n(.*?)\n\s*//", QML, re.S)
     assert logout and f"{kind}Pending = false" in logout.group(1)
 
@@ -430,7 +430,7 @@ class _Node:
 
 
 def _tree(partial=False):
-    from waves.helper.folders import FolderTree
+    from bitwave.helper.folders import FolderTree
 
     return FolderTree(
         nodes=[

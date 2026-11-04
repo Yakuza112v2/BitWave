@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from waves.download import Download, _SharedContextAdapter, pooled_session
+from bitwave.download import Download, _SharedContextAdapter, pooled_session
 
 
 @pytest.fixture(autouse=True)
@@ -110,7 +110,7 @@ def test_cert_verify_falls_back_for_custom_verify(tmp_path):
 
 
 def test_the_download_session_drops_connections_after_an_idle_gap_or_a_sleep():
-    from waves.http_pool import IdleDropAdapter
+    from bitwave.http_pool import IdleDropAdapter
 
     adapter = Download._shared_http().get_adapter("https://example.com")
     assert isinstance(adapter, IdleDropAdapter)

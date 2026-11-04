@@ -28,18 +28,18 @@ from types import SimpleNamespace
 
 from tidalapi import Album, Track
 
-from waves.constants import DEFAULT_ILLEGAL_MAP
-from waves.helper.path import (
+from bitwave.constants import DEFAULT_ILLEGAL_MAP
+from bitwave.helper.path import (
     ILLEGAL_FILENAME_CHARS,
     format_path_media,
     safe_filename_replacement,
     safe_filename_replacement_map,
 )
-from waves.model.cfg import HelpSettings
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import _FIRST_RUN_OVERRIDES, WavesBridge
+from bitwave.model.cfg import HelpSettings
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import _FIRST_RUN_OVERRIDES, BitWaveBridge
 
-_UI = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui"
+_UI = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui"
 _SETTINGS_QML = (_UI / "qml" / "SettingsPage.qml").read_text(encoding="utf-8")
 
 
@@ -48,7 +48,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
@@ -60,9 +60,9 @@ def _schema_stub():
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub._ffmpeg_flag_prefs = {}
     # applySettings does its ffmpeg restores and its write under this lock, the
     # same one _save_settings holds, so a worker save cannot slip its borrowed
@@ -76,7 +76,7 @@ def _schema_stub():
 
 def _map_field(stub=None) -> dict:
     stub = stub or _schema_stub()
-    for section in WavesBridge.settingsSchema(stub):
+    for section in BitWaveBridge.settingsSchema(stub):
         for f in section["fields"]:
             if f["key"] == "filename_illegal_map":
                 return f
@@ -183,11 +183,11 @@ def _offer_stub(*, fresh: bool, configured: bool, stamped: bool = False):
     if configured:
         stub.settings.data.filename_illegal_map = {":": " - "}
     stub._fresh_install = fresh
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_prefs["illegal_map_offer_done"] = stamped
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_prefs["illegal_map_offer_done"] = stamped
     stub._saves = []
-    stub._save_waves_prefs = lambda: stub._saves.append(dict(stub._waves_prefs))
+    stub._save_bitwave_prefs = lambda: stub._saves.append(dict(stub._bitwave_prefs))
     return stub
 
 
@@ -196,7 +196,7 @@ class TestWhoGetsAsked:
         stub = _offer_stub(fresh=False, configured=False)
         _bind(stub, "_migrate_illegal_map_offer")()
 
-        assert stub._waves_prefs["illegal_map_offer_done"] is False
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is False
         assert stub._saves == [], "nothing to persist until the user answers"
         assert _map_field()["offer"] is True
 
@@ -206,14 +206,14 @@ class TestWhoGetsAsked:
         stub = _offer_stub(fresh=True, configured=False)
         _bind(stub, "_migrate_illegal_map_offer")()
 
-        assert stub._waves_prefs["illegal_map_offer_done"] is True
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is True
         assert len(stub._saves) == 1
 
     def test_someone_with_stand_ins_of_their_own_is_not_asked(self):
         stub = _offer_stub(fresh=False, configured=True)
         _bind(stub, "_migrate_illegal_map_offer")()
 
-        assert stub._waves_prefs["illegal_map_offer_done"] is True
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is True
 
     def test_the_answer_is_remembered(self):
         stub = _offer_stub(fresh=False, configured=False, stamped=True)
@@ -223,7 +223,7 @@ class TestWhoGetsAsked:
 
     def test_a_stamped_install_no_longer_sees_the_strip(self):
         stub = _schema_stub()
-        stub._waves_prefs["illegal_map_offer_done"] = True
+        stub._bitwave_prefs["illegal_map_offer_done"] = True
 
         assert _map_field(stub)["offer"] is False
 
@@ -231,22 +231,22 @@ class TestWhoGetsAsked:
         stub = _offer_stub(fresh=False, configured=False)
         _bind(stub, "resolveIllegalMapOffer")()
 
-        assert stub._waves_prefs["illegal_map_offer_done"] is True
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is True
         assert len(stub._saves) == 1
 
         _bind(stub, "resolveIllegalMapOffer")()
-        assert len(stub._saves) == 1, "declining twice must not rewrite waves.json"
+        assert len(stub._saves) == 1, "declining twice must not rewrite bitwave.json"
 
 
 class TestSavingStandInsAnswersTheOfferToo:
     def _apply_stub(self):
         stub = _Stub()
         stub.settings = SimpleNamespace(data=CfgSettings(), save=lambda: None)
-        stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-        stub._waves_prefs = stub._default_waves_prefs()
-        stub._waves_prefs["illegal_map_offer_done"] = False
+        stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+        stub._bitwave_prefs = stub._default_bitwave_prefs()
+        stub._bitwave_prefs["illegal_map_offer_done"] = False
         stub._saves = []
-        stub._save_waves_prefs = lambda: stub._saves.append(dict(stub._waves_prefs))
+        stub._save_bitwave_prefs = lambda: stub._saves.append(dict(stub._bitwave_prefs))
         stub._ffmpeg_flag_prefs = {}
         # applySettings does its ffmpeg restores and its write under this lock, the
         # same one _save_settings holds, so a worker save cannot slip its borrowed
@@ -256,8 +256,8 @@ class TestSavingStandInsAnswersTheOfferToo:
         stub._restore_ffmpeg_path = lambda: None
         stub._submit_settings_write = lambda: stub.settings.save()
         stub._ffmpeg_source_label = lambda: "system"
-        stub._waves_pref_bool = lambda key: False
-        # The master switch is off here (_waves_pref_bool above), so the
+        stub._bitwave_pref_bool = lambda key: False
+        # The master switch is off here (_bitwave_pref_bool above), so the
         # armed check is a no-op; applySettings still calls it.
         stub._notify_master_armed = _bind(stub, "_notify_master_armed")
         stub._set_status = lambda text: None
@@ -275,16 +275,16 @@ class TestSavingStandInsAnswersTheOfferToo:
         # Whether the values came from the offer's own button or from typing
         # into the boxes, the user has answered.
         stub = self._apply_stub()
-        WavesBridge.applySettings.__get__(stub, type(stub))({"filename_illegal_map": {"?": "-"}})
+        BitWaveBridge.applySettings.__get__(stub, type(stub))({"filename_illegal_map": {"?": "-"}})
 
         assert stub.settings.data.filename_illegal_map == {"?": "-"}
-        assert stub._waves_prefs["illegal_map_offer_done"] is True
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is True
 
     def test_clearing_the_table_back_to_empty_does_not_answer_it(self):
         stub = self._apply_stub()
-        WavesBridge.applySettings.__get__(stub, type(stub))({"filename_illegal_map": {}})
+        BitWaveBridge.applySettings.__get__(stub, type(stub))({"filename_illegal_map": {}})
 
-        assert stub._waves_prefs["illegal_map_offer_done"] is False
+        assert stub._bitwave_prefs["illegal_map_offer_done"] is False
 
 
 class TestTheSettingsPageShowsTheOffer:
@@ -305,7 +305,7 @@ class TestTheSettingsPageShowsTheOffer:
     def test_only_declining_writes_the_stamp(self):
         # Taking the table stages it for SAVE CHANGES instead, so a CANCEL
         # leaves the question genuinely unanswered and it gets asked again.
-        assert _SETTINGS_QML.count("waves.resolveIllegalMapOffer()") == 1
+        assert _SETTINGS_QML.count("bitwave.resolveIllegalMapOffer()") == 1
 
     def test_taking_the_table_stages_it_rather_than_saving_it(self):
         assert "page.mapStage(mapCard.modelData, mapCard.modelData.default_value)" in _SETTINGS_QML

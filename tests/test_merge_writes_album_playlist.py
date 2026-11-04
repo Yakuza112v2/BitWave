@@ -27,7 +27,7 @@ HOW THIS STAYS FIXED
 --------------------
 A real ``Download`` (its network-touching ``__init__`` skipped) with the REAL
 ``playlist_populate``, a real temp album folder, and the REAL
-``WavesBridge._download_merge_plan`` as an unbound method. ``item()`` is the
+``BitWaveBridge._download_merge_plan`` as an unbound method. ``item()`` is the
 only stand-in on the merge path: it writes a real file where the engine would
 and returns the engine's ``(ok, path)`` contract. Most assertions read the
 folder; the few that need the arguments the playlist writer was handed record
@@ -46,11 +46,11 @@ from unittest.mock import patch
 import pytest
 from tidalapi import Album
 
-from waves.constants import PLAYLIST_EXTENSION, PLAYLIST_PREFIX
-from waves.download import Download
-from waves.helper.path import format_path_media
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.constants import PLAYLIST_EXTENSION, PLAYLIST_PREFIX
+from bitwave.download import Download
+from bitwave.helper.path import format_path_media
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _ALBUM_TITLE = "Album X (Deluxe)"
 _M3U8 = f"{PLAYLIST_PREFIX}{_ALBUM_TITLE}{PLAYLIST_EXTENSION}"
@@ -130,7 +130,7 @@ def _run_merge(dl: _WritingDownload, plan, *, template="{album_title}/{track_tit
     # Identity re-tagging is not what is measured here; the source track
     # passes straight through so item() sees the name the plan gave it.
     with patch.object(backend, "_as_member_of", lambda src, *a: src):
-        WavesBridge._download_merge_plan(bridge, dl, signals, abort or threading.Event(), _album(), template, plan)
+        BitWaveBridge._download_merge_plan(bridge, dl, signals, abort or threading.Event(), _album(), template, plan)
 
 
 def _lines(m3u8: pathlib.Path) -> list[str]:

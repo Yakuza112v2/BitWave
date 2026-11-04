@@ -1,8 +1,8 @@
-"""Regression tests for WavesTidal.login_token (cached-sign-in launch login).
+"""Regression tests for BitWaveTidal.login_token (cached-sign-in launch login).
 
 The upstream ``Tidal.login_token`` deletes the saved sign-in on *any* exception,
 so a black-holed network at launch permanently logs the user out (the OAuth
-refresh credential is unrecoverable). ``WavesTidal`` inverts that default: it
+refresh credential is unrecoverable). ``BitWaveTidal`` inverts that default: it
 deletes only when TIDAL positively refused the sign-in with a 401 or a 403, and
 keeps it for every other failure.
 
@@ -24,11 +24,11 @@ import pytest
 import requests
 from tidalapi.exceptions import TooManyRequests
 
-from waves.waves_ui.session import WavesTidal
+from bitwave.bitwave_ui.session import BitWaveTidal
 
 
 def _bare(tmp_path, *, raises=None, returns=False, has_token=True):
-    wt = WavesTidal.__new__(WavesTidal)
+    wt = BitWaveTidal.__new__(BitWaveTidal)
     wt.token_from_storage = has_token
     # Dummy fixture values, not real credentials (bandit S106 false positive).
     wt.data = types.SimpleNamespace(

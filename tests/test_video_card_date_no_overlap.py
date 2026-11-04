@@ -17,7 +17,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_FAIL = 1
@@ -41,10 +41,10 @@ _ARTISTS = (
 def test_video_card_date_stays_clear_of_the_download_button():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    # Sandboxed: this scenario builds a REAL WavesBridge, and a bridge that
+    # Sandboxed: this scenario builds a REAL BitWaveBridge, and a bridge that
     # finds the packaged app's config dir adopts its settings, writes its
     # log, and starts a real scan of the user's music library.
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-video-card-date-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-video-card-date-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -75,8 +75,8 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -84,13 +84,13 @@ def _run_scenario() -> int:
     from tests._qml_offline import PARK_LOGIN_QML, patch_offline
 
     patch_offline()  # BEFORE the bridge: its __init__ fires the sign-in check
-    # Bridge BEFORE engine: constructing WavesBridge with a live
+    # Bridge BEFORE engine: constructing BitWaveBridge with a live
     # QQmlApplicationEngine crashed engine.load() natively (PySide6
     # 6.11.1, offscreen, seen when the host audio setup changed), and
     # the sibling harnesses that build the bridge first never crashed.
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

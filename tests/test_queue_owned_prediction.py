@@ -44,7 +44,7 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.media import Quality
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -65,11 +65,11 @@ class _Store:
 
 
 def _bridge(*, recs=None, claim=None, quality=Quality.hi_res_lossless, atmos=False):
-    """A WavesBridge carcass with only what _predict_skips reads, and the real
+    """A BitWaveBridge carcass with only what _predict_skips reads, and the real
     method bound onto it."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._ownership = _Store(recs or {})
     b._redownload_overrides = set()
     b._library_claim_overrides = set()
@@ -94,7 +94,7 @@ def _bridge(*, recs=None, claim=None, quality=Quality.hi_res_lossless, atmos=Fal
         "_job_skip_existing",
         "_queue_item",
     ):
-        setattr(b, name, getattr(backend.WavesBridge, name).__get__(b, backend.WavesBridge))
+        setattr(b, name, getattr(backend.BitWaveBridge, name).__get__(b, backend.BitWaveBridge))
     return b
 
 
@@ -228,18 +228,18 @@ def test_an_ownership_lookup_failure_never_gates():
 def test_a_live_event_outranks_a_prediction():
     """The run reached the track and said something: that is fact, and the
     prediction must not paint over it."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._job_tracks = {1: {"1": {"id": "1", "status": "running", "pct": 40.0, "quality": ""}}}
     b._job_owned = {1: {"1": {"kind": "own", "tier": "LOSSLESS"}, "2": {"kind": "claim", "tier": "HIGH"}}}
     b._job_fetched = {}
     # The expansion's row: a merge for a row that has gone is dropped now.
     b._queue_index = {1: {"qid": 1, "media_id": "m1", "status": "running"}}
-    b._queue_item = backend.WavesBridge._queue_item.__get__(b, backend.WavesBridge)
+    b._queue_item = backend.BitWaveBridge._queue_item.__get__(b, backend.BitWaveBridge)
     emitted = []
     b.queueTracksLoaded = SimpleNamespace(emit=lambda qid, rows: emitted.append(rows))
-    backend.WavesBridge._merge_queue_tracks(
+    backend.BitWaveBridge._merge_queue_tracks(
         b,
         1,
         [
@@ -255,21 +255,21 @@ def test_a_live_event_outranks_a_prediction():
 
 
 def test_marks_landing_after_the_list_are_merged_into_it():
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._job_tracks = {}
     b._job_owned = {}
     b._job_fetched = {}
     # The expansion's row: a merge for a row that has gone is dropped now.
     b._queue_index = {1: {"qid": 1, "media_id": "m1", "status": "running"}}
-    b._queue_item = backend.WavesBridge._queue_item.__get__(b, backend.WavesBridge)
+    b._queue_item = backend.BitWaveBridge._queue_item.__get__(b, backend.BitWaveBridge)
     emitted = []
     b.queueTracksLoaded = SimpleNamespace(emit=lambda qid, rows: emitted.append(rows))
     fetched = [{"id": "1", "num": 1, "title": "a", "duration": "3:00"}]
-    backend.WavesBridge._merge_queue_tracks(b, 1, fetched)
+    backend.BitWaveBridge._merge_queue_tracks(b, 1, fetched)
     assert emitted[-1][0]["status"] == "pending"
-    backend.WavesBridge._apply_owned_marks(b, 1, {"1": {"kind": "own", "tier": "HI-RES"}})
+    backend.BitWaveBridge._apply_owned_marks(b, 1, {"1": {"kind": "own", "tier": "HI-RES"}})
     assert emitted[-1][0]["status"] == "owned"
     assert emitted[-1][0]["quality"] == "HI-RES"
 
@@ -278,30 +278,30 @@ def test_a_prediction_never_reaches_the_collapsed_rows_rollup():
     """The row's word is the record of what the RUN delivered (including the
     tier of a copy it really skipped). A prediction is not a delivery and must
     leave it alone until the run speaks."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._job_tracks = {}
     b._job_owned = {1: {"1": {"kind": "own", "tier": "LOSSLESS"}}}
     b._job_fetched = {}
     # The expansion's row: a merge for a row that has gone is dropped now.
     b._queue_index = {1: {"qid": 1, "media_id": "m1", "status": "running"}}
-    b._queue_item = backend.WavesBridge._queue_item.__get__(b, backend.WavesBridge)
+    b._queue_item = backend.BitWaveBridge._queue_item.__get__(b, backend.BitWaveBridge)
     b.queueTracksLoaded = SimpleNamespace(emit=lambda *a: None)
-    backend.WavesBridge._merge_queue_tracks(b, 1, [{"id": "1", "num": 1, "title": "a", "duration": "3:00"}])
+    backend.BitWaveBridge._merge_queue_tracks(b, 1, [{"id": "1", "num": 1, "title": "a", "duration": "3:00"}])
     assert backend._delivered_rollup(b._job_tracks.get(1, {})) == ("", [])
 
 
 def test_the_stores_are_dropped_with_the_queue_row():
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._queue = [{"qid": 2}]
     b._job_tracks = {1: {}, 2: {}}
     b._job_owned = {1: {}, 2: {}}
     b._job_fetched = {1: [], 2: []}
     b._job_objs = {1: object(), 2: object()}  # the rows' kept live objects
-    backend.WavesBridge._prune_job_tracks(b)
+    backend.BitWaveBridge._prune_job_tracks(b)
     assert set(b._job_owned) == {2} and set(b._job_fetched) == {2}
 
 
@@ -309,7 +309,7 @@ def test_the_stores_are_dropped_with_the_queue_row():
 def test_the_drawer_says_in_library_before_the_run_and_fills_in_after():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-owned-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-owned-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -343,15 +343,15 @@ def _run_scenario() -> int:  # (one straight line of scene setup)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

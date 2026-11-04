@@ -1,4 +1,4 @@
-"""Tests for waves/mb_service.py: the one door to MusicBrainz that the
+"""Tests for bitwave/mb_service.py: the one door to MusicBrainz that the
 library arbiter and the Releases check share.
 
 The promises: both features together never send two requests inside a
@@ -20,10 +20,10 @@ import threading
 import time
 import urllib.parse
 
-from waves import mb_service
-from waves import musicbrainz as mb
-from waves.mb_arbiter import MBArbiter
-from waves.mb_service import MBService, Pacer
+from bitwave import mb_service
+from bitwave import musicbrainz as mb
+from bitwave.mb_arbiter import MBArbiter
+from bitwave.mb_service import MBService, Pacer
 
 WANT = {"title": "Nevermind", "artist": "Nirvana", "year": "", "tracks": 3, "duration": 0}
 LOCAL = {"tracks": 3, "runtime": 600}

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from waves.waves_ui.backend import _collection_incomplete_reason, _unavailable_note
+from bitwave.bitwave_ui.backend import _collection_incomplete_reason, _unavailable_note
 
 
 @pytest.mark.parametrize(

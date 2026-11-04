@@ -26,8 +26,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from waves.ownership import OwnershipStore
-from waves.waves_ui import backend
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui import backend
 
 
 def _gate(force: bool) -> backend._TrackedDownload:
@@ -42,7 +42,7 @@ def _gate(force: bool) -> backend._TrackedDownload:
 def test_forced_job_verdict_is_force_without_consulting_any_gate():
     m = MagicMock()
     m.id = "123"
-    m.waves_identity_id = None
+    m.bitwave_identity_id = None
     assert _gate(True)._claim_verdict(m) == "force"
 
 
@@ -50,14 +50,14 @@ def test_register_redownload_marks_both_overrides():
     stub = MagicMock()
     stub._redownload_overrides = set()
     stub._library_claim_overrides = set()
-    backend.WavesBridge.registerRedownload(stub, "a1")
+    backend.BitWaveBridge.registerRedownload(stub, "a1")
     assert stub._redownload_overrides == {"a1"}
     assert stub._library_claim_overrides == {"a1"}, "a forced job must not be re-gated by a tag match"
 
 
 # --------------------------------------------------------------------------- #
 # The tier boundary itself: which owned copies are "current" and which force
-# an upgrade. Ranks follow waves.ownership.QUALITY_RANK (LOW 0, HIGH 1,
+# an upgrade. Ranks follow bitwave.ownership.QUALITY_RANK (LOW 0, HIGH 1,
 # LOSSLESS 2, HI_RES_LOSSLESS 3); -1 is a tier-less (video) record.
 # --------------------------------------------------------------------------- #
 def _upgrade_gate(rec: dict | None, target_rank: int) -> backend._TrackedDownload:
@@ -73,7 +73,7 @@ def _upgrade_gate(rec: dict | None, target_rank: int) -> backend._TrackedDownloa
 def _plain_track(tid: str = "123") -> MagicMock:
     m = MagicMock()
     m.id = tid
-    m.waves_identity_id = None  # a plain single-track job, no merge placement
+    m.bitwave_identity_id = None  # a plain single-track job, no merge placement
     m.audio_modes = []
     return m
 
@@ -108,7 +108,7 @@ def test_ownership_verdict_at_every_tier_boundary(rec, target_rank, verdict):
 
 
 class _OwnBridge:
-    """The slice of WavesBridge that ownershipOf touches, bound onto a real
+    """The slice of BitWaveBridge that ownershipOf touches, bound onto a real
     OwnershipStore (the shape tests/test_ownership_bridge.py uses), with the
     refresh pool run inline so the second query serves the refreshed cache."""
 
@@ -127,9 +127,9 @@ class _OwnBridge:
         self._own_lock = Lock()
         self._own_announce: list = []
         self._own_announce_armed = False
-        self._OWN_CACHE_MAX = backend.WavesBridge._OWN_CACHE_MAX
-        self._OWN_TTL = backend.WavesBridge._OWN_TTL
-        self._OWN_TTL_BUSY = backend.WavesBridge._OWN_TTL_BUSY
+        self._OWN_CACHE_MAX = backend.BitWaveBridge._OWN_CACHE_MAX
+        self._OWN_TTL = backend.BitWaveBridge._OWN_TTL
+        self._OWN_TTL_BUSY = backend.BitWaveBridge._OWN_TTL_BUSY
         self._own_pool = self._Pool()
         self._ownAnnounceArm = self._Sig()
         self._downloads_running = lambda: False
@@ -147,7 +147,7 @@ class _OwnBridge:
             "_quality_override_key",
             "_ask_atmos_for",
         ):
-            setattr(self, name, getattr(backend.WavesBridge, name).__get__(self, _OwnBridge))
+            setattr(self, name, getattr(backend.BitWaveBridge, name).__get__(self, _OwnBridge))
 
     def own(self, tid: str) -> dict:
         self.ownershipOf(tid)  # schedules the (inline) refresh

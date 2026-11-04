@@ -8,7 +8,7 @@ from __future__ import annotations
 from test_releases_backend import _bind
 from test_releases_import_backend import _import_stub
 
-from waves.waves_ui import bridge_releases as rel
+from bitwave.bitwave_ui import bridge_releases as rel
 
 
 def _land(s):
@@ -188,7 +188,7 @@ def test_switching_it_on_looks_at_once_and_retires_the_offer(tmp_path, monkeypat
     s._library_index_building = False
     s._rel_lib_stamp_seen = 5
     s._rel_notice = {"kind": "more", "n": 1}
-    s._waves_prefs["releases_auto_import"] = True
+    s._bitwave_prefs["releases_auto_import"] = True
     _bind(s, "_releases_auto_import_switched")(True)
     assert s.artistImportNotice.emits[0] == {"kind": "", "n": 0}
     _land(s)
@@ -238,7 +238,7 @@ def test_switching_it_off_drops_a_run_in_flight(tmp_path, monkeypatch):
     _moved(s, 1)
     done = s._relImportDone.emits[-1]
     s._rel_import_running, s._rel_import_auto = True, True  # still in flight
-    s._waves_prefs["releases_auto_import"] = False
+    s._bitwave_prefs["releases_auto_import"] = False
     _bind(s, "_releases_auto_import_switched")(False)
     assert s._rel_import_running is False
     _bind(s, "_on_rel_import_done")(done)
@@ -254,7 +254,7 @@ def test_the_automatic_import_never_brings_back_an_unfollowed_favorite(tmp_path,
     assert {r["artist_id"] for r in s._releases.followed_artists()} == {"8"}
     assert s._releases.tidal_unfollowed_ids() == {"7"}
     # The hand review still offers it, flagged so it starts unticked.
-    s._waves_prefs["releases_auto_import"] = False
+    s._bitwave_prefs["releases_auto_import"] = False
     _bind(s, "startArtistImport")()
     _land(s)
     review = s.artistImportReady.emits[-1]["matched"]
@@ -311,7 +311,7 @@ def test_the_offer_leaves_out_artists_under_the_floor_and_a_lower_floor_looks_ag
     _moved(s, 2)
     _land_count(s)
     assert s.artistImportNotice.emits[-1] == {"kind": "more", "n": 1}
-    s._waves_prefs["releases_import_min_tracks"] = "1"
+    s._bitwave_prefs["releases_import_min_tracks"] = "1"
     _bind(s, "_releases_import_floor_changed")()
     _land_count(s)
     assert s.artistImportNotice.emits[-1] == {"kind": "more", "n": 2}

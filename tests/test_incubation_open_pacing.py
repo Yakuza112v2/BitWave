@@ -48,7 +48,7 @@ def test_the_app_never_imports_a_binding_the_bundle_trim_deletes():
     assert "QtQuick" in bindings, "the trim list changed shape; re-check what the packaged app keeps"
     pattern = re.compile(r"^\s*(?:from\s+PySide6\.(\w+)\s+import|import\s+PySide6\.(\w+))", re.MULTILINE)
     offenders = []
-    for path in sorted((_ROOT / "waves").rglob("*.py")):
+    for path in sorted((_ROOT / "bitwave").rglob("*.py")):
         for m in pattern.finditer(path.read_text(encoding="utf-8")):
             module = m.group(1) or m.group(2)
             if module in bindings:
@@ -62,7 +62,7 @@ def test_the_app_never_imports_a_binding_the_bundle_trim_deletes():
 def test_the_open_slices_are_short():
     sys.path.insert(0, str(_ROOT))
     try:
-        from waves.waves_ui.app import _BootPacedIncubation
+        from bitwave.bitwave_ui.app import _BootPacedIncubation
     except Exception as exc:  # pragma: no cover - environment without Qt
         import pytest
 
@@ -82,7 +82,7 @@ def test_the_slices_follow_the_screen_refresh_rate():
     120 Hz display was 60% of the GUI thread while a page filled in."""
     sys.path.insert(0, str(_ROOT))
     try:
-        from waves.waves_ui.app import _BootPacedIncubation
+        from bitwave.bitwave_ui.app import _BootPacedIncubation
     except Exception as exc:  # pragma: no cover - environment without Qt
         import pytest
 
@@ -100,7 +100,7 @@ def test_queued_frame_slots_are_coalesced():
     flowing with nothing to show). One slice per cluster, not one per slot."""
     sys.path.insert(0, str(_ROOT))
     try:
-        from waves.waves_ui.app import _BootPacedIncubation
+        from bitwave.bitwave_ui.app import _BootPacedIncubation
     except Exception as exc:  # pragma: no cover - environment without Qt
         import pytest
 
@@ -125,7 +125,7 @@ def test_queued_frame_slots_are_coalesced():
         def incubateFor(self, ms):
             self.slices.append(ms)
 
-    import waves.waves_ui.app as app_module
+    import bitwave.bitwave_ui.app as app_module
 
     real = app_module.time.monotonic
     app_module.time.monotonic = lambda: clock["now"]
@@ -213,7 +213,7 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _BootPacedIncubation
+        from bitwave.bitwave_ui.app import _BootPacedIncubation
     except Exception as exc:
         print(f"app module unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -240,7 +240,7 @@ def _run_scenario() -> int:
             if busy and not fresh:
                 self.timer_slices += 1
 
-    folder = tempfile.mkdtemp(prefix="waves-open-pacing-")
+    folder = tempfile.mkdtemp(prefix="bitwave-open-pacing-")
     qml = Path(folder) / "Win.qml"
     qml.write_text(_QML)
     engine = QQmlApplicationEngine()

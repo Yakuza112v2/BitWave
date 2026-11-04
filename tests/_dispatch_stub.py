@@ -1,4 +1,4 @@
-"""Arm a partial WavesBridge stand-in with the queue dispatcher's state.
+"""Arm a partial BitWaveBridge stand-in with the queue dispatcher's state.
 
 _download used to build a job per call and hand it straight to dl_pool; it
 now records a _JobSpec and _pump_queue builds the job when the pool is free,
@@ -16,7 +16,7 @@ from collections import deque
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _RecordingSignal:
@@ -92,7 +92,7 @@ def arm_queue(stub) -> None:
         "_release_abandoned_hold",
     ):
         if not hasattr(stub, name):
-            setattr(stub, name, getattr(WavesBridge, name).__get__(stub, type(stub)))
+            setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, type(stub)))
     _arm_rollups(stub)
     arm_notify(stub)
 
@@ -110,7 +110,7 @@ def arm_notify(stub) -> None:
         ("_dl_queue_done", int),
         ("_dl_queue_failed", int),
         ("_dl_queue_failed_qids", set),
-        ("_waves_prefs", dict),
+        ("_bitwave_prefs", dict),
         ("_paused", bool),
         ("_scans_in_flight", int),
         ("_pending_downloads", list),
@@ -126,7 +126,7 @@ def arm_notify(stub) -> None:
     if not hasattr(stub, "_dl_notify_timer"):
         stub._dl_notify_timer = SimpleNamespace(isActive=lambda: True, start=lambda *a: None)
     for name in (
-        "_waves_pref_bool",
+        "_bitwave_pref_bool",
         "_notify_job_ended",
         "_notify_queue_idle",
         "_maybe_notify_idle",
@@ -134,7 +134,7 @@ def arm_notify(stub) -> None:
         "_notify_forget_run",
     ):
         if not hasattr(stub, name):
-            setattr(stub, name, getattr(WavesBridge, name).__get__(stub, type(stub)))
+            setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, type(stub)))
 
 
 def _arm_rollups(stub) -> None:
@@ -164,7 +164,7 @@ def _arm_rollups(stub) -> None:
             setattr(stub, sig, _RecordingSignal())
     for name in ("_bump_download_groups", "_bump_artist_group", "_bump_folder_group", "_reap_stranded_groups"):
         if not hasattr(stub, name):
-            setattr(stub, name, getattr(WavesBridge, name).__get__(stub, type(stub)))
+            setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, type(stub)))
     # _download's duplicate-row refusal reads the pinned quality of a fresh row.
     if not hasattr(stub, "_queued_quality_value"):
         stub._queued_quality_value = lambda: "LOSSLESS"
@@ -191,6 +191,6 @@ def arm_dispatch(stub) -> None:
         # would (the pre-dispatcher behavior: the job always started).
         stub._queue_item = lambda qid: {"qid": qid, "status": "queued"}
     for name in ("_pump_queue", "_start_job", "_on_job_finished", "_on_job_streams_started"):
-        setattr(stub, name, getattr(WavesBridge, name).__get__(stub, type(stub)))
+        setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, type(stub)))
     stub._jobFinished = SimpleNamespace(emit=stub._on_job_finished)
     stub._jobStreamsStarted = SimpleNamespace(emit=stub._on_job_streams_started)

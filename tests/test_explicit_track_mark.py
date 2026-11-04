@@ -31,13 +31,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_explicit_rows_wear_the_mark_and_clean_rows_do_not() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-explicit-mark-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-explicit-mark-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -111,15 +111,15 @@ def _run_scenario() -> int:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -235,7 +235,7 @@ def _run_scenario() -> int:
     if rows[long_title]["nx"] is None or rows["Fresh Explicit"]["nx"] is None:
         failures.append("a fresh row wears no NEW tag")
 
-    shot = os.environ.get("WAVES_EXPLICIT_SHOT")
+    shot = os.environ.get("BITWAVE_EXPLICIT_SHOT")
     if shot:
         root.grabWindow().save(shot)
 

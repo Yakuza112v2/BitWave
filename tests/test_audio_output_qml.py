@@ -33,16 +33,16 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 # A device id no machine lists: the "unplugged" pick.
-_GONE = b"waves-test-gone-output".hex()
+_GONE = b"bitwave-test-gone-output".hex()
 
 
 def test_the_audio_output_pick_reaches_every_player():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-audio-output-test-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-audio-output-test-")
     env["HOME"] = sandbox
     env["XDG_CONFIG_HOME"] = str(Path(sandbox) / ".config")
     proc = subprocess.run(  # (fixed argv: this file, one flag)
@@ -78,19 +78,19 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    WavesBridge._library_root = lambda self: ""  # type: ignore[method-assign]
-    WavesBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
-    WavesBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge._library_root = lambda self: ""  # type: ignore[method-assign]
+    BitWaveBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -180,7 +180,7 @@ def _run_scenario() -> int:
     check(q("outMenuList.hi") == 1, f"Down from System default did not highlight row 1: {q('outMenuList.hi')}")
     q("outMenuList.choose(1)")
     check(
-        q("String(waves.wavesPref('audio_output'))") == str(rows[1]["value"]),
+        q("String(bitwave.bitwavePref('audio_output'))") == str(rows[1]["value"]),
         "a row click did not save the pick at once",
     )
     check(bool(q("outMenuList.moving")), "the check did not set off for the new row")
@@ -196,8 +196,8 @@ def _run_scenario() -> int:
         not bool(q("outMenuList.moving")) and not bool(q("outMenu.visible")),
         "with motion off a pick did not close at once",
     )
-    q("root.hoverMotion = Qt.binding(function() { return waves.wavesPref('hover_control_motion') !== false })")
-    bridge.setWavesPref("audio_output", "")
+    q("root.hoverMotion = Qt.binding(function() { return bitwave.bitwavePref('hover_control_motion') !== false })")
+    bridge.setBitWavePref("audio_output", "")
     settle(300)
 
     # Return with no row highlighted keeps the pick and closes the menu.
@@ -207,7 +207,7 @@ def _run_scenario() -> int:
     QTest.keyClick(root, Qt.Key.Key_Return)
     settle(300)
     check(not bool(q("outMenu.visible")), "Return with nothing highlighted left the menu open")
-    check(q("String(waves.wavesPref('audio_output') || '')") == "", "Return with nothing highlighted changed the pick")
+    check(q("String(bitwave.bitwavePref('audio_output') || '')") == "", "Return with nothing highlighted changed the pick")
 
     # More than ten outputs scroll inside the menu. Scrolled down, the
     # pointer still lights the row it is over, and the beam leaves from the
@@ -220,10 +220,10 @@ def _run_scenario() -> int:
     settle(450)
     q(
         "outMenu.opts = outMenu.opts.slice(0, 1).concat(Array.from({length: 13}, function(_, i) {"
-        " return {value: 'waves-test-out-' + (i + 1), label: 'Test output ' + (i + 1),"
+        " return {value: 'bitwave-test-out-' + (i + 1), label: 'Test output ' + (i + 1),"
         " sub: '', 'default': false, missing: false} }))"
     )
-    q("outMenu.pick = 'waves-test-out-9'")
+    q("outMenu.pick = 'bitwave-test-out-9'")
     settle(200)
     q("outMenuList.positionViewAtIndex(13, ListView.End)")
     settle(200)
@@ -236,14 +236,14 @@ def _run_scenario() -> int:
     check(q("outMenuList.hi") == 12, f"the pointer over row 12 of a scrolled menu lit row {q('outMenuList.hi')}")
     q("outMenuList.choose(12)")
     check(
-        q("String(waves.wavesPref('audio_output'))") == "waves-test-out-12",
+        q("String(bitwave.bitwavePref('audio_output'))") == "bitwave-test-out-12",
         "a pick in a scrolled menu saved another row",
     )
     lift = q("beamMark.mapToItem(null, 0, 0).y - outMenuList.itemAtIndex(9).mapToItem(null, 0, 0).y")
     check(abs(lift - 7) < 0.5, f"the beam left {lift - 7:+.0f} px off the row it leaves in a scrolled menu")
     settle(800)
     QTest.mouseMove(root, QPoint(4, 4))
-    bridge.setWavesPref("audio_output", "")
+    bridge.setBitWavePref("audio_output", "")
     settle(300)
 
     # A pick moves every player at once, and both lists follow it.
@@ -251,19 +251,19 @@ def _run_scenario() -> int:
     if other is None:
         print("only one output here: the move step is skipped", file=sys.stderr)
     else:
-        bridge.setWavesPref("audio_output", other["value"])
+        bridge.setBitWavePref("audio_output", other["value"])
         settle(800)
         check(heard() == {other["label"]}, f"a pick did not reach every player: {heard()} vs {other['label']!r}")
         check(q("idleOut.cur") == other["label"], "the chip did not take the picked name")
         check(q("settingsPage.outPick") == other["value"], "Settings > Playback did not follow the pick")
-        bridge.setWavesPref("audio_output", "")
+        bridge.setBitWavePref("audio_output", "")
         settle(800)
         check(heard() == {default}, "System default did not bring every player back")
 
     # An unplugged pick plays through the default and turns the chip gold.
-    bridge.setWavesPref("audio_output", _GONE)
+    bridge.setBitWavePref("audio_output", _GONE)
     # (as if it was picked by this name before it was unplugged)
-    bridge._waves_prefs["audio_output_name"] = "Studio monitors (USB)"
+    bridge._bitwave_prefs["audio_output_name"] = "Studio monitors (USB)"
     settle(800)
     check(bool(q("root.outMissing")), "an unplugged pick does not read as missing")
     check(heard() == {default}, f"an unplugged pick did not fall back to the default: {heard()}")
@@ -274,7 +274,7 @@ def _run_scenario() -> int:
         bool(gone) and gone.get("missing") is True and gone.get("label") == "Studio monitors (USB)",
         f"Settings does not list the unplugged pick by name under System default: {gone!r}",
     )
-    bridge.setWavesPref("audio_output", "")
+    bridge.setBitWavePref("audio_output", "")
     settle(300)
 
     # The chip's sound sign: green with the pills moving while sound plays,
@@ -313,7 +313,7 @@ def _run_scenario() -> int:
     q("root.hoverMotion = false")
     q("root.previewPlaying = true")
     check(q("npOut.lv") == 1 and not bool(q("npOut.wave.moving")), "with motion off the playing pills still move")
-    q("root.hoverMotion = Qt.binding(function() { return waves.wavesPref('hover_control_motion') !== false })")
+    q("root.hoverMotion = Qt.binding(function() { return bitwave.bitwavePref('hover_control_motion') !== false })")
     q("root.previewPlaying = false")
     q("root.previewKind = ''")
     settle(300)

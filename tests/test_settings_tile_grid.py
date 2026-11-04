@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from tests.test_releases_settings_placement import _schema_stub
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # Characters a help can hold at the narrowest window: four lines of a third,
 # three of a half; one line fewer while a nested checkbox shows.
@@ -37,8 +37,8 @@ def _switches(section):
 
 @pytest.fixture(params=[False, True], ids=["no-banner", "banner"])
 def schema(request, monkeypatch):
-    monkeypatch.setattr("waves.waves_ui.backend.notifications_supported", lambda: request.param)
-    return WavesBridge.settingsSchema(_schema_stub())
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.notifications_supported", lambda: request.param)
+    return BitWaveBridge.settingsSchema(_schema_stub())
 
 
 def test_no_switch_is_left_alone_on_a_row(schema):

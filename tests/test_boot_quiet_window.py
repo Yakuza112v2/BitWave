@@ -7,7 +7,7 @@ so every one of its frames needs the GUI thread, and the GUI thread waits
 for the interpreter lock whenever any Python runs anywhere. A pool job
 dispatched between the bridge's construction and the reveal therefore
 competes with the picture for every frame it holds the lock. The library
-walk did exactly that (now a child process, waves.library_worker); a
+walk did exactly that (now a child process, bitwave.library_worker); a
 presence-index build did (now the sqlite cache itself); and every fix
 before this one was undone by the next feature that added a boot job.
 
@@ -71,10 +71,10 @@ ALLOWED_BOOT_JOBS = {
     # The diagnostics log queue drain: asleep until a record is queued.
     "QueueListener._monitor",
     # The saved-session login: one HTTPS round trip.
-    "WavesBridge._try_token_login.<locals>.work",
+    "BitWaveBridge._try_token_login.<locals>.work",
     # The settings writer: asleep until a save is queued.
     "_SingleFlightWriter._run",
-    # app.py's own TLS warm-up (waves_activate starts it beside the bridge):
+    # app.py's own TLS warm-up (bitwave_activate starts it beside the bridge):
     # builds Qt's default TLS configuration (a CA store read), no network.
     "_warm_tls",
 }
@@ -83,7 +83,7 @@ ALLOWED_BOOT_JOBS = {
 def test_only_allowlisted_jobs_run_under_the_launch_water():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-boot-quiet-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-boot-quiet-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -124,7 +124,7 @@ def _qualname(fn) -> str:
 
 
 def _run_scenario() -> int:
-    # THIS checkout's waves, not the venv's editable install.
+    # THIS checkout's bitwave, not the venv's editable install.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import threading
 
@@ -157,7 +157,7 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -166,7 +166,7 @@ def _run_scenario() -> int:
     # the launch takes its library path (badge seed, scanner process).
     import json
 
-    from waves.helper.path import path_config_base
+    from bitwave.helper.path import path_config_base
 
     cfg = path_config_base()
     os.makedirs(cfg, exist_ok=True)
@@ -174,13 +174,13 @@ def _run_scenario() -> int:
     album = os.path.join(lib, "Lorna Shore", "Pain Remains")
     os.makedirs(album, exist_ok=True)
     Path(album, "01.flac").write_bytes(b"")
-    with open(os.path.join(cfg, "waves.json"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(cfg, "bitwave.json"), "w", encoding="utf-8") as fh:
         json.dump({"library_enabled": True, "library_source": "separate", "library_folder": lib}, fh)
 
-    bridge = WavesBridge(tidal=None)
-    # What waves_activate itself starts next to the bridge (the TLS warm-up):
+    bridge = BitWaveBridge(tidal=None)
+    # What bitwave_activate itself starts next to the bridge (the TLS warm-up):
     # part of the same launch, so it is measured under the same water.
-    from waves.waves_ui.app import _start_boot_threads
+    from bitwave.bitwave_ui.app import _start_boot_threads
 
     _start_boot_threads()
     loop = QEventLoop()

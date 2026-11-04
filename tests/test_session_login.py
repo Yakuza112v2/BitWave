@@ -1,7 +1,7 @@
 """Regression tests for the cached-token launch login (``_try_token_login``).
 
 Hermetic and Qt-free in the ``test_audit_backend.py`` style: the real, unbound
-``WavesBridge`` method is bound onto a minimal stand-in whose collaborators are
+``BitWaveBridge`` method is bound onto a minimal stand-in whose collaborators are
 fakes. ``_try_token_login`` dispatches a ``Worker`` to ``self.threadpool``; the
 conftest ``_InlinePool`` runs it synchronously on the calling thread, and the
 real ``Worker.run`` (which deliberately swallows and logs any exception so a
@@ -27,7 +27,7 @@ import types
 
 from conftest import _InlinePool, _Signal
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _LoginStub:
@@ -70,7 +70,7 @@ class _LoginStub:
 
 
 def _run(stub: _LoginStub) -> None:
-    WavesBridge._try_token_login.__get__(stub, _LoginStub)()
+    BitWaveBridge._try_token_login.__get__(stub, _LoginStub)()
 
 
 def test_corrupt_page_cache_still_resolves_and_logs_in():
@@ -178,7 +178,7 @@ class _PkceStub:
 
 
 def _complete(stub: _PkceStub, url: str = "https://tidal.com/cb?code=x") -> None:
-    WavesBridge.completeLogin.__get__(stub, _PkceStub)(url)
+    BitWaveBridge.completeLogin.__get__(stub, _PkceStub)(url)
 
 
 def test_a_corrupt_page_cache_never_strands_the_pasted_url_sign_in():

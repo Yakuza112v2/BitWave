@@ -45,7 +45,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -102,7 +102,7 @@ def test_the_peek_animation_does_not_overshoot() -> None:
 def test_a_one_item_release_offers_no_expansion() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-single-expand-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-single-expand-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -136,15 +136,15 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

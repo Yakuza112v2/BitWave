@@ -1,6 +1,6 @@
 """Tests for the ownership recording wiring in the bridge (backend.py).
 
-These import WavesBridge, so they collect only in the full runtime venv (PySide6
+These import BitWaveBridge, so they collect only in the full runtime venv (PySide6
 present), like tests/test_audit_backend.py. Two layers are covered:
 
   * the GUI-thread record sink (_track_lifecycle -> _record_ownership -> store)
@@ -19,9 +19,9 @@ from threading import Event, Lock, local
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import waves.waves_ui.backend as backend
-from waves.ownership import OwnershipStore
-from waves.waves_ui.backend import WavesBridge, _stream_quality
+import bitwave.bitwave_ui.backend as backend
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui.backend import BitWaveBridge, _stream_quality
 
 
 class _Signal:
@@ -49,7 +49,7 @@ class _SyncPool:
 
 
 class _BridgeStub:
-    """Bare stand-in for WavesBridge carrying only what the ownership sink and
+    """Bare stand-in for BitWaveBridge carrying only what the ownership sink and
     query touch, with the real bridge methods bound on and a real store."""
 
     def __init__(self, tmp_path, quality_audio="LOSSLESS", atmos=False):
@@ -66,10 +66,10 @@ class _BridgeStub:
         self._own_lock = Lock()
         self._own_announce: list = []
         self._own_announce_armed = False
-        self._OWN_CACHE_MAX = WavesBridge._OWN_CACHE_MAX
+        self._OWN_CACHE_MAX = BitWaveBridge._OWN_CACHE_MAX
         self._own_pool = _SyncPool()
-        self._OWN_TTL = WavesBridge._OWN_TTL
-        self._OWN_TTL_BUSY = WavesBridge._OWN_TTL_BUSY
+        self._OWN_TTL = BitWaveBridge._OWN_TTL
+        self._OWN_TTL_BUSY = BitWaveBridge._OWN_TTL_BUSY
         self._downloads_running = lambda: False
         self._base_ok = ("", 0.0)
         # The page's object cache: ownershipOf reads the track out of it (when
@@ -117,7 +117,7 @@ class _BridgeStub:
             # The quality menu's IN LIBRARY mark (issue #36).
             "ownedTierOf",
         ):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _BridgeStub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _BridgeStub))
 
     def own(self, tid):
         """ownershipOf with the async refresh settled: first call schedules the
@@ -839,8 +839,8 @@ def _scoped_stub(tmp_path, library_root=""):
     stub.settings.data.download_base_path = str(tmp_path / "downloads")
     stub._library_root = lambda: library_root
     for name in ("_ownership_roots", "_resolved_root", "_forget_ownership_answers", "_age_ownership_answers"):
-        setattr(stub, name, getattr(WavesBridge, name).__get__(stub, _BridgeStub))
-    stub._ROOT_RESOLVE_TTL = WavesBridge._ROOT_RESOLVE_TTL
+        setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, _BridgeStub))
+    stub._ROOT_RESOLVE_TTL = BitWaveBridge._ROOT_RESOLVE_TTL
     stub._ownership.set_roots(stub._ownership_roots)
     return stub
 
@@ -871,7 +871,7 @@ def test_a_copy_recorded_through_a_link_stays_owned_after_symlink_mode_is_turned
 def test_a_folder_is_resolved_once_per_window_not_per_question(tmp_path):
     stub = _scoped_stub(tmp_path, library_root=str(tmp_path / "library"))
     calls = []
-    with patch("waves.waves_ui.backend.os.path.realpath", side_effect=lambda p: (calls.append(p), p)[1]):
+    with patch("bitwave.bitwave_ui.backend.os.path.realpath", side_effect=lambda p: (calls.append(p), p)[1]):
         stub._ownership_roots()
         stub._ownership_roots()
         stub._ownership_roots()

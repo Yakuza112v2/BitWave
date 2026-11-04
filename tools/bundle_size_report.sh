@@ -7,13 +7,13 @@
 # visible by diffing two logs. Plain text, stable sort, sizes in MB.
 #
 # Pass the bundle ROOT, same as trim_qt_bundle.sh:
-#   macOS:    dist/waves.app
-#   Linux:    dist/waves.dist
-#   Windows:  dist/waves.dist
+#   macOS:    dist/bitwave.app
+#   Linux:    dist/bitwave.dist
+#   Windows:  dist/bitwave.dist
 set -euo pipefail
 
-DIR="${1:-dist/waves.app}"
-[ -e "$DIR" ] || { echo "error: '$DIR' not found; build first (make gui-waves)" >&2; exit 1; }
+DIR="${1:-dist/bitwave.app}"
+[ -e "$DIR" ] || { echo "error: '$DIR' not found; build first (make gui-bitwave)" >&2; exit 1; }
 
 if [ -d "$DIR/Contents/MacOS" ]; then
   LIBDIR="$DIR/Contents/MacOS"
@@ -26,7 +26,7 @@ fi
 
 echo "=== bundle size report: $DIR ==="
 echo "total_mb $(du -sm "$DIR" | cut -f1)"
-for exe in "$LIBDIR/BitWave" "$LIBDIR/BitWave.exe" "$LIBDIR/waves" "$LIBDIR/waves.bin" "$LIBDIR/waves.exe"; do
+for exe in "$LIBDIR/BitWave" "$LIBDIR/BitWave.exe" "$LIBDIR/bitwave" "$LIBDIR/bitwave.bin" "$LIBDIR/bitwave.exe"; do
   if [ -f "$exe" ]; then
     echo "binary_mb $(du -sm "$exe" | cut -f1) ($(basename "$exe"))"
     break

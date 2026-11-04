@@ -3,7 +3,7 @@
 A Mac that slept comes back with every pooled keep-alive dead. Reusing one
 means polling the dead socket and closing it, in every worker at once, and a
 packaged build crashed right there (a segmentation fault inside the compiled
-copy of urllib3's socket poll). ``waves.http_pool.IdleDropAdapter`` sidesteps
+copy of urllib3's socket poll). ``bitwave.http_pool.IdleDropAdapter`` sidesteps
 the path: before a request, connections left waiting longer than
 ``idle_reset_sec`` (wall clock), or across a sleep (the wall clock ran ahead
 of the monotonic one), are closed and their slots left empty, so the request
@@ -24,16 +24,16 @@ import pytest
 import requests
 import tidalapi
 
-from waves.config import harden_api_session
-from waves.http_pool import IdleDropAdapter
+from bitwave.config import harden_api_session
+from bitwave.http_pool import IdleDropAdapter
 
 
 class _Clock:
     def __init__(self, monkeypatch, wall: float = 1000.0, mono: float = 10.0) -> None:
         self.wall = wall
         self.mono = mono
-        monkeypatch.setattr("waves.http_pool.time.time", lambda: self.wall)
-        monkeypatch.setattr("waves.http_pool.time.monotonic", lambda: self.mono)
+        monkeypatch.setattr("bitwave.http_pool.time.time", lambda: self.wall)
+        monkeypatch.setattr("bitwave.http_pool.time.monotonic", lambda: self.mono)
 
     def tick(self, seconds: float) -> None:
         """Time passes with the machine awake."""
@@ -77,12 +77,12 @@ def _no_network(monkeypatch):
         return "sent"
 
     send.calls = 0
-    monkeypatch.setattr("waves.http_pool.HTTPAdapter.send", send)
+    monkeypatch.setattr("bitwave.http_pool.HTTPAdapter.send", send)
     return send
 
 
 def test_both_sessions_carry_the_rule():
-    from waves.download import Download
+    from bitwave.download import Download
 
     assert isinstance(Download._shared_http().get_adapter("https://example.com"), IdleDropAdapter)
     session = tidalapi.Session.__new__(tidalapi.Session)
@@ -99,7 +99,7 @@ def test_the_catalog_adapter_keeps_its_default_timeout(monkeypatch):
         seen.update(kwargs)
         return "sent"
 
-    monkeypatch.setattr("waves.http_pool.HTTPAdapter.send", send)
+    monkeypatch.setattr("bitwave.http_pool.HTTPAdapter.send", send)
     session = tidalapi.Session.__new__(tidalapi.Session)
     session.request_session = requests.Session()
     harden_api_session(session)
@@ -179,7 +179,7 @@ def test_a_request_in_flight_across_the_sleep_does_not_block_the_drop(monkeypatc
         seen.append(request)
         return "sent"
 
-    monkeypatch.setattr("waves.http_pool.HTTPAdapter.send", nested)
+    monkeypatch.setattr("bitwave.http_pool.HTTPAdapter.send", nested)
     adapter.send("first")
 
     assert seen == ["second", "first"]
@@ -200,7 +200,7 @@ def test_a_request_that_ran_across_the_sleep_drops_at_its_own_finish(monkeypatch
         clock.tick(1)
         return "sent"
 
-    monkeypatch.setattr("waves.http_pool.HTTPAdapter.send", slept_through)
+    monkeypatch.setattr("bitwave.http_pool.HTTPAdapter.send", slept_through)
     adapter.send("request")
 
     assert waiting.closed
@@ -212,7 +212,7 @@ def test_a_failed_request_still_stamps_its_use(monkeypatch):
     def boom(_adapter, request, *args, **kwargs):
         raise OSError("connection reset")
 
-    monkeypatch.setattr("waves.http_pool.HTTPAdapter.send", boom)
+    monkeypatch.setattr("bitwave.http_pool.HTTPAdapter.send", boom)
     clock.tick(5)
     with pytest.raises(OSError):
         adapter.send("request")

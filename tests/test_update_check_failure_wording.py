@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pathlib
 
-QML = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 
 
 def _handler(src: str, name: str) -> str:

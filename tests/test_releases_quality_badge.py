@@ -19,7 +19,7 @@ loaded through the real store and bridge:
 
 Runs in a SUBPROCESS like the other Main.qml scenarios: building the bridge
 installs process-global handlers that must not leak into the suite. Set
-WAVES_SHOT_DIR to also save a screenshot of the feed there.
+BITWAVE_SHOT_DIR to also save a screenshot of the feed there.
 """
 
 from __future__ import annotations
@@ -38,13 +38,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_feed_cards_wear_the_capped_quality() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-releases-quality-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-releases-quality-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -202,15 +202,15 @@ def _run_scenario() -> int:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     import datetime as _datetime
 
-    from waves.waves_ui import bridge_releases
+    from bitwave.bitwave_ui import bridge_releases
 
     class _Day(_datetime.date):
         @classmethod
@@ -220,8 +220,8 @@ def _run_scenario() -> int:
     bridge_releases._dt = type("_Dt", (), {"date": _Day})
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -286,7 +286,7 @@ def _run_scenario() -> int:
         return _EXIT_PRECONDITION
 
     store = bridge._releases
-    bridge._waves_prefs["releases_window_months"] = "120"
+    bridge._bitwave_prefs["releases_window_months"] = "120"
     store.follow("ar1", "Artist One", "")
     rows = [
         _rel("hires", "Hi Res Album", "HI-RES"),
@@ -443,7 +443,7 @@ def _run_scenario() -> int:
     q('delete dlHolders["high"]; dlHoldersGen++')
     settle(400)
 
-    shots = os.environ.get("WAVES_SHOT_DIR", "")
+    shots = os.environ.get("BITWAVE_SHOT_DIR", "")
     if shots:
         settle(300)
         root.grabWindow().save(str(Path(shots) / "releases_quality_badge.png"))

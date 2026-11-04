@@ -19,10 +19,10 @@ not do.
 
 HOW THIS STAYS FIXED
 --------------------
-The real ``WavesTidal`` finalizes a sign-in against a real credentials file in
+The real ``BitWaveTidal`` finalizes a sign-in against a real credentials file in
 a temp folder, and the symptom is then reproduced end to end through the REAL
-``waves.config.Tidal.switch_to_atmos_session`` and the REAL
-``WavesTidal.login_token``. Only tidalapi's own session object is a stand-in,
+``bitwave.config.Tidal.switch_to_atmos_session`` and the REAL
+``BitWaveTidal.login_token``. Only tidalapi's own session object is a stand-in,
 and it counts how many times it was actually asked to sign in, so "returned
 False without trying" is distinguishable from "tried and failed".
 """
@@ -31,8 +31,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from waves.model.cfg import Token as ModelToken
-from waves.waves_ui.session import WavesTidal
+from bitwave.model.cfg import Token as ModelToken
+from bitwave.bitwave_ui.session import BitWaveTidal
 
 
 class _Session:
@@ -72,9 +72,9 @@ class _Session:
 
 
 def _tidal(tmp_path, *, session=None):
-    """A real WavesTidal with its config paths sandboxed into tmp_path, built
+    """A real BitWaveTidal with its config paths sandboxed into tmp_path, built
     without __init__ so no real session or real config folder is touched."""
-    t = WavesTidal.__new__(WavesTidal)
+    t = BitWaveTidal.__new__(BitWaveTidal)
     t.cls_model = ModelToken
     t.data = ModelToken()
     t.path_base = str(tmp_path)

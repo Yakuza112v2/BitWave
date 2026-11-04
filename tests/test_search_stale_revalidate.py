@@ -17,21 +17,21 @@ from unittest.mock import MagicMock
 
 from conftest import _InlinePool, _Signal
 
-from waves.page_store import PageStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import _PAGE_CACHE_VERSION, _SEARCH_DISK_MAX, _STALE_STAMP, WavesBridge, _search_same
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import _PAGE_CACHE_VERSION, _SEARCH_DISK_MAX, _STALE_STAMP, BitWaveBridge, _search_same
 
 
 class _Stub:
-    search = WavesBridge.search
-    _search_total = staticmethod(WavesBridge._search_total)
-    _pop_cached = WavesBridge._pop_cached
-    _remember_capped = WavesBridge._remember_capped
-    _remember_search = WavesBridge._remember_search
-    _SEARCH_TTL = WavesBridge._SEARCH_TTL
-    _SEARCH_CACHE_MAX = WavesBridge._SEARCH_CACHE_MAX
-    _ARTIST_POP_TTL = WavesBridge._ARTIST_POP_TTL
-    _ARTIST_POP_MAX = WavesBridge._ARTIST_POP_MAX
+    search = BitWaveBridge.search
+    _search_total = staticmethod(BitWaveBridge._search_total)
+    _pop_cached = BitWaveBridge._pop_cached
+    _remember_capped = BitWaveBridge._remember_capped
+    _remember_search = BitWaveBridge._remember_search
+    _SEARCH_TTL = BitWaveBridge._SEARCH_TTL
+    _SEARCH_CACHE_MAX = BitWaveBridge._SEARCH_CACHE_MAX
+    _ARTIST_POP_TTL = BitWaveBridge._ARTIST_POP_TTL
+    _ARTIST_POP_MAX = BitWaveBridge._ARTIST_POP_MAX
 
     def __init__(self):
         self.threadpool = _InlinePool()
@@ -151,7 +151,7 @@ def test_a_stale_page_in_this_session_takes_the_same_path(monkeypatch):
     _wire(monkeypatch, album_ids=("al1", "al2"))
     monkeypatch.setattr(backend.time, "monotonic", lambda: 1000.0)
     stub = _Stub()
-    stub._search_cache["needle"] = (1000.0 - WavesBridge._SEARCH_TTL - 1, _payload(("al1",)))
+    stub._search_cache["needle"] = (1000.0 - BitWaveBridge._SEARCH_TTL - 1, _payload(("al1",)))
     stub.search("needle")
     assert [("refresh" in p) for p in _payloads(stub)] == [False, True]
 
@@ -192,7 +192,7 @@ def test_same_page_ignores_the_meters_and_the_flag():
 
 
 def _cache_bridge(tmp_path):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._logged_in = True
     b._lib_cache = {}
     b._lib_sort = {}

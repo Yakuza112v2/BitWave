@@ -23,7 +23,7 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui import backend
+from bitwave.bitwave_ui import backend
 
 
 class _DeferredPool:
@@ -57,7 +57,7 @@ def _album(tracks):
 
 
 def _bridge(album=None):
-    b = backend.WavesBridge.__new__(backend.WavesBridge)
+    b = backend.BitWaveBridge.__new__(backend.BitWaveBridge)
     b._logged_in = True
     b._objs = {"album": {}, "track": {}}
     b._objs_lock = Lock()

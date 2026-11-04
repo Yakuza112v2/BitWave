@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from tests.test_settings_save_guard import _apply_bridge
 from tests.test_settings_sections import _schema
-from waves.model.cfg import HelpSettings
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import _INT_BOUNDS
+from bitwave.model.cfg import HelpSettings
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import _INT_BOUNDS
 
 
 def _pacing_fields() -> dict:
@@ -81,7 +81,7 @@ def test_the_new_setting_ships_on_with_a_short_help_that_names_off():
 def test_a_hand_edited_config_lands_inside_the_bounds_on_load():
     """The save clamps, but a config file edited by hand never passes through
     it, and the engine and the queue read these numbers raw."""
-    from waves.config import _clamp_bounded_numbers
+    from bitwave.config import _clamp_bounded_numbers
 
     d = CfgSettings()
     d.downloads_concurrent_max = 50
@@ -92,7 +92,7 @@ def test_a_hand_edited_config_lands_inside_the_bounds_on_load():
 
 
 def test_an_in_range_config_is_left_alone_on_load():
-    from waves.config import _clamp_bounded_numbers
+    from bitwave.config import _clamp_bounded_numbers
 
     d = CfgSettings()
     d.downloads_finishing_max = 0
@@ -106,7 +106,7 @@ def test_a_non_finite_number_in_a_hand_edited_config_resets_that_field_alone(tmp
     away. Only the field goes back to its default now."""
     import json
 
-    from waves.config import BaseConfig
+    from bitwave.config import BaseConfig
 
     raw = json.loads(CfgSettings().to_json())
     raw["downloads_finishing_max"] = float("inf")
@@ -139,7 +139,7 @@ def test_a_wrong_shaped_value_in_a_hand_edited_config_resets_that_field_alone(tm
     to its own default now and the rest of the file survives."""
     import json
 
-    from waves.config import BaseConfig
+    from bitwave.config import BaseConfig
 
     raw = json.loads(CfgSettings().to_json())
     raw["downloads_finishing_max"] = "three"

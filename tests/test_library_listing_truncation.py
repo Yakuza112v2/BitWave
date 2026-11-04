@@ -1,5 +1,5 @@
 """A directory listing the scanner cannot trust, and the probe by name that
-covers what such a listing leaves out (waves/library_index.py).
+covers what such a listing leaves out (bitwave/library_index.py).
 
 THE BUG THIS FENCES OFF
 -----------------------
@@ -26,8 +26,8 @@ import os
 import shutil
 import time
 
-import waves.library_index as li
-from waves.library_index import SCAN_OK, LibraryIndex
+import bitwave.library_index as li
+from bitwave.library_index import SCAN_OK, LibraryIndex
 
 
 def _mk(base, rel, files):

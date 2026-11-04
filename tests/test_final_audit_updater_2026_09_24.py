@@ -22,10 +22,10 @@ import pathlib
 import pytest
 import requests
 
-from waves.waves_ui import ffmpeg_manager as fm
-from waves.waves_ui import signing
-from waves.waves_ui import updater as u
-from waves.waves_ui.updater import AppUpdater, Release, UpdaterError, user_facing_error
+from bitwave.bitwave_ui import ffmpeg_manager as fm
+from bitwave.bitwave_ui import signing
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.updater import AppUpdater, Release, UpdaterError, user_facing_error
 
 
 def _helper_texts(up):
@@ -68,13 +68,13 @@ def test_parse_prerelease_reads_the_common_spellings():
 
 
 def test_signed_manifest_with_an_unparseable_version_is_refused(monkeypatch, tmp_path):
-    """The anti-rollback gate used to pass a '# waves-version:' value with no
+    """The anti-rollback gate used to pass a '# bitwave-version:' value with no
     digits (fail-open); it now refuses it like a missing line."""
     pub, priv = signing.keygen()
     payload = b"bytes"
     import hashlib
 
-    manifest = f"# waves-version: latest\n{hashlib.sha256(payload).hexdigest()}  BitWave-windows-amd64.zip\n".encode()
+    manifest = f"# bitwave-version: latest\n{hashlib.sha256(payload).hexdigest()}  BitWave-windows-amd64.zip\n".encode()
     up, calls = _prep(monkeypatch, tmp_path, payload, manifest, signing.sign(manifest, priv), pub)
     with pytest.raises(UpdaterError, match="older than the installed"):
         up.install(session=object())
@@ -115,7 +115,7 @@ def _signed(payload: bytes, version="v2.0.0"):
     import hashlib
 
     pub, priv = signing.keygen()
-    manifest = f"# waves-version: {version}\n{hashlib.sha256(payload).hexdigest()}  {_ASSET}\n".encode()
+    manifest = f"# bitwave-version: {version}\n{hashlib.sha256(payload).hexdigest()}  {_ASSET}\n".encode()
     return pub, manifest, signing.sign(manifest, priv)
 
 
@@ -140,7 +140,7 @@ def test_an_asset_missing_from_the_manifest_is_refused_before_any_download(monke
     import hashlib
 
     pub, priv = signing.keygen()
-    manifest = f"# waves-version: v2.0.0\n{hashlib.sha256(b'x').hexdigest()}  Other.zip\n".encode()
+    manifest = f"# bitwave-version: v2.0.0\n{hashlib.sha256(b'x').hexdigest()}  Other.zip\n".encode()
     up, calls = _prep(monkeypatch, tmp_path, b"x", manifest, signing.sign(manifest, priv), pub)
     with pytest.raises(UpdaterError, match="not in the signed manifest"):
         up.install(session=object())
@@ -256,10 +256,10 @@ def _brew(monkeypatch, lines, code=0):
 _BREW_LINES = [
     "==> Downloading https://github.com/Yakuza112v2/BitWave/releases/download/v1.1.0/bitwave_macos-apple-silicon.zip",
     "Already downloaded: /Users/someone/Library/Caches/Homebrew/downloads/0123abcd--bitwave_macos-apple-silicon.zip",
-    "==> Upgrading waves 1.0.0 -> 1.1.0",
+    "==> Upgrading bitwave 1.0.0 -> 1.1.0",
     "==> Moving App 'BitWave.app' to '/Applications/BitWave.app'",
-    "==> Purging files for version 1.0.0 of Cask waves",
-    "🍺  waves was upgraded",
+    "==> Purging files for version 1.0.0 of Cask bitwave",
+    "🍺  bitwave was upgraded",
 ]
 
 
@@ -276,7 +276,7 @@ def test_managed_upgrade_shows_phase_words_only(monkeypatch):
 
 
 def test_managed_upgrade_phase_never_moves_backwards():
-    assert u._managed_phase("==> Installing Cask waves", "Downloading") == ("Installing", 70.0)
+    assert u._managed_phase("==> Installing Cask bitwave", "Downloading") == ("Installing", 70.0)
     assert u._managed_phase("==> Downloading a dependency", "Installing") == ("Installing", 0.0)
     assert u._managed_phase("some unrelated line", "Installing") == ("Installing", 0.0)
     assert u._managed_phase("some unrelated line", "") == ("", 0.0)
@@ -364,7 +364,7 @@ def test_restart_after_the_helper_gave_up_arms_a_fresh_one(tmp_path, monkeypatch
     up, spawned = _armed_windows(tmp_path, monkeypatch, helper_alive=False)
     assert up.rearm_for_restart() is True
     assert len(spawned) == 1, "a fresh helper was spawned against this process"
-    assert spawned[0]["WAVES_UPDATE_3"].endswith("BitWave.new")
+    assert spawned[0]["BITWAVE_UPDATE_3"].endswith("BitWave.new")
     assert list(_helper_texts(up)) == [f"apply_update_{os.getpid()}.bat"]
     assert up.status()["pending_restart"] is True
 

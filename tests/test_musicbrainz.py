@@ -1,4 +1,4 @@
-"""Tests for waves/musicbrainz.py: the MusicBrainz side of the Releases
+"""Tests for bitwave/musicbrainz.py: the MusicBrainz side of the Releases
 pane, driven through a fake transport (no network, no real sleep).
 
 The promises: one request a second through a monotonic pacer; a 429 or
@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 
-from waves import musicbrainz as mb
+from bitwave import musicbrainz as mb
 
 
 def _clock():

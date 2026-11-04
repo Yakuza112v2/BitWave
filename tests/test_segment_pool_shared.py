@@ -20,7 +20,7 @@ import threading
 import time
 from types import SimpleNamespace
 
-from waves.download import SEGMENT_GAUGE, Download
+from bitwave.download import SEGMENT_GAUGE, Download
 
 
 def _engine(per_track_max=20):

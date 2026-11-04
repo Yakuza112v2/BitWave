@@ -18,8 +18,8 @@ import types
 
 import tidalapi
 
-from waves.config import Tidal
-from waves.constants import ATMOS_CLIENT_ID, ATMOS_CLIENT_SECRET, ATMOS_REQUEST_QUALITY
+from bitwave.config import Tidal
+from bitwave.constants import ATMOS_CLIENT_ID, ATMOS_CLIENT_SECRET, ATMOS_REQUEST_QUALITY
 
 # Dummy fixture values, not real credentials (bandit S105).
 _ORIG_ID = "orig-plain-id"
@@ -170,8 +170,8 @@ def test_a_real_atmos_copy_settles_instead_of_re_fetching_forever():
     target the user can pick. The gate has to answer on the audio_mode, not the
     tier, or every save re-fetches the identical Atmos file. Pinned because the
     whole point of restoring delivery is undone if the copy never settles."""
-    from waves.ownership import QUALITY_RANK
-    from waves.waves_ui.backend import _copy_is_current, _delivers_atmos
+    from bitwave.ownership import QUALITY_RANK
+    from bitwave.bitwave_ui.backend import _copy_is_current, _delivers_atmos
 
     atmos_only = types.SimpleNamespace(audio_modes=["DOLBY_ATMOS"])
     rec_atmos = {"audio_mode": "DOLBY_ATMOS", "quality_tier": "LOW", "quality_rank": QUALITY_RANK["LOW"]}
@@ -194,13 +194,13 @@ def test_rebuilding_the_session_recaptures_every_original_the_swap_restores():
     import inspect
     import re
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     def _captured(src: str) -> set[str]:
         return set(re.findall(r"original_client_\w+", src))
 
     in_init = _captured(inspect.getsource(Tidal.__init__))
-    in_reset = _captured(inspect.getsource(WavesBridge._reset_tidal_session))
+    in_reset = _captured(inspect.getsource(BitWaveBridge._reset_tidal_session))
     assert in_init, "guard is looking at the wrong constructor"
     assert in_init == in_reset, (
         "the session rebuild does not capture the same originals as the "
@@ -214,16 +214,16 @@ def test_the_switch_leaves_a_breadcrumb_that_never_names_the_client(caplog):
     must never appear in a log line."""
     import logging
 
-    with caplog.at_level(logging.INFO, logger="waves.config"):
+    with caplog.at_level(logging.INFO, logger="bitwave.config"):
         _make().switch_to_atmos_session()
     text = "\n".join(r.message for r in caplog.records)
     assert "Dolby Atmos session engaged" in text
     assert ATMOS_CLIENT_ID not in text
 
     caplog.clear()
-    with caplog.at_level(logging.INFO, logger="waves.config"):
+    with caplog.at_level(logging.INFO, logger="bitwave.config"):
         _make(refresh_ok=False).switch_to_atmos_session()
-    records = [r for r in caplog.records if r.name == "waves.config"]
+    records = [r for r in caplog.records if r.name == "bitwave.config"]
     assert any(r.levelno == logging.WARNING for r in records), "a failed switch is logged"
     assert ATMOS_CLIENT_ID not in "\n".join(r.message for r in records)
 

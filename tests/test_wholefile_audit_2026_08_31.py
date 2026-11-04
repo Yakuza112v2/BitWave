@@ -31,9 +31,9 @@ from unittest.mock import MagicMock, patch
 
 from _dispatch_stub import arm_dispatch, arm_queue
 
-from waves.download import Download
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge, _JobSpec
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge, _JobSpec
 
 
 class _Sig:
@@ -45,7 +45,7 @@ class _Sig:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Stub:
@@ -224,7 +224,7 @@ def test_the_second_entry_skips_onto_the_file_the_first_one_landed(tmp_path):
     dst.write_bytes(b"landed by the first twin")
     media = _track("42")
 
-    with patch("waves.download.read_item_id", lambda p: "42"):
+    with patch("bitwave.download.read_item_id", lambda p: "42"):
         ok, landed = _twin_run(dl, dst, media)
 
     assert ok is True
@@ -240,7 +240,7 @@ def test_a_genuinely_different_track_of_the_same_name_is_not_skipped(tmp_path):
     dst.write_bytes(b"a different track that happens to share the name")
     media = _track("42")
 
-    with patch("waves.download.read_item_id", lambda p: "999"):
+    with patch("bitwave.download.read_item_id", lambda p: "999"):
         try:
             _twin_run(dl, dst, media)
         except _ReachedTheClaim:
@@ -257,7 +257,7 @@ def test_a_forced_redownload_does_not_late_skip_its_own_file(tmp_path):
     dst.write_bytes(b"the copy being replaced")
     media = _track("42")
 
-    with patch("waves.download.read_item_id", lambda p: "42"):
+    with patch("bitwave.download.read_item_id", lambda p: "42"):
         try:
             _twin_run(dl, dst, media)
         except _ReachedTheClaim:
@@ -279,7 +279,7 @@ def test_an_untagged_stranger_on_the_name_is_not_read_as_this_item(tmp_path):
     dst.write_bytes(b"a different track, written by something that tags nothing")
     media = _track("42")
 
-    with patch("waves.download.read_item_id", lambda p: None):
+    with patch("bitwave.download.read_item_id", lambda p: None):
         try:
             _twin_run(dl, dst, media)
         except _ReachedTheClaim:
@@ -301,7 +301,7 @@ def test_an_empty_destination_is_never_read_as_this_item(tmp_path):
     dst = tmp_path / "Song.flac"  # deliberately NOT created
     media = _track("42")
 
-    with patch("waves.download.read_item_id", lambda p: None):
+    with patch("bitwave.download.read_item_id", lambda p: None):
         try:
             _twin_run(dl, dst, media)
         except _ReachedTheClaim:
@@ -583,7 +583,7 @@ class _GateStub:
         self._queue_index = {1: self._queue[0]}
         self._queue_lock = Lock()
         self.settings = SimpleNamespace(
-            data=SimpleNamespace(download_base_path="/tmp/waves-out", download_delay=False, downloads_concurrent_max=2)
+            data=SimpleNamespace(download_base_path="/tmp/bitwave-out", download_delay=False, downloads_concurrent_max=2)
         )
         self.dl = SimpleNamespace(path_base="")
         self.dl_pool = _InlinePool()
@@ -646,7 +646,7 @@ def test_a_download_held_at_the_gate_is_not_credited_as_failed():
     spec = _JobSpec(_media(), "album", "Album", "{title}", True, "m1", None)
 
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
 
     assert stub.bumps == [], "the rollup was deleted before the automatic replay could report into it"
 
@@ -667,7 +667,7 @@ def test_a_merge_held_at_the_gate_keeps_its_plan_even_if_a_clear_beat_the_stash(
     stub._merge_plans.pop("m1", None)
 
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
 
     assert stub._merge_plans.get("m1") == plan, "a retried merge would have come back a plain album"
 
@@ -679,7 +679,7 @@ def test_a_plain_album_held_at_the_gate_invents_no_plan():
     spec = _JobSpec(_media(), "album", "Album", "{title}", True, "m1", None)
 
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
 
     assert stub._merge_plans == {}
 
@@ -691,7 +691,7 @@ def test_a_download_held_at_the_gate_still_withdraws_its_row():
     spec = _JobSpec(_media(), "album", "Album", "{title}", True, "m1", None)
 
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
 
     assert stub._queue == []
     assert ("m1", "") in stub.downloadState.emits

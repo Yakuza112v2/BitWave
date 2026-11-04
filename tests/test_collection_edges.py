@@ -30,9 +30,9 @@ import pytest
 from tidalapi import Mix, Playlist
 from tidalapi.media import Track, Video
 
-from waves.download import Download
-from waves.helper.tidal import items_results_all
-from waves.waves_ui.backend import _collection_incomplete_reason
+from bitwave.download import Download
+from bitwave.helper.tidal import items_results_all
+from bitwave.bitwave_ui.backend import _collection_incomplete_reason
 
 
 def _make_download(tmp_path: pathlib.Path) -> Download:
@@ -183,7 +183,7 @@ def test_an_empty_count_never_covers_a_real_failure():
 
 def test_the_engine_reports_the_list_size_to_the_bridge():
     """The hook the bridge reads it through, and the base engine's no-op."""
-    from waves.waves_ui.backend import _TrackedDownload
+    from bitwave.bitwave_ui.backend import _TrackedDownload
 
     td = _TrackedDownload.__new__(_TrackedDownload)
     assert Download._note_list_size(td, 5) is None  # base: nothing to report to

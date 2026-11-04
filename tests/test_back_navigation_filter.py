@@ -27,12 +27,12 @@ import re
 from conftest import _Signal
 from PySide6.QtCore import QEvent, Qt
 
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _ROOT = pathlib.Path(__file__).resolve().parents[1]
-_MAIN_QML = _ROOT / "waves" / "waves_ui" / "qml" / "Main.qml"
-_APP_PY = _ROOT / "waves" / "waves_ui" / "app.py"
+_MAIN_QML = _ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
+_APP_PY = _ROOT / "bitwave" / "bitwave_ui" / "app.py"
 
 
 class _MouseEvent:
@@ -76,7 +76,7 @@ class _Stub:
 
 
 def _filter(stub, event):
-    return WavesBridge.eventFilter(stub, object(), event)
+    return BitWaveBridge.eventFilter(stub, object(), event)
 
 
 def test_swipe_emits_but_never_consumes(monkeypatch):

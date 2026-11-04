@@ -1,10 +1,10 @@
-"""BitWave must not read Waves profiles or install upstream releases."""
+"""BitWave must not read BitWave profiles or install upstream releases."""
 
 import tomllib
 from pathlib import Path
 
-from waves import __config_dirname__, name_app, name_package
-from waves.waves_ui import signing, updater
+from bitwave import __config_dirname__, name_app, name_package
+from bitwave.bitwave_ui import signing, updater
 
 
 def test_profile_and_distribution_are_independent():

@@ -169,7 +169,7 @@ def _scenario() -> int:
 def test_the_model_mirrors_the_bridge_through_every_kind_of_change():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-queue-delta-mirror-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-queue-delta-mirror-")
     env["HOME"] = env["XDG_CONFIG_HOME"]
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-queue-delta-mirror"],

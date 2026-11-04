@@ -23,8 +23,8 @@ import mutagen.mp3
 import mutagen.mp4
 from tidalapi import Video
 
-from waves.download import Download
-from waves.metadata import Metadata
+from bitwave.download import Download
+from bitwave.metadata import Metadata
 
 
 def _mp4_stub():
@@ -71,7 +71,7 @@ def test_video_tags_carry_title_artists_year_and_media_kind(tmp_path):
     fake = _mp4_stub()
     file = tmp_path / "v.mp4"
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=fake):
+    with patch("bitwave.metadata.mutagen.File", return_value=fake):
         m = Metadata(
             path_file=file,
             target_upc={"MP4": "UPC"},
@@ -98,7 +98,7 @@ def test_video_tags_skip_the_album_structure_atoms(tmp_path):
     fake = _mp4_stub()
     file = tmp_path / "v.mp4"
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=fake):
+    with patch("bitwave.metadata.mutagen.File", return_value=fake):
         Metadata(
             path_file=file,
             target_upc={"MP4": "UPC"},
@@ -115,7 +115,7 @@ def test_audio_tagging_is_unchanged_by_the_video_mode(tmp_path):
     fake = _mp4_stub()
     file = tmp_path / "t.m4a"
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=fake):
+    with patch("bitwave.metadata.mutagen.File", return_value=fake):
         Metadata(
             path_file=file,
             target_upc={"MP4": "UPC"},
@@ -150,7 +150,7 @@ def test_metadata_write_video_maps_the_video_fields():
     dl.settings.data.metadata_cover_embed = False
     dl.settings.data.metadata_write_url = False
     dl.settings.data.metadata_target_upc = "UPC"
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         assert dl.metadata_write_video(_video(), pathlib.Path("v.mp4")) is True
     kw = _RecMeta.last.kw
     assert _RecMeta.last.saved is True
@@ -185,7 +185,7 @@ def test_an_id_less_video_artist_writes_no_id_rather_than_the_next_artist_s():
         artists=[SimpleNamespace(id=999, name="Marina")],  # the band
         artist=SimpleNamespace(id=None, name="Marina"),  # the singer, id absent
     )
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         assert dl.metadata_write_video(video, pathlib.Path("v.mp4")) is True
     kw = _RecMeta.last.kw
     assert kw["albumartist"] == ["Marina"], "the name tag still commits to the primary"
@@ -200,7 +200,7 @@ def test_metadata_write_video_survives_missing_fields():
     dl.settings.data.metadata_write_url = False
     dl.settings.data.metadata_target_upc = "UPC"
     bare = _video(release_date=None, artists=[], artist=None, explicit=False, cover=None)
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         assert dl.metadata_write_video(bare, pathlib.Path("v.mp4")) is True
     kw = _RecMeta.last.kw
     assert kw["date"] == "" and kw["artists"] == [] and kw["albumartist"] == []

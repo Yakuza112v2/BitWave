@@ -26,8 +26,8 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.helper.folders import FolderNode, FolderTree
-from waves.waves_ui.backend import WavesBridge
+from bitwave.helper.folders import FolderNode, FolderTree
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Emit:
@@ -48,13 +48,13 @@ class _InlinePool:
 
 
 class _WarmStub:
-    _warm_folder_tree = WavesBridge._warm_folder_tree
-    _on_folder_tree_warmed = WavesBridge._on_folder_tree_warmed
-    _current_folder_tree = WavesBridge._current_folder_tree
-    openPlaylistFolder = WavesBridge.openPlaylistFolder
-    downloadPlaylist = WavesBridge.downloadPlaylist
-    _playlist_template = WavesBridge._playlist_template
-    _needs_folder_tree = WavesBridge._needs_folder_tree
+    _warm_folder_tree = BitWaveBridge._warm_folder_tree
+    _on_folder_tree_warmed = BitWaveBridge._on_folder_tree_warmed
+    _current_folder_tree = BitWaveBridge._current_folder_tree
+    openPlaylistFolder = BitWaveBridge.openPlaylistFolder
+    downloadPlaylist = BitWaveBridge.downloadPlaylist
+    _playlist_template = BitWaveBridge._playlist_template
+    _needs_folder_tree = BitWaveBridge._needs_folder_tree
 
     def __init__(self, tree=None, logged_in=True):
         self._folder_tree = None
@@ -153,7 +153,7 @@ def test_a_download_before_the_sweep_waits_for_the_folder_path():
     stub.downloadState = _Emit()
     stub._download = lambda *a, **k: templates.append(a[3])
     stub._refetch_for_download = lambda *a: None
-    WavesBridge.downloadPlaylist(stub, "p1")
+    BitWaveBridge.downloadPlaylist(stub, "p1")
 
     assert stub.sweeps == 1
     assert templates == ["Playlists/Country/{playlist_name}"], "the playlist's real folder, not the root"
@@ -191,7 +191,7 @@ def test_a_template_without_the_placeholder_never_waits():
     stub.downloadState = _Emit()
     stub._download = lambda *a, **k: templates.append(a[3])
     stub._refetch_for_download = lambda *a: None
-    WavesBridge.downloadPlaylist(stub, "p1")
+    BitWaveBridge.downloadPlaylist(stub, "p1")
 
     assert stub.sweeps == 0
     assert templates == ["Playlists/{playlist_name}/{track_title}"]

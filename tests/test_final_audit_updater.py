@@ -23,8 +23,8 @@ import sys
 
 import pytest
 
-from waves.waves_ui import updater as u
-from waves.waves_ui.updater import AppUpdater, Release
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.updater import AppUpdater, Release
 
 
 def _helper_text(up):
@@ -258,7 +258,7 @@ def test_a_recycled_windows_pid_cannot_take_over_a_kept_backup(tmp_path, monkeyp
     (new_tree / "BitWave.exe").write_text("NEW")
     up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
 
-    backup = spawns[-1]["env"]["WAVES_UPDATE_2"]
+    backup = spawns[-1]["env"]["BITWAVE_UPDATE_2"]
     assert backup != str(kept), "the new helper was handed a backup that is the user's files"
     assert backup.endswith(".old-4128-1")
     assert (kept / "my-mixtape.flac").read_text() == "MINE"
@@ -341,7 +341,7 @@ def test_a_staged_single_file_swap_is_re_armed_at_the_next_launch(tmp_path, monk
         assert new_exe.is_file()  # nor is the staged build
         assert _helper_text(up)  # a fresh helper, armed against THIS process
         env = spawned["kw"]["env"]
-        assert [env["WAVES_UPDATE_1"], env["WAVES_UPDATE_3"]] == [str(target), str(new_exe)]
+        assert [env["BITWAVE_UPDATE_1"], env["BITWAVE_UPDATE_3"]] == [str(target), str(new_exe)]
         assert up.status()["pending_restart"] is True
         assert up.status()["pending_version"] == "v2.0.0"
     finally:
@@ -580,7 +580,7 @@ def test_the_bundle_size_report_survives_a_wide_bundle_root(tmp_path):
     output. The report is a report; it must never be what fails a build.
     """
     script = pathlib.Path(__file__).resolve().parents[1] / "tools" / "bundle_size_report.sh"
-    root = tmp_path / "waves.dist"
+    root = tmp_path / "bitwave.dist"
     (root / "PySide6").mkdir(parents=True)
     wide = "w" * 200  # long names: 64 KB of du output without 60k files
     for i in range(1200):

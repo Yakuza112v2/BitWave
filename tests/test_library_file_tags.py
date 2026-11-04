@@ -22,8 +22,8 @@ import mutagen.flac
 import mutagen.id3
 import pytest
 
-from waves import library_index
-from waves.library_index import LibraryIndex, _read_album_tags
+from bitwave import library_index
+from bitwave.library_index import LibraryIndex, _read_album_tags
 
 
 def _flac(path, **tags):

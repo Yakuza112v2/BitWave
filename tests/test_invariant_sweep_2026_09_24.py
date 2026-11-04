@@ -16,13 +16,13 @@ from types import SimpleNamespace
 
 import tidalapi
 
-import waves.config as config
-import waves.library_worker as library_worker
-from waves.download import Download
-from waves.waves_ui import backend, bridge_library
+import bitwave.config as config
+import bitwave.library_worker as library_worker
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend, bridge_library
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MAIN_QML = (ROOT / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+MAIN_QML = (ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 def _code_only(text: str) -> str:
@@ -33,7 +33,7 @@ def _code_only(text: str) -> str:
 
 
 def test_a_mix_job_fills_its_items_under_the_browse_lock_before_the_engine_enumerates():
-    src = inspect.getsource(backend.WavesBridge._start_job)
+    src = inspect.getsource(backend.BitWaveBridge._start_job)
     body = src[src.index('devlog.event("download", "start"') :]
     lock = body.index("with self._browse_lock:")
     items = body.index("dl.items(")
@@ -45,7 +45,7 @@ def test_a_mix_job_fills_its_items_under_the_browse_lock_before_the_engine_enume
 
 
 def test_every_gate_replay_carries_keep_ask():
-    src = inspect.getsource(backend.WavesBridge._download)
+    src = inspect.getsource(backend.BitWaveBridge._download)
     replays = re.findall(r"lambda: self\._download\((.*?)\)\s*,?\s*\)?", src, re.S)
     assert len(replays) >= 2, "expected the nudge and ffmpeg gate replays"
     for args in replays:
@@ -63,7 +63,7 @@ def test_musicbrainz_answers_bump_the_library_stamp_before_announcing():
 
 
 def test_the_arbiter_toggle_bumps_the_library_stamp_before_announcing():
-    src = inspect.getsource(backend.WavesBridge)
+    src = inspect.getsource(backend.BitWaveBridge)
     idx = src.index('elif key == "library_mb_arbiter" and value != old:')
     block = src[idx : idx + 1200]
     assert block.index("_bump_library_stamp()") < block.index("self.libraryPresenceChanged.emit()")
@@ -159,21 +159,21 @@ def test_the_scanner_child_reports_a_failed_job_by_class_only():
 
 
 def test_the_scanner_stderr_relay_is_marked_content():
-    from waves.waves_ui import library_proc
+    from bitwave.bitwave_ui import library_proc
 
     src = inspect.getsource(library_proc)
     assert 'logger.warning("[scanner] %s", diagnostics.content(line))' in src
 
 
 def test_the_boot_breadcrumb_carries_no_path():
-    src = inspect.getsource(backend.WavesBridge.__init__)
-    idx = src.index('"WavesBridge starting"')
+    src = inspect.getsource(backend.BitWaveBridge.__init__)
+    idx = src.index('"BitWaveBridge starting"')
     assert "os.path.basename" in src[idx : idx + 160]
     assert "log=str(log_path" not in src[idx : idx + 160]
 
 
 def test_the_mount_point_is_registered_where_the_share_origin_is():
-    src = inspect.getsource(backend.WavesBridge._remember_share_origin)
+    src = inspect.getsource(backend.BitWaveBridge._remember_share_origin)
     assert 'diagnostics.register_secret(root, "‹mount-point›")' in src
 
 
@@ -208,7 +208,7 @@ def test_my_tidal_has_a_max_age_timer_like_the_browse_landing():
     block = code[idx : idx + 900]
     assert "repeat: true" in block
     assert "root.libraryOpen" in block
-    assert "waves.loadHome(" in block and "waves.loadLibrary(root.libraryCategory, true)" in block
+    assert "bitwave.loadHome(" in block and "bitwave.loadLibrary(root.libraryCategory, true)" in block
 
 
 # --- rule 6: a parked item page or artist page still revalidates ------------
@@ -230,14 +230,14 @@ class _Emit:
 def _item_stub(cached, built, stamp=None):
     from threading import Lock
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     s = SimpleNamespace()
     s._logged_in = True
     s._browse_pages = {"item:playlist:p1": cached} if cached is not None else {}
     s._browse_loading = set()
     s._item_fetch_ts = {"item:playlist:p1": stamp} if stamp is not None else {}
-    s._ITEM_FRESH_S = WavesBridge._ITEM_FRESH_S
+    s._ITEM_FRESH_S = BitWaveBridge._ITEM_FRESH_S
     s._BROWSE_PAGES_MAX = 50
     s._browse_gen = 1
     s._prefetch_lock = Lock()
@@ -250,7 +250,7 @@ def _item_stub(cached, built, stamp=None):
     s._set_busy = lambda v: None
     s._set_status = lambda v: None
     for name in ("refreshBrowseItem", "_start_browse_item_build"):
-        setattr(s, name, getattr(WavesBridge, name).__get__(s))
+        setattr(s, name, getattr(BitWaveBridge, name).__get__(s))
     return s
 
 
@@ -282,7 +282,7 @@ def test_a_parked_item_page_revalidates_and_repaints_only_on_change():
 def _artist_stub(cached, stamp=None, loading=()):
     from threading import Lock
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     s = SimpleNamespace()
     s._logged_in = True
@@ -293,7 +293,7 @@ def _artist_stub(cached, stamp=None, loading=()):
     s._prefetch_lock = Lock()
     s.builds = []
     s._start_artist_build = lambda aid, cached, collapse, silent: s.builds.append((aid, cached, collapse, silent))
-    s.refreshArtist = WavesBridge.refreshArtist.__get__(s)
+    s.refreshArtist = BitWaveBridge.refreshArtist.__get__(s)
     return s
 
 
@@ -324,7 +324,7 @@ def test_a_parked_artist_page_revalidates_silently():
 
 
 def test_every_artist_fetch_stamps_the_refresh_floor():
-    src = inspect.getsource(backend.WavesBridge._start_artist_build)
+    src = inspect.getsource(backend.BitWaveBridge._start_artist_build)
     assert "reval_ts[artist_id] = time.monotonic()" in src
 
 
@@ -333,8 +333,8 @@ def test_item_and_artist_pages_have_max_age_timers():
     i = code.index("id: browseItemFreshTimer")
     block = code[i : i + 900]
     assert "repeat: true" in block and 'root.browsePageKey !== ""' in block
-    assert 'waves.refreshBrowseItem(parts[1], parts.slice(2).join(":"))' in block
+    assert 'bitwave.refreshBrowseItem(parts[1], parts.slice(2).join(":"))' in block
     j = code.index("id: artistFreshTimer")
     block = code[j : j + 700]
     assert "repeat: true" in block and "root.artistOpen" in block and "libraryScoped" in block
-    assert 'waves.refreshArtist("" + root.artistData.id)' in block
+    assert 'bitwave.refreshArtist("" + root.artistData.id)' in block

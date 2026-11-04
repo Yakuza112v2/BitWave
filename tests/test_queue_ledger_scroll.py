@@ -39,7 +39,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -60,7 +60,7 @@ MISSING = {5: "unavailable", 1100: "failed"}
 def test_every_track_of_a_huge_playlist_is_reachable():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-ledger-scroll-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-ledger-scroll-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -94,15 +94,15 @@ def _run_scenario() -> int:  # (one straight line of scene setup)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -255,12 +255,12 @@ def _run_scenario() -> int:  # (one straight line of scene setup)
     if abs(box - BOX) > 0.5:
         bad.append(f"the open ledger is {box}px tall, want its {BOX}px box")
     # The box's size is a setting (Advanced), and an open row follows it live.
-    bridge.setWavesPref("queue_ledger_rows", 6)
+    bridge.setBitWavePref("queue_ledger_rows", 6)
     settle(300)
     box = float(q(f"{find('qLedgerList')}.height"))
     if abs(box - (6 * 18 - 3)) > 0.5:
         bad.append(f"set to 6 rows, the open ledger is {box}px tall, want {6 * 18 - 3}px")
-    bridge.setWavesPref("queue_ledger_rows", 12)
+    bridge.setBitWavePref("queue_ledger_rows", 12)
     settle(300)
 
     def fades() -> tuple[bool, bool]:

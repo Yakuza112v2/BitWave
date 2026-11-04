@@ -28,7 +28,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _WIN_W, _WIN_H = 1100, 720
 
@@ -36,8 +36,8 @@ _WIN_W, _WIN_H = 1100, 720
 def test_playlist_folder_drill_in_and_badge_state():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-folderqml-test-")
-    # The scenario must import THIS tree's waves (script mode puts tests/ on
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-folderqml-test-")
+    # The scenario must import THIS tree's bitwave (script mode puts tests/ on
     # sys.path, and an editable install could otherwise shadow a worktree).
     env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
 
@@ -114,15 +114,15 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

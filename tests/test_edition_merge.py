@@ -11,9 +11,9 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.media import Quality
 
-from waves.download import Download
-from waves.waves_ui.backend import (
-    WavesBridge,
+from bitwave.download import Download
+from bitwave.bitwave_ui.backend import (
+    BitWaveBridge,
     _align_edition,
     _as_member_of,
     _build_merge_plan,
@@ -45,7 +45,7 @@ class _Track:
 
 
 # The tidalapi tier a stand-in's numeric rank advertises, so the PRODUCTION rank
-# reader (_quality_rank, via WavesBridge._merge_rank_fn) sees the same tier the
+# reader (_quality_rank, via BitWaveBridge._merge_rank_fn) sees the same tier the
 # test's shortcut _rank_of does. Empty media_metadata_tags make it fall through
 # to audio_quality, exactly like a not-yet-available track does.
 _QUALITY_OF = {4: Quality.hi_res_lossless, 3: Quality.high_lossless, 2: Quality.low_320k, 1: Quality.low_96k}
@@ -78,9 +78,9 @@ def _rank_of(obj):
 
 
 def _bridge_capped_at(quality):
-    """A WavesBridge whose settings pin the audio quality at ``quality``, built
+    """A BitWaveBridge whose settings pin the audio quality at ``quality``, built
     without Qt or network so the real _merge_rank_fn can be exercised."""
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=quality))
     return bridge
 
@@ -251,7 +251,7 @@ def test_as_member_of_overrides_on_a_copy():
 
     assert member is not track
     assert member.id == "t-1"  # same recording -> same stream
-    assert member.waves_identity_id == "identity-9"  # but recorded under the identity slot
+    assert member.bitwave_identity_id == "identity-9"  # but recorded under the identity slot
     assert member.album is identity_album
     assert member.track_num == 12
     assert member.volume_num == 2
@@ -314,7 +314,7 @@ class _FakeSignals:
 
 
 def test_download_merge_plan_calls_item_per_track():
-    bridge = WavesBridge.__new__(WavesBridge)  # no Qt/network init
+    bridge = BitWaveBridge.__new__(BitWaveBridge)  # no Qt/network init
     bridge.settings = _FakeSettings()
 
     identity = object()
@@ -340,7 +340,7 @@ def test_download_merge_plan_calls_item_per_track():
     # Each source recording is preserved (the stream still comes from its edition)
     # while every member carries its identity slot for record-keeping.
     assert {c["media"].id for c in dl.calls} == {"s-a", "s-b", "d-c"}
-    assert {c["media"].waves_identity_id for c in dl.calls} == {"d-a", "d-b", "d-c"}
+    assert {c["media"].bitwave_identity_id for c in dl.calls} == {"d-a", "d-b", "d-c"}
     # List progress reaches 100% once every track is done.
     assert signals.list_item.values and signals.list_item.values[-1] == pytest.approx(100.0)
     # And the step items() ends with: the album's playlist, under the identity
@@ -350,7 +350,7 @@ def test_download_merge_plan_calls_item_per_track():
 
 def test_download_merge_plan_raises_when_a_track_fails():
     # A partially-failed merge must NOT be reported as a clean success.
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     plan = [_PlanEntry(_Track("a", "A", 100), 1, 1, "a"), _PlanEntry(_Track("b", "B", 100), 2, 1, "b")]
 
@@ -367,7 +367,7 @@ def test_seed_merge_registry_keys_rows_by_identity_id():
     # loadQueueTracks fetches the IDENTITY album's track list and joins it to
     # this registry by id; source-id keys would miss, freezing rows at pending
     # and appending ghost rows (a 3-track album rendered as 5 rows).
-    from waves.waves_ui.backend import _seed_merge_registry
+    from bitwave.bitwave_ui.backend import _seed_merge_registry
 
     plan = [
         _PlanEntry(_Track("s-a", "A", 200), 1, 1, "d-a"),
@@ -402,7 +402,7 @@ def test_a_withheld_track_does_not_fail_the_merge():
     # the album is on disk. Counting refusals turned one withheld track into a
     # red album, and since the plan is only dropped on success every retry
     # replayed it and failed the same way (issue #25, in the merge path).
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     plan = [
         _PlanEntry(_Track("a", "A", 100), 1, 1, "a"),
@@ -417,7 +417,7 @@ def test_an_all_refused_merge_does_not_report_a_clean_success():
     # The other side of the refusal rule: a refusal writes nothing, so an album
     # TIDAL withheld entirely must say so rather than report done over an empty
     # folder. Same line _collection_incomplete_reason draws for a plain album.
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     plan = [_PlanEntry(_Track("a", "A", 100), 1, 1, "a"), _PlanEntry(_Track("b", "B", 100), 2, 1, "b")]
 
@@ -439,7 +439,7 @@ def test_an_all_refused_merge_does_not_report_a_clean_success():
 def test_a_hard_failure_still_raises():
     # The other half of the contract: a genuine failure (no refusal recorded)
     # must still fail the job so it can be retried.
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     plan = [_PlanEntry(_Track("a", "A", 100), 1, 1, "a"), _PlanEntry(_Track("b", "B", 100), 2, 1, "b")]
 
@@ -621,19 +621,19 @@ def test_a_merged_member_is_filed_under_the_identity_id():
     # whether a destination holds BitWave' own copy. Writing the SOURCE edition's
     # id meant a later plain job asked with the identity id, failed to recognize
     # the file, and wrote a _01 duplicate beside it instead of replacing it.
-    from waves.download import _waves_item_id, _waves_owned_ids
+    from bitwave.download import _bitwave_item_id, _bitwave_owned_ids
 
     plain = _Track("t-1", "Song", 200)
-    assert _waves_item_id(plain) == "t-1", "an ordinary track is filed under its own id"
-    assert _waves_owned_ids(plain) == {"t-1"}
+    assert _bitwave_item_id(plain) == "t-1", "an ordinary track is filed under its own id"
+    assert _bitwave_owned_ids(plain) == {"t-1"}
 
     member = _as_member_of(plain, object(), 3, 1, "identity-9")
     assert member.id == "t-1", "the stream still comes from the source edition"
-    assert _waves_item_id(member) == "identity-9"
+    assert _bitwave_item_id(member) == "identity-9"
     # Builds up to v0.1.21 wrote the SOURCE id into this file, so a library
     # already on disk is tagged the other way. Both count as our own copy, or a
     # forced re-save drops a numbered duplicate the app will never delete.
-    assert _waves_owned_ids(member) == {"identity-9", "t-1"}
+    assert _bitwave_owned_ids(member) == {"identity-9", "t-1"}
 
 
 # ---- ownership gate: merge members skip only at THIS job's destination -------
@@ -720,7 +720,7 @@ def test_album_key_separates_same_title_different_track_counts():
     # differ in track count (it keeps only the best quality, dropping the other's
     # unique songs). Track count is part of the key, so they survive to the
     # track-aware edition stage.
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     short = _KeyAlbum("Greatest Hits", "Band", 18)
     long = _KeyAlbum("Greatest Hits", "Band", 22)
     dupe = _KeyAlbum("Greatest Hits", "Band", 18)  # same release at another quality
@@ -733,7 +733,7 @@ def test_the_merge_cap_follows_the_albums_quality_choice():
     """A plan for an album chosen at LOSSLESS is measured at LOSSLESS, whatever
     the setting says: the job asks at the choice, and a merge planned at the
     setting's HI-RES assembled an album from tiers that job never fetches."""
-    from waves.waves_ui.backend import _chosen_quality, _group_quality_choice
+    from bitwave.bitwave_ui.backend import _chosen_quality, _group_quality_choice
 
     standard = _Album("std", [_Track("s-a", "A", 200), _Track("s-b", "B", 200)], rank=4)
     deluxe = _Album("dlx", [_Track("d-a", "A", 200), _Track("d-b", "B", 200), _Track("d-c", "C", 200)], rank=3)

@@ -15,7 +15,7 @@ from types import SimpleNamespace
 
 from _dispatch_stub import arm_notify
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
@@ -23,7 +23,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _stub():
@@ -74,7 +74,7 @@ def _stub():
     # tests drive the index with nothing running.
     stub._streaming_qid = None
     stub._live_qids = set()
-    stub._abort_if_in_flight = WavesBridge._abort_if_in_flight.__get__(stub, type(stub))
+    stub._abort_if_in_flight = BitWaveBridge._abort_if_in_flight.__get__(stub, type(stub))
     # The withdrawal slots credit rollups and sweep for stranded groups now
     # (issue #32); these tests are about the index, so the groups stay empty.
     stub._artist_groups = {}
@@ -87,8 +87,8 @@ def _stub():
     stub.downloadState = SimpleNamespace(emit=lambda *a: None)
     stub.downloadProgress = SimpleNamespace(emit=lambda *a: None)
     stub.folderRemaining = SimpleNamespace(emit=lambda *a: None)
-    stub._QUEUE_SETTLED = WavesBridge._QUEUE_SETTLED
-    stub._QUEUE_HISTORY_MAX = WavesBridge._QUEUE_HISTORY_MAX
+    stub._QUEUE_SETTLED = BitWaveBridge._QUEUE_SETTLED
+    stub._QUEUE_HISTORY_MAX = BitWaveBridge._QUEUE_HISTORY_MAX
     for name in (
         "_enqueue",
         "_queue_batch",

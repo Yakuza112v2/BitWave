@@ -1,4 +1,4 @@
-"""Tests for the download-ownership store (waves/ownership.py).
+"""Tests for the download-ownership store (bitwave/ownership.py).
 
 Pure standard library, no PySide6, so these run in the lint venv like the other
 engine-level tests. The store's whole point is that ownership is decided against
@@ -13,7 +13,7 @@ import threading
 
 import pytest
 
-from waves.ownership import OwnershipStore, quality_rank
+from bitwave.ownership import OwnershipStore, quality_rank
 
 
 def _store(tmp_path):
@@ -245,7 +245,7 @@ def test_cold_reader_works_under_an_awkward_folder_name(tmp_path, caplog):
     folder.mkdir()
     store = OwnershipStore(str(folder / "ownership.sqlite3"))
     store.record_members_replace("album1", ["1", "2"])
-    with caplog.at_level("WARNING", logger="waves.ownership"):
+    with caplog.at_level("WARNING", logger="bitwave.ownership"):
         assert sorted(_on_fresh_thread(lambda: store.members_of("album1"))) == ["1", "2"]
     assert "shared connection" not in caplog.text
 

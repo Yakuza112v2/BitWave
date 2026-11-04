@@ -1,4 +1,4 @@
-"""The final pre-release pass over waves/download.py, one guard per finding.
+"""The final pre-release pass over bitwave/download.py, one guard per finding.
 
 Three defects, all of them silent in their own way: a run that writes a second
 copy of a track it already has, a run that paints a finished playlist red, and a
@@ -30,7 +30,7 @@ from collections import defaultdict
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from waves.download import Download
+from bitwave.download import Download
 
 
 def _make_download(tmp_path: pathlib.Path, *, skip_existing: bool = True) -> Download:
@@ -174,7 +174,7 @@ def test_a_twin_that_landed_at_a_numbered_variant_is_still_a_late_skip(tmp_path)
     twin.write_bytes(b"landed by the first twin")
     dl._record_name_written(twin, "42")
 
-    with patch("waves.download.read_item_id", lambda p: "999"):
+    with patch("bitwave.download.read_item_id", lambda p: "999"):
         ok, landed = _run_to_the_guard(dl, dst, _track("42"))
 
     assert ok is True
@@ -190,7 +190,7 @@ def test_a_twin_this_run_wrote_with_no_readable_id_is_still_a_late_skip(tmp_path
     dst.write_bytes(b"landed by the first twin")
     dl._record_name_written(dst, "42")
 
-    with patch("waves.download.read_item_id", lambda p: ""):
+    with patch("bitwave.download.read_item_id", lambda p: ""):
         ok, landed = _run_to_the_guard(dl, dst, _track("42"))
 
     assert ok is True
@@ -207,7 +207,7 @@ def test_an_untagged_file_this_run_did_not_write_is_still_a_stranger(tmp_path):
     dst = tmp_path / "Song.flac"
     dst.write_bytes(b"a different track, written by something that tags nothing")
 
-    with patch("waves.download.read_item_id", lambda p: ""):
+    with patch("bitwave.download.read_item_id", lambda p: ""):
         try:
             _run_to_the_guard(dl, dst, _track("42"))
         except _ReachedTheClaim:
@@ -224,7 +224,7 @@ def test_a_name_this_run_wrote_for_another_item_is_not_this_item(tmp_path):
     sibling.write_bytes(b"a colliding track of the same name")
     dl._record_name_written(sibling, "999")
 
-    with patch("waves.download.read_item_id", lambda p: ""):
+    with patch("bitwave.download.read_item_id", lambda p: ""):
         try:
             _run_to_the_guard(dl, dst, _track("42"))
         except _ReachedTheClaim:
@@ -240,7 +240,7 @@ def test_a_recorded_name_whose_file_is_gone_is_not_a_landing(tmp_path):
     dst = tmp_path / "Song.flac"
     dl._record_name_written(tmp_path / "Song_01.flac", "42")  # never created
 
-    with patch("waves.download.read_item_id", lambda p: ""):
+    with patch("bitwave.download.read_item_id", lambda p: ""):
         try:
             _run_to_the_guard(dl, dst, _track("42"))
         except _ReachedTheClaim:
@@ -260,7 +260,7 @@ def test_a_name_this_run_wrote_in_another_folder_is_no_answer(tmp_path):
     landed.write_bytes(b"the first occurrence, under its own name")
     dl._record_name_written(landed, "42")
 
-    with patch("waves.download.read_item_id", lambda p: ""):
+    with patch("bitwave.download.read_item_id", lambda p: ""):
         try:
             _run_to_the_guard(dl, tmp_path / "Song.flac", _track("42"))
         except _ReachedTheClaim:
@@ -277,7 +277,7 @@ def test_a_forced_redownload_still_reaches_the_move(tmp_path):
     dst.write_bytes(b"the copy being replaced")
     dl._record_name_written(dst, "42")
 
-    with patch("waves.download.read_item_id", lambda p: "42"):
+    with patch("bitwave.download.read_item_id", lambda p: "42"):
         try:
             _run_to_the_guard(dl, dst, _track("42"))
         except _ReachedTheClaim:
@@ -369,7 +369,7 @@ def test_a_foreign_occupant_at_the_move_still_fails_the_item(tmp_path):
 
     dl._handle_metadata_and_extras = _extras
 
-    with _stubbed_stream(), patch("waves.download.read_item_id", lambda p: "999"):
+    with _stubbed_stream(), patch("bitwave.download.read_item_id", lambda p: "999"):
         ok, path = _run_to_the_end(dl, dst, _track("42"))
 
     assert ok is False
@@ -431,7 +431,7 @@ def test_a_twin_landing_between_the_guard_and_the_claim_writes_no_second_copy(tm
     with (
         _stubbed_stream(),
         patch.object(Download, "_claim_destination", _claim_after_the_twin_lands),
-        patch("waves.download.read_item_id", lambda p: ""),
+        patch("bitwave.download.read_item_id", lambda p: ""),
     ):
         ok, landed = _run_to_the_end(dl, dst, _track("42"))
 
@@ -468,7 +468,7 @@ def test_an_exhausted_name_family_still_finds_the_twin_that_took_the_last_name(t
     with (
         _stubbed_stream(),
         patch.object(Download, "_claim_destination", _claim_after_the_twin_lands),
-        patch("waves.download.read_item_id", lambda p: ""),
+        patch("bitwave.download.read_item_id", lambda p: ""),
     ):
         ok, landed = _run_to_the_end(dl, dst, _track("42"))
 

@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 
 from tidalapi.media import Track
 
-from waves.download import Download
+from bitwave.download import Download
 
 
 def _make_download(tmp_path: pathlib.Path) -> Download:

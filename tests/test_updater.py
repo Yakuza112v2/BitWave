@@ -19,9 +19,9 @@ from pathlib import Path
 
 import pytest
 
-from waves.waves_ui import signing
-from waves.waves_ui import updater as u
-from waves.waves_ui.updater import AppUpdater, Release, UpdaterError
+from bitwave.bitwave_ui import signing
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.updater import AppUpdater, Release, UpdaterError
 
 
 def _helper_text(up):
@@ -383,8 +383,8 @@ def test_apply_windows_helper_backs_up_and_restores(tmp_path, monkeypatch):
     # The backup is named per pid: two copies of BitWave can each have a helper
     # waiting, and a shared ".old" let the loser delete the winner's only copy
     # of the old build (see test_two_helpers_cannot_collide_over_one_backup).
-    assert [env[f"WAVES_UPDATE_{i}"] for i in (1, 3)] == [str(target), f"{target}.new"]
-    assert env["WAVES_UPDATE_2"] == f"{target}.old-{os.getpid()}"
+    assert [env[f"BITWAVE_UPDATE_{i}"] for i in (1, 3)] == [str(target), f"{target}.new"]
+    assert env["BITWAVE_UPDATE_2"] == f"{target}.old-{os.getpid()}"
 
 
 def test_apply_windows_is_cross_device_safe(tmp_path, monkeypatch):
@@ -468,7 +468,7 @@ def test_two_helpers_cannot_collide_over_one_backup(tmp_path, monkeypatch):
         new_tree.mkdir(parents=True)
         (new_tree / "BitWave.exe").write_text("NEW")
         up._apply_windows_tree(new_tree, target, lambda *a, **k: None)
-        backups.append(spawns[-1]["env"]["WAVES_UPDATE_2"])
+        backups.append(spawns[-1]["env"]["BITWAVE_UPDATE_2"])
 
     assert backups[0] != backups[1], "two waiting helpers still share one backup folder"
     assert backups[0].endswith(".old-4242") and backups[1].endswith(".old-5353")
@@ -579,8 +579,8 @@ def test_windows_helpers_are_pure_ascii_whatever_the_paths_are(tmp_path, monkeyp
     assert script[:3] != b"\xef\xbb\xbf"  # no BOM either: cmd would echo it
     # the non-ASCII paths did reach the helper, through the environment
     env = spawned["kw"]["env"]
-    assert env["WAVES_UPDATE_1"] == str(install_root)
-    assert env["WAVES_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
+    assert env["BITWAVE_UPDATE_1"] == str(install_root)
+    assert env["BITWAVE_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
 
 
 def test_windows_helper_paths_survive_every_character_a_folder_may_hold(tmp_path, monkeypatch):
@@ -610,12 +610,12 @@ def test_windows_helper_paths_survive_every_character_a_folder_may_hold(tmp_path
     assert hostile not in spawned["cmd"]  # nothing for cmd to expand or split
     assert spawned["kw"]["cwd"] == str(up.staging_dir)
     env = spawned["kw"]["env"]
-    assert env["WAVES_UPDATE_1"] == str(install_root)
-    assert env["WAVES_UPDATE_4"] == str(target)
+    assert env["BITWAVE_UPDATE_1"] == str(install_root)
+    assert env["BITWAVE_UPDATE_4"] == str(target)
     # and the script reads them from there, not from %~1
     script = _helper_text(up)
     assert "%~1" not in script and "%~2" not in script
-    assert 'set "INSTALL=%WAVES_UPDATE_1%"' in script
+    assert 'set "INSTALL=%BITWAVE_UPDATE_1%"' in script
 
 
 def test_apply_windows_tree_lands_the_new_tree_on_the_install_volume_first(tmp_path, monkeypatch):
@@ -775,7 +775,7 @@ def test_a_staged_swap_that_never_ran_is_re_armed_at_the_next_launch(tmp_path, m
 
     assert pending is not None and pending["version"] == "v2.0.0"
     assert _helper_text(up)  # a fresh helper, armed against THIS process
-    assert spawned["kw"]["env"]["WAVES_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
+    assert spawned["kw"]["env"]["BITWAVE_UPDATE_3"] == str(install_root.with_name("BitWave.new"))
     # and the UI can see it without being told
     assert up.status()["pending_restart"] is True
     assert up.status()["pending_version"] == "v2.0.0"
@@ -833,7 +833,7 @@ def test_a_second_copy_cannot_stage_over_an_armed_update(tmp_path, monkeypatch):
     held for the whole life of a process that armed a helper, so the second
     copy is told to restart instead."""
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     first, _ = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -898,7 +898,7 @@ def test_the_helper_rechecks_the_staged_tree_after_the_wait(tmp_path, monkeypatc
         ("1.2", (1, 2)),
         ("v2", (2,)),
         ("v1.2.0-beta.1", (1, 2, 0)),  # the numeric part only; _parse_prerelease reads the suffix
-        ("waves-3.4.5", (3, 4, 5)),
+        ("bitwave-3.4.5", (3, 4, 5)),
         ("nope", ()),
         ("", ()),
     ],
@@ -1123,10 +1123,10 @@ _ASSET = "BitWave.bin"
 
 
 def _manifest(payload: bytes, asset: str = _ASSET, version: str = "v2.0.0") -> bytes:
-    """A signed-manifest body: the CI ``# waves-version`` line (anti-rollback) plus a
+    """A signed-manifest body: the CI ``# bitwave-version`` line (anti-rollback) plus a
     coreutils-style SHA256SUMS line pinning ``payload``'s digest to ``asset``."""
     line = f"{hashlib.sha256(payload).hexdigest()}  {asset}\n"
-    return (f"# waves-version: {version}\n{line}").encode()
+    return (f"# bitwave-version: {version}\n{line}").encode()
 
 
 def _prep(monkeypatch, tmp_path, *, payload, manifest, signature, pubkey, asset=_ASSET):
@@ -1168,7 +1168,7 @@ def _staged(tmp_path):
 
 def test_install_happy_path(monkeypatch, tmp_path):
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -1202,7 +1202,7 @@ def test_install_tampered_manifest_aborts(monkeypatch, tmp_path):
     # Sign the genuine manifest, then serve a manifest whose hash line was swapped:
     # the signature no longer covers these bytes → authenticity failure, abort.
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     genuine = _manifest(payload)
     sig = signing.sign(genuine, priv)
     forged = _manifest(b"attacker-payload")  # different hash, same asset name
@@ -1215,7 +1215,7 @@ def test_install_tampered_manifest_aborts(monkeypatch, tmp_path):
 
 def test_install_bad_signature_aborts(monkeypatch, tmp_path):
     pub, _ = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature="not-a-valid-signature", pubkey=pub
@@ -1230,7 +1230,7 @@ def test_install_wrong_key_aborts(monkeypatch, tmp_path):
     # Signed with key A but the binary embeds key B's public key → reject.
     _, priv_a = signing.keygen()
     pub_b, _ = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, applied = _prep(
         monkeypatch,
@@ -1250,7 +1250,7 @@ def test_install_missing_signature_aborts(monkeypatch, tmp_path):
     # Manifest present and hash correct, but the signature couldn't be fetched
     # (missing/404). Fail-closed: no signature → never install.
     pub, _priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, applied = _prep(monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=None, pubkey=pub)
     with pytest.raises(UpdaterError, match="could not fetch"):
@@ -1263,7 +1263,7 @@ def test_install_unconfigured_key_aborts(monkeypatch, tmp_path):
     # An otherwise-valid signed update must still refuse when this build ships no
     # public key (the dormant UPDATE_PUBLIC_KEY="" default).
     _pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=""
@@ -1279,7 +1279,7 @@ def test_install_downgrade_refused(monkeypatch, tmp_path):
     # installed (current is 1.0.0) must be refused, so a replayed old release can't
     # roll the user back to a build with known holes.
     pub, priv = signing.keygen()
-    payload = b"old-waves-binary"
+    payload = b"old-bitwave-binary"
     manifest = _manifest(payload, version="v0.5.0")
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -1294,8 +1294,8 @@ def test_install_missing_version_line_refused(monkeypatch, tmp_path):
     # A signed manifest lacking the version line is refused (fail-closed): the
     # downgrade protection must rest on an authenticated version being present.
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
-    manifest = f"{hashlib.sha256(payload).hexdigest()}  {_ASSET}\n".encode()  # no "# waves-version"
+    payload = b"new-bitwave-binary"
+    manifest = f"{hashlib.sha256(payload).hexdigest()}  {_ASSET}\n".encode()  # no "# bitwave-version"
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
     )
@@ -1308,7 +1308,7 @@ def test_install_missing_version_line_refused(monkeypatch, tmp_path):
 def test_install_asset_not_in_manifest_aborts(monkeypatch, tmp_path):
     # Valid signature, but our asset isn't listed in the signed manifest → abort.
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload, asset="SomethingElse.zip")
     up, applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -1339,16 +1339,16 @@ def test_safe_extractall_preserves_symlinks_and_exec_bit(tmp_path):
     zp.write_bytes(
         _zip_with(
             [
-                ("waves.app/Contents/MacOS/BitWave", b"BINARY", 0o100755),  # regular, rwxr-xr-x
-                ("waves.app/Contents/Frameworks/Foo.framework/Versions/Current", b"A", 0o120755),  # symlink
+                ("bitwave.app/Contents/MacOS/BitWave", b"BINARY", 0o100755),  # regular, rwxr-xr-x
+                ("bitwave.app/Contents/Frameworks/Foo.framework/Versions/Current", b"A", 0o120755),  # symlink
             ]
         )
     )
     out = tmp_path / "out"
     with zipfile.ZipFile(zp) as zf:
         AppUpdater._safe_extractall(zf, out)
-    exe = out / "waves.app/Contents/MacOS/BitWave"
-    link = out / "waves.app/Contents/Frameworks/Foo.framework/Versions/Current"
+    exe = out / "bitwave.app/Contents/MacOS/BitWave"
+    link = out / "bitwave.app/Contents/Frameworks/Foo.framework/Versions/Current"
     assert exe.read_bytes() == b"BINARY" and os.access(exe, os.X_OK)
     assert link.is_symlink() and os.readlink(link) == "A"
 
@@ -1373,13 +1373,13 @@ def test_safe_extractall_rejects_escaping_symlink(tmp_path):
 def test_apply_unix_tree_swaps_whole_directory(tmp_path):
     # Nuitka --standalone ships a multi-file tree; the new binary must run against
     # its OWN bundled libs, so the entire install dir is replaced, not just the exe.
-    install_root = tmp_path / "waves.dist"
+    install_root = tmp_path / "bitwave.dist"
     install_root.mkdir()
     (install_root / "BitWave").write_bytes(b"OLD-EXE")
     (install_root / "libQt6Core.so.6").write_bytes(b"OLD-LIB")
     target = install_root / "BitWave"
 
-    new_tree = tmp_path / "staged" / "waves.dist"
+    new_tree = tmp_path / "staged" / "bitwave.dist"
     new_tree.mkdir(parents=True)
     (new_tree / "BitWave").write_bytes(b"NEW-EXE")
     (new_tree / "libQt6Core.so.6").write_bytes(b"NEW-LIB")
@@ -1398,12 +1398,12 @@ def _no_channel_env(monkeypatch):
     """Neutralize every channel signal so each test enables exactly one."""
     for var in ("SNAP", "FLATPAK_ID", "APPIMAGE"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr(u, "_current_exe", lambda: __import__("pathlib").Path("/Applications/waves.app/x"))
+    monkeypatch.setattr(u, "_current_exe", lambda: __import__("pathlib").Path("/Applications/bitwave.app/x"))
     monkeypatch.setattr(u.os.path, "exists", lambda p: False if p == "/.flatpak-info" else os.path.exists(p))
 
 
 def _point_config_at(monkeypatch, tmp_path):
-    import waves.helper.path as path_helper
+    import bitwave.helper.path as path_helper
 
     monkeypatch.setattr(path_helper, "path_config_base", lambda: str(tmp_path))
 
@@ -1415,10 +1415,10 @@ def test_managed_channel_empty_by_default(_no_channel_env, monkeypatch, tmp_path
 
 def test_managed_channel_from_container_env(_no_channel_env, monkeypatch, tmp_path):
     _point_config_at(monkeypatch, tmp_path)
-    monkeypatch.setenv("SNAP", "/snap/waves/1")
+    monkeypatch.setenv("SNAP", "/snap/bitwave/1")
     assert u.managed_channel() == "snap"
     monkeypatch.delenv("SNAP")
-    monkeypatch.setenv("FLATPAK_ID", "app.waves.BitWave")
+    monkeypatch.setenv("FLATPAK_ID", "app.bitwave.BitWave")
     assert u.managed_channel() == "flatpak"
 
 
@@ -1433,7 +1433,7 @@ def test_appimage_is_not_a_managed_channel(_no_channel_env, monkeypatch, tmp_pat
 def test_managed_channel_from_scoop_path(_no_channel_env, monkeypatch, tmp_path):
     _point_config_at(monkeypatch, tmp_path)
     monkeypatch.setattr(
-        u, "_current_exe", lambda: __import__("pathlib").Path("C:/Users/u/scoop/apps/waves/current/BitWave.exe")
+        u, "_current_exe", lambda: __import__("pathlib").Path("C:/Users/u/scoop/apps/bitwave/current/BitWave.exe")
     )
     assert u.managed_channel() == "scoop"
 
@@ -1546,10 +1546,10 @@ def test_managed_upgrade_runs_brew_and_reports_done(monkeypatch):
     argv_seen = {}
     proc = _FakeProc(
         [
-            "==> Upgrading waves 1.0.0 -> 1.1.0",
-            "==> Downloading waves",
+            "==> Upgrading bitwave 1.0.0 -> 1.1.0",
+            "==> Downloading bitwave",
             "==> Moving App 'BitWave.app' to '/Applications/BitWave.app'",
-            "🍺  waves was upgraded",
+            "🍺  bitwave was upgraded",
         ]
     )
     monkeypatch.setattr(u, "is_frozen", lambda: True)
@@ -1576,7 +1576,7 @@ def test_managed_upgrade_runs_brew_and_reports_done(monkeypatch):
     assert pcts[-1] == 100.0
     # The UI hears fixed phase words, never the manager's own lines (C04).
     assert "Downloading" in logs and "Installing" in logs
-    assert not any("waves" in m.lower() and "==>" in m for m in logs), logs
+    assert not any("bitwave" in m.lower() and "==>" in m for m in logs), logs
 
 
 def test_managed_upgrade_failure_keeps_the_output_tail_in_the_log(monkeypatch, caplog):
@@ -1595,7 +1595,7 @@ def test_managed_upgrade_failure_keeps_the_output_tail_in_the_log(monkeypatch, c
 
 def test_managed_upgrade_stale_tap_is_a_clear_error(monkeypatch):
     # brew exits 0 but did nothing: its tap clone hasn't seen the release yet.
-    up = _managed_up(monkeypatch, _FakeProc(["Warning: waves already installed, it's already up-to-date"], code=0))
+    up = _managed_up(monkeypatch, _FakeProc(["Warning: bitwave already installed, it's already up-to-date"], code=0))
     with pytest.raises(UpdaterError, match=r"does not see the new version"):
         up.install()
 
@@ -1605,7 +1605,7 @@ def test_managed_upgrade_abort_cancels(monkeypatch):
 
     abort = _Event()
     abort.set()  # canceled before/while output streams
-    proc = _FakeProc(["==> Downloading waves"], code=1)
+    proc = _FakeProc(["==> Downloading bitwave"], code=1)
     up = _managed_up(monkeypatch, proc)
     with pytest.raises(u.UpdateCancelled):
         up.install(abort=abort)
@@ -1692,7 +1692,7 @@ def test_managed_channel_from_app_dir_sentinel(_no_channel_env, monkeypatch, tmp
     # System packages (AUR) plant the sentinel next to the binary, where a
     # root-owned install CAN write and per-user config CANNOT.
     _point_config_at(monkeypatch, tmp_path / "config-without-sentinel")
-    exe_dir = tmp_path / "opt" / "waves"
+    exe_dir = tmp_path / "opt" / "bitwave"
     exe_dir.mkdir(parents=True)
     (exe_dir / "install_channel").write_text("aur\n")
     monkeypatch.setattr(u, "_current_exe", lambda: exe_dir / "BitWave")

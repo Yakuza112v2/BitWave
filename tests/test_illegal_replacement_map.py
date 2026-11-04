@@ -21,18 +21,18 @@ from unittest.mock import MagicMock
 
 from tidalapi import Album, Track
 
-from waves.download import Download
-from waves.helper.path import (
+from bitwave.download import Download
+from bitwave.helper.path import (
     ILLEGAL_FILENAME_CHARS,
     format_path_media,
     safe_filename_replacement_map,
 )
-from waves.model.cfg import HelpSettings
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.model.cfg import HelpSettings
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_UI = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui"
+_UI = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui"
 
 _SUBTITLED = "The Better Life (Rarities Edition: Live At Red Rocks)"
 _MIDDOT = "The Better Life (Rarities Edition · Live At Red Rocks)"
@@ -211,7 +211,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
@@ -223,9 +223,9 @@ def _schema_stub():
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub._ffmpeg_flag_prefs = {}
     stub.ffmpegState = lambda: {"status": "none", "source": "none", "path": ""}
     stub._user_ffmpeg_path = lambda: ""
@@ -234,7 +234,7 @@ def _schema_stub():
 
 
 def _map_field() -> dict:
-    for section in WavesBridge.settingsSchema(_schema_stub()):
+    for section in BitWaveBridge.settingsSchema(_schema_stub()):
         for f in section["fields"]:
             if f["key"] == "filename_illegal_map":
                 return f
@@ -243,7 +243,7 @@ def _map_field() -> dict:
 
 class TestTheSettingsPageOffersOneBoxPerCharacter:
     def test_the_table_sits_in_file_organization_under_the_general_stand_in(self):
-        section = next(s for s in WavesBridge.settingsSchema(_schema_stub()) if s["id"] == "files")
+        section = next(s for s in BitWaveBridge.settingsSchema(_schema_stub()) if s["id"] == "files")
         keys = [f["key"] for f in section["fields"]]
 
         assert keys.index("filename_illegal_map") == keys.index("filename_illegal_replacement") + 1
@@ -262,7 +262,7 @@ class TestTheSettingsPageOffersOneBoxPerCharacter:
         stub = _schema_stub()
         stub.settings.data.filename_illegal_map = {":": " · ", "a": "b", "?": "/"}
         field = next(
-            f for s in WavesBridge.settingsSchema(stub) for f in s["fields"] if f["key"] == "filename_illegal_map"
+            f for s in BitWaveBridge.settingsSchema(stub) for f in s["fields"] if f["key"] == "filename_illegal_map"
         )
 
         assert field["value"] == {":": " · ", "?": ""}
@@ -278,7 +278,7 @@ class TestTheSettingsPageOffersOneBoxPerCharacter:
         seen: dict = {}
         monkeypatch.setattr(backend, "format_path_media", lambda *a, **kw: seen.update(kw) or "Example Album")
 
-        WavesBridge.previewPathTemplate(stub, "album", "{album_title}")
+        BitWaveBridge.previewPathTemplate(stub, "album", "{album_title}")
 
         assert seen["illegal_map"] == {":": " · "}
 
@@ -297,7 +297,7 @@ class TestThePageCannotSaveARejectedStandIn:
     def test_the_row_asks_the_engines_own_launderer(self):
         src = (_UI / "qml" / "SettingsPage.qml").read_text()
 
-        assert "waves.sanitizeFilenameReplacement(v)" in src
+        assert "bitwave.sanitizeFilenameReplacement(v)" in src
 
     def test_clearing_a_row_is_not_the_same_as_emptying_it(self):
         # An empty stand-in IS a choice (remove the character outright), so

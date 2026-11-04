@@ -17,8 +17,8 @@ from types import SimpleNamespace
 
 from conftest import _Signal
 
-from waves import download
-from waves.waves_ui import backend
+from bitwave import download
+from bitwave.bitwave_ui import backend
 
 
 class _Poll:
@@ -40,14 +40,14 @@ def _stub(running: bool = True, in_flight: int | None = None):
         _queue=[{"status": "running" if running else "queued"}],
         downloadMbpsChanged=_Signal(),
     )
-    b.sample = backend.WavesBridge._sample_speed.__get__(b)
+    b.sample = backend.BitWaveBridge._sample_speed.__get__(b)
     return b
 
 
 def _drive(monkeypatch):
     clock = {"t": 100.0, "bytes": 0}
     monkeypatch.setattr(backend.time, "monotonic", lambda: clock["t"])
-    monkeypatch.setattr(backend._waves_download, "bytes_received", lambda: clock["bytes"])
+    monkeypatch.setattr(backend._bitwave_download, "bytes_received", lambda: clock["bytes"])
     return clock
 
 

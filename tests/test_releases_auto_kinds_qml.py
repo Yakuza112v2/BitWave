@@ -29,13 +29,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_auto_download_kinds_row_shows_under_the_switch_and_ticks():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-auto-kinds-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-auto-kinds-test-")
     env["HOME"] = env["XDG_CONFIG_HOME"]  # nothing in the scenario may reach the real home
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
@@ -77,15 +77,15 @@ def _run_scenario() -> int:
         app.setApplicationName("BitWave")
         app.setOrganizationName("BitWave")
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -176,7 +176,7 @@ def _run_scenario() -> int:
     if bool(boxes["album"].property("on")) or not bool(boxes["featured"].property("on")):
         failures.append("the boxes do not show the staged pick")
 
-    shot = os.environ.get("WAVES_AUTO_KINDS_SHOT")
+    shot = os.environ.get("BITWAVE_AUTO_KINDS_SHOT")
     if shot:
         top = max(0, int(album.mapToScene(album.boundingRect().topLeft()).y()) - 260)
         root.grabWindow().copy(0, top, int(root.width()), 520).save(shot)

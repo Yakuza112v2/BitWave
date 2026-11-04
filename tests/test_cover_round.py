@@ -15,7 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-QML = REPO / "waves" / "waves_ui" / "qml"
+QML = REPO / "bitwave" / "bitwave_ui" / "qml"
 MAIN = QML / "Main.qml"
 SHADER = QML / "shaders" / "cover_round.frag"
 

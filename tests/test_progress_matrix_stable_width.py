@@ -60,7 +60,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -95,10 +95,10 @@ _STEP_SETTLE_MS = 60
 def _run_in_subprocess(flag: str) -> tuple[int, str]:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    # Sandboxed: this scenario builds a REAL WavesBridge, and a bridge that
+    # Sandboxed: this scenario builds a REAL BitWaveBridge, and a bridge that
     # finds the packaged app's config dir adopts its settings, writes its log,
     # and starts a real scan of the user's music library.
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-dot-matrix-width-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-dot-matrix-width-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), flag],
         env=env,
@@ -169,21 +169,21 @@ def _boot():
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     # No library scan and no browse fetch: neither is what these scenarios
     # are about, and both reach outside the sandbox.
-    WavesBridge._library_root = lambda self: ""  # type: ignore[method-assign]
-    WavesBridge.loadBrowse = lambda self, *a: None  # type: ignore[method-assign]
+    BitWaveBridge._library_root = lambda self: ""  # type: ignore[method-assign]
+    BitWaveBridge.loadBrowse = lambda self, *a: None  # type: ignore[method-assign]
 
     # Bridge BEFORE engine: see the sibling harnesses.
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

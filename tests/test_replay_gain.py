@@ -6,9 +6,9 @@ None) are never written, and a real gain is emitted in the ReplayGain 2.0 writer
 form ("-7.36 dB") while peak stays a bare linear amplitude.
 """
 
-from waves.config import _migrate_settings
-from waves.metadata import _replay_gain_tags, _rg_missing
-from waves.model.cfg import Settings
+from bitwave.config import _migrate_settings
+from bitwave.metadata import _replay_gain_tags, _rg_missing
+from bitwave.model.cfg import Settings
 
 
 def _tags(album_gain, album_peak, track_gain, track_peak):

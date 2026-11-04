@@ -29,7 +29,7 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from waves.waves_ui import backend as backend_mod
+from bitwave.bitwave_ui import backend as backend_mod
 
 BACKEND_SRC = Path(inspect.getsourcefile(backend_mod))
 
@@ -68,7 +68,7 @@ def test_the_knob_still_reaches_the_track_executor():
     """downloads_concurrent_max must keep meaning something: the engine's
     per-collection executor is sized from it (plus the finishing seats), read
     live at download time, and the slot ledger caps the streams by it."""
-    from waves import download as engine_dl
+    from bitwave import download as engine_dl
 
     src = Path(inspect.getsourcefile(engine_dl)).read_text(encoding="utf-8")
     assert "max_workers=workers" in src

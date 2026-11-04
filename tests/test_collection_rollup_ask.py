@@ -23,7 +23,7 @@ card:
 HOW THIS STAYS FIXED
 --------------------
 The real ``ownershipOf`` and rollup (``_rollup_scan`` through
-``_collection_ask``) on a WavesBridge carcass over a real OwnershipStore, with
+``_collection_ask``) on a BitWaveBridge carcass over a real OwnershipStore, with
 the job's gate (``_TrackedDownload._ownership_decision``, pinned as the row
 would pin it) run beside it on the same records: the two must agree in every
 case, held track objects or not. The deliberate "an owned stereo copy stays
@@ -38,8 +38,8 @@ from types import SimpleNamespace
 
 from tidalapi.media import Quality, Track
 
-from waves.ownership import OwnershipStore, quality_rank
-from waves.waves_ui.backend import WavesBridge, _TrackedDownload
+from bitwave.ownership import OwnershipStore, quality_rank
+from bitwave.bitwave_ui.backend import BitWaveBridge, _TrackedDownload
 
 ATMOS = "DOLBY_ATMOS"
 STEREO_CEILING = quality_rank("HI_RES_LOSSLESS")
@@ -61,7 +61,7 @@ def _track(tid, album_id, modes=("STEREO", ATMOS)):
 
 
 def _bridge(store, *, atmos_on, overrides, held=None, quality=Quality.high_lossless):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._ownership = store
     b._own_cache = {}
     b._own_lock = Lock()
@@ -94,7 +94,7 @@ def _bridge(store, *, atmos_on, overrides, held=None, quality=Quality.high_lossl
         "_target_tier",
         "_collection_ask",
     ):
-        setattr(b, name, getattr(WavesBridge, name).__get__(b, WavesBridge))
+        setattr(b, name, getattr(BitWaveBridge, name).__get__(b, BitWaveBridge))
     return b
 
 

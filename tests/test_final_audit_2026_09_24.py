@@ -5,13 +5,13 @@ from __future__ import annotations
 import pathlib
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge, _PlanEntry
+from bitwave.bitwave_ui.backend import BitWaveBridge, _PlanEntry
 
 
 class _PlanStub:
-    _unbind_merge_plans = WavesBridge._unbind_merge_plans
-    _needs_plan_rebind = WavesBridge._needs_plan_rebind
-    _rebind_merge_plan = WavesBridge._rebind_merge_plan
+    _unbind_merge_plans = BitWaveBridge._unbind_merge_plans
+    _needs_plan_rebind = BitWaveBridge._needs_plan_rebind
+    _rebind_merge_plan = BitWaveBridge._rebind_merge_plan
 
     def __init__(self):
         self._merge_plans = {}
@@ -61,9 +61,9 @@ def test_a_rebind_that_cannot_fetch_a_borrowed_track_raises():
 def test_the_retry_refetch_rebinds_before_it_retries():
     import inspect
 
-    src = inspect.getsource(WavesBridge._retry_queue_refetch)
+    src = inspect.getsource(BitWaveBridge._retry_queue_refetch)
     assert "_rebind_merge_plan" in src and "self._merge_plans[media_id] = plan" in src
-    assert "_needs_plan_rebind" in inspect.getsource(WavesBridge.retryQueueItem)
+    assert "_needs_plan_rebind" in inspect.getsource(BitWaveBridge.retryQueueItem)
 
 
 def test_the_config_folder_is_made_owner_only_on_posix(tmp_path):
@@ -74,7 +74,7 @@ def test_the_config_folder_is_made_owner_only_on_posix(tmp_path):
 
     import pytest
 
-    from waves.waves_ui import app as app_mod
+    from bitwave.bitwave_ui import app as app_mod
 
     if os.name != "posix":
         pytest.skip("POSIX only")
@@ -115,7 +115,7 @@ def test_lyrics_are_embedded_only_when_embed_is_on(tmp_path):
         dl.settings.data.lyrics_file = True
         dl.settings.data.lyrics_embed = embed
         dl._retrieve_lyrics = lambda _t: ("synced", "synced", "plain")
-        with patch("waves.download.Metadata", _RecMeta):
+        with patch("bitwave.download.Metadata", _RecMeta):
             dl.metadata_write(_track(_album(12)), tmp_path / "t.flac", True, stream)
         kw = _RecMeta.last.kw
         assert (kw["lyrics"], kw["lyrics_unsynced"]) == (("synced", "plain") if embed else ("", ""))
@@ -124,7 +124,7 @@ def test_lyrics_are_embedded_only_when_embed_is_on(tmp_path):
 def test_a_text_payload_to_a_binary_temp_file_never_raises(tmp_path):
     """Final audit C24: a failed cover.jpg fetch returns '' and the binary
     write raised ValueError, which failed the whole track."""
-    from waves.download import Download
+    from bitwave.download import Download
 
     dl = SimpleNamespace(fn_logger=lambda *a, **k: None)
     path = Download.write_to_tmp_file(dl, tmp_path, "xb", "abc")
@@ -134,8 +134,8 @@ def test_a_text_payload_to_a_binary_temp_file_never_raises(tmp_path):
 def test_an_unreadable_settings_file_starts_on_defaults_and_is_left_alone(tmp_path):
     """Final audit C28: a settings.json that exists but cannot be opened
     raised out of the bridge constructor on every launch."""
-    from waves.config import BaseConfig
-    from waves.model.cfg import Settings as ModelSettings
+    from bitwave.config import BaseConfig
+    from bitwave.model.cfg import Settings as ModelSettings
 
     target = tmp_path / "settings.json"
     target.mkdir()  # a folder under that name: open() raises IsADirectoryError
@@ -156,8 +156,8 @@ def test_a_wrong_shaped_field_sets_the_file_aside_before_defaults_are_written(tm
     takes the whole-file path, which must keep the user's copy."""
     import json
 
-    from waves.config import BaseConfig
-    from waves.model.cfg import Settings as ModelSettings
+    from bitwave.config import BaseConfig
+    from bitwave.model.cfg import Settings as ModelSettings
 
     def _read(body: str):
         target = tmp_path / "settings.json"
@@ -204,8 +204,8 @@ def test_a_root_resolve_is_single_flight_and_serves_the_last_answer():
     from unittest.mock import patch
 
     class _Roots:
-        _resolved_root = WavesBridge._resolved_root
-        _ROOT_RESOLVE_TTL = WavesBridge._ROOT_RESOLVE_TTL
+        _resolved_root = BitWaveBridge._resolved_root
+        _ROOT_RESOLVE_TTL = BitWaveBridge._ROOT_RESOLVE_TTL
 
     stub = _Roots()
     entered, release = threading.Event(), threading.Event()
@@ -217,7 +217,7 @@ def test_a_root_resolve_is_single_flight_and_serves_the_last_answer():
         release.wait(5)
         return "/real" + p
 
-    with patch("waves.waves_ui.backend.os.path.realpath", slow_realpath):
+    with patch("bitwave.bitwave_ui.backend.os.path.realpath", slow_realpath):
         first = []
         t = threading.Thread(target=lambda: first.append(stub._resolved_root("/share")))
         t.start()
@@ -234,15 +234,15 @@ def test_a_root_resolve_is_single_flight_and_serves_the_last_answer():
 def test_a_merge_job_takes_its_ask_from_the_click_not_from_the_other_editions_choice():
     import inspect
 
-    src = inspect.getsource(WavesBridge.downloadAlbum)
+    src = inspect.getsource(BitWaveBridge.downloadAlbum)
     assert 'keep_ask=getattr(self, "_merge_asks", {}).pop(album_id, None)' in src
-    assert "setQualityOverride(key" not in inspect.getsource(WavesBridge.downloadAlbumBestOfBoth)
+    assert "setQualityOverride(key" not in inspect.getsource(BitWaveBridge.downloadAlbumBestOfBoth)
 
 
 def test_the_ntfs_recycle_bin_is_never_walked():
     """Final audit C32: the skip set had only the FAT spelling, compared
     exactly, so a deleted album in $Recycle.Bin indexed as owned."""
-    from waves.library_index import _is_skipped_dir_name
+    from bitwave.library_index import _is_skipped_dir_name
 
     for name in ("$Recycle.Bin", "$RECYCLE.BIN", "$recycle.bin"):
         assert _is_skipped_dir_name(name), name
@@ -253,7 +253,7 @@ def test_the_max_age_timers_stop_while_the_window_is_minimized():
     """Final audit C35: four 5-minute revalidation timers kept hitting TIDAL
     from a minimized window. The Releases feed's is the fifth, held to the
     same rule."""
-    main = (pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(
+    main = (pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(
         encoding="utf-8"
     )
     # windowUp, not onScreen: onScreen also drops on a presentation stall,

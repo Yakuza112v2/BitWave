@@ -17,7 +17,7 @@ rollups already use, so the running frame reads 0%.
 
 HOW THIS STAYS FIXED
 --------------------
-The real ``WavesBridge._download`` runs against a bare stand-in that records
+The real ``BitWaveBridge._download`` runs against a bare stand-in that records
 its ``downloadProgress`` and ``downloadState`` emits into ONE ordered list;
 the assertion is on the order, not just on presence.
 """
@@ -30,8 +30,8 @@ from unittest.mock import patch
 
 from _dispatch_stub import arm_dispatch
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Recorder:
@@ -74,7 +74,7 @@ class _Stub:
         self._queue: list = []
         self._queue_lock = Lock()
         self.settings = SimpleNamespace(
-            data=SimpleNamespace(download_base_path="/tmp/waves-out", download_delay=False, download_dolby_atmos=False)
+            data=SimpleNamespace(download_base_path="/tmp/bitwave-out", download_delay=False, download_dolby_atmos=False)
         )
         self.dl_pool = _InlinePool()
         self.downloadState = _Recorder("state", log)
@@ -155,7 +155,7 @@ def _run(media_id: str = "t-1") -> list:
     # The per-job relay is a QObject parented to the bridge; the stand-in is
     # not one, and the relay's wiring is not what this test is about.
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._download(stub, _track(), "track", "Song", "{title}", False, media_id)
+        BitWaveBridge._download(stub, _track(), "track", "Song", "{title}", False, media_id)
     assert stub.statuses[-1] == (41, "done"), stub.statuses
     return log
 

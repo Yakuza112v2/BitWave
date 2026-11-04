@@ -11,7 +11,7 @@ directions (a stereo fetch spares an Atmos file, an Atmos fetch spares a
 stereo one). Same mode keeps the historical answer, so a genuine upgrade
 still replaces its own copy in place.
 
-The mode of the occupant is read off the disk (waves.download's
+The mode of the occupant is read off the disk (bitwave.download's
 _file_audio_mode_is_atmos), never out of a ledger, so a user's own Atmos file
 is protected the same as one BitWave wrote, tagged or not.
 """
@@ -22,9 +22,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import waves.download as download_mod
-from waves.download import Download, _file_audio_mode_is_atmos
-from waves.waves_ui.backend import _TrackedDownload
+import bitwave.download as download_mod
+from bitwave.download import Download, _file_audio_mode_is_atmos
+from bitwave.bitwave_ui.backend import _TrackedDownload
 
 ATMOS_MARK = b"|atmos"
 
@@ -44,7 +44,7 @@ def _identity_from_content(monkeypatch):
 
         return raw[3:].decode() if raw.startswith(b"id-") and raw[3:].isdigit() else ""
 
-    monkeypatch.setattr("waves.download.read_item_id", _read)
+    monkeypatch.setattr("bitwave.download.read_item_id", _read)
 
 
 @pytest.fixture(autouse=True)
@@ -64,7 +64,7 @@ def _mode_from_content(monkeypatch):
 
         return raw.endswith(ATMOS_MARK)
 
-    monkeypatch.setattr("waves.download._file_audio_mode_is_atmos", _mode)
+    monkeypatch.setattr("bitwave.download._file_audio_mode_is_atmos", _mode)
 
 
 def _make_download(tmp_path: pathlib.Path, skip_existing: bool, cls: type[Download] = Download) -> Download:

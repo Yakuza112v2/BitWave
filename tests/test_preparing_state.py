@@ -20,9 +20,9 @@ from pathlib import Path
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-QML = Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML = Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 class _Emit:
@@ -40,7 +40,7 @@ class _InlinePool:
 
 
 class _RefetchStub:
-    _refetch_for_download = WavesBridge._refetch_for_download
+    _refetch_for_download = BitWaveBridge._refetch_for_download
 
     def __init__(self):
         self._refetch_inflight: set = set()
@@ -62,12 +62,12 @@ def test_a_refetch_never_lights_the_progress_bar():
 
 
 class _WarmStub:
-    _warm_folder_tree = WavesBridge._warm_folder_tree
-    _on_folder_tree_warmed = WavesBridge._on_folder_tree_warmed
-    _current_folder_tree = WavesBridge._current_folder_tree
-    downloadPlaylist = WavesBridge.downloadPlaylist
-    _playlist_template = WavesBridge._playlist_template
-    _needs_folder_tree = WavesBridge._needs_folder_tree
+    _warm_folder_tree = BitWaveBridge._warm_folder_tree
+    _on_folder_tree_warmed = BitWaveBridge._on_folder_tree_warmed
+    _current_folder_tree = BitWaveBridge._current_folder_tree
+    downloadPlaylist = BitWaveBridge.downloadPlaylist
+    _playlist_template = BitWaveBridge._playlist_template
+    _needs_folder_tree = BitWaveBridge._needs_folder_tree
 
     def __init__(self):
         self._folder_tree = None
@@ -88,14 +88,14 @@ class _WarmStub:
 
 def test_a_playlist_waiting_on_the_folder_sweep_never_lights_the_progress_bar():
     stub = _WarmStub()
-    WavesBridge.downloadPlaylist(stub, "p1")
+    BitWaveBridge.downloadPlaylist(stub, "p1")
 
     assert stub.downloadState.calls == [("p1", "preparing")]
 
 
 def test_every_pre_queue_hand_off_uses_the_same_word():
     """No entry point may go back to "running" for a click it has not queued."""
-    src = (Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "backend.py").read_text()
+    src = (Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "backend.py").read_text()
     # The three pre-queue acknowledgements, each immediately before a return or
     # a worker dispatch. Any of them saying "running" is the progress-bar flash.
     assert src.count('"preparing")') == 4, "refetch, playlist warm, category warm, edition scan"

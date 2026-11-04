@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -40,7 +40,7 @@ _EXIT_PRECONDITION = 78
 def test_playlist_and_mix_rows_expand_to_a_ledger():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-playlist-expand-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-playlist-expand-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -65,21 +65,21 @@ def _bridge_for_fetch(monkeypatch):
     from PySide6.QtGui import QGuiApplication
 
     QGuiApplication.instance() or QGuiApplication([])
-    from waves.waves_ui import backend as be
-    from waves.waves_ui import diagnostics
-    from waves.waves_ui.session import WavesTidal
+    from bitwave.bitwave_ui import backend as be
+    from bitwave.bitwave_ui import diagnostics
+    from bitwave.bitwave_ui.session import BitWaveTidal
 
     # This bridge lives in the pytest process, so it must not read the
-    # developer's real waves.json: with verbose diagnostics on there, __init__
+    # developer's real bitwave.json: with verbose diagnostics on there, __init__
     # started the real freeze watchdog, whose QTimer re-armed a faulthandler
     # countdown from every later in-process event loop, and the one still
     # pending at exit fired inside interpreter teardown and spun forever
     # (the suite printed its summary and never exited). Default prefs, no live
     # login, and a check that the watchdog stayed off.
-    monkeypatch.setattr(WavesTidal, "login_token", lambda self: False)
-    monkeypatch.setattr(be.WavesBridge, "_load_waves_prefs", lambda self: self._default_waves_prefs())
+    monkeypatch.setattr(BitWaveTidal, "login_token", lambda self: False)
+    monkeypatch.setattr(be.BitWaveBridge, "_load_bitwave_prefs", lambda self: self._default_bitwave_prefs())
     monkeypatch.setattr(be, "name_builder_title", lambda t: getattr(t, "name", ""))
-    bridge = be.WavesBridge(tidal=None)
+    bridge = be.BitWaveBridge(tidal=None)
     assert diagnostics._watchdog._timer is None, "a bridge built with default prefs must not start the freeze watchdog"
 
     class _Inline:
@@ -145,15 +145,15 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

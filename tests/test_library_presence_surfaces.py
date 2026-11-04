@@ -44,7 +44,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 ARTIST = "Miss May I"
 ALBUM = "Shadows Inside"
@@ -55,7 +55,7 @@ FOLDER = "/lib/mmi/shadows-inside"
 def test_every_download_surface_reports_the_library_verdict():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-presence-surfaces-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-presence-surfaces-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -108,14 +108,14 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.matching import presence_key, track_key
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.matching import presence_key, track_key
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     # One album, held complete and PROVEN (the folder agrees on year and track
     # count), which is also what makes its artist's rollup non-empty.
     bridge._library_index = {
@@ -145,7 +145,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
             }
         ]
     }
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", "JetBrains Mono")
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

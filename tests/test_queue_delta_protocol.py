@@ -28,8 +28,8 @@ from unittest.mock import patch
 
 from _dispatch_stub import arm_dispatch, arm_queue
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _plain_relay():
@@ -53,7 +53,7 @@ class _Stub:
 
 def _bind(stub, *names):
     for name in names:
-        setattr(stub, name, getattr(WavesBridge, name).__get__(stub, type(stub)))
+        setattr(stub, name, getattr(BitWaveBridge, name).__get__(stub, type(stub)))
 
 
 def _delta_stub():
@@ -70,8 +70,8 @@ def _delta_stub():
     _bind(stub, "_ask_quality_for", "_ask_atmos_for", "_quality_override_key", "_row_ask")
     stub._library_bulk_skip_on = lambda: True
     stub._skip_existing_on = lambda: True
-    stub._QUEUE_SETTLED = WavesBridge._QUEUE_SETTLED
-    stub._QUEUE_HISTORY_MAX = WavesBridge._QUEUE_HISTORY_MAX
+    stub._QUEUE_SETTLED = BitWaveBridge._QUEUE_SETTLED
+    stub._QUEUE_HISTORY_MAX = BitWaveBridge._QUEUE_HISTORY_MAX
     arm_queue(stub)
     stub.log = []
     stub.queueChanged = _Sig(stub.log, "full")
@@ -234,7 +234,7 @@ def _job_stub(pool=None):
     stub._logged_in = True
     stub.settings = SimpleNamespace(
         data=SimpleNamespace(
-            download_base_path="/tmp/waves-out",
+            download_base_path="/tmp/bitwave-out",
             download_delay=False,
             downloads_concurrent_max=2,
             download_dolby_atmos=False,
@@ -287,7 +287,7 @@ class _NullDl:
         return None
 
     def item(self, **kw):
-        return True, "/tmp/waves-out/x.flac"
+        return True, "/tmp/bitwave-out/x.flac"
 
 
 def _albumish(mid: str):

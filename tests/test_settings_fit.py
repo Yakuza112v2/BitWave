@@ -39,7 +39,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_DIR = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML_DIR = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 QML_MAIN = QML_DIR / "Main.qml"
 
 _SECTIONS = [
@@ -80,7 +80,7 @@ _REVEALED = (
 def test_settings_fits_the_smallest_window_and_every_way_in_works() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-settings-fit-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-settings-fit-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox  # nothing in the scenario may reach the real home
     proc = subprocess.run(
@@ -119,15 +119,15 @@ def _run_scenario() -> int:
         app.setApplicationName("BitWave")
         app.setOrganizationName("BitWave")
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -293,7 +293,7 @@ def _run_scenario() -> int:
                 failures.append("the staged master does not say SAVE sends a test banner")
             # What SAVE CHANGES records (the real save would send the banner):
             # once it is saved, the note must stop asking for a save.
-            save_src = (Path(__file__).resolve().parent.parent / "waves/waves_ui/qml/SettingsPage.qml").read_text()
+            save_src = (Path(__file__).resolve().parent.parent / "bitwave/bitwave_ui/qml/SettingsPage.qml").read_text()
             if "page.savedVals = Object.assign({}, page.savedVals, page.editMap)" not in save_src:
                 failures.append("SAVE CHANGES no longer records what it saved")
             q("settingsPage.savedVals = Object.assign({}, settingsPage.savedVals, settingsPage.editMap)")
@@ -376,8 +376,8 @@ def _run_scenario() -> int:
     # 4. The section on show is stored for the next launch.
     q('settingsPage.showSection("metadata")')
     settle(100)
-    if bridge.wavesPref("settings_section") != "metadata":
-        failures.append(f"the section was not stored: {bridge.wavesPref('settings_section')!r}")
+    if bridge.bitwavePref("settings_section") != "metadata":
+        failures.append(f"the section was not stored: {bridge.bitwavePref('settings_section')!r}")
 
     # 5. The rail's foot is reachable at the smallest window.
     coffee = named("settingsCoffee")

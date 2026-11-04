@@ -1,6 +1,6 @@
-"""Pin the waves.progress shim to the rich bookkeeping semantics it replaced.
+"""Pin the bitwave.progress shim to the rich bookkeeping semantics it replaced.
 
-``waves.progress`` stands in for the slice of ``rich.progress`` the engine
+``bitwave.progress`` stands in for the slice of ``rich.progress`` the engine
 used as a headless task table (rich itself rendered nothing here and is no
 longer a dependency). The engine's loops gate on these exact behaviors, so
 each one is pinned:
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import threading
 
-from waves.progress import Progress, TaskID
+from bitwave.progress import Progress, TaskID
 
 
 def test_ids_are_sequential_and_index_the_task_list():

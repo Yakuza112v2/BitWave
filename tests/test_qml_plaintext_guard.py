@@ -37,7 +37,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML_DIR = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML_DIR = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 
 # Files in scope, and (per file) whether `model.`/`modelData.` denote *remote*
 # (attacker-controllable TIDAL) data.

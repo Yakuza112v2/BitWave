@@ -16,11 +16,11 @@ import time
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-MAIN_QML = (ROOT / "waves" / "waves_ui" / "qml" / "Main.qml").read_text()
-SETTINGS_QML = (ROOT / "waves" / "waves_ui" / "qml" / "SettingsPage.qml").read_text()
+MAIN_QML = (ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text()
+SETTINGS_QML = (ROOT / "bitwave" / "bitwave_ui" / "qml" / "SettingsPage.qml").read_text()
 
 
 class _Signal:
@@ -49,38 +49,38 @@ class _Timer:
 
 
 class RecoveryHost:
-    _BASE_OK_TTL_SEC = WavesBridge._BASE_OK_TTL_SEC
-    _WARMUP_DIALOG_DELAY_SEC = WavesBridge._WARMUP_DIALOG_DELAY_SEC
-    _keepwarm_tick = WavesBridge._keepwarm_tick
-    _gate_reachability = WavesBridge._gate_reachability
-    _note_download_base_ok = WavesBridge._note_download_base_ok
-    _downloads_running = WavesBridge._downloads_running
-    _stash_pending_download = WavesBridge._stash_pending_download
-    _run_pending_downloads = WavesBridge._run_pending_downloads
+    _BASE_OK_TTL_SEC = BitWaveBridge._BASE_OK_TTL_SEC
+    _WARMUP_DIALOG_DELAY_SEC = BitWaveBridge._WARMUP_DIALOG_DELAY_SEC
+    _keepwarm_tick = BitWaveBridge._keepwarm_tick
+    _gate_reachability = BitWaveBridge._gate_reachability
+    _note_download_base_ok = BitWaveBridge._note_download_base_ok
+    _downloads_running = BitWaveBridge._downloads_running
+    _stash_pending_download = BitWaveBridge._stash_pending_download
+    _run_pending_downloads = BitWaveBridge._run_pending_downloads
 
     def _maybe_notify_idle(self):
         # The replay's trailing idle check (the drain banner): no queue here.
         pass
 
-    _recovery_probe = WavesBridge._recovery_probe
-    _on_folder_recovered = WavesBridge._on_folder_recovered
+    _recovery_probe = BitWaveBridge._recovery_probe
+    _on_folder_recovered = BitWaveBridge._on_folder_recovered
     # Proof of life records the share's origin (real method, real state: no
     # mount to statfs here, so it stays a quiet no-op in these tests).
-    _remember_share_origin = WavesBridge._remember_share_origin
+    _remember_share_origin = BitWaveBridge._remember_share_origin
     # A watch that has run past the wedge window force-remounts the share;
     # real method + real state (no origins recorded here, so it's a no-op,
     # and _recovery_started is stamped fresh so the window never elapses).
-    _remount_download_share = WavesBridge._remount_download_share
-    _REMOUNT_COOLDOWN_SEC = WavesBridge._REMOUNT_COOLDOWN_SEC
-    _WEDGE_FORCE_SEC = WavesBridge._WEDGE_FORCE_SEC
-    _save_settings = WavesBridge._save_settings
+    _remount_download_share = BitWaveBridge._remount_download_share
+    _REMOUNT_COOLDOWN_SEC = BitWaveBridge._REMOUNT_COOLDOWN_SEC
+    _WEDGE_FORCE_SEC = BitWaveBridge._WEDGE_FORCE_SEC
+    _save_settings = BitWaveBridge._save_settings
 
     def _submit_settings_write(self):
         # The disk seam behind _save_settings; route it into the counter.
         self.settings.save()
 
-    _restore_ffmpeg_flags = WavesBridge._restore_ffmpeg_flags
-    _restore_ffmpeg_path = WavesBridge._restore_ffmpeg_path
+    _restore_ffmpeg_flags = BitWaveBridge._restore_ffmpeg_flags
+    _restore_ffmpeg_path = BitWaveBridge._restore_ffmpeg_path
 
     def __init__(self, base: str = "/Volumes/Share/Music") -> None:
         self.saved = 0
@@ -241,7 +241,7 @@ def test_warmup_deadline_raises_the_dialog_once():
 
 
 def test_keepwarm_touches_only_network_volumes(monkeypatch):
-    import waves.waves_ui.backend as backend_mod
+    import bitwave.bitwave_ui.backend as backend_mod
 
     listed: list[str] = []
     monkeypatch.setattr(backend_mod.os, "listdir", listed.append)
@@ -266,7 +266,7 @@ def test_keepwarm_touches_only_network_volumes(monkeypatch):
 
 
 def test_keepwarm_collapses_while_a_touch_is_hung(monkeypatch):
-    import waves.waves_ui.backend as backend_mod
+    import bitwave.bitwave_ui.backend as backend_mod
 
     started: list = []
     monkeypatch.setattr(

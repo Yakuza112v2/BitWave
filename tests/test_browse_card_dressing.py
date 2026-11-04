@@ -25,17 +25,17 @@ on. Two things about doing the work early:
 
 from __future__ import annotations
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _METHODS = ("_dress_card", "_dress_cards", "_emit_dressed")
 
 
 class _Stub:
-    _CARD_DRESS_KINDS = WavesBridge._CARD_DRESS_KINDS
+    _CARD_DRESS_KINDS = BitWaveBridge._CARD_DRESS_KINDS
 
 
 for _m in _METHODS:
-    setattr(_Stub, _m, getattr(WavesBridge, _m))
+    setattr(_Stub, _m, getattr(BitWaveBridge, _m))
 
 
 class _Emits:
@@ -155,12 +155,12 @@ def test_the_cards_in_the_qml_compare_the_stamp_before_trusting_the_answer():
     import re
     from pathlib import Path
 
-    qml = (Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text()
+    qml = (Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text()
     uses = re.findall(r'\(!live && \("lib" in c\)[^)]*\)', qml)
     assert len(uses) == 2, f"expected both card styles to read the baked verdict, found {len(uses)}"
     for use in uses:
         assert "c.libStamp === root.libStamp" in use, f"a card trusts a verdict it cannot date: {use}"
-    assert "root.libStamp = waves.libraryStamp()" in qml, "nothing refreshes the window's stamp on a publish"
+    assert "root.libStamp = bitwave.libraryStamp()" in qml, "nothing refreshes the window's stamp on a publish"
 
 
 def test_a_pending_rollup_is_never_baked():

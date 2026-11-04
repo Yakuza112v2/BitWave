@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from waves import artist_import
+from bitwave import artist_import
 
 
 def _search_from(catalog: dict):

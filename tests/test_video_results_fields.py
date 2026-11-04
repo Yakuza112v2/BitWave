@@ -12,7 +12,7 @@ import datetime as _dt
 from types import SimpleNamespace
 from typing import ClassVar
 
-from waves.waves_ui.backend import WavesBridge, _video_spec
+from bitwave.bitwave_ui.backend import BitWaveBridge, _video_spec
 
 
 def _video(**kw):
@@ -31,9 +31,9 @@ def _video(**kw):
 
 
 def _dict(video):
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge._remember = lambda *a, **k: None
-    return WavesBridge._video_dict(bridge, video)
+    return BitWaveBridge._video_dict(bridge, video)
 
 
 def test_spec_reads_the_resolution_out_of_the_tier():
@@ -76,8 +76,8 @@ def _vid(title, dur, explicit=False, quality="MP4_1080P"):
 
 
 def _dedup_bridge(mode="explicit"):
-    b = WavesBridge.__new__(WavesBridge)
-    b._waves_prefs = {"explicit_mode": mode}
+    b = BitWaveBridge.__new__(BitWaveBridge)
+    b._bitwave_prefs = {"explicit_mode": mode}
     b.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=SimpleNamespace(name="")))
     return b
 

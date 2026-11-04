@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_QML = Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml"
+_QML = Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml"
 
 
 class _Stub:
@@ -24,23 +24,23 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _prefs_stub():
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     return stub
 
 
 def test_player_size_defaults_to_full():
-    assert _prefs_stub()._waves_prefs["player_size"] == "full"
+    assert _prefs_stub()._bitwave_prefs["player_size"] == "full"
 
 
 def test_choice_is_offered_in_the_appearance_section():
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     appearance = next(s for s in schema if s["id"] == "appearance")
     field = next((f for f in appearance["fields"] if f["key"] == "player_size"), None)
     assert field is not None, "the choice must be reachable from Settings > Appearance"
@@ -53,7 +53,7 @@ def test_choice_is_offered_in_the_appearance_section():
 
 def test_picking_the_other_size_notifies_the_ui():
     stub = _prefs_stub()
-    stub._save_waves_prefs = lambda: None
+    stub._save_bitwave_prefs = lambda: None
     stub._factory_reset = False
     fired = []
 
@@ -62,19 +62,19 @@ def test_picking_the_other_size_notifies_the_ui():
             fired.append(True)
 
     stub.playerSizeChanged = _Sig()
-    _bind(stub, "setWavesPref")("player_size", "mini")
-    assert stub._waves_prefs["player_size"] == "mini"
+    _bind(stub, "setBitWavePref")("player_size", "mini")
+    assert stub._bitwave_prefs["player_size"] == "mini"
     assert fired, "Main.qml only re-reads the pref when playerSizeChanged fires"
     # An unknown value is refused and does not notify.
     fired.clear()
-    _bind(stub, "setWavesPref")("player_size", "huge")
-    assert stub._waves_prefs["player_size"] == "mini"
+    _bind(stub, "setBitWavePref")("player_size", "huge")
+    assert stub._bitwave_prefs["player_size"] == "mini"
     assert not fired
 
 
 def test_the_rail_sizes_itself_from_the_pref():
     src = (_QML / "Main.qml").read_text(encoding="utf-8")
-    assert 'property string playerSize: waves.wavesPref("player_size") === "mini" ? "mini" : "full"' in src
+    assert 'property string playerSize: bitwave.bitwavePref("player_size") === "mini" ? "mini" : "full"' in src
     assert "function onPlayerSizeChanged()" in src
     rail = src[src.index("    component NowRail: Item {") : src.index("    component RailCanvas: Canvas {")]
     assert 'readonly property int rw: root.playerSize === "mini" ? 130 : 200' in rail
@@ -83,8 +83,8 @@ def test_the_rail_sizes_itself_from_the_pref():
 def _schema_stub():
     """A bridge stub with just enough state for settingsSchema(), on a
     defaults-only config, never the machine's own."""
-    from waves.model.cfg import HelpSettings
-    from waves.model.cfg import Settings as CfgSettings
+    from bitwave.model.cfg import HelpSettings
+    from bitwave.model.cfg import Settings as CfgSettings
 
     class _Cfg:
         data = CfgSettings()

@@ -1,8 +1,8 @@
-"""Regression tests for the audited WavesBridge (backend.py) fixes.
+"""Regression tests for the audited BitWaveBridge (backend.py) fixes.
 
-Hermetic and Qt-free: constructing a real ``WavesBridge`` needs a Qt app, a
+Hermetic and Qt-free: constructing a real ``BitWaveBridge`` needs a Qt app, a
 tidalapi session and (historically) a synchronous token-login network call, none
-of which belong in a unit test. Each ``WavesBridge`` method under test here is
+of which belong in a unit test. Each ``BitWaveBridge`` method under test here is
 plain Python once its Qt signals are stubbed, so we bind the *real, unbound*
 method onto a minimal ``_Stub`` carrying exactly the attributes that method
 touches (fake signals record their emits). This exercises the shipped code path
@@ -24,7 +24,7 @@ from threading import Event, Lock
 import pytest
 from _dispatch_stub import arm_queue
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -38,8 +38,8 @@ class _Signal:
 
 
 class _Stub:
-    """Bare stand-in for a WavesBridge, with the attributes the bound methods
-    read/write. Real behavior comes from binding WavesBridge methods below."""
+    """Bare stand-in for a BitWaveBridge, with the attributes the bound methods
+    read/write. Real behavior comes from binding BitWaveBridge methods below."""
 
     def __init__(self):
         self._queue: list[dict] = []
@@ -98,10 +98,10 @@ class _Stub:
     # Small real helpers the SUTs lean on: bind the genuine implementations so
     # queue lookups / emits behave exactly as in the app.
     def _queue_item(self, qid):
-        return WavesBridge._queue_item(self, qid)
+        return BitWaveBridge._queue_item(self, qid)
 
     def _reindex_queue(self):
-        return WavesBridge._reindex_queue(self)
+        return BitWaveBridge._reindex_queue(self)
 
     def _seed_queue(self, rows):
         """Tests replace the whole queue; keep the qid index mirrored the way
@@ -109,44 +109,44 @@ class _Stub:
         self._queue = rows
         self._reindex_queue()
 
-    _QUEUE_SETTLED = WavesBridge._QUEUE_SETTLED
-    _QUEUE_HISTORY_MAX = WavesBridge._QUEUE_HISTORY_MAX
+    _QUEUE_SETTLED = BitWaveBridge._QUEUE_SETTLED
+    _QUEUE_HISTORY_MAX = BitWaveBridge._QUEUE_HISTORY_MAX
 
     def _trim_queue_history(self):
-        return WavesBridge._trim_queue_history(self)
+        return BitWaveBridge._trim_queue_history(self)
 
     def _emit_queue(self):
-        return WavesBridge._emit_queue(self)
+        return BitWaveBridge._emit_queue(self)
 
     def _flush_queue_changes(self):
-        return WavesBridge._flush_queue_changes(self)
+        return BitWaveBridge._flush_queue_changes(self)
 
     def _queue_mark_changed(self, qid):
-        return WavesBridge._queue_mark_changed(self, qid)
+        return BitWaveBridge._queue_mark_changed(self, qid)
 
     # withdrawn_out is how the withdrawal slots learn which rows were still
     # queued at the instant they went, so they credit only those to their
     # rollups: read under the removal's own lock, since the worker thread can
     # flip a row to running between a caller's look and the removal.
     def _remove_rows_where(self, pred, withdrawn_out=None):
-        return WavesBridge._remove_rows_where(self, pred, withdrawn_out)
+        return BitWaveBridge._remove_rows_where(self, pred, withdrawn_out)
 
     def _remove_row(self, qid, withdrawn_out=None):
-        return WavesBridge._remove_row(self, qid, withdrawn_out)
+        return BitWaveBridge._remove_row(self, qid, withdrawn_out)
 
     def _row_object(self, item):
-        return WavesBridge._row_object(self, item)
+        return BitWaveBridge._row_object(self, item)
 
     def _start_retry(self, item, obj):
-        return WavesBridge._start_retry(self, item, obj)
+        return BitWaveBridge._start_retry(self, item, obj)
 
     def _set_queue_status(self, qid, status, reason=""):
-        return WavesBridge._set_queue_status(self, qid, status, reason)
+        return BitWaveBridge._set_queue_status(self, qid, status, reason)
 
 
 def _bind(stub, name):
-    """Bind the real (unbound) WavesBridge method onto the stub."""
-    return getattr(WavesBridge, name).__get__(stub, _Stub)
+    """Bind the real (unbound) BitWaveBridge method onto the stub."""
+    return getattr(BitWaveBridge, name).__get__(stub, _Stub)
 
 
 # --------------------------------------------------------------------------- #
@@ -350,7 +350,7 @@ def test_load_more_library_transient_error_keeps_more(monkeypatch):
     stub._lib_cache = {"albums": {"items": [1, 2], "offset": 100, "more": True}}
     stub.libraryMore = _Signal()
     stub._lib_status = lambda cat, count, more: f"{count} {cat}"
-    stub._lib_count = WavesBridge._lib_count
+    stub._lib_count = BitWaveBridge._lib_count
     stub._logged_in = True
 
     # Make the page fetch raise, and run the worker synchronously.
@@ -369,7 +369,7 @@ def test_load_more_library_transient_error_keeps_more(monkeypatch):
     stub.threadpool = _Pool()
 
     # devlog is a module-level import used inside the method; patch its funcs.
-    import waves.waves_ui.backend as backend
+    import bitwave.bitwave_ui.backend as backend
 
     monkeypatch.setattr(backend.devlog, "clock", lambda: 0.0, raising=True)
     monkeypatch.setattr(backend.devlog, "done", lambda *a, **k: None, raising=True)
@@ -411,7 +411,7 @@ def test_restore_ffmpeg_path_preserves_user_override():
 def _cache_stub(path, user_id):
     from threading import Lock
 
-    from waves.page_store import PageStore
+    from bitwave.page_store import PageStore
 
     stub = _Stub()
     stub._logged_in = True
@@ -473,7 +473,7 @@ def test_refresh_browse_throttles_and_falls_back():
             self.load_calls.append(emit_cached)
 
     stub = _RB()
-    refresh = WavesBridge.refreshBrowse.__get__(stub, _RB)
+    refresh = BitWaveBridge.refreshBrowse.__get__(stub, _RB)
 
     refresh()  # no cache yet: must delegate to the full loadBrowse path
     assert stub.load_calls == ["full"]

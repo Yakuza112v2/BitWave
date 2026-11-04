@@ -11,8 +11,8 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.helper.folders import FolderNode, FolderTree
-from waves.waves_ui.backend import WavesBridge
+from bitwave.helper.folders import FolderNode, FolderTree
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -38,7 +38,7 @@ class _OrderedSignal(_Signal):
 
 
 class _BumpStub:
-    _bump_folder_group = WavesBridge._bump_folder_group
+    _bump_folder_group = BitWaveBridge._bump_folder_group
 
     def __init__(self, group: dict, extra: dict | None = None):
         self._folder_groups = {"fold1": group}
@@ -110,7 +110,7 @@ def _tree_with(paths: dict[str, str]) -> FolderTree:
 
 
 class _TemplateStub:
-    _playlist_template = WavesBridge._playlist_template
+    _playlist_template = BitWaveBridge._playlist_template
 
     def __init__(self, tree):
         self._tree = tree
@@ -138,11 +138,11 @@ def test_playlist_template_root_and_cold_session_fall_back_clean():
 
 
 class _DownloadFolderStub:
-    downloadFolder = WavesBridge.downloadFolder
+    downloadFolder = BitWaveBridge.downloadFolder
     # The folder's playlists are queued as one batch, delivered once.
-    _queue_batch = WavesBridge._queue_batch
-    _playlist_template = WavesBridge._playlist_template
-    _ffmpeg_gate_holds = WavesBridge._ffmpeg_gate_holds
+    _queue_batch = BitWaveBridge._queue_batch
+    _playlist_template = BitWaveBridge._playlist_template
+    _ffmpeg_gate_holds = BitWaveBridge._ffmpeg_gate_holds
 
     def __init__(self, tree, gate="ok", ffmpeg="system"):
         self._tree = tree
@@ -177,7 +177,7 @@ class _DownloadFolderStub:
     def _ffmpeg_source_label(self):
         return self.ffmpeg
 
-    _stash_pending_download = WavesBridge._stash_pending_download
+    _stash_pending_download = BitWaveBridge._stash_pending_download
 
     def _remember(self, bucket, key, obj):
         self._objs[bucket][key] = obj
@@ -325,5 +325,5 @@ def test_a_missing_ffmpeg_stashes_the_whole_rollup_before_any_state():
 
 def test_lib_count_excludes_folder_rows():
     rows = [{"kind": "folder"}, {"kind": "playlist"}, {"kind": "playlist"}]
-    assert WavesBridge._lib_count("playlists", rows) == 2
-    assert WavesBridge._lib_count("albums", rows) == 3
+    assert BitWaveBridge._lib_count("playlists", rows) == 2
+    assert BitWaveBridge._lib_count("albums", rows) == 3

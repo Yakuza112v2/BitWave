@@ -13,8 +13,8 @@ import os
 
 import pytest
 
-from waves.config import BaseConfig
-from waves.model.cfg import Settings as ModelSettings
+from bitwave.config import BaseConfig
+from bitwave.model.cfg import Settings as ModelSettings
 
 
 def _cfg(tmp_path):
@@ -41,7 +41,7 @@ def test_save_is_atomic_original_survives_a_failed_replace(tmp_path, monkeypatch
     original = target.read_text()
 
     # Change the model so a non-atomic write would leave different bytes behind.
-    cfg.data.download_base_path = "/waves/atomic/marker"
+    cfg.data.download_base_path = "/bitwave/atomic/marker"
 
     # Simulate a crash at the final swap: the real file must not be touched.
     def _boom(_src, _dst):

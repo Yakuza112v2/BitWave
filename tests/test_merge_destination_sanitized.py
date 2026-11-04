@@ -2,7 +2,7 @@
 
 WHAT THIS FENCES OFF
 --------------------
-A best-of-both merge member (``waves_identity_id`` set) may skip, or be forced
+A best-of-both merge member (``bitwave_identity_id`` set) may skip, or be forced
 into an upgrade, only when the copy already on disk sits in THIS job's
 destination folder. Two things have to agree for that check to ever fire:
 
@@ -44,9 +44,9 @@ from types import SimpleNamespace
 import pytest
 from tidalapi import Album, Track
 
-from waves.download import Download
-from waves.helper.path import format_path_media, path_file_sanitize
-from waves.waves_ui.backend import _as_member_of, _TrackedDownload
+from bitwave.download import Download
+from bitwave.helper.path import format_path_media, path_file_sanitize
+from bitwave.bitwave_ui.backend import _as_member_of, _TrackedDownload
 
 _ARTIST = "Bright Eyes"
 # 300 characters: over the 255-byte component cap on its own, and the default

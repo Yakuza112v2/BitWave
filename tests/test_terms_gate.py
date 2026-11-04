@@ -1,7 +1,7 @@
 """The first-run terms gate.
 
 The gate's wording is canonical: it is the same text published at
-getwaves.dev/terms/, and a divergence between the two makes it unclear which
+getbitwave.dev/terms/, and a divergence between the two makes it unclear which
 terms a user actually accepted. These tests pin the clauses that carry legal
 weight, the enforceability shape of the gate (full window, no way out but
 acknowledging), and the version stamp that says WHICH terms were agreed to.
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-QML_MAIN = ROOT / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 README = ROOT / "README.md"
 
 TERMS_VERSION = "1.0"

@@ -35,8 +35,8 @@ from types import SimpleNamespace
 import pytest
 from tidalapi import Track
 
-from waves.helper.path import format_path_media
-from waves.model.cfg import Settings
+from bitwave.helper.path import format_path_media
+from bitwave.model.cfg import Settings
 
 # Names that pathvalidate reduces to nothing.
 EMPTYING_NAMES = ["?", "??", "*", "<>", "|", '"', "..."]

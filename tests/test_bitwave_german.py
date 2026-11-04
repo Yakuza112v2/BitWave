@@ -8,7 +8,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtQml import QJSEngine
 
-QML = Path(__file__).resolve().parents[1] / "waves/waves_ui/qml"
+QML = Path(__file__).resolve().parents[1] / "bitwave/bitwave_ui/qml"
 
 
 def test_german_catalogue_and_dynamic_messages():
@@ -42,8 +42,8 @@ def test_windows_release_targets_only():
 
 
 def test_german_notifications_keep_music_names():
-    from waves.waves_ui.backend import _downloads_banner, _queue_banner
-    from waves.waves_ui.bridge_releases import _releases_banner
+    from bitwave.bitwave_ui.backend import _downloads_banner, _queue_banner
+    from bitwave.bitwave_ui.bridge_releases import _releases_banner
     assert _downloads_banner(["Home"], []) == ("Download abgeschlossen", "Home")
     assert _queue_banner(2, 1) == ("Downloads abgeschlossen", "2 abgeschlossen, 1 fehlgeschlagen")
     assert _releases_banner(1, [{"artist": "Future", "title": "Home"}]) == ("Neu von Future", "Home")

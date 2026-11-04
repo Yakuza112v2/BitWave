@@ -21,9 +21,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from waves.download import Download
-from waves.waves_ui import backend
-from waves.waves_ui.backend import _TrackedDownload
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import _TrackedDownload
 
 
 def _make_tracked() -> tuple[_TrackedDownload, MagicMock]:

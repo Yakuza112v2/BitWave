@@ -19,13 +19,13 @@ from unittest.mock import MagicMock
 import pytest
 from tidalapi import Playlist, Track
 
-from waves.config import _drop_unusable_fields
-from waves.constants import MediaType
-from waves.download import Download
-from waves.helper.path import format_path_media
-from waves.helper.tidal import get_tidal_media_id, get_tidal_media_type
-from waves.model.cfg import Settings as ModelSettings
-from waves.waves_ui import netmount, smb_relist
+from bitwave.config import _drop_unusable_fields
+from bitwave.constants import MediaType
+from bitwave.download import Download
+from bitwave.helper.path import format_path_media
+from bitwave.helper.tidal import get_tidal_media_id, get_tidal_media_type
+from bitwave.model.cfg import Settings as ModelSettings
+from bitwave.bitwave_ui import netmount, smb_relist
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def _download() -> Download:
 
 
 def test_a_refused_remux_swap_keeps_the_raw_file(monkeypatch, tmp_path):
-    import waves.download as download_mod
+    import bitwave.download as download_mod
 
     raw = tmp_path / "merged"
     raw.write_bytes(b"raw")
@@ -160,7 +160,7 @@ def test_a_refused_remux_swap_keeps_the_raw_file(monkeypatch, tmp_path):
 
 
 def _lyrics_download(monkeypatch, lrclib: tuple[str, str], tidal):
-    import waves.download as download_mod
+    import bitwave.download as download_mod
 
     dl = _download()
     dl.settings = SimpleNamespace(data=SimpleNamespace(lyrics_prefer_lrclib=True))

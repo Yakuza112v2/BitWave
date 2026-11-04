@@ -24,8 +24,8 @@ from threading import Lock, local
 from unittest.mock import MagicMock, patch
 
 from tests.test_queue_delta_protocol import _albumish, _HoldPool, _job_stub, _plain_relay
-from waves.download_slots import StreamSlots
-from waves.waves_ui import backend
+from bitwave.download_slots import StreamSlots
+from bitwave.bitwave_ui import backend
 
 # ----- the count, on the tracked download ---------------------------------- #
 
@@ -109,7 +109,7 @@ def test_the_engine_reports_the_enumerated_size_before_any_item_runs():
     with the list size ahead of the fan-out."""
     import inspect
 
-    from waves.download import Download
+    from bitwave.download import Download
 
     src = inspect.getsource(Download.items)
     assert "self._note_list_size(list_total)" in src

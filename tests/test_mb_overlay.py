@@ -20,8 +20,8 @@ test_library_claim_gate.py: no Qt, no network, no files.
 
 from __future__ import annotations
 
-import waves.matching as matching
-from waves.waves_ui.bridge_library import LibraryMixin
+import bitwave.matching as matching
+from bitwave.bitwave_ui.bridge_library import LibraryMixin
 
 
 class _Stub:
@@ -35,7 +35,7 @@ class _Stub:
         self._prefs = {"library_enabled": on, "library_mb_arbiter": on}
         self._queued = []
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return bool(self._prefs.get(key, False))
 
     # The enqueue resolves the arbiter on the GUI thread (so racing first
@@ -162,7 +162,7 @@ def test_bulk_gate_never_reads_the_overlay():
     # method must appear in exactly one place: the presence slot.
     import inspect
 
-    import waves.waves_ui.bridge_library as bl
+    import bitwave.bitwave_ui.bridge_library as bl
 
     src = inspect.getsource(bl)
     assert src.count("self._mb_arbitrated(") == 1

@@ -23,8 +23,8 @@ from pathlib import Path
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 BACKEND_SRC = Path(backend.__file__).read_text(encoding="utf-8")
 
@@ -108,14 +108,14 @@ class _WatchedDict(dict):
 # G-15 / G-16: the search's popularity fan-out
 # --------------------------------------------------------------------------- #
 class _SearchStub:
-    search = WavesBridge.search
-    _search_total = staticmethod(WavesBridge._search_total)
-    _pop_cached = WavesBridge._pop_cached
-    _remember_capped = WavesBridge._remember_capped
-    _remember_search = WavesBridge._remember_search
-    _SEARCH_TTL = WavesBridge._SEARCH_TTL
-    _SEARCH_CACHE_MAX = WavesBridge._SEARCH_CACHE_MAX
-    _ARTIST_POP_TTL = WavesBridge._ARTIST_POP_TTL
+    search = BitWaveBridge.search
+    _search_total = staticmethod(BitWaveBridge._search_total)
+    _pop_cached = BitWaveBridge._pop_cached
+    _remember_capped = BitWaveBridge._remember_capped
+    _remember_search = BitWaveBridge._remember_search
+    _SEARCH_TTL = BitWaveBridge._SEARCH_TTL
+    _SEARCH_CACHE_MAX = BitWaveBridge._SEARCH_CACHE_MAX
+    _ARTIST_POP_TTL = BitWaveBridge._ARTIST_POP_TTL
     _ARTIST_POP_MAX = 3  # small enough that one search has to evict
 
     def __init__(self):
@@ -231,7 +231,7 @@ def test_no_bucket_clear_is_left_outside_the_object_lock():
 
 
 class _OpenUrlStub:
-    _open_url = WavesBridge._open_url
+    _open_url = BitWaveBridge._open_url
 
     def __init__(self):
         self.threadpool = _HoldingPool()  # the clear happens before the worker
@@ -264,11 +264,11 @@ def test_the_pasted_link_clears_the_buckets_under_the_lock():
 # G-18: the membership commit leaves the GUI thread
 # --------------------------------------------------------------------------- #
 class _AlbumExpandStub:
-    loadAlbumTracks = WavesBridge.loadAlbumTracks
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    loadAlbumTracks = BitWaveBridge.loadAlbumTracks
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self):
         self.threadpool = _HoldingPool()
@@ -304,9 +304,9 @@ def test_expanding_a_hovered_album_defers_the_ownership_commit():
 # G-19: one tile-art crawl at a time
 # --------------------------------------------------------------------------- #
 class _TileArtStub:
-    _sample_links_art = WavesBridge._sample_links_art
-    _TILE_ART_TTL = WavesBridge._TILE_ART_TTL
-    _TILE_ART_V = WavesBridge._TILE_ART_V
+    _sample_links_art = BitWaveBridge._sample_links_art
+    _TILE_ART_TTL = BitWaveBridge._TILE_ART_TTL
+    _TILE_ART_V = BitWaveBridge._TILE_ART_V
 
     def __init__(self):
         self.threadpool = _HoldingPool()

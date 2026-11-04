@@ -10,16 +10,16 @@
 # nothing imports them, so nothing loads them.
 #
 # Works on all three packaged layouts; pass the bundle ROOT:
-#   macOS:    dist/waves.app        (libs live under Contents/MacOS, bare names)
-#   Linux:    dist/waves.dist       (libQt6Foo.so.6)
-#   Windows:  dist/waves.dist       (Qt6Foo.dll)
+#   macOS:    dist/bitwave.app        (libs live under Contents/MacOS, bare names)
+#   Linux:    dist/bitwave.dist       (libQt6Foo.so.6)
+#   Windows:  dist/bitwave.dist       (Qt6Foo.dll)
 # Qt library names differ per OS, so module matching is by SUBSTRING, which makes
 # the one token list work everywhere. macOS is the only layout verified locally;
 # the Linux/Windows legs are exercised on CI.
 set -euo pipefail
 
-DIR="${1:-dist/waves.dist}"
-[ -e "$DIR" ] || { echo "error: '$DIR' not found; build first (make gui-waves)" >&2; exit 1; }
+DIR="${1:-dist/bitwave.dist}"
+[ -e "$DIR" ] || { echo "error: '$DIR' not found; build first (make gui-bitwave)" >&2; exit 1; }
 
 # Resolve the directory that holds the Qt libraries + the PySide6/ tree.
 if [ -d "$DIR/Contents/MacOS" ]; then
@@ -159,7 +159,7 @@ rm -f "$LIBDIR/PySide6/qt-plugins/multimedia/libdarwinmediaplugin.dylib" \
       "$LIBDIR/PySide6/Qt/plugins/multimedia/libdarwinmediaplugin.dylib"
 
 # pycryptodome native modules: the app's ONLY Crypto surface is the updater's
-# Ed25519 verify() (waves_ui/signing.py, raw 32-byte key, no PEM), so of the
+# Ed25519 verify() (bitwave_ui/signing.py, raw 32-byte key, no PEM), so of the
 # ~2.6 MB of Crypto .so Nuitka copies, six files cover it, proven by the
 # perf-pass sandbox probe (delete the rest, sign a manifest with the full
 # venv Crypto, verify it in the gutted copy: real signature True, tampered

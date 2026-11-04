@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from waves.helper import system_ffmpeg
+from bitwave.helper import system_ffmpeg
 
 pytestmark = pytest.mark.skipif(sys.platform.startswith("win"), reason="POSIX executable bits")
 
@@ -58,7 +58,7 @@ def test_a_broken_install_is_passed_over_for_one_that_works(tmp_path, monkeypatc
 
 
 def test_status_never_reports_a_broken_system_ffmpeg_installed(tmp_path, monkeypatch):
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     _make(tmp_path)
     monkeypatch.setattr(system_ffmpeg.shutil, "which", lambda name: None)
@@ -68,7 +68,7 @@ def test_status_never_reports_a_broken_system_ffmpeg_installed(tmp_path, monkeyp
 
 
 def _broken_then_working(tmp_path, monkeypatch):
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     broken = tmp_path / "local"
     brew = tmp_path / "brew"
@@ -89,9 +89,9 @@ def test_a_download_runs_the_ffmpeg_settings_shows(tmp_path, monkeypatch):
     lossless track fails on another."""
     from unittest.mock import MagicMock
 
-    from waves.config import Settings
-    from waves.download import Download
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.config import Settings
+    from bitwave.download import Download
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     good = _broken_then_working(tmp_path, monkeypatch)
     assert fm.FfmpegManager(tmp_path / "app").status()["path"] == good
@@ -105,9 +105,9 @@ def test_a_download_runs_the_ffmpeg_settings_shows(tmp_path, monkeypatch):
 def test_preview_flac_check_and_source_label_pass_over_a_broken_ffmpeg(tmp_path, monkeypatch):
     from types import SimpleNamespace
 
-    from waves.waves_ui import ffmpeg_manager as fm
-    from waves.waves_ui.backend import WavesBridge
-    from waves.waves_ui.bridge_flac import FlacCheckMixin
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui.backend import BitWaveBridge
+    from bitwave.bitwave_ui.bridge_flac import FlacCheckMixin
 
     good = _broken_then_working(tmp_path, monkeypatch)
     stub = SimpleNamespace(
@@ -116,13 +116,13 @@ def test_preview_flac_check_and_source_label_pass_over_a_broken_ffmpeg(tmp_path,
         _user_ffmpeg_path=lambda: "",
         _ffmpeg=SimpleNamespace(is_installed=lambda: False),
     )
-    assert WavesBridge._preview_ffmpeg_bin(stub) == good
+    assert BitWaveBridge._preview_ffmpeg_bin(stub) == good
     assert FlacCheckMixin._flac_check_ffmpeg(stub) == good
-    assert WavesBridge._ffmpeg_source_label(stub) == "system"
+    assert BitWaveBridge._ffmpeg_source_label(stub) == "system"
     monkeypatch.setattr(fm, "_probe_version", lambda path: "")
-    assert WavesBridge._preview_ffmpeg_bin(stub) is None
+    assert BitWaveBridge._preview_ffmpeg_bin(stub) is None
     assert FlacCheckMixin._flac_check_ffmpeg(stub) == ""
-    assert WavesBridge._ffmpeg_source_label(stub) == "none"
+    assert BitWaveBridge._ffmpeg_source_label(stub) == "none"
 
 
 def test_an_ffmpeg_too_slow_for_the_probe_is_kept_and_not_probed_again(tmp_path, monkeypatch):
@@ -131,7 +131,7 @@ def test_an_ffmpeg_too_slow_for_the_probe_is_kept_and_not_probed_again(tmp_path,
     forks it again."""
     import subprocess
 
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     exe = _make(tmp_path)
     monkeypatch.setattr(system_ffmpeg.shutil, "which", lambda name: None)
@@ -157,7 +157,7 @@ def test_a_slow_ffmpeg_does_not_shadow_a_working_one(tmp_path, monkeypatch):
     import subprocess
     from types import SimpleNamespace
 
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
@@ -186,7 +186,7 @@ def test_a_slow_ffmpeg_is_probed_again_for_a_job_once_its_pause_is_over(tmp_path
     import subprocess
     from types import SimpleNamespace
 
-    from waves.waves_ui import ffmpeg_manager as fm
+    from bitwave.bitwave_ui import ffmpeg_manager as fm
 
     exe = _make(tmp_path)
     monkeypatch.setattr(system_ffmpeg.shutil, "which", lambda name: None)

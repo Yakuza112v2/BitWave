@@ -22,8 +22,8 @@ import inspect
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -80,8 +80,8 @@ class _Artist:
 # loadArtist: a choking builder must not strand the artist or latch busy
 # --------------------------------------------------------------------------- #
 class _LoadArtistStub(_StubBase):
-    loadArtist = WavesBridge.loadArtist
-    _start_artist_build = WavesBridge._start_artist_build
+    loadArtist = BitWaveBridge.loadArtist
+    _start_artist_build = BitWaveBridge._start_artist_build
 
     def __init__(self, artist):
         super().__init__()
@@ -150,8 +150,8 @@ def test_an_unresolvable_artist_still_reports_failure():
 # search: a choking builder fails THIS search visibly
 # --------------------------------------------------------------------------- #
 class _SearchStub(_StubBase):
-    search = WavesBridge.search
-    _search_total = WavesBridge._search_total
+    search = BitWaveBridge.search
+    _search_total = BitWaveBridge._search_total
 
     def __init__(self):
         super().__init__()
@@ -195,7 +195,7 @@ def test_a_choking_search_build_clears_busy_and_says_so(monkeypatch):
 # _open_url: same discipline for the pasted-link resolver
 # --------------------------------------------------------------------------- #
 class _OpenUrlStub(_StubBase):
-    _open_url = WavesBridge._open_url
+    _open_url = BitWaveBridge._open_url
 
     def __init__(self):
         super().__init__()
@@ -225,7 +225,7 @@ def test_a_choking_link_payload_clears_busy(monkeypatch):
 # loadArtistLibrary: same discipline for the library-scoped page
 # --------------------------------------------------------------------------- #
 class _LibraryArtistStub(_StubBase):
-    loadArtistLibrary = WavesBridge.loadArtistLibrary
+    loadArtistLibrary = BitWaveBridge.loadArtistLibrary
 
     def __init__(self):
         super().__init__()
@@ -283,16 +283,16 @@ def test_logout_supersedes_every_inflight_search():
     # in flight emits after "Signed out" and repoisons the caches logout just
     # cleared. Behavior is pinned at the source because logout touches half
     # the bridge and stubbing it whole would test the stub.
-    source = inspect.getsource(WavesBridge.logout)
+    source = inspect.getsource(BitWaveBridge.logout)
     assert "_search_gen += 1" in source
 
 
 class _AlbumTracksStub(_StubBase):
-    _start_album_tracks_fetch = WavesBridge._start_album_tracks_fetch
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    _start_album_tracks_fetch = BitWaveBridge._start_album_tracks_fetch
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self, album):
         super().__init__()
@@ -334,11 +334,11 @@ def test_album_tracks_landing_after_logout_are_dropped():
 
 
 class _PlaylistTracksStub(_StubBase):
-    loadPlaylistTracks = WavesBridge.loadPlaylistTracks
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    loadPlaylistTracks = BitWaveBridge.loadPlaylistTracks
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self):
         super().__init__()

@@ -6,13 +6,13 @@ Two layers are covered:
     synthetic screen layouts, so the "keep the window reachable" math is checked
     without a display, and
   * the ``windowSaveGeometry`` / ``windowRestoreGeometry`` round trip through a
-    real ``waves.json`` on disk, exercised through a Qt-free stub that binds the
+    real ``bitwave.json`` on disk, exercised through a Qt-free stub that binds the
     real bridge methods onto a plain object (same approach as
     tests/test_ownership_bridge.py). The screen clamp is stubbed to identity in
     the round-trip layer so it does not depend on a real screen; the clamp math
     is covered on its own above.
 
-Like tests/test_ownership_bridge.py these import WavesBridge, so they collect
+Like tests/test_ownership_bridge.py these import BitWaveBridge, so they collect
 only in the full runtime venv (PySide6 present).
 """
 
@@ -24,8 +24,8 @@ import types
 import pytest
 from conftest import _InlineWriter
 
-import waves.waves_ui.backend as backend
-from waves.waves_ui.backend import WavesBridge, _fit_frame
+import bitwave.bitwave_ui.backend as backend
+from bitwave.bitwave_ui.backend import BitWaveBridge, _fit_frame
 
 
 # The suite itself runs offscreen, so the headless-save guard would turn every
@@ -111,8 +111,8 @@ def _assert_fully_inside(frame, screens):
 
 
 class _PrefsStub:
-    """Bare stand-in for WavesBridge carrying only the geometry-persistence
-    surface, with the real methods bound on and a real waves.json on disk. The
+    """Bare stand-in for BitWaveBridge carrying only the geometry-persistence
+    surface, with the real methods bound on and a real bitwave.json on disk. The
     screen clamp delegates to the real pure _fit_frame against a synthetic
     (display-free) screen list, so the windowRestoreGeometry -> clamp WIRING is
     exercised end-to-end without a display."""
@@ -120,21 +120,21 @@ class _PrefsStub:
     screens = ONE_SCREEN  # override per-instance to simulate a different layout
 
     def __init__(self, tmp_path):
-        self._waves_prefs_path = str(tmp_path / "waves.json")
+        self._bitwave_prefs_path = str(tmp_path / "bitwave.json")
         self.save_calls = 0
         for name in (
-            "_default_waves_prefs",
-            "_load_waves_prefs",
+            "_default_bitwave_prefs",
+            "_load_bitwave_prefs",
             "_preserve_unreadable_prefs",
-            "_waves_pref_bool",
+            "_bitwave_pref_bool",
             "windowSaveGeometry",
             "windowRestoreGeometry",
             "queueSaveWidth",
             "queueRestoreWidth",
         ):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _PrefsStub))
-        self._waves_prefs = self._load_waves_prefs()
-        # The real _save_waves_prefs submits its disk work here; inline keeps
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _PrefsStub))
+        self._bitwave_prefs = self._load_bitwave_prefs()
+        # The real _save_bitwave_prefs submits its disk work here; inline keeps
         # "what landed on disk" assertable right after the call.
         self._config_writer = _InlineWriter()
 
@@ -144,9 +144,9 @@ class _PrefsStub:
         return _fit_frame((x, y, w, h), self.screens) or (x, y, w, h)
 
     # Real atomic write, but counted so "only save when changed" is testable.
-    def _save_waves_prefs(self):
+    def _save_bitwave_prefs(self):
         self.save_calls += 1
-        WavesBridge._save_waves_prefs(self)
+        BitWaveBridge._save_bitwave_prefs(self)
 
 
 def test_fresh_install_has_no_saved_geometry(tmp_path):
@@ -173,10 +173,10 @@ def test_save_then_restore_round_trip(tmp_path):
 
 def test_geometry_is_stored_as_ints_not_strings(tmp_path):
     """The dedicated slot must write real ints; routing geometry through the
-    generic setWavesPref would str()-coerce them and break restore."""
+    generic setBitWavePref would str()-coerce them and break restore."""
     _PrefsStub(tmp_path).windowSaveGeometry(10, 20, 900, 700, False)
 
-    data = json.loads((tmp_path / "waves.json").read_text(encoding="utf-8"))
+    data = json.loads((tmp_path / "bitwave.json").read_text(encoding="utf-8"))
     for key in ("win_x", "win_y", "win_w", "win_h"):
         assert isinstance(data[key], int), f"{key} was stored as {type(data[key])}, not int"
     assert data["win_w"] == 900 and data["win_h"] == 700
@@ -229,7 +229,7 @@ def test_headless_platform_never_saves_geometry(tmp_path, monkeypatch):
 
 def test_unchanged_geometry_does_not_rewrite_the_file(tmp_path):
     """Saving the identical frame twice writes once: the debounced change storm
-    must not rewrite waves.json when nothing actually moved."""
+    must not rewrite bitwave.json when nothing actually moved."""
     stub = _PrefsStub(tmp_path)
     stub.windowSaveGeometry(30, 40, 1000, 800, False)
     assert stub.save_calls == 1
@@ -242,7 +242,7 @@ def test_unchanged_geometry_does_not_rewrite_the_file(tmp_path):
 def test_corrupt_saved_size_falls_back_to_empty(tmp_path):
     """A non-numeric win_w on disk (hand-edited, or a format from a future
     build) must not crash restore; it reads as "nothing saved"."""
-    (tmp_path / "waves.json").write_text(json.dumps({"win_w": "oops", "win_h": 800}), encoding="utf-8")
+    (tmp_path / "bitwave.json").write_text(json.dumps({"win_w": "oops", "win_h": 800}), encoding="utf-8")
     assert _PrefsStub(tmp_path).windowRestoreGeometry() == {}
 
 
@@ -265,9 +265,9 @@ def test_restore_clamps_offscreen_frame_onto_a_live_screen(tmp_path):
 
 def test_queue_width_round_trips(tmp_path):
     """A dragged width survives a restart, stored as a real int rather than the
-    string setWavesPref would coerce it to, so QML reads back a number."""
+    string setBitWavePref would coerce it to, so QML reads back a number."""
     _PrefsStub(tmp_path).queueSaveWidth(620)
-    stored = json.loads((tmp_path / "waves.json").read_text(encoding="utf-8"))["queue_w"]
+    stored = json.loads((tmp_path / "bitwave.json").read_text(encoding="utf-8"))["queue_w"]
     assert stored == 620 and isinstance(stored, int)
     assert _PrefsStub(tmp_path).queueRestoreWidth() == 620
 
@@ -279,7 +279,7 @@ def test_fresh_install_has_no_remembered_queue_width(tmp_path):
 
 def test_queue_width_saves_only_on_a_real_change(tmp_path):
     """QML debounces a drag, but a settled call that changes nothing still must
-    not rewrite waves.json."""
+    not rewrite bitwave.json."""
     stub = _PrefsStub(tmp_path)
     stub.queueSaveWidth(620)
     stub.queueSaveWidth(620)
@@ -298,19 +298,19 @@ def test_a_zero_queue_width_never_clobbers_a_saved_one(tmp_path):
 def test_a_corrupt_queue_width_falls_back_to_the_sentinel(tmp_path):
     """A hand-edited prefs file cannot take the drawer down with it: a width
     that will not parse reads as never-saved."""
-    (tmp_path / "waves.json").write_text('{"queue_w": "very wide"}', encoding="utf-8")
+    (tmp_path / "bitwave.json").write_text('{"queue_w": "very wide"}', encoding="utf-8")
     assert _PrefsStub(tmp_path).queueRestoreWidth() == 0
 
 
 def test_unparseable_prefs_file_falls_back_to_defaults(tmp_path):
-    """A syntactically broken waves.json (hand-edited, or truncated by a process
-    death mid-write, the exact case the atomic write in _save_waves_prefs
+    """A syntactically broken bitwave.json (hand-edited, or truncated by a process
+    death mid-write, the exact case the atomic write in _save_bitwave_prefs
     defends against) must load as defaults, not crash startup. This pins the
-    JSONDecodeError arm of _load_waves_prefs, distinct from the missing-file arm
+    JSONDecodeError arm of _load_bitwave_prefs, distinct from the missing-file arm
     covered by test_fresh_install_has_no_saved_geometry."""
-    (tmp_path / "waves.json").write_text("{ not valid json", encoding="utf-8")
+    (tmp_path / "bitwave.json").write_text("{ not valid json", encoding="utf-8")
     stub = _PrefsStub(tmp_path)
-    assert stub._waves_prefs["win_w"] == 0  # fell back to the default schema
+    assert stub._bitwave_prefs["win_w"] == 0  # fell back to the default schema
     assert stub.windowRestoreGeometry() == {}
 
 
@@ -318,10 +318,10 @@ def test_an_unreadable_prefs_file_is_kept_before_defaults_are_saved_over_it(tmp_
     """Falling back to defaults must not destroy the settings it could not read.
     A save follows within the same __init__ (the video-flag migration), so the
     broken file has to be somewhere else by the time it lands."""
-    broken = tmp_path / "waves.json"
+    broken = tmp_path / "bitwave.json"
     broken.write_text('{"library_enabled": tru', encoding="utf-8")
     stub = _PrefsStub(tmp_path)
-    kept = tmp_path / "waves.json.bak"
+    kept = tmp_path / "bitwave.json.bak"
     assert kept.read_text(encoding="utf-8") == '{"library_enabled": tru'
     # The save that follows writes defaults to the real name, not over the copy.
     stub.windowSaveGeometry(10, 20, 900, 700, False)
@@ -332,11 +332,11 @@ def test_an_unreadable_prefs_file_is_kept_before_defaults_are_saved_over_it(tmp_
 def test_a_second_unreadable_file_never_overwrites_the_first_rescue(tmp_path):
     """The older copy is usually the more complete one, so it stays put and the
     new one lands beside it under a stamped name."""
-    (tmp_path / "waves.json.bak").write_text('{"the": "older rescue"}', encoding="utf-8")
-    (tmp_path / "waves.json").write_text("{ broken again", encoding="utf-8")
+    (tmp_path / "bitwave.json.bak").write_text('{"the": "older rescue"}', encoding="utf-8")
+    (tmp_path / "bitwave.json").write_text("{ broken again", encoding="utf-8")
     _PrefsStub(tmp_path)
-    assert (tmp_path / "waves.json.bak").read_text(encoding="utf-8") == '{"the": "older rescue"}'
-    stamped = [p for p in tmp_path.iterdir() if p.name.startswith("waves.json.bak-")]
+    assert (tmp_path / "bitwave.json.bak").read_text(encoding="utf-8") == '{"the": "older rescue"}'
+    stamped = [p for p in tmp_path.iterdir() if p.name.startswith("bitwave.json.bak-")]
     assert len(stamped) == 1, sorted(p.name for p in tmp_path.iterdir())
     assert stamped[0].read_text(encoding="utf-8") == "{ broken again"
 
@@ -345,7 +345,7 @@ def test_prefs_that_could_not_be_kept_are_never_saved_over(tmp_path, monkeypatch
     """A broken file that cannot even be renamed (a read-only folder, another
     process holding it) is the only copy of those settings there is: this run
     keeps its prefs in memory rather than cementing defaults over them."""
-    broken = tmp_path / "waves.json"
+    broken = tmp_path / "bitwave.json"
     broken.write_text("{ not valid json", encoding="utf-8")
 
     def _no_rename(src, dst):
@@ -407,7 +407,7 @@ def test_fit_geometry_reads_available_not_full(monkeypatch):
     to sit above it; using the full 1080 geometry instead would leave it under
     the taskbar."""
     _patch_screens(monkeypatch, [_FakeScreen(_FakeRect(0, 0, 1920, 1040))])
-    x, y, w, h = WavesBridge._fit_geometry_to_screens(None, 0, 1030, 1000, 40)
+    x, y, w, h = BitWaveBridge._fit_geometry_to_screens(None, 0, 1030, 1000, 40)
     assert y + h <= 1040
 
 
@@ -416,11 +416,11 @@ def test_fit_geometry_tuple_order_not_transposed(monkeypatch):
     1920-wide screen and stays put. If width/height were swapped, the clamp
     would think the screen is 1080 wide and shrink the window."""
     _patch_screens(monkeypatch, [_FakeScreen(_FakeRect(0, 0, 1920, 1080))])
-    assert WavesBridge._fit_geometry_to_screens(None, 100, 100, 1500, 200) == (100, 100, 1500, 200)
+    assert BitWaveBridge._fit_geometry_to_screens(None, 100, 100, 1500, 200) == (100, 100, 1500, 200)
 
 
 def test_fit_geometry_no_screens_returns_input(monkeypatch):
     """No connected screens: the saved frame is returned unchanged rather than
     blocking the restore (windowRestoreGeometry still hands QML something sane)."""
     _patch_screens(monkeypatch, [])
-    assert WavesBridge._fit_geometry_to_screens(None, 5, 6, 7, 8) == (5, 6, 7, 8)
+    assert BitWaveBridge._fit_geometry_to_screens(None, 5, 6, 7, 8) == (5, 6, 7, 8)

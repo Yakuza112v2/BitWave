@@ -22,7 +22,7 @@ import threading
 from collections import OrderedDict
 from unittest.mock import MagicMock
 
-from waves.download import Download
+from bitwave.download import Download
 
 
 def _engine(monkeypatch, responses=None):

@@ -32,10 +32,10 @@ from unittest.mock import MagicMock, patch
 
 from tidalapi.media import Track
 
-from waves import download as download_mod
-from waves.download import Download
-from waves.progress import Progress
-from waves.waves_ui.backend import WavesBridge, _TrackedDownload
+from bitwave import download as download_mod
+from bitwave.download import Download
+from bitwave.progress import Progress
+from bitwave.bitwave_ui.backend import BitWaveBridge, _TrackedDownload
 
 # A credit that eats the whole 30-character budget on its own, so every track of
 # the release truncates to a single identical description. Real shape, not a
@@ -63,7 +63,7 @@ def _bare_tracked(progress: Progress) -> _TrackedDownload:
 
 
 class _PollStub:
-    """Stand-in for WavesBridge carrying only what _poll_track_progress touches,
+    """Stand-in for BitWaveBridge carrying only what _poll_track_progress touches,
     with the real poller and the real roll-up bound on."""
 
     def __init__(self, dl, reg, total):
@@ -75,7 +75,7 @@ class _PollStub:
         self._queue_index = {7: {"collection": True, "tracks": total, "progress": 0.0}}
         self._rollups: list = []
         for name in ("_poll_track_progress", "_bump_group_progress"):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _PollStub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _PollStub))
 
     def _queue_item(self, qid):
         return self._queue_index.get(qid)

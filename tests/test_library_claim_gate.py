@@ -15,7 +15,7 @@ even more than the duplicate-recording gate's:
   to a skip by a tag match.
 * Never inside a "best of both" merge. A merge assembles one complete folder,
   and the claim points at the library, not this job's destination. A merge
-  member is recognized by ``waves_identity_id``.
+  member is recognized by ``bitwave_identity_id``.
 * A claim lookup failure never gates: downloading twice beats not
   downloading at all.
 
@@ -28,13 +28,13 @@ from __future__ import annotations
 
 import types
 
-from waves.waves_ui.backend import _TrackedDownload
+from bitwave.bitwave_ui.backend import _TrackedDownload
 
 
 def _media(identity: str | None = None):
     m = types.SimpleNamespace(id=99, name="Song", artist=types.SimpleNamespace(name="Artist"))
     if identity is not None:
-        m.waves_identity_id = identity
+        m.bitwave_identity_id = identity
     return m
 
 
@@ -115,11 +115,11 @@ def test_a_claim_lookup_failure_never_gates():
 
 def _adapter(media, album=None):
     """_library_claim_media on a stub that records the question it asks."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     asked: list[tuple] = []
     stub = types.SimpleNamespace(_library_track_claim=lambda *a: asked.append(a) and None)
-    WavesBridge._library_claim_media(stub, media, album=album)
+    BitWaveBridge._library_claim_media(stub, media, album=album)
     return asked[0] if asked else None
 
 

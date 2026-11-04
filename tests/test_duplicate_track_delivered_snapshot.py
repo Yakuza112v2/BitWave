@@ -23,8 +23,8 @@ from types import SimpleNamespace
 
 from tidalapi.media import Track
 
-from waves import download as download_mod
-from waves.waves_ui.backend import _TrackedDownload
+from bitwave import download as download_mod
+from bitwave.bitwave_ui.backend import _TrackedDownload
 
 
 def _track(tid="101"):

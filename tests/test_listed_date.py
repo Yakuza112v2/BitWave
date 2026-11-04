@@ -24,9 +24,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.page_store import PageStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 UTC = dt.UTC
 
@@ -162,9 +162,9 @@ class _Sig:
 
 
 class _PageStub:
-    loadArtist = WavesBridge.loadArtist
-    _start_artist_build = WavesBridge._start_artist_build
-    _artist_art_summary = staticmethod(WavesBridge._artist_art_summary)
+    loadArtist = BitWaveBridge.loadArtist
+    _start_artist_build = BitWaveBridge._start_artist_build
+    _artist_art_summary = staticmethod(BitWaveBridge._artist_art_summary)
 
     def __init__(self, artist):
         self.threadpool = _Pool()
@@ -244,7 +244,7 @@ def test_the_artist_page_leads_with_the_reissue_and_revalidates_quietly():
 
 
 class _CacheStub:
-    _load_page_cache = WavesBridge._load_page_cache
+    _load_page_cache = BitWaveBridge._load_page_cache
 
     def __init__(self, path):
         self._page_cache_lock = Lock()

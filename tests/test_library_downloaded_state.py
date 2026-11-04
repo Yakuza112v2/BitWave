@@ -18,7 +18,7 @@ opens libraryClaimGate, which names the matched folder and offers DOWNLOAD
 ANYWAY. Two halves of that are pinned here, and both matter:
 
 * the claim is clickable and its DOWNLOAD ANYWAY really reaches
-  waves.downloadAlbum with the right album id (detection must never prevent a
+  bitwave.downloadAlbum with the right album id (detection must never prevent a
   download the user could otherwise make), and
 * a DOWNLOADED that comes from the OWNERSHIP STORE is not a guess but a
   record of a download BitWave made, so it stays inert and opens nothing.
@@ -50,13 +50,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_owned_album_button_reads_downloaded_partial_stays_live():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-lib-dl-state-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-lib-dl-state-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -163,9 +163,9 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.matching import presence_key
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.matching import presence_key
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -178,7 +178,7 @@ def _run_scenario() -> int:
     # download path, which needs a live TIDAL session, out of the scenario.
     downloaded: list[str] = []
 
-    class SpyBridge(WavesBridge):
+    class SpyBridge(BitWaveBridge):
         @Slot(str)
         def downloadAlbum(self, album_id: str) -> None:
             downloaded.append(str(album_id))
@@ -239,7 +239,7 @@ def _run_scenario() -> int:
             }
         ],
     }
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

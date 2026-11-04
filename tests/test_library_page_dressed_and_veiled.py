@@ -51,7 +51,7 @@ _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
 REPO = Path(__file__).resolve().parent.parent
-QML_MAIN = REPO / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = REPO / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _HELD = 4  # albums (and artists) the library holds
 _ABSENT = 2  # and ones it does not, so a pass cannot come from "everything is on"
@@ -60,7 +60,7 @@ _ABSENT = 2  # and ones it does not, so a pass cannot come from "everything is o
 def test_a_dressed_page_builds_without_asking_and_a_cold_one_waits():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-lib-veil-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-lib-veil-")
     env["HOME"] = env["XDG_CONFIG_HOME"]  # nothing in the scenario may reach the real home
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
@@ -98,7 +98,7 @@ def test_every_badge_dates_the_verdict_it_was_handed():
 
 
 def test_every_library_emit_dresses_its_rows():
-    src = (REPO / "waves" / "waves_ui" / "backend.py").read_text()
+    src = (REPO / "bitwave" / "bitwave_ui" / "backend.py").read_text()
     bare = re.findall(r"self\.library(?:Loaded|More)\.emit\(category, (?!self\._dress_library_rows)", src)
     assert not bare, f"a My Tidal emit still sends undressed rows: {len(bare)}"
     assert src.count("self._dress_library_rows(category,") == 5
@@ -147,16 +147,16 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves import matching
-        from waves.matching import presence_key, track_key
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave import matching
+        from bitwave.matching import presence_key, track_key
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     asked = {"album": 0, "artist": 0, "track": 0}
 
-    class CountingBridge(WavesBridge):
+    class CountingBridge(BitWaveBridge):
         # Every overload the real bridge registers, or Qt dispatches straight to
         # the base class and this counter silently measures nothing.
         @Slot(str, str, str, int, result="QVariant")
@@ -164,12 +164,12 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
         @Slot(str, str, str, int, int, int, result="QVariant")
         def libraryAlbumPresence(self, artist, title, year, num_tracks, duration=0, explicit=-1):
             asked["album"] += 1
-            return WavesBridge.libraryAlbumPresence(self, artist, title, year, num_tracks, duration, explicit)
+            return BitWaveBridge.libraryAlbumPresence(self, artist, title, year, num_tracks, duration, explicit)
 
         @Slot(str, result="QVariant")
         def artistLibraryPresence(self, name):
             asked["artist"] += 1
-            return WavesBridge.artistLibraryPresence(self, name)
+            return BitWaveBridge.artistLibraryPresence(self, name)
 
         @Slot(str, str, result="QVariant")
         @Slot(str, str, str, str, result="QVariant")
@@ -177,7 +177,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
         @Slot(str, str, str, str, int, int, result="QVariant")
         def libraryTrackPresence(self, artist, title, album="", album_year="", duration=0, explicit=-1):
             asked["track"] += 1
-            return WavesBridge.libraryTrackPresence(self, artist, title, album, album_year, duration, explicit)
+            return BitWaveBridge.libraryTrackPresence(self, artist, title, album, album_year, duration, explicit)
 
     index: dict = {}
     rollup: dict = {}
@@ -263,7 +263,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
     bridge = CountingBridge(tidal=None)
     bridge._library_stamp = 1
     warm()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", "JetBrains Mono")
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -372,7 +372,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
     settle(30)
     bridge._library_index = None
     bridge._library_root = lambda: "/library"  # configured, so "not yet" is a real state
-    if q("waves.libraryIndexReady()"):
+    if q("bitwave.libraryIndexReady()"):
         print("could not make the index read as unanswered", file=sys.stderr)
         return _EXIT_PRECONDITION
     bridge.libraryLoaded.emit("albums", bridge._dress_library_rows("albums", albums), False)

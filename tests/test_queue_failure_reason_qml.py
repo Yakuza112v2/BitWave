@@ -126,10 +126,10 @@ def _scenario() -> int:
 def test_a_failed_queue_row_shows_why_it_failed():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    # Sandboxed: this scenario builds a REAL WavesBridge, and a bridge that
+    # Sandboxed: this scenario builds a REAL BitWaveBridge, and a bridge that
     # finds the packaged app's config dir adopts its settings, writes its log,
     # and starts a real scan of the user's music library.
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-queue-reason-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-queue-reason-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -139,7 +139,7 @@ def test_a_failed_queue_row_shows_why_it_failed():
     )
     # The scenario prints its findings before Qt's own teardown chatter, so
     # keep enough of the tail that they are still in it.
-    lines = [ln for ln in (proc.stdout + proc.stderr).strip().splitlines() if "waves.qt" not in ln]
+    lines = [ln for ln in (proc.stdout + proc.stderr).strip().splitlines() if "bitwave.qt" not in ln]
     tail = "\n".join(lines[-12:])
     if proc.returncode == _EXIT_NO_QT:
         pytest.skip("PySide6 / offscreen Qt unavailable")

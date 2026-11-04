@@ -24,8 +24,8 @@ from unittest.mock import MagicMock, patch
 
 from tidalapi.media import Track
 
-from waves.download import Download
-from waves.waves_ui import backend
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend
 
 
 def _tracked(relay):
@@ -40,7 +40,7 @@ def _tracked(relay):
 def _media(mid="123", identity=None):
     m = MagicMock()
     m.id = mid
-    m.waves_identity_id = identity
+    m.bitwave_identity_id = identity
     return m
 
 
@@ -68,7 +68,7 @@ class _LifecycleStub:
         self.queueTrackState = _Signal()
         self._emit_queue = lambda: None
         for name in ("_track_lifecycle", "_queue_item", "_queue_mark_changed"):
-            setattr(self, name, getattr(backend.WavesBridge, name).__get__(self, _LifecycleStub))
+            setattr(self, name, getattr(backend.BitWaveBridge, name).__get__(self, _LifecycleStub))
 
 
 def test_note_stage_emits_running_with_fraction():
@@ -138,7 +138,7 @@ def _finalize_fracs(tmp_path, *, extract=False, suffix=".flac", is_bts=True):
     )
     media = Track.__new__(Track)
     media.id = "123"
-    media.waves_identity_id = None
+    media.bitwave_identity_id = None
     dst = tmp_path / f"song{suffix}"
     stream = SimpleNamespace(is_bts=is_bts)
     cls = backend._TrackedDownload
@@ -151,7 +151,7 @@ def _finalize_fracs(tmp_path, *, extract=False, suffix=".flac", is_bts=True):
         patch.object(cls, "_handle_metadata_and_extras", return_value=None),
         patch.object(cls, "_move_file", return_value=True),
         patch.object(cls, "_record_name_written"),
-        patch("waves.download.name_builder_item", return_value="x"),
+        patch("bitwave.download.name_builder_item", return_value="x"),
     ):
         ok, _ = td._perform_actual_download(media, dst, None, extract, False, stream)
     assert ok is True
@@ -252,7 +252,7 @@ def test_the_row_rolls_its_finish_steps_up_for_the_header():
     It is emitted only when it moves."""
     b = _LifecycleStub()
     b.queueItemFinish = _Signal()
-    b._roll_up_finish = backend.WavesBridge._roll_up_finish.__get__(b, _LifecycleStub)
+    b._roll_up_finish = backend.BitWaveBridge._roll_up_finish.__get__(b, _LifecycleStub)
     b._track_lifecycle(1, {"id": "a", "status": "skipped"})
     b._track_lifecycle(1, {"id": "b", "status": "running"})
     b._track_lifecycle(1, {"id": "c", "status": "pending"})

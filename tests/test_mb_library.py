@@ -1,4 +1,4 @@
-"""The MusicBrainz library lookup (waves/mb_library.py) and how it and the
+"""The MusicBrainz library lookup (bitwave/mb_library.py) and how it and the
 Releases check confirm each other.
 
 Promises: the files' own MusicBrainz id settles an artist with no search;
@@ -21,10 +21,10 @@ import json
 import urllib.parse
 
 from tests.test_library_file_tags import _flac
-from waves import mb_library
-from waves import musicbrainz as mb
-from waves.library_index import LibraryIndex, _read_album_tags
-from waves.mb_service import MBService, Pacer
+from bitwave import mb_library
+from bitwave import musicbrainz as mb
+from bitwave.library_index import LibraryIndex, _read_album_tags
+from bitwave.mb_service import MBService, Pacer
 
 A_ID = "11111111-1111-1111-1111-111111111111"
 B_ID = "22222222-2222-2222-2222-222222222222"
@@ -244,7 +244,7 @@ def test_a_collaboration_id_says_nothing(tmp_path):
 class _Bridge:
     """The bridge's lookup methods over a stub: prefs, a published cache."""
 
-    from waves.waves_ui.bridge_library import LibraryMixin as _L
+    from bitwave.bitwave_ui.bridge_library import LibraryMixin as _L
 
     _mb_lookup_on = _L._mb_lookup_on
     _mb_lookup_kick = _L._mb_lookup_kick
@@ -264,7 +264,7 @@ class _Bridge:
         )
         self._library_index = types.SimpleNamespace(cache=cache)
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return bool(self.prefs.get(key))
 
     def _mb_service_instance(self):

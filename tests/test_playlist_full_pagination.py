@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from tidalapi.media import Track
 
-from waves.waves_ui.backend import _all_playlist_items
+from bitwave.bitwave_ui.backend import _all_playlist_items
 
 
 def _make_track(i: int) -> Track:

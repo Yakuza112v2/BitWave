@@ -17,7 +17,7 @@ import sys
 import textwrap
 from pathlib import Path
 
-from waves.follows import FollowStore
+from bitwave.follows import FollowStore
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -27,7 +27,7 @@ def _run_as_test_script(tmp_path: Path, xdg: str | None) -> subprocess.Completed
     tests_dir.mkdir()
     script = tests_dir / "test_direct_run.py"
     script.write_text(textwrap.dedent("""
-            from waves.helper.path import path_config_base
+            from bitwave.helper.path import path_config_base
             print("BASE", path_config_base())
             """))
     env = dict(os.environ)
@@ -71,6 +71,6 @@ def test_the_store_drops_ids_tidal_never_issues(tmp_path):
 
 
 def test_the_app_drops_them_when_it_opens_the_store():
-    src = (ROOT / "waves" / "waves_ui" / "backend.py").read_text()
+    src = (ROOT / "bitwave" / "bitwave_ui" / "backend.py").read_text()
     opened = src.index("self._releases = FollowStore(_rel_file)")
     assert "drop_foreign_ids()" in src[opened : opened + 800]

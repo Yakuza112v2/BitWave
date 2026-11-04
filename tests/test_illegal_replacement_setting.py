@@ -25,11 +25,11 @@ from unittest.mock import MagicMock
 
 from tidalapi import Album, Track
 
-from waves.download import Download
-from waves.helper.path import format_path_media, safe_filename_replacement
-from waves.waves_ui.backend import WavesBridge
+from bitwave.download import Download
+from bitwave.helper.path import format_path_media, safe_filename_replacement
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_UI = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui"
+_UI = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui"
 
 _SLASHED = "The Better Life / Dead Love"
 _LEGACY_DIR = "The Better Life  Dead Love"  # doubled space, pre-0.1.17
@@ -192,9 +192,9 @@ class TestTheSettingsBoxRefusesIllegalCharacters:
     def test_the_page_asks_the_engines_own_launderer(self):
         # The warning would be a lie if the page judged the value by a rule of
         # its own, so the slot is the very function the download path calls.
-        assert WavesBridge.sanitizeFilenameReplacement(None, "-/") == "-"
-        assert WavesBridge.sanitizeFilenameReplacement(None, "?") == ""
-        assert WavesBridge.sanitizeFilenameReplacement(None, " - ") == " - "
+        assert BitWaveBridge.sanitizeFilenameReplacement(None, "-/") == "-"
+        assert BitWaveBridge.sanitizeFilenameReplacement(None, "?") == ""
+        assert BitWaveBridge.sanitizeFilenameReplacement(None, " - ") == " - "
 
     def test_the_field_is_marked_for_laundering(self):
         src = (_UI / "backend.py").read_text()
@@ -209,7 +209,7 @@ class TestTheSettingsBoxRefusesIllegalCharacters:
         assert "border.color: invalid ? page.red :" in src
         # ... and the short-value box sets it from the laundering check.
         assert "invalid: page.sanitizeDirty(modelData)" in src
-        assert "waves.sanitizeFilenameReplacement(String(val(f)))" in src
+        assert "bitwave.sanitizeFilenameReplacement(String(val(f)))" in src
 
     def test_a_red_field_grays_out_save_instead_of_correcting_it(self):
         # Correcting the value on save flashed "changes saved" over a silent

@@ -1,6 +1,6 @@
-"""Shared test doubles for the WavesBridge unit tests.
+"""Shared test doubles for the BitWaveBridge unit tests.
 
-The bridge tests are Qt-free: they bind the real, unbound ``WavesBridge`` methods
+The bridge tests are Qt-free: they bind the real, unbound ``BitWaveBridge`` methods
 onto a minimal stand-in and drive them with fakes instead of a live QObject, a
 QThreadPool, or an event loop. Two of those fakes were copy-pasted into ~10 test
 files, and had already drifted into two spellings of the same ``_Signal`` and
@@ -25,8 +25,8 @@ import tempfile
 
 # Every test in this suite runs against a throwaway config directory.
 #
-# A test that builds a real WavesBridge otherwise reads and WRITES the config
-# of the machine it runs on: __init__ alone stamps waves.json (see
+# A test that builds a real BitWaveBridge otherwise reads and WRITES the config
+# of the machine it runs on: __init__ alone stamps bitwave.json (see
 # _migrate_video_flag), so one suite run could overwrite a real install's
 # library switch, folder and MusicBrainz choice, its window geometry and its
 # explicit-version setting with whatever the test happened to hold. Nothing in
@@ -37,7 +37,7 @@ import tempfile
 # conftest import, before any test module is imported and before any path is
 # resolved from it. The subprocess scenarios copy this environment, so they
 # land in the same throwaway home unless they name one of their own.
-_TEST_CONFIG_HOME = tempfile.mkdtemp(prefix="waves-test-config-")
+_TEST_CONFIG_HOME = tempfile.mkdtemp(prefix="bitwave-test-config-")
 os.environ["XDG_CONFIG_HOME"] = _TEST_CONFIG_HOME
 atexit.register(shutil.rmtree, _TEST_CONFIG_HOME, True)
 
@@ -74,7 +74,7 @@ class _InlinePool:
 class _InlineWriter:
     """Stand-in for the bridge's ``_SingleFlightWriter`` that performs each
     submitted config write synchronously, so a test that borrows the real
-    ``_save_settings`` / ``_save_waves_prefs`` can assert what landed on disk
+    ``_save_settings`` / ``_save_bitwave_prefs`` can assert what landed on disk
     right after the call, exactly as before those saves went off-thread. The
     writer's own async behavior is covered by its dedicated tests."""
 

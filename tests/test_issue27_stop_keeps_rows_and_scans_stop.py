@@ -36,7 +36,7 @@ from _dispatch_stub import arm_queue
 from test_discography_video_source import _Artist as _VideoArtist
 from test_discography_video_source import _DiscoStub, _Signal
 
-from waves.waves_ui.backend import _RETRYABLE, WavesBridge, _stop_check_for
+from bitwave.bitwave_ui.backend import _RETRYABLE, BitWaveBridge, _stop_check_for
 
 # ---------------------------------------------------------------------------
 # 1. STOP during a discography scan
@@ -171,12 +171,12 @@ def test_a_parked_scan_says_it_is_scanning_until_it_ends():
     stub = _StopMidScanStub("never")
     pool = _HoldingPool()
     stub._scan_pool = pool
-    assert WavesBridge._get_scanning(stub) is False
+    assert BitWaveBridge._get_scanning(stub) is False
     stub.downloadArtist("art1")
-    assert WavesBridge._get_scanning(stub) is True, "ordered, not yet running: already scanning"
+    assert BitWaveBridge._get_scanning(stub) is True, "ordered, not yet running: already scanning"
     assert stub.scanningChanged.emits == [()]
     pool.run_all()
-    assert WavesBridge._get_scanning(stub) is False
+    assert BitWaveBridge._get_scanning(stub) is False
     assert stub.scanningChanged.emits == [(), ()]
 
 
@@ -187,7 +187,7 @@ def test_a_scan_that_stop_ends_hands_scanning_back_too():
     stub.downloadArtist("art1")
     stub._press_stop()
     pool.run_all()
-    assert WavesBridge._get_scanning(stub) is False
+    assert BitWaveBridge._get_scanning(stub) is False
 
 
 def test_two_scans_in_flight_announce_once_each_way():
@@ -210,10 +210,10 @@ def test_the_drawer_stop_button_reads_scanning():
     import re
     from pathlib import Path
 
-    src = (Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text()
+    src = (Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text()
     stop = re.search(r'visible: ([^\n]*)\n\s*danger: true; label: "STOP"', src)
     assert stop, "the drawer's STOP button"
-    assert "waves.scanning" in stop.group(1) and "activeQueueCount > 0" in stop.group(1)
+    assert "bitwave.scanning" in stop.group(1) and "activeQueueCount > 0" in stop.group(1)
 
 
 def test_a_stop_check_is_stale_only_after_a_bump():
@@ -223,7 +223,7 @@ def test_a_stop_check_is_stale_only_after_a_bump():
     bridge._scan_gen += 1
     import pytest
 
-    from waves.waves_ui.backend import _ScanStopped
+    from bitwave.bitwave_ui.backend import _ScanStopped
 
     with pytest.raises(_ScanStopped):
         check()
@@ -257,16 +257,16 @@ class _StopInEditionScanStub(_StopMidScanStub):
     """'Most-complete edition only' on, so the sweep scans editions; STOP lands
     inside the first track fetch of that scan."""
 
-    _collapse_editions = WavesBridge._collapse_editions
-    _merge_editions = WavesBridge._merge_editions
-    _merge_recs_factory = WavesBridge._merge_recs_factory
+    _collapse_editions = BitWaveBridge._collapse_editions
+    _merge_editions = BitWaveBridge._merge_editions
+    _merge_recs_factory = BitWaveBridge._merge_recs_factory
 
     def __init__(self, merge: bool):
         super().__init__("editions")
         self.merge = merge
-        self._waves_prefs = {"edition_conflict": "merge" if merge else "completeness", "explicit_mode": "explicit"}
+        self._bitwave_prefs = {"edition_conflict": "merge" if merge else "completeness", "explicit_mode": "explicit"}
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return key == "collapse_editions"
 
     def _merge_pref_on(self):
@@ -305,20 +305,20 @@ def test_stop_during_the_best_of_both_scan_queues_nothing():
 
 
 class _QueueStub:
-    stopAll = WavesBridge.stopAll
-    retryAllFailed = WavesBridge.retryAllFailed
-    retryAllStopped = WavesBridge.retryAllStopped
-    _retry_all_with_status = WavesBridge._retry_all_with_status
-    clearFailed = WavesBridge.clearFailed
-    clearStopped = WavesBridge.clearStopped
-    clearFinished = WavesBridge.clearFinished
-    clearQueue = WavesBridge.clearQueue
-    _set_queue_status = WavesBridge._set_queue_status
-    _queue_item = WavesBridge._queue_item
-    _reindex_queue = WavesBridge._reindex_queue
-    _remove_rows_where = WavesBridge._remove_rows_where
-    _remove_row = WavesBridge._remove_row
-    _row_object = WavesBridge._row_object
+    stopAll = BitWaveBridge.stopAll
+    retryAllFailed = BitWaveBridge.retryAllFailed
+    retryAllStopped = BitWaveBridge.retryAllStopped
+    _retry_all_with_status = BitWaveBridge._retry_all_with_status
+    clearFailed = BitWaveBridge.clearFailed
+    clearStopped = BitWaveBridge.clearStopped
+    clearFinished = BitWaveBridge.clearFinished
+    clearQueue = BitWaveBridge.clearQueue
+    _set_queue_status = BitWaveBridge._set_queue_status
+    _queue_item = BitWaveBridge._queue_item
+    _reindex_queue = BitWaveBridge._reindex_queue
+    _remove_rows_where = BitWaveBridge._remove_rows_where
+    _remove_row = BitWaveBridge._remove_row
+    _row_object = BitWaveBridge._row_object
 
     def __init__(self, statuses):
         self._queue = [
@@ -477,13 +477,13 @@ def test_retry_accepts_exactly_failed_and_stopped():
 
 
 class _RetryStub:
-    retryQueueItem = WavesBridge.retryQueueItem
-    _queue_item = WavesBridge._queue_item
-    _reindex_queue = WavesBridge._reindex_queue
-    _remove_rows_where = WavesBridge._remove_rows_where
-    _remove_row = WavesBridge._remove_row
-    _row_object = WavesBridge._row_object
-    _start_retry = WavesBridge._start_retry
+    retryQueueItem = BitWaveBridge.retryQueueItem
+    _queue_item = BitWaveBridge._queue_item
+    _reindex_queue = BitWaveBridge._reindex_queue
+    _remove_rows_where = BitWaveBridge._remove_rows_where
+    _remove_row = BitWaveBridge._remove_row
+    _row_object = BitWaveBridge._row_object
+    _start_retry = BitWaveBridge._start_retry
 
     def __init__(self, status):
         self._queue = [
@@ -539,7 +539,7 @@ class _EditionGateStub(_DiscoStub):
         self.merge = merge
         self.calls: list = []
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return self.collapse if key == "collapse_editions" else False
 
     def _merge_pref_on(self):
@@ -625,7 +625,7 @@ def test_the_help_says_the_sweep_follows_the_switch():
     # wrong field.
     from test_discography_video_source import _schema_stub
 
-    fields = {f["key"]: f for s in WavesBridge.settingsSchema(_schema_stub()) for f in s["fields"]}
+    fields = {f["key"]: f for s in BitWaveBridge.settingsSchema(_schema_stub()) for f in s["fields"]}
     conflict = fields["edition_conflict"]["help"]
     collapse = fields["collapse_editions"]["help"]
     # "any of these" is every choice, 'Best of both' included.

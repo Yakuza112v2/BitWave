@@ -13,9 +13,9 @@ from pathlib import Path
 
 import certifi
 
-from waves.tls import tls_context
+from bitwave.tls import tls_context
 
-_PKG = Path(__file__).resolve().parent.parent / "waves"
+_PKG = Path(__file__).resolve().parent.parent / "bitwave"
 
 
 def test_the_shared_context_verifies_against_certifi():

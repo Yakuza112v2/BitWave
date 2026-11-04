@@ -41,13 +41,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_arrivals_sit_under_just_in_until_seen() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-releases-just-in-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-releases-just-in-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -248,13 +248,13 @@ def _run_scenario() -> int:  # noqa: C901
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    from waves.waves_ui import bridge_releases
+    from bitwave.bitwave_ui import bridge_releases
 
     class _Day(datetime.date):
         @classmethod
@@ -264,8 +264,8 @@ def _run_scenario() -> int:  # noqa: C901
     bridge_releases._dt = type("_Dt", (), {"date": _Day})
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -329,7 +329,7 @@ def _run_scenario() -> int:  # noqa: C901
     q('todayIso = "2026-10-14"')
 
     store = bridge._releases
-    bridge._waves_prefs["releases_window_months"] = "120"
+    bridge._bitwave_prefs["releases_window_months"] = "120"
     store.follow("ar1", "Artist One", "")
     many = [{"id": f"ar{n}", "name": f"A Remarkably Long Artist Name {n}"} for n in range(1, 5)]
     crowd = [{"id": f"cr{n}", "name": f"The Featured Ensemble Of Session Player {n}"} for n in range(1, 13)]
@@ -472,7 +472,7 @@ def _run_scenario() -> int:  # noqa: C901
         failures.append(f"This week runs {order().get('This week')}, wanted newest day first, then the latest find")
 
     # 7. Set to go after a visit: gone once the pane is left.
-    bridge._waves_prefs["releases_arrivals"] = "visit"
+    bridge._bitwave_prefs["releases_arrivals"] = "visit"
     store.record_check(
         "ar1",
         [

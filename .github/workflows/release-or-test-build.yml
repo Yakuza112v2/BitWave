@@ -6,7 +6,7 @@ defaults:
   run:
     shell: bash
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.inputs.release_tag || github.ref }}
   cancel-in-progress: true
 env:
   ASSET_EXTENSION: .zip
@@ -37,9 +37,9 @@ jobs:
       if: ${{ (github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
         'workflow_dispatch' && github.event.inputs.release_tag != '') }}
       run: |
-        grep -Eq '^REPO = "[^"]+"' waves/waves_ui/updater.py \
+        grep -Eq '^REPO = "[^"]+"' bitwave/bitwave_ui/updater.py \
           || { echo "::error::updater.REPO is empty; a published build could never auto-update. Set REPO before tagging a release."; exit 1; }
-        grep -Eq '^UPDATE_PUBLIC_KEY = "[^"]+"' waves/waves_ui/signing.py \
+        grep -Eq '^UPDATE_PUBLIC_KEY = "[^"]+"' bitwave/bitwave_ui/signing.py \
           || { echo "::error::signing.UPDATE_PUBLIC_KEY is empty; shipped updates could not be signature-verified. Embed UPDATE_PUBLIC_KEY before tagging a release."; exit 1; }
         echo "Updater is configured; release build may proceed."
     - name: Guard, release tag matches __version__
@@ -49,9 +49,9 @@ jobs:
         RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
       run: |
         TAG_VERSION="${RELEASE_TAG#v}"
-        CODE_VERSION="$(grep -m1 '__version__' waves/waves_ui/__init__.py | tr -d ' "' | cut -d'=' -f2)"
+        CODE_VERSION="$(grep -m1 '__version__' bitwave/bitwave_ui/__init__.py | tr -d ' "' | cut -d'=' -f2)"
         if [ "$TAG_VERSION" != "$CODE_VERSION" ]; then
-          echo "::error::release tag '$RELEASE_TAG' (version '$TAG_VERSION') does not match waves/waves_ui/__init__.py __version__ '$CODE_VERSION'. Bump __version__ to match the tag before releasing."
+          echo "::error::release tag '$RELEASE_TAG' (version '$TAG_VERSION') does not match bitwave/bitwave_ui/__init__.py __version__ '$CODE_VERSION'. Bump __version__ to match the tag before releasing."
           exit 1
         fi
         echo "Version $CODE_VERSION matches release tag $RELEASE_TAG."
@@ -102,12 +102,12 @@ jobs:
           TARGET: windows-2022
           OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_X64}}
           CMD_BUILD: |
-            choco install zip make -y && source $VENV && poetry run make gui-waves-windows && cd dist && mv waves.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
+            choco install zip make -y && source $VENV && poetry run make gui-bitwave-windows && cd dist && mv bitwave.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_X64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
         - os: windows-11-arm
           TARGET: windows-11-arm
           OS_ARCH: ${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}
           CMD_BUILD: |
-            choco install zip make -y && source $VENV && poetry run make gui-waves-windows && cd dist && mv waves.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
+            choco install zip make -y && source $VENV && poetry run make gui-bitwave-windows && cd dist && mv bitwave.dist BitWave && zip -9 -r ${{needs.compute.outputs.OUT_NAME_FILE}}_${{needs.compute.outputs.ARCH_WINDOWS_ARM64}}${{needs.compute.outputs.ASSET_EXTENSION}} BitWave && cd ..
     runs-on: ${{ matrix.os }}
     steps:
     - name: Check out
@@ -218,7 +218,7 @@ jobs:
       env:
         RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
       run: |
-        { echo "# waves-version: ${RELEASE_TAG}"; cat sums/*.sha256 | LC_ALL=C sort -k2; } > SHA256SUMS
+        { echo "# bitwave-version: ${RELEASE_TAG}"; cat sums/*.sha256 | LC_ALL=C sort -k2; } > SHA256SUMS
         echo "----- SHA256SUMS -----"; cat SHA256SUMS
     - name: Sign SHA256SUMS
       env:

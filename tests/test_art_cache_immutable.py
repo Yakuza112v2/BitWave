@@ -18,7 +18,7 @@ pytest.importorskip("PySide6")
 from PySide6.QtCore import QDateTime, QUrl  # noqa: E402
 from PySide6.QtNetwork import QNetworkCacheMetaData, QNetworkDiskCache  # noqa: E402
 
-from waves.waves_ui.app import _ArtCacheFactory, _ImmutableArtCache  # noqa: E402
+from bitwave.bitwave_ui.app import _ArtCacheFactory, _ImmutableArtCache  # noqa: E402
 
 URL = "https://img.test/cover/320x320.jpg"
 

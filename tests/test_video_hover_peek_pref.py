@@ -16,7 +16,7 @@ hatches should stay pinned the same way.
 
 from __future__ import annotations
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
@@ -24,23 +24,23 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _prefs_stub():
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     return stub
 
 
 def test_video_hover_peek_defaults_on():
-    assert _prefs_stub()._waves_prefs["video_hover_peek"] is True
+    assert _prefs_stub()._bitwave_prefs["video_hover_peek"] is True
 
 
 def test_toggle_is_offered_in_the_appearance_section():
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     appearance = next(s for s in schema if s["id"] == "appearance")
     field = next((f for f in appearance["fields"] if f["key"] == "video_hover_peek"), None)
     assert field is not None, "the toggle must be reachable from Settings > Appearance"
@@ -52,7 +52,7 @@ def test_toggle_is_offered_in_the_appearance_section():
 
 def test_flipping_the_pref_notifies_the_ui():
     stub = _prefs_stub()
-    stub._save_waves_prefs = lambda: None
+    stub._save_bitwave_prefs = lambda: None
     stub._factory_reset = False
     fired = []
 
@@ -61,8 +61,8 @@ def test_flipping_the_pref_notifies_the_ui():
             fired.append(True)
 
     stub.videoHoverPeekChanged = _Sig()
-    _bind(stub, "setWavesPref")("video_hover_peek", False)
-    assert stub._waves_prefs["video_hover_peek"] is False
+    _bind(stub, "setBitWavePref")("video_hover_peek", False)
+    assert stub._bitwave_prefs["video_hover_peek"] is False
     assert fired, "Main.qml only re-reads the pref when videoHoverPeekChanged fires"
 
 
@@ -72,8 +72,8 @@ def _schema_stub():
     Built on a fresh defaults-only config, never the machine's own, so the
     test can't depend on (or print) the user's real settings.
     """
-    from waves.model.cfg import HelpSettings
-    from waves.model.cfg import Settings as CfgSettings
+    from bitwave.model.cfg import HelpSettings
+    from bitwave.model.cfg import Settings as CfgSettings
 
     class _Cfg:
         data = CfgSettings()

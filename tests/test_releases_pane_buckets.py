@@ -48,13 +48,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_releases_pane_buckets_and_follows_the_clock() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-releases-pane-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-releases-pane-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -522,8 +522,8 @@ def _run_scenario() -> int:  # noqa: C901
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -532,7 +532,7 @@ def _run_scenario() -> int:  # noqa: C901
     # back from the same day the scenario pins todayIso to.
     import datetime as _datetime
 
-    from waves.waves_ui import bridge_releases
+    from bitwave.bitwave_ui import bridge_releases
 
     class _Day(_datetime.date):
         @classmethod
@@ -542,8 +542,8 @@ def _run_scenario() -> int:  # noqa: C901
     bridge_releases._dt = type("_Dt", (), {"date": _Day})
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -612,7 +612,7 @@ def _run_scenario() -> int:  # noqa: C901
     store = bridge._releases
     # The widest window: the August 2025 row is inside it whatever the real
     # date (the pane reads the feed through the window setting).
-    bridge._waves_prefs["releases_window_months"] = "120"
+    bridge._bitwave_prefs["releases_window_months"] = "120"
     store.follow("ar1", "Artist One", "")
     base = [
         _rel("u_late", "2026-10-20", "album"),
@@ -731,7 +731,7 @@ def _run_scenario() -> int:  # noqa: C901
         failures.append(f"Videos shows {heads()} {order()}, wanted the one video")
     if q("relSearchField.placeholderText") != "Search music videos\u2026":
         failures.append(f"the search under Videos reads {q('relSearchField.placeholderText')!r}")
-    bridge._waves_prefs["releases_videos"] = "hide"
+    bridge._bitwave_prefs["releases_videos"] = "hide"
     before = loads["n"]
     bridge.releasesChanged.emit()
     if not pump(lambda: loads["n"] > before and "This week:1" in heads()):
@@ -841,7 +841,7 @@ def _run_scenario() -> int:  # noqa: C901
         failures.append(f"the FOLLOWING view did not open as the roster ({q('releasesFollowView')})")
     for n in range(80):
         bridge._releases.follow(f"zz{n:03d}", f"Grid Artist {n:03d}", "")
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     if not pump(lambda: q("releasesFollowedModel.count") == 81):
         failures.append(f"the grid never listed 81 follows ({q('releasesFollowedModel.count')})")
     q("relFollowRoster.contentY = Math.min(240, relFollowRoster.contentHeight - relFollowRoster.height)")
@@ -849,7 +849,7 @@ def _run_scenario() -> int:  # noqa: C901
     held_y = q("relFollowRoster.contentY")
     first = q("relFollowRoster.indexAt(10, relFollowRoster.contentY + 20)")
     q(f"relFollowRoster.itemAtIndex({first}).objectName = 'gridCellKept'")
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     settle(400)
     if not held_y or q("relFollowRoster.contentY") != held_y:
         failures.append(f"a reload moved the roster ({held_y} -> {q('relFollowRoster.contentY')})")
@@ -919,7 +919,7 @@ def _run_scenario() -> int:  # noqa: C901
         # scrolled, or at once when short rows leave the view unfilled).
         if not q(f"{view}.visible") or q("relFollowRoster.visible") or q(f"{view}.count") < 60:
             failures.append(f"the {shape} shape did not show a page of the follows ({q(f'{view}.count')})")
-        if q('waves.wavesPref("releases_follow_view")') != shape:
+        if q('bitwave.bitwavePref("releases_follow_view")') != shape:
             failures.append(f"the {shape} shape was not remembered")
     # The shelves: every release on a shelf that scrolls sideways, a wheel
     # turned sideways over it moves the shelf and one turned down moves the
@@ -1013,7 +1013,7 @@ def _run_scenario() -> int:  # noqa: C901
     # ar1's upcoming album (10/28) is the newest on record, then this single.
     store.record_check("zz005", [_rel("late5", "2026-10-12", "single")])
     q('releasesSetFollowSort("recent")')
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     if not pump(lambda: q("releasesFollowedModel.count") > 1 and q("releasesFollowedModel.get(1).uid") == "zz005"):
         failures.append("newest release first did not order the artists by their latest release")
     if q("releasesFollowedModel.get(0).uid") != "ar1":
@@ -1192,14 +1192,14 @@ def _run_scenario() -> int:  # noqa: C901
     # The MusicBrainz marks: with the setting on, a release group TIDAL
     # lacks is a red dot on the ledger's timeline, its hint names it with a
     # NOT ON TIDAL chip, no cover and nothing to click; off, the marks go.
-    bridge._waves_prefs["releases_musicbrainz"] = True
+    bridge._bitwave_prefs["releases_musicbrainz"] = True
     store.record_mb(
         "ar1",
         "mbid-ar1",
         [{"rgid": "g-lost", "title": "Lost One", "date": "2024-03-03", "rtype": "album", "release_id": ""}],
     )
     q('releasesSetFollowView("ledger")')
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     if not pump(lambda: q(_LEDGER_MB_MARK) != ""):
         failures.append("the ledger timeline drew no mark for the release TIDAL lacks")
     else:
@@ -1219,8 +1219,8 @@ def _run_scenario() -> int:  # noqa: C901
             failures.append(f"the hint's row for a release TIDAL lacks is wrong ({tip})")
         QTest.mouseMove(root, QPoint(5, my))
         settle(200)
-    bridge._waves_prefs["releases_musicbrainz"] = False
-    q("waves.loadFollowed()")
+    bridge._bitwave_prefs["releases_musicbrainz"] = False
+    q("bitwave.loadFollowed()")
     if not pump(lambda: q(_LEDGER_MB_COUNT) == 0):
         failures.append("switching MusicBrainz off left the marks on the timeline")
     long_career = json.loads(q(_LEDGER_LONG_CAREER) or "null")
@@ -1235,7 +1235,7 @@ def _run_scenario() -> int:  # noqa: C901
     settle(50)
     if not q(_NAMES_IN_ORDER):
         failures.append("switching back to by name kept the newest-first order")
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     pump(lambda: q("releasesFollowedModel.get(0).uid") != "zz005")
     q('releasesSetView("excluded")')
     bridge.excludedLoaded.emit([{"name": "Thin One", "key": "thin one", "albums": 1, "tracks": 2}])
@@ -1279,7 +1279,7 @@ def _run_scenario() -> int:  # noqa: C901
     # then one more each time it is scrolled near its end.
     for n in range(80, 280):
         bridge._releases.follow(f"zz{n:03d}", f"Grid Artist {n:03d}", "")
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     if not pump(lambda: 0 < q("releasesFollowedModel.count") < 281 and not q("relFollowMoreCheck.running")):
         failures.append(f"the roster did not page a long follow list ({q('releasesFollowedModel.count')} of 281)")
     shown = q("releasesFollowedModel.count")
@@ -1292,7 +1292,7 @@ def _run_scenario() -> int:  # noqa: C901
         failures.append(f"scrolling to the end never showed every follow ({q('releasesFollowedModel.count')})")
     for n in range(280):
         bridge._releases.unfollow(f"zz{n:03d}")
-    q("waves.loadFollowed()")
+    q("bitwave.loadFollowed()")
     pump(lambda: q("releasesFollowedModel.count") == 1)
     bridge.unfollowArtist("ar1")
     if q("releasesFollowedRows.length") != 0 or q("releasesFollowedModel.count") != 0:

@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 import pytest
 
-from waves.waves_ui.backend import _FACTORY_WIPE_FILES, _write_json_atomic, _write_text_atomic
+from bitwave.bitwave_ui.backend import _FACTORY_WIPE_FILES, _write_json_atomic, _write_text_atomic
 
 
 class TestAtomicWriters:
@@ -32,7 +32,7 @@ class TestAtomicWriters:
         target.write_text('{"kept": true}', encoding="utf-8")
 
         with (
-            patch("waves.waves_ui.backend.os.replace", side_effect=OSError(28, "No space left on device")),
+            patch("bitwave.bitwave_ui.backend.os.replace", side_effect=OSError(28, "No space left on device")),
             pytest.raises(OSError, match="No space left on device"),
         ):
             _write_json_atomic(str(target), {"replacement": True})
@@ -43,7 +43,7 @@ class TestAtomicWriters:
         target = tmp_path / "cache.json"
 
         with (
-            patch("waves.waves_ui.backend.os.replace", side_effect=OSError(28, "No space left on device")),
+            patch("bitwave.bitwave_ui.backend.os.replace", side_effect=OSError(28, "No space left on device")),
             pytest.raises(OSError),
         ):
             _write_json_atomic(str(target), {"a": 1})
@@ -69,8 +69,8 @@ class TestAtomicWriters:
             return replace_real(src, dst)
 
         with (
-            patch("waves.waves_ui.backend.os.fsync", _fsync),
-            patch("waves.waves_ui.backend.os.replace", _replace),
+            patch("bitwave.bitwave_ui.backend.os.fsync", _fsync),
+            patch("bitwave.bitwave_ui.backend.os.replace", _replace),
         ):
             _write_text_atomic(str(target), "{}")
 
@@ -87,7 +87,7 @@ class TestAtomicWriters:
 
 class TestTheWritersAreTheOnesUsed:
     def test_the_prefs_writer_leaves_a_readable_file(self, tmp_path):
-        target = tmp_path / "waves.json"
+        target = tmp_path / "bitwave.json"
 
         _write_json_atomic(str(target), {"window": {"w": 1280}}, indent=2)
 
@@ -102,16 +102,16 @@ def test_a_mkstemp_staging_leftover_is_wiped_by_a_factory_reset():
     # A hard kill mid-save strands "<name>.<random>.tmp"; for token.json that
     # stray holds the session token document, the one thing a factory reset
     # promises to remove.
-    from waves.waves_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
+    from bitwave.bitwave_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
 
-    for base in ("settings.json", "token.json", "waves.json", "page_cache.json", "browse_tile_art.json"):
+    for base in ("settings.json", "token.json", "bitwave.json", "page_cache.json", "browse_tile_art.json"):
         stray = f"{base}.k3j9x2ab.tmp"
         assert any(p.match(stray) for p in _FACTORY_WIPE_LOG_PATTERNS), stray
 
 
 def test_the_staging_pattern_cannot_eat_a_foreign_file():
     # Anchored on both ends: only a name BitWave itself stages may ever match.
-    from waves.waves_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
+    from bitwave.bitwave_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
 
     for foreign in (
         "notes.json.k3j9x2ab.tmp",

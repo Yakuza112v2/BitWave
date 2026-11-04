@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import logging
 
-import waves.waves_ui.backend as backend_mod
-from waves.waves_ui.backend import WavesBridge
+import bitwave.bitwave_ui.backend as backend_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-probe = WavesBridge._probe_folder_verdict
+probe = BitWaveBridge._probe_folder_verdict
 
 
 def _deny_writes(monkeypatch):
@@ -31,7 +31,7 @@ def test_a_denied_write_on_a_left_behind_mount_point_reads_as_stale(tmp_path, mo
     (volumes / "Media").mkdir(parents=True)
     _deny_writes(monkeypatch)
     monkeypatch.setattr(backend_mod.netmount, "is_mounted", lambda root: False)
-    with caplog.at_level(logging.INFO, logger="waves"):
+    with caplog.at_level(logging.INFO, logger="bitwave"):
         verdict, _ = probe(str(volumes / "Media" / "Music"), volumes_root=str(volumes))
     assert verdict == "dead"
     assert "nothing mounted on it" in caplog.text
@@ -43,7 +43,7 @@ def test_a_denied_write_on_a_live_mount_reads_as_denied(tmp_path, monkeypatch, c
     (volumes / "Media").mkdir(parents=True)
     _deny_writes(monkeypatch)
     monkeypatch.setattr(backend_mod.netmount, "is_mounted", lambda root: True)
-    with caplog.at_level(logging.INFO, logger="waves"):
+    with caplog.at_level(logging.INFO, logger="bitwave"):
         verdict, _ = probe(str(volumes / "Media" / "Music"), volumes_root=str(volumes))
     assert verdict == "dead"
     assert "denied by OS permissions" in caplog.text
@@ -56,7 +56,7 @@ def test_a_denied_write_outside_the_volumes_root_never_reads_the_mount_table(tmp
         "is_mounted",
         lambda root: (_ for _ in ()).throw(AssertionError("mount table read for a local path")),
     )
-    with caplog.at_level(logging.INFO, logger="waves"):
+    with caplog.at_level(logging.INFO, logger="bitwave"):
         verdict, _ = probe(str(tmp_path / "Music"), volumes_root=str(tmp_path / "Volumes"))
     assert verdict == "dead"
     assert "denied by OS permissions" in caplog.text

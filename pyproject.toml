@@ -1,7 +1,7 @@
 [project]
 name = "bitwave"
-authors = [{ name = "Yakuza112v2" }, { name = "iamprivacy (Waves upstream)" }]
-# Kept equal to waves.waves_ui.__version__, which is the version the app and
+authors = [{ name = "Yakuza112v2" }]
+# Kept equal to bitwave.bitwave_ui.__version__, which is the version the app and
 # the updater actually report; tests/test_package_version.py fails the build if
 # the two drift. Bump both in the same commit that cuts a release.
 version = "0.2.2"
@@ -26,7 +26,7 @@ repository = "https://github.com/Yakuza112v2/BitWave"
 documentation = "https://github.com/Yakuza112v2/BitWave"
 
 [tool.poetry]
-packages = [{ include = "waves" }]
+packages = [{ include = "bitwave" }]
 
 [tool.poetry.dependencies]
 requests = "~2.34.2"
@@ -36,7 +36,7 @@ pathvalidate = "^3.3.1"
 m3u8 = "^6.0.0"
 # Getestete Qt-Version für die Windows-Ausgaben.
 pyside6 = { version = "6.11.1", optional = true }
-# Optional on purpose: waves_ui.notify degrades to "no banner" without it, and
+# Optional on purpose: bitwave_ui.notify degrades to "no banner" without it, and
 # Settings shows the notification switch only when it is importable.
 desktop-notifier = { version = "^6.2.0", optional = true }
 tidalapi = "^0.8.10"
@@ -138,7 +138,7 @@ ignore = [
 "tests/test_settings_unsaved_marks.py" = ["S603", "C901"]
 "tests/test_releases_search_restore.py" = ["S603"]
 "tests/test_releases_feed_reveal.py" = ["S603"]
-"tests/test_waves_scrollbar.py" = ["S603", "C901"]
+"tests/test_bitwave_scrollbar.py" = ["S603", "C901"]
 "tests/test_queue_row_bar_follows_drag.py" = ["S603", "C901"]
 "tests/test_queue_button_echo.py" = ["S603", "C901"]
 "tests/test_releases_badge_flare.py" = ["S603", "C901"]
@@ -201,7 +201,7 @@ ignore = [
 # machine over each folder's probe result (unchanged / relist / transient error /
 # vanished / root offline); the branching is the point and the function was kept
 # whole so it reads (and was reviewed) as one flow, so exempt mccabe (C901).
-"waves/library_index.py" = ["C901"]
+"bitwave/library_index.py" = ["C901"]
 # Same subprocess-isolation + linear-scenario shape as the scroll guard.
 "tests/test_forward_history_account_switch.py" = ["S603", "C901"]
 "tests/test_playlist_folder_qml.py" = ["S603", "C901"]
@@ -288,23 +288,23 @@ ignore = [
 # The BitWave bridge has several inherently branchy but linear functions (the
 # settings-schema builder, the settings dispatcher and the search/discography
 # orchestration) that trip mccabe (C901) without being genuinely complex.
-"waves/waves_ui/backend.py" = ["C901"]
+"bitwave/bitwave_ui/backend.py" = ["C901"]
 # The ffmpeg manager's job is to download and run a static ffmpeg build, so it
 # intentionally shells out (S603/S607); install() is one linear sequence (C901);
 # and its raised errors carry deliberately descriptive messages (TRY003).
-"waves/waves_ui/ffmpeg_manager.py" = ["S603", "S607", "C901", "TRY003"]
+"bitwave/bitwave_ui/ffmpeg_manager.py" = ["S603", "S607", "C901", "TRY003"]
 # The updater downloads and swaps a packaged build, so it intentionally shells
 # out (S603/S607) for the platform swap/relaunch; install()/_apply are linear
 # sequences (C901); and its errors carry deliberately descriptive messages (TRY003).
-"waves/waves_ui/updater.py" = ["S603", "S606", "S607", "C901", "TRY003"]
+"bitwave/bitwave_ui/updater.py" = ["S603", "S606", "S607", "C901", "TRY003"]
 # download.py is upstream Tidaler code (kept as-is apart from the keep_album flag);
 # its downsample/transcode raises carry deliberately descriptive messages (TRY003),
 # same rationale as ffmpeg_manager/updater above.
-"waves/download.py" = ["TRY003"]
+"bitwave/download.py" = ["TRY003"]
 # The untrusted-listing recovery mounts a share a second time to read the names
 # the first mount will not list, so it intentionally shells out to the system's
 # own mount and umount binaries (S603, fixed argv, no shell).
-"waves/waves_ui/smb_relist.py" = ["S603"]
+"bitwave/bitwave_ui/smb_relist.py" = ["S603"]
 
 [tool.black]
 # https://github.com/psf/black

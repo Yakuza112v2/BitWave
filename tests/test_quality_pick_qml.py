@@ -32,13 +32,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_quality_badge_menu_follows_the_choice_on_every_row():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-quality-pick-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-quality-pick-test-")
     proc = subprocess.run(  # (fixed argv: this file, one flag)
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -162,25 +162,25 @@ def _run_scenario() -> int:  # noqa: C901 (one straight scenario)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui import backend
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui import backend
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    WavesBridge._library_root = lambda self: ""  # type: ignore[method-assign]
-    WavesBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
-    WavesBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge._library_root = lambda self: ""  # type: ignore[method-assign]
+    BitWaveBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     # Copies already on disk, recorded BEFORE the page can ask about them (an
     # answer is cached for its TTL, so a record written later would not be
     # seen): t1 and t2 are held at HI-RES and are the album's whole track
     # list. t2's catalog tier is LOSSLESS, so its HI-RES row is the widest a
     # menu row gets, NOT OFFERED and in the library at once.
-    owned_dir = Path(tempfile.mkdtemp(prefix="waves-quality-pick-owned-"))
+    owned_dir = Path(tempfile.mkdtemp(prefix="bitwave-quality-pick-owned-"))
     # Ownership is only ever answered from the download folder (and the
     # library folder, none here), so the copies live in the download folder.
     bridge.settings.data.download_base_path = str(owned_dir)
@@ -189,7 +189,7 @@ def _run_scenario() -> int:  # noqa: C901 (one straight scenario)
         f.write_text("audio")
         bridge._ownership.record(tid, str(f), "HI_RES_LOSSLESS")
     bridge._ownership.record_members_replace("a1", ["t1", "t2"])
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

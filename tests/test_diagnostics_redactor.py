@@ -22,16 +22,16 @@ import pytest
 
 @pytest.fixture()
 def diag():
-    sys.modules.pop("waves.waves_ui.diagnostics", None)
-    module = importlib.import_module("waves.waves_ui.diagnostics")
+    sys.modules.pop("bitwave.bitwave_ui.diagnostics", None)
+    module = importlib.import_module("bitwave.bitwave_ui.diagnostics")
     yield module
-    sys.modules.pop("waves.waves_ui.diagnostics", None)
+    sys.modules.pop("bitwave.bitwave_ui.diagnostics", None)
 
 
 # ---- identity tier: (input line, leaked fragments that MUST be gone) --------
 IDENTITY_CORPUS = [
     # user paths, all OS spellings
-    ("could not open /Users/carol.smith/Music/waves/track.flac", ["carol.smith"]),
+    ("could not open /Users/carol.smith/Music/bitwave/track.flac", ["carol.smith"]),
     ("scan found /home/dave_99/library", ["dave_99"]),
     (r"error at C:\Users\Eve Adams\AppData\Local\BitWave\settings.json", ["Eve Adams"]),
     # each half of a spaced profile name, not just the joined string
@@ -70,7 +70,7 @@ IDENTITY_CORPUS = [
     ("etag 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", ["9f86d081884c7d659a2f"]),
     ("device 550e8400-e29b-41d4-a716-446655440000 registered", ["550e8400-e29b-41d4-a716-446655440000"]),
     # traceback path
-    ('  File "/Users/karl/dev/waves/waves/download.py", line 42', ["karl"]),
+    ('  File "/Users/karl/dev/bitwave/bitwave/download.py", line 42', ["karl"]),
     # third-party lines never pass through content(), so a URL query string is
     # the one place a search needle can reach the disk log unmarked: urllib3
     # logs the retried URL verbatim once the API session mounts a Retry policy
@@ -105,7 +105,7 @@ KEEP_CORPUS = [
     # inside an ordinary path.
     ("GET https://api.tidal.com/v1/tracks/123 -> 200", ["https://api.tidal.com/v1/tracks/123"]),
     ("scanning /Music//Artist/Album took 2s", ["/Music//Artist/Album"]),
-    # The download slot ledger's two lines (waves/download_slots.py): a
+    # The download slot ledger's two lines (bitwave/download_slots.py): a
     # cooldown length and a refusal over disk space, neither naming a path.
     ("Next download will start in 3.5 seconds.", ["3.5 seconds"]),
     ("Finishing seat refused: low disk space on the temp volume.", ["low disk space"]),
@@ -247,7 +247,7 @@ def test_breadcrumb_ring_is_bounded_and_drop_oldest(diag):
 def test_redacting_filter_scrubs_formatted_records(diag):
     import logging
 
-    rec = logging.LogRecord("waves.t", logging.INFO, "", 0, "path %s hit", ("/Users/nina/a.flac",), None)
+    rec = logging.LogRecord("bitwave.t", logging.INFO, "", 0, "path %s hit", ("/Users/nina/a.flac",), None)
     assert diag._RedactingFilter().filter(rec) is True
     assert "nina" not in rec.getMessage()
 
@@ -257,15 +257,15 @@ def test_installer_failure_text_shown_to_the_user_is_scrubbed():
     # installer or updater. An OSError names the staging file under the home
     # directory, so the emit went through str(exc) unscrubbed (front-end
     # audit 2026-09-17, G5). Both emits now go through _user_error.
-    from waves.waves_ui.backend import _user_error
+    from bitwave.bitwave_ui.backend import _user_error
 
-    exc = PermissionError(13, "Permission denied", "/Users/nina/Library/Application Support/waves/ffmpeg.tmp")
+    exc = PermissionError(13, "Permission denied", "/Users/nina/Library/Application Support/bitwave/ffmpeg.tmp")
     shown = _user_error(exc, "Install failed")
     assert "nina" not in shown and "/" not in shown
     # Final audit C05: the UI gets a plain sentence for the failure's kind,
     # never the library's own text; the raw exception stays in the log.
     assert shown == "BitWave could not write to its install folder"
-    raw = OSError("[Errno 13] Permission denied: '/Users/nina/Library/Application Support/waves/ffmpeg.tmp'")
+    raw = OSError("[Errno 13] Permission denied: '/Users/nina/Library/Application Support/bitwave/ffmpeg.tmp'")
     assert _user_error(raw, "Install failed") == "Install failed"
     assert _user_error(RuntimeError(""), "Install failed") == "Install failed"
 

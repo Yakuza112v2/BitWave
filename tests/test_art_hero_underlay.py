@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-MAIN_PATH = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+MAIN_PATH = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 MAIN_QML = MAIN_PATH.read_text()
 
 
@@ -118,7 +118,7 @@ def test_every_loading_surface_shares_the_one_wire_hint():
 
 
 def test_the_hint_ships_one_treatment_and_not_a_dial():
-    # Eleven were built to be compared in the lab (tags waves-wire-hint-*);
+    # Eleven were built to be compared in the lab (tags bitwave-wire-hint-*);
     # the chosen one is the whole file now. A `variant` switch back in this
     # component means the other ten came back with it, and every loading
     # surface in the app is then carrying code no release can reach.
@@ -162,8 +162,8 @@ def test_hover_prefetch_is_one_shared_dwell_that_warms_the_hero_and_asks_the_bac
     assert (
         'root.warmArt("" + c.art, kind === "artist" ? 300 : 360, kind === "artist" ? 300 : 360)' in timer
     ), "the item hero decodes at 360 (180px Art), the artist photo at 300 (150px)"
-    assert "waves.prefetchBrowseItem(" in timer
-    assert "waves.prefetchArtist(" in timer, "an artist card's dwell builds its page too"
+    assert "bitwave.prefetchBrowseItem(" in timer
+    assert "bitwave.prefetchArtist(" in timer, "an artist card's dwell builds its page too"
     keyfn = _body("    function _cardPrefetchKey(card) {")
     assert '"album:" + card.album_id' in keyfn, "a track card prefetches its album page"
     assert 'kind === "artist"' in keyfn, "artist cards are in the family"

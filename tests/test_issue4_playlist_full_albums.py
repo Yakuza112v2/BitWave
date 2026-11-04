@@ -20,9 +20,9 @@ from types import SimpleNamespace
 from tidalapi.album import Album
 from tidalapi.media import AudioMode, Quality, Track, Video
 
-from waves.waves_ui.backend import _PLAYLIST_ALBUMS_GROUP_PREFIX, WavesBridge
+from bitwave.bitwave_ui.backend import _PLAYLIST_ALBUMS_GROUP_PREFIX, BitWaveBridge
 
-QML = (Path(__file__).parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+QML = (Path(__file__).parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 ATMOS = AudioMode.dolby_atmos.value
 
 
@@ -110,7 +110,7 @@ class _Lock:
 
 
 class _Stub:
-    downloadPlaylistAlbums = WavesBridge.downloadPlaylistAlbums
+    downloadPlaylistAlbums = BitWaveBridge.downloadPlaylistAlbums
 
     def __init__(self, playlist, albums, *, atmos=True, cached=True, fail_album=None, bulk_skip=False, claimed=()):
         self._dl = object()
@@ -156,7 +156,7 @@ class _Stub:
     def _dedup_albums(self, albums):
         return list(albums)
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return False
 
     def _merge_pref_on(self):
@@ -328,7 +328,7 @@ class _EditionStub(_Stub):
         self.merge = merge
         self.calls: list = []
 
-    def _waves_pref_bool(self, key):
+    def _bitwave_pref_bool(self, key):
         return self.collapse if key == "collapse_editions" else False
 
     def _merge_pref_on(self):
@@ -400,7 +400,7 @@ def test_the_playlist_header_carries_the_full_albums_button():
     assert head, "the browse item header's full-albums button was not found"
     block = head.group(0)
     assert '"albums:" + (browseItemHeader.hd.id || "")' in block
-    assert "waves.downloadPlaylistAlbums(browseItemHeader.hd.id)" in block
+    assert "bitwave.downloadPlaylistAlbums(browseItemHeader.hd.id)" in block
     assert re.search(
         r'visible: !!browseItemHeader\.hd && browseItemHeader\.hd\.kind === "playlist"', block
     ), "the button must hide on album and mix pages"

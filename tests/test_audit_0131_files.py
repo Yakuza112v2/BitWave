@@ -15,10 +15,10 @@ from tests.test_release_star_history import (
     _write_hook,
     sandbox,  # noqa: F401  (fixture, reached by name below)
 )
-from waves.config import BaseConfig, Settings
-from waves.helper.decorator import SingletonMeta
-from waves.helper.path import path_config_base
-from waves.model.cfg import Settings as ModelSettings
+from bitwave.config import BaseConfig, Settings
+from bitwave.helper.decorator import SingletonMeta
+from bitwave.helper.path import path_config_base
+from bitwave.model.cfg import Settings as ModelSettings
 
 _USER_FILE = {"download_base_path": "/music/mine", "format_album": "{album_title}/{track_title}"}
 
@@ -61,7 +61,7 @@ def test_an_unreadable_settings_file_survives_the_launch_and_later_saves(tmp_pat
 def test_a_broken_settings_file_that_cannot_be_set_aside_is_left_as_it_is(tmp_path, monkeypatch):
     """#26: when the move to .bak failed (a lock, a read-only folder), the
     defaults were still written over the only copy of the user's file."""
-    import waves.config as config_module
+    import bitwave.config as config_module
 
     base = _config_home(tmp_path, monkeypatch)
     target = base / "settings.json"

@@ -37,8 +37,8 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.media import Quality
 
-from waves.ownership import quality_rank
-from waves.waves_ui import backend
+from bitwave.ownership import quality_rank
+from bitwave.bitwave_ui import backend
 
 
 class _Emit:
@@ -51,7 +51,7 @@ class _Emit:
 
 def _bind(stub, *names) -> None:
     for name in names:
-        setattr(stub, name, getattr(backend.WavesBridge, name).__get__(stub))
+        setattr(stub, name, getattr(backend.BitWaveBridge, name).__get__(stub))
 
 
 def _bridge(setting=Quality.high_lossless):
@@ -388,7 +388,7 @@ def test_ownership_of_uses_the_choice_aware_rank():
     _override_target_rank, not the bare setting."""
     import inspect
 
-    src = inspect.getsource(backend.WavesBridge.ownershipOf)
+    src = inspect.getsource(backend.BitWaveBridge.ownershipOf)
     assert "_override_target_rank(tid)" in src
     assert "_copy_is_current(rec, self._target_quality_rank()" not in src
 
@@ -396,13 +396,13 @@ def test_ownership_of_uses_the_choice_aware_rank():
 def test_the_download_reads_the_choice_after_every_gate_and_writes_it_on_the_row():
     import inspect
 
-    src = inspect.getsource(backend.WavesBridge._download)
+    src = inspect.getsource(backend.BitWaveBridge._download)
     gates = src.index("_ffmpeg_gate_holds")
     ask = src.index("_ask_quality_for(obj, type_media, media_id)")
     assert gates < ask, "the choice is read before a gate that may hold the download"
     assert "ask_quality=ask" in src and "ask_tier=ask_tier" in src
     assert "_consume_quality_override" not in src, "a download spends the choice again"
-    assert not hasattr(backend.WavesBridge, "_consume_quality_override"), "the spending helper came back"
+    assert not hasattr(backend.BitWaveBridge, "_consume_quality_override"), "the spending helper came back"
 
 
 def test_a_retry_keeps_the_tier_its_row_asked_at():
@@ -529,11 +529,11 @@ def test_the_runner_hands_its_rows_atmos_answer_to_the_engine():
     the setting."""
     import inspect
 
-    src = inspect.getsource(backend.WavesBridge)
+    src = inspect.getsource(backend.BitWaveBridge)
     call = src[src.index("dl = self._build_download(") :]
     call = call[: call.index("\n        )")]
     assert "atmos_on=self._job_atmos(qid)" in call, call
-    build = inspect.getsource(backend.WavesBridge._build_download)
+    build = inspect.getsource(backend.BitWaveBridge._build_download)
     assert "atmos_on=atmos_on" in build, build
     dl = backend._TrackedDownload.__new__(backend._TrackedDownload)
     dl.settings = SimpleNamespace(data=SimpleNamespace(download_dolby_atmos=False))
@@ -572,7 +572,7 @@ def test_a_best_of_both_merge_carries_the_clicked_albums_whole_ask():
     the merge landed in stereo under a badge reading ATMOS."""
     import inspect
 
-    src = inspect.getsource(backend.WavesBridge)
+    src = inspect.getsource(backend.BitWaveBridge)
     at = src.index("asks = self._merge_asks = {}")
     before = src[at - 700 : at]
     assert 'if album_id in (getattr(self, "_quality_overrides", None) or {}):' in before, before
@@ -589,7 +589,7 @@ def test_flipping_download_dolby_atmos_re_asks_every_button():
     their old verdict."""
     import inspect
 
-    src = inspect.getsource(backend.WavesBridge.applySettings)
+    src = inspect.getsource(backend.BitWaveBridge.applySettings)
     block = src[src.index('if "download_dolby_atmos" in values:') :]
     block = block[: block.index('if "quality_audio" in values:')]
     assert "self.atmosOnChanged.emit()" in block, block

@@ -24,7 +24,7 @@ from unittest.mock import MagicMock
 import pytest
 from tidalapi.media import Track
 
-from waves.download import Download
+from bitwave.download import Download
 
 
 @pytest.fixture(autouse=True)
@@ -46,7 +46,7 @@ def _identity_from_content(monkeypatch):
 
         return raw[3:].decode() if raw.startswith(b"id-") and raw[3:].isdigit() else ""
 
-    monkeypatch.setattr("waves.download.read_item_id", _read)
+    monkeypatch.setattr("bitwave.download.read_item_id", _read)
 
 
 def _make_download(tmp_path: pathlib.Path, skip_existing: bool, cls: type[Download] = Download) -> Download:
@@ -422,7 +422,7 @@ class TestTrackedDownloadForcesSkippingOffPerThread:
     def test_force_download_is_thread_local(self):
         # The link the tests above stand on: the upgrade context manager flips
         # skipping for the calling thread only.
-        from waves.waves_ui.backend import _TrackedDownload
+        from bitwave.bitwave_ui.backend import _TrackedDownload
 
         dl = _TrackedDownload.__new__(_TrackedDownload)
         dl._tls = threading.local()

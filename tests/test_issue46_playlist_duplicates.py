@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 from tidalapi.types import OrderDirection, PlaylistOrder
 
-from waves.helper.tidal import user_media_lists
+from bitwave.helper.tidal import user_media_lists
 
 
 def _pl(pid: str) -> SimpleNamespace:

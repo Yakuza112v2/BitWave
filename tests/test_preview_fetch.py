@@ -1,6 +1,6 @@
 """Preview loading: parallel HLS segment fetch + up-front 'now previewing' meta.
 
-Hermetic: real unbound WavesBridge methods bound onto minimal stubs, with a
+Hermetic: real unbound BitWaveBridge methods bound onto minimal stubs, with a
 fake pooled session in place of the network. No Qt, no ffmpeg, no CDN.
 """
 
@@ -14,8 +14,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Resp:
@@ -67,7 +67,7 @@ def _playlist(count: int, *, dur: float = 4.0, base: str = "https://cdn/seg", ex
 
 
 class _HlsStub:
-    _localise_hls = WavesBridge._localise_hls
+    _localise_hls = BitWaveBridge._localise_hls
 
 
 @pytest.fixture
@@ -218,12 +218,12 @@ def test_the_remux_error_keeps_ffmpegs_words_and_none_of_the_paths(tmp_path, mon
     import subprocess
 
     class _Stub:
-        _remux_preview = WavesBridge._remux_preview
+        _remux_preview = BitWaveBridge._remux_preview
 
     tmp = tempfile.gettempdir()
     stderr = (
         f"[hls] Opening 'https://cdn.example/seg0.ts?auth=SECRET' for reading\n"
-        f"Error opening output file {tmp}/waves_preview_ab12.m4a.\n"
+        f"Error opening output file {tmp}/bitwave_preview_ab12.m4a.\n"
         "Invalid data found when processing input\n"
     ).encode()
 
@@ -260,8 +260,8 @@ class _ImmediatePool:
 
 
 class _PreviewStub:
-    previewTrack = WavesBridge.previewTrack
-    _emit_preview_meta = WavesBridge._emit_preview_meta
+    previewTrack = BitWaveBridge.previewTrack
+    _emit_preview_meta = BitWaveBridge._emit_preview_meta
 
     def __init__(self, track):
         self.log: list = []

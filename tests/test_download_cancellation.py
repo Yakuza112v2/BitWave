@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from waves.download import Download
-from waves.progress import Progress, TaskID
+from bitwave.download import Download
+from bitwave.progress import Progress, TaskID
 
 
 class TestDownloadCancellation:

@@ -14,7 +14,7 @@ import logging
 import pathlib
 from unittest.mock import MagicMock, patch
 
-from waves.download import Download
+from bitwave.download import Download
 
 
 def _download_instance() -> Download:
@@ -43,12 +43,12 @@ def test_a_cross_filesystem_rename_says_which_errno(tmp_path, caplog):
 
         return replace_real(self, target)
 
-    with caplog.at_level(logging.INFO, logger="waves.download"), patch.object(pathlib.Path, "replace", _cross_device):
+    with caplog.at_level(logging.INFO, logger="bitwave.download"), patch.object(pathlib.Path, "replace", _cross_device):
         assert dl._move_file(source, destination, overwrite=True) is True
 
     assert destination.read_bytes() == b"audio"
 
-    breadcrumbs = [r.getMessage() for r in caplog.records if r.name == "waves.download"]
+    breadcrumbs = [r.getMessage() for r in caplog.records if r.name == "bitwave.download"]
     assert any(str(errno.EXDEV) in message for message in breadcrumbs), breadcrumbs
     assert any("landed.flac" in message for message in breadcrumbs), breadcrumbs
     assert not any(str(tmp_path) in message for message in breadcrumbs), "the path never reaches the log"
@@ -59,7 +59,7 @@ def test_a_successful_rename_says_nothing(tmp_path, caplog):
     source = tmp_path / "source.flac"
     source.write_bytes(b"audio")
 
-    with caplog.at_level(logging.INFO, logger="waves.download"):
+    with caplog.at_level(logging.INFO, logger="bitwave.download"):
         assert dl._move_file(source, tmp_path / "landed.flac", overwrite=True) is True
 
-    assert [r for r in caplog.records if r.name == "waves.download"] == []
+    assert [r for r in caplog.records if r.name == "bitwave.download"] == []

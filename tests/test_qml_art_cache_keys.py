@@ -42,7 +42,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 # The one fill mode every cover surface uses. Covers are square and so are the
 # decode sizes asked for them, so cropping and stretching would paint the same

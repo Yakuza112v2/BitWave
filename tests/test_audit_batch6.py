@@ -1,6 +1,6 @@
 """Tier-3 fixes from the 2026-08-02 audit (findings 41-64).
 
-Hermetic: real unbound WavesBridge/updater/helper functions bound onto minimal
+Hermetic: real unbound BitWaveBridge/updater/helper functions bound onto minimal
 stubs; no Qt, no network. One test per guard, so each fix can be
 knockout-verified independently.
 """
@@ -17,12 +17,12 @@ from unittest.mock import patch
 import pytest
 from test_updater import _manifest, _prep
 
-from waves.helper.path import FILENAME_LENGTH_MAX, format_path_media, path_file_uniquify
-from waves.helper.tidal import name_builder_album_artist, user_media_lists
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui import signing
-from waves.waves_ui.backend import WavesBridge, _graft_scroll_growth
-from waves.waves_ui.updater import UpdateCancelled
+from bitwave.helper.path import FILENAME_LENGTH_MAX, format_path_media, path_file_uniquify
+from bitwave.helper.tidal import name_builder_album_artist, user_media_lists
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui import signing
+from bitwave.bitwave_ui.backend import BitWaveBridge, _graft_scroll_growth
+from bitwave.bitwave_ui.updater import UpdateCancelled
 
 BACKEND_SRC = pathlib.Path(backend_mod.__file__).read_text(encoding="utf-8")
 
@@ -54,7 +54,7 @@ class _HeldPool:
 
 
 class _LogoutStub:
-    logout = WavesBridge.logout
+    logout = BitWaveBridge.logout
 
     def __init__(self):
         self.events: list = []
@@ -147,7 +147,7 @@ def test_concurrent_capped_inserts_never_race():
     def hammer(tag):
         try:
             for i in range(3000):
-                WavesBridge._remember_capped(stub, d, f"{tag}{i}", i, 10)
+                BitWaveBridge._remember_capped(stub, d, f"{tag}{i}", i, 10)
         except Exception as exc:  # pragma: no cover - the failure mode under test
             errors.append(exc)
 
@@ -175,7 +175,7 @@ def test_remember_capped_evicts_oldest():
     stub = SimpleNamespace(_evict_lock=Lock())
     d: dict = {}
     for i in range(45):
-        WavesBridge._remember_capped(stub, d, str(i), i, 40)
+        BitWaveBridge._remember_capped(stub, d, str(i), i, 40)
     assert len(d) == 40 and "0" not in d and "44" in d
 
 
@@ -183,8 +183,8 @@ def test_remember_capped_evicts_oldest():
 
 
 class _TileArtStub:
-    _sample_links_art = WavesBridge._sample_links_art
-    _TILE_ART_TTL = WavesBridge._TILE_ART_TTL
+    _sample_links_art = BitWaveBridge._sample_links_art
+    _TILE_ART_TTL = BitWaveBridge._TILE_ART_TTL
 
     def __init__(self, mem, disk):
         self._tile_art_mem = mem
@@ -208,7 +208,7 @@ def test_a_fresh_mem_tile_entry_is_served():
 
 
 def test_an_expired_mem_tile_entry_is_resampled():
-    old = time.time() - WavesBridge._TILE_ART_TTL - 10
+    old = time.time() - BitWaveBridge._TILE_ART_TTL - 10
     stub = _TileArtStub({"pages/x": (old, ["u1"])}, {"pages/x": {"ts": old, "arts": ["u1"]}})
     stub._sample_links_art([("X", "pages/x")], 1)
     assert stub.browseTileArt.emits == [], "week-old art must not be served forever in an always-on app"
@@ -219,11 +219,11 @@ def test_an_expired_mem_tile_entry_is_resampled():
 
 
 def test_own_cache_is_bounded():
-    stub = SimpleNamespace(_own_cache={}, _OWN_CACHE_MAX=WavesBridge._OWN_CACHE_MAX)
-    for i in range(WavesBridge._OWN_CACHE_MAX + 7):
+    stub = SimpleNamespace(_own_cache={}, _OWN_CACHE_MAX=BitWaveBridge._OWN_CACHE_MAX)
+    for i in range(BitWaveBridge._OWN_CACHE_MAX + 7):
         stub._own_cache[str(i)] = (0.0, None)
-        WavesBridge._evict_own_cache_locked(stub)
-    assert len(stub._own_cache) == WavesBridge._OWN_CACHE_MAX
+        BitWaveBridge._evict_own_cache_locked(stub)
+    assert len(stub._own_cache) == BitWaveBridge._OWN_CACHE_MAX
     assert "0" not in stub._own_cache
 
 
@@ -231,11 +231,11 @@ def test_own_cache_is_bounded():
 
 
 class _MoreStub:
-    loadMoreLibrary = WavesBridge.loadMoreLibrary
+    loadMoreLibrary = BitWaveBridge.loadMoreLibrary
     # The emit dresses its rows (no presence slots here, so they pass through).
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
 
     def __init__(self):
         self._logged_in = True
@@ -286,8 +286,8 @@ def test_a_scroll_page_with_unchanged_sort_still_appends():
 
 
 class _MediaListsStub:
-    _media_lists = WavesBridge._media_lists
-    _MEDIA_LISTS_TTL = WavesBridge._MEDIA_LISTS_TTL
+    _media_lists = BitWaveBridge._media_lists
+    _MEDIA_LISTS_TTL = BitWaveBridge._MEDIA_LISTS_TTL
 
     def __init__(self, cached_tree):
         self._media_lists_lock = Lock()
@@ -352,7 +352,7 @@ def test_remount_heal_requires_the_library_folder_to_exist(tmp_path):
     dead.mkdir()
     dead.chmod(0o500)  # the original volume went read-only ("dead")
     try:
-        verdict, _path = WavesBridge._probe_folder_verdict(str(dead), volumes_root=str(vroot))
+        verdict, _path = BitWaveBridge._probe_folder_verdict(str(dead), volumes_root=str(vroot))
     finally:
         dead.chmod(0o700)
     assert verdict == "dead", "a same-stem drive WITHOUT the library folder is a different drive"
@@ -367,7 +367,7 @@ def test_remount_heal_still_follows_a_genuine_remount(tmp_path):
     dead.mkdir()
     dead.chmod(0o500)
     try:
-        verdict, path = WavesBridge._probe_folder_verdict(str(dead), volumes_root=str(vroot))
+        verdict, path = BitWaveBridge._probe_folder_verdict(str(dead), volumes_root=str(vroot))
     finally:
         dead.chmod(0o700)
     assert verdict == "healed" and path == str(vroot / "T7 1" / "Music")
@@ -375,7 +375,7 @@ def test_remount_heal_still_follows_a_genuine_remount(tmp_path):
 
 def test_a_failed_probe_cleanup_still_reads_as_writable(tmp_path):
     with patch.object(pathlib.Path, "unlink", side_effect=OSError("EACCES")):
-        verdict, _ = WavesBridge._probe_folder_verdict(str(tmp_path), volumes_root=str(tmp_path / "none"))
+        verdict, _ = BitWaveBridge._probe_folder_verdict(str(tmp_path), volumes_root=str(tmp_path / "none"))
     assert verdict == "ok", "the write proved the folder works; a failed cleanup must not block downloads"
 
 
@@ -396,12 +396,12 @@ def test_liveness_stamps_the_proven_path():
     # _remember_share_origin rides on proof of life (share-remount feature);
     # here only the stamp itself is under test.
     stub = SimpleNamespace(_base_ok=("", 0.0), _remember_share_origin=lambda base: None)
-    WavesBridge._note_download_base_ok(stub, "/Volumes/A/Music")
+    BitWaveBridge._note_download_base_ok(stub, "/Volumes/A/Music")
     assert stub._base_ok[0] == "/Volumes/A/Music"
 
 
 class _LifecycleStub:
-    _track_lifecycle = WavesBridge._track_lifecycle
+    _track_lifecycle = BitWaveBridge._track_lifecycle
 
     def __init__(self, base):
         self._job_tracks: dict = {1: {}}
@@ -452,11 +452,11 @@ def test_release_job_signals_defers_the_pop_through_the_queued_hop():
     sig = SimpleNamespace(deleteLater=lambda: dropped.append("deleted"))
     stub._job_signals[7] = sig
 
-    WavesBridge._release_job_signals(stub, 7)
+    BitWaveBridge._release_job_signals(stub, 7)
     assert 7 in stub._job_signals, "the relay must survive the worker's release call"
     assert stub._jobSignalsReleased.emits == [(7,)]
 
-    WavesBridge._drop_job_signals(stub, 7)
+    BitWaveBridge._drop_job_signals(stub, 7)
     assert stub._job_signals == {} and dropped == ["deleted"]
 
 
@@ -464,7 +464,7 @@ def test_release_job_signals_defers_the_pop_through_the_queued_hop():
 
 
 class _RemuxStub:
-    _remux_preview = WavesBridge._remux_preview
+    _remux_preview = BitWaveBridge._remux_preview
 
 
 def test_a_failed_remux_removes_the_output_temp(tmp_path, monkeypatch):
@@ -475,7 +475,7 @@ def test_a_failed_remux_removes_the_output_temp(tmp_path, monkeypatch):
     stub = _RemuxStub()
     with pytest.raises(subprocess.CalledProcessError):
         stub._remux_preview("/usr/bin/false", "https://cdn/x", None, whole=False)
-    leftovers = list(tmp_path.glob("waves_preview_*"))
+    leftovers = list(tmp_path.glob("bitwave_preview_*"))
     assert leftovers == [], "an orphan here is invisible to every shutdown sweep"
     tempfile.tempdir = None
 
@@ -507,7 +507,7 @@ class _Pool:
 
 
 class _ShutdownStub:
-    shutdown = WavesBridge.shutdown
+    shutdown = BitWaveBridge.shutdown
 
     def __init__(self):
         from threading import Event
@@ -542,7 +542,7 @@ def test_install_cancel_after_extraction_is_honored_and_staging_swept(monkeypatc
     from threading import Event
 
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, _applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -567,7 +567,7 @@ def test_install_cancel_after_extraction_is_honored_and_staging_swept(monkeypatc
 
 def test_a_failed_apply_sweeps_the_staged_copy(monkeypatch, tmp_path):
     pub, priv = signing.keygen()
-    payload = b"new-waves-binary"
+    payload = b"new-bitwave-binary"
     manifest = _manifest(payload)
     up, _applied = _prep(
         monkeypatch, tmp_path, payload=payload, manifest=manifest, signature=signing.sign(manifest, priv), pubkey=pub
@@ -624,7 +624,7 @@ def test_isrc_without_a_value_never_writes_literal_braces():
 
 
 def test_album_artist_with_no_credits_is_empty_not_a_crash():
-    with patch("waves.helper.tidal.get_album_artists", return_value=[]):
+    with patch("bitwave.helper.tidal.get_album_artists", return_value=[]):
         assert name_builder_album_artist(SimpleNamespace(), first_only=True) == ""
 
 
@@ -660,14 +660,14 @@ def test_empty_mix_categories_keep_the_playlists():
 
 def test_uniquify_leaves_a_short_name_at_a_deep_path_alone():
     deep = pathlib.Path("/" + "/".join(["d" * 10] * 40)) / "song.flac"
-    with patch("waves.helper.path.file_unique_suffix", return_value="_01"):
+    with patch("bitwave.helper.path.file_unique_suffix", return_value="_01"):
         out = path_file_uniquify(deep)
     assert out.name == "song_01.flac", "path depth must never shred a short filename"
 
 
 def test_uniquify_still_bounds_a_maximal_filename():
     long_name = "x" * FILENAME_LENGTH_MAX + ".flac"
-    with patch("waves.helper.path.file_unique_suffix", return_value="_01"):
+    with patch("bitwave.helper.path.file_unique_suffix", return_value="_01"):
         out = path_file_uniquify(pathlib.Path("/music") / long_name)
     assert len(out.name) <= FILENAME_LENGTH_MAX
     assert out.name.endswith("_01.flac")

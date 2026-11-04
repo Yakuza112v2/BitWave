@@ -1,4 +1,4 @@
-"""Tests for waves/follows.py: the follow list, the release baseline and the
+"""Tests for bitwave/follows.py: the follow list, the release baseline and the
 feed window behind the Releases pane.
 
 Pure standard library (sqlite), no Qt. The promises: following seeds silently
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from waves.follows import DL_QUEUED, DL_WAITING, FollowStore
+from bitwave.follows import DL_QUEUED, DL_WAITING, FollowStore
 
 
 def _store(tmp_path):
@@ -184,7 +184,7 @@ def test_followed_artists_carry_the_releases_the_views_draw(tmp_path):
 
 
 def test_followed_artists_carry_the_whole_career_on_first_release_days(tmp_path, monkeypatch):
-    import waves.follows as follows
+    import bitwave.follows as follows
 
     monkeypatch.setattr(follows, "FOLLOW_SHELF", 2)
     monkeypatch.setattr(follows, "FOLLOW_CAREER_CAP", 4)
@@ -370,7 +370,7 @@ def test_collab_shows_once_under_either_artist(tmp_path):
 
 
 def test_a_collab_new_to_two_followed_artists_is_announced_once(tmp_path):
-    from waves.follows import DL_QUEUED
+    from bitwave.follows import DL_QUEUED
 
     s = _store(tmp_path)
     _seed(s, "1")

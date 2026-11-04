@@ -1,4 +1,4 @@
-"""DesktopNotify (waves/waves_ui/notify.py): built once, a failed build only
+"""DesktopNotify (bitwave/bitwave_ui/notify.py): built once, a failed build only
 retried after its pause, no failure ever reaches the caller, and True means
 the OS really took the banner (dispatched, and authorized where the platform
 can say): the update check remembers a version off that answer."""
@@ -10,7 +10,7 @@ import threading
 
 import pytest
 
-from waves.waves_ui.notify import DesktopNotify
+from bitwave.bitwave_ui.notify import DesktopNotify
 
 
 class _Notifier:
@@ -69,7 +69,7 @@ def test_a_failed_build_is_remembered_for_its_pause():
 def test_a_failed_build_is_tried_again_after_the_pause(monkeypatch):
     # A Linux notification daemon that starts late: the first build fails,
     # and banners come back on a later send instead of waiting for a restart.
-    from waves.waves_ui import notify
+    from bitwave.bitwave_ui import notify
 
     monkeypatch.setattr(notify, "_BUILD_RETRY_S", -1.0)
     calls = []
@@ -127,16 +127,16 @@ def test_a_banner_the_os_never_shows_keeps_the_version_unannounced():
     denied = _Notifier(authorized=False)
     s._notifier = DesktopNotify(factory=lambda name: denied)
     s._notify_app_update("0.3.0")
-    assert s._waves_prefs["notify_update_seen"] == ""
+    assert s._bitwave_prefs["notify_update_seen"] == ""
     denied.authorized = True
     s._notify_app_update("0.3.0")
-    assert s._waves_prefs["notify_update_seen"] == "0.3.0"
+    assert s._bitwave_prefs["notify_update_seen"] == "0.3.0"
 
 
 def test_a_failed_linux_probe_closes_its_half_open_bus():
     from types import SimpleNamespace
 
-    from waves.waves_ui import notify
+    from bitwave.bitwave_ui import notify
 
     closed = []
 
@@ -194,10 +194,10 @@ def test_without_the_package_it_is_a_quiet_no_op(monkeypatch):
 def test_settings_offer_the_notifications_section_only_with_the_package(monkeypatch):
     from test_discography_video_source import _schema_stub
 
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     def sections():
-        return {s["id"]: s for s in backend.WavesBridge.settingsSchema(_schema_stub())}
+        return {s["id"]: s for s in backend.BitWaveBridge.settingsSchema(_schema_stub())}
 
     monkeypatch.setattr(backend, "notifications_supported", lambda: False)
     secs = sections()
@@ -219,7 +219,7 @@ def test_settings_offer_the_notifications_section_only_with_the_package(monkeypa
 def test_supported_follows_the_installed_package(monkeypatch):
     import importlib.util
 
-    from waves.waves_ui import notify
+    from bitwave.bitwave_ui import notify
 
     monkeypatch.setattr(importlib.util, "find_spec", lambda name: None)
     assert notify.notifications_supported() is False
@@ -260,7 +260,7 @@ def _fake_package(monkeypatch, caps_error=None):
     return built
 
 
-def test_banners_carry_the_waves_icon(monkeypatch):
+def test_banners_carry_the_bitwave_icon(monkeypatch):
     from pathlib import Path
 
     built = _fake_package(monkeypatch)
@@ -275,8 +275,8 @@ def test_the_icon_ships_beside_the_packaged_binary():
     import re
     from pathlib import Path
 
-    src = (Path(__file__).resolve().parent.parent / "waves.py").read_text(encoding="utf-8")
-    assert re.search(r"--include-data-files=\{MAIN_DIRECTORY\}/waves/ui/icon\*\.png=ui/", src)
+    src = (Path(__file__).resolve().parent.parent / "bitwave.py").read_text(encoding="utf-8")
+    assert re.search(r"--include-data-files=\{MAIN_DIRECTORY\}/bitwave/ui/icon\*\.png=ui/", src)
 
 
 def test_linux_without_a_notification_service_sends_nothing(monkeypatch):
@@ -300,7 +300,7 @@ def test_linux_with_a_notification_service_sends(monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="the UNUserNotificationCenter delegate is macOS only")
-def test_macos_banners_show_while_waves_is_in_front():
+def test_macos_banners_show_while_bitwave_is_in_front():
     """Without a willPresentNotification answer macOS files the front app's
     banner in Notification Center unseen. The swapped-in delegate is driven
     through the real ObjC runtime and must answer banner, list and sound."""
@@ -309,7 +309,7 @@ def test_macos_banners_show_while_waves_is_in_front():
 
     from rubicon.objc import Block, NSUInteger, objc_id, send_message
 
-    from waves.waves_ui import notify
+    from bitwave.bitwave_ui import notify
 
     class _Center:
         delegate = None
@@ -332,4 +332,4 @@ def test_macos_banners_show_while_waves_is_in_front():
     assert answered == [2 | 8 | 16]
     # A rebuilt notifier (after a failed build) reuses the registered class.
     notify._present_in_front(SimpleNamespace(_async_api=SimpleNamespace(_backend=backend)))
-    assert backend.nc_delegate.objc_class.name == "WavesNotificationDelegate"
+    assert backend.nc_delegate.objc_class.name == "BitWaveNotificationDelegate"

@@ -73,7 +73,7 @@ def test_the_queue_button_pours_while_a_download_finishes():
 
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-queue-finishing-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-queue-finishing-test-")
     env["HOME"] = env["XDG_CONFIG_HOME"]
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],

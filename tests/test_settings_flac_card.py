@@ -2,7 +2,7 @@
 
 Static checks over the QML, in the shape of test_settings_diagnostics_card:
 the card may only ever read state and ask (scan, cancel, reveal); the two
-writing calls, ``waves.flacCheckFix()`` and ``waves.flacCheckResume()``,
+writing calls, ``bitwave.flacCheckFix()`` and ``bitwave.flacCheckResume()``,
 live in Main.qml inside the confirmation gate and nowhere else; and every
 dynamic text is plain text.
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-QML_DIR = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML_DIR = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 SETTINGS = QML_DIR / "SettingsPage.qml"
 MAIN = QML_DIR / "Main.qml"
 
@@ -62,27 +62,27 @@ def test_the_settings_page_never_calls_the_writing_slot():
     card = _block(source, "id: flacCardComp")
     assert "page.flacFixRequested(flacCard.fixable, page.flacWhere())" in card
     assert "page.flacResumeRequested(page.flacResumeWhere())" in card
-    assert "waves.flacCheckScan(page.flacDeep, page.flacRecheck)" in card
-    assert "waves.flacCheckCancel()" in card
-    assert "waves.flacCheckRevealReports()" in card
-    assert "setWavesPref" not in card, "the card holds no persisted setting"
+    assert "bitwave.flacCheckScan(page.flacDeep, page.flacRecheck)" in card
+    assert "bitwave.flacCheckCancel()" in card
+    assert "bitwave.flacCheckRevealReports()" in card
+    assert "setBitWavePref" not in card, "the card holds no persisted setting"
 
 
 def test_main_confirms_the_fix_with_the_count_before_calling_the_backend():
     source = _code(MAIN)
-    assert source.count("waves.flacCheckFix()") == 1
-    assert source.count("waves.flacCheckResume()") == 1
+    assert source.count("bitwave.flacCheckFix()") == 1
+    assert source.count("bitwave.flacCheckResume()") == 1
     gate = _block(source, "id: flacFixGate")
-    assert "waves.flacCheckFix()" in gate
-    assert "waves.flacCheckResume()" in gate
+    assert "bitwave.flacCheckFix()" in gate
+    assert "bitwave.flacCheckResume()" in gate
     assert "visible: root.confirmFlacFix" in gate
     assert "root.flacFixCount" in gate
     assert "text: root.flacFixWhere" in gate, "the gate names where it writes"
     # The confirm closes the gate and then asks, the cancel only closes it.
     confirm = gate[gate.index('label: root.flacFixResume ? "RESUME" : "WRITE SIGNATURES"') :]
-    assert confirm.index("root.confirmFlacFix = false") < confirm.index("waves.flacCheckResume()")
-    assert confirm.index("root.confirmFlacFix = false") < confirm.index("waves.flacCheckFix()")
-    assert "if (root.flacFixResume) waves.flacCheckResume()" in confirm
+    assert confirm.index("root.confirmFlacFix = false") < confirm.index("bitwave.flacCheckResume()")
+    assert confirm.index("root.confirmFlacFix = false") < confirm.index("bitwave.flacCheckFix()")
+    assert "if (root.flacFixResume) bitwave.flacCheckResume()" in confirm
     # A FIX request always opens the gate as a fix, a RESUME request as a resume.
     assert (
         "onFlacFixRequested: function(count, where) { root.flacFixResume = false; root.flacFixCount = count;"
@@ -112,14 +112,14 @@ def test_every_dynamic_text_on_the_card_is_plain_text():
         assert "textFormat: Text.PlainText" in body, body.strip()[:120]
 
 
-def test_the_folder_row_offers_the_waves_library_or_a_browsed_folder():
+def test_the_folder_row_offers_the_bitwave_library_or_a_browsed_folder():
     card = _block(_code(SETTINGS), "id: flacCardComp")
     assert 'text: "BITWAVE LIBRARY"' in card
     assert 'text: "CUSTOM LOCATION"' in card
-    assert 'waves.flacCheckSetSource("waves")' in card
-    assert 'waves.flacCheckSetSource("folder")' in card
+    assert 'bitwave.flacCheckSetSource("bitwave")' in card
+    assert 'bitwave.flacCheckSetSource("folder")' in card
     dialog = _block(card, "id: flacFolderDlg")
-    assert "onAccepted: waves.flacCheckSetFolder(page.urlToPath(selectedFolder))" in dialog
+    assert "onAccepted: bitwave.flacCheckSetFolder(page.urlToPath(selectedFolder))" in dialog
 
 
 def test_the_chosen_folder_only_ever_comes_from_the_system_dialog():
@@ -128,7 +128,7 @@ def test_the_chosen_folder_only_ever_comes_from_the_system_dialog():
     card = _block(_code(SETTINGS), "id: flacCardComp")
     for typed in ("SText", "TextField", "TextInput", "TextEdit"):
         assert typed not in card, typed
-    assert card.count("waves.flacCheckSetFolder(") == 1
+    assert card.count("bitwave.flacCheckSetFolder(") == 1
 
 
 def test_the_card_offers_no_fix_for_folders_it_is_no_longer_showing():
@@ -138,7 +138,7 @@ def test_the_card_offers_no_fix_for_folders_it_is_no_longer_showing():
     assert 'page.flacStale()) return "Not checked yet."' in source
 
 
-def test_the_card_re_reads_its_folders_whenever_the_waves_library_can_move():
+def test_the_card_re_reads_its_folders_whenever_the_bitwave_library_can_move():
     """The "BitWave library" is the download folder and the library folder; both
     can change while Settings stays open (SAVE CHANGES, the library card's
     live switches, a settings reset), and the card's stale check compares
@@ -146,7 +146,7 @@ def test_the_card_re_reads_its_folders_whenever_the_waves_library_can_move():
     source = _code(SETTINGS)
     save = source[source.index('text: "SAVE CHANGES"') :]
     save = save[: save.index("flashTimer.restart()") + 60]
-    assert "waves.applySettings(page.editMap)" in save
+    assert "bitwave.applySettings(page.editMap)" in save
     assert "page.flacRefresh()" in save
     assert "refreshSchema(); syncLibraryMirrors(); flacRefresh() }" in source  # externalReset
     for handler in ("function onLibraryScanStatusChanged()", "function onLibrarySourceChanged()"):
@@ -267,7 +267,7 @@ def test_jumping_to_the_card_disarms_once_the_section_has_opened():
     assert "page.pendingY === page.flacJumpY" in timer, "only the jump's own target is disarmed"
     assert timer.index("page._restoreScroll()") < timer.index("page.pendingY = -1")
     assert "if (flacJumpSettle.running) flacJumpSettle.restart()" in source
-    assert "ScrollBar.vertical: WavesScrollBar { onPressedChanged: if (pressed) page.pendingY = -1 }" in source
+    assert "ScrollBar.vertical: BitWaveScrollBar { onPressedChanged: if (pressed) page.pendingY = -1 }" in source
     restore = re.search(r"function _restoreScroll\(\) \{.*?\n    \}", source, re.S).group(0)
     assert restore.index("restoringScroll = true") < restore.index("settingsFlick.contentY =")
     assert restore.index("settingsFlick.contentY =") < restore.index("restoringScroll = false")

@@ -28,7 +28,7 @@ HOW THIS STAYS FIXED
 --------------------
 The gate is the REAL ``_TrackedDownload._ownership_decision`` reading a REAL
 ``OwnershipStore`` with real files on disk, and the query is the REAL
-``WavesBridge.ownershipOf``. The premise the whole thing rests on (that the
+``BitWaveBridge.ownershipOf``. The premise the whole thing rests on (that the
 Atmos request tier ranks below a Lossless target) is pinned against the real
 constant rather than the string it equals today, and the engine's own Atmos
 condition is driven directly so the mirror in backend.py cannot drift from it.
@@ -41,12 +41,12 @@ from types import SimpleNamespace
 
 from tidalapi.media import AudioMode, Quality, Track
 
-from waves.constants import ATMOS_REQUEST_QUALITY
-from waves.download import Download
-from waves.ownership import OwnershipStore, quality_rank
-from waves.waves_ui import backend
-from waves.waves_ui.backend import (
-    WavesBridge,
+from bitwave.constants import ATMOS_REQUEST_QUALITY
+from bitwave.download import Download
+from bitwave.ownership import OwnershipStore, quality_rank
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import (
+    BitWaveBridge,
     _collection_incomplete_reason,
     _delivers_atmos,
     _TrackedDownload,
@@ -106,8 +106,8 @@ class _InlinePool:
 
 
 def _bridge(store, *, quality, atmos_on):
-    """The real ownershipOf/_rollup_verdict, on a WavesBridge carcass."""
-    b = WavesBridge.__new__(WavesBridge)
+    """The real ownershipOf/_rollup_verdict, on a BitWaveBridge carcass."""
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._ownership = store
     b._own_cache = {}
     b._own_lock = Lock()
@@ -124,7 +124,7 @@ def _bridge(store, *, quality, atmos_on):
         "_evict_own_cache_locked",
         "_rollup_verdict",
     ):
-        setattr(b, name, getattr(WavesBridge, name).__get__(b, WavesBridge))
+        setattr(b, name, getattr(BitWaveBridge, name).__get__(b, BitWaveBridge))
     return b
 
 
@@ -166,7 +166,7 @@ def _engine_took_the_atmos_session(media, atmos_on: bool) -> bool:
     return reached == ["atmos"]
 
 
-def test_waves_mirrors_the_engines_own_atmos_condition():
+def test_bitwave_mirrors_the_engines_own_atmos_condition():
     """_delivers_atmos claims to be the engine's want_atmos, and the whole fix
     rests on that claim. Check all four combinations against the engine itself
     rather than against a transcription of it."""
@@ -344,7 +344,7 @@ def test_an_atmos_album_card_reads_as_downloaded(tmp_path):
 # The prediction: the drawer promises what the run will actually do.
 # --------------------------------------------------------------------------- #
 def _predictor(store, *, quality, atmos_on):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._ownership = store
     b._redownload_overrides = set()
     b._library_claim_overrides = set()
@@ -366,7 +366,7 @@ def _predictor(store, *, quality, atmos_on):
         "_job_skip_existing",
         "_queue_item",
     ):
-        setattr(b, name, getattr(WavesBridge, name).__get__(b, WavesBridge))
+        setattr(b, name, getattr(BitWaveBridge, name).__get__(b, BitWaveBridge))
     return b
 
 
@@ -379,7 +379,7 @@ def _row():
 def test_the_queue_predicts_a_skip_for_an_owned_atmos_track(tmp_path, monkeypatch):
     store = _store(tmp_path)
     store.record("101", _file(tmp_path, "song.m4a"), ATMOS_TIER, audio_mode=ATMOS)
-    monkeypatch.setattr(backend.WavesBridge, "_job_quality", lambda self, qid: Quality.hi_res_lossless)
+    monkeypatch.setattr(backend.BitWaveBridge, "_job_quality", lambda self, qid: Quality.hi_res_lossless)
     b = _predictor(store, quality=Quality.hi_res_lossless, atmos_on=True)
     marks = b._predict_skips(1, _row(), [_track()])
     # The drawer says ATMOS for an Atmos copy, never the tier it was requested
@@ -406,7 +406,7 @@ def test_an_atmos_copy_reads_atmos_on_every_drawer_surface(tmp_path, monkeypatch
     # The gate's skip mark carries the same word the prediction does.
     store = _store(tmp_path)
     store.record("101", _file(tmp_path, "song.m4a"), ATMOS_TIER, audio_mode=ATMOS)
-    monkeypatch.setattr(backend.WavesBridge, "_job_quality", lambda self, qid: Quality.hi_res_lossless)
+    monkeypatch.setattr(backend.BitWaveBridge, "_job_quality", lambda self, qid: Quality.hi_res_lossless)
     b = _predictor(store, quality=Quality.hi_res_lossless, atmos_on=True)
     marks = b._predict_skips(1, _row(), [_track()])
     dl = _gate(store, target=Quality.hi_res_lossless.value, atmos_on=True)
@@ -422,7 +422,7 @@ def test_the_prediction_and_the_gate_agree_about_an_atmos_track(tmp_path, monkey
     two must not answer differently. Both are driven here, on one store."""
     store = _store(tmp_path)
     store.record("101", _file(tmp_path, "song.m4a"), ATMOS_TIER, audio_mode=ATMOS)
-    monkeypatch.setattr(backend.WavesBridge, "_job_quality", lambda self, qid: Quality.high_lossless)
+    monkeypatch.setattr(backend.BitWaveBridge, "_job_quality", lambda self, qid: Quality.high_lossless)
     for atmos_on in (True, False):
         b = _predictor(store, quality=Quality.high_lossless, atmos_on=atmos_on)
         predicted = "101" in b._predict_skips(1, _row(), [_track()])

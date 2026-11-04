@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 
-from waves.library_index import LibraryIndex
+from bitwave.library_index import LibraryIndex
 
 
 def _mk(base, rel, files):

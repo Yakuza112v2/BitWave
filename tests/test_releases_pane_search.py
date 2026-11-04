@@ -33,13 +33,13 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_the_releases_search_box_filters_every_page() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-releases-search-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-releases-search-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -134,15 +134,15 @@ def _run_scenario() -> int:  # noqa: C901
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     import datetime as _datetime
 
-    from waves.waves_ui import bridge_releases
+    from bitwave.bitwave_ui import bridge_releases
 
     class _Day(_datetime.date):
         @classmethod
@@ -154,8 +154,8 @@ def _run_scenario() -> int:  # noqa: C901
     engine = QQmlApplicationEngine()
     warnings: list[str] = []
     engine.warnings.connect(lambda ws: warnings.extend(w.toString() for w in ws))
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -229,7 +229,7 @@ def _run_scenario() -> int:  # noqa: C901
     # Three follows; one of them has a release from 1997, years past the
     # one-year window the feed browses.
     store = bridge._releases
-    bridge._waves_prefs["releases_window_months"] = "12"
+    bridge._bitwave_prefs["releases_window_months"] = "12"
     for aid, name in (("bj", "Björk"), ("be", "Beyoncé"), ("ot", "Other Artist")):
         store.follow(aid, name, "")
     store.record_check(

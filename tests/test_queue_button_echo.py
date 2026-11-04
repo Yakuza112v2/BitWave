@@ -62,7 +62,7 @@ def test_the_queue_button_counts_and_finishes_inside_the_window():
 
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-queue-button-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-queue-button-test-")
     env["HOME"] = env["XDG_CONFIG_HOME"]
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],

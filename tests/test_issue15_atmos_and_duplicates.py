@@ -7,7 +7,7 @@ file the user asked not to have. It is now skipped outright.
 
 Bug 2: skip_existing was filename-keyed, so distinct tracks whose sanitized
 names collide (several mixes sharing one title) were skipped after the first
-download. Files now carry a WAVES_TIDAL_ID tag and the skip decision compares
+download. Files now carry a BITWAVE_TIDAL_ID tag and the skip decision compares
 ids: same id skips, a different id downloads under a uniquified name, an
 untagged occupant (pre-tag library) keeps the historical skip so re-fetching
 an old library cannot duplicate it.
@@ -26,9 +26,9 @@ from unittest.mock import MagicMock, patch
 import mutagen.mp4
 from tidalapi.media import AudioMode, Track
 
-from waves.download import Download
-from waves.helper.path import path_file_uniquify
-from waves.metadata import ITEM_ID_TAG, Metadata, read_item_id
+from bitwave.download import Download
+from bitwave.helper.path import path_file_uniquify
+from bitwave.metadata import ITEM_ID_TAG, Metadata, read_item_id
 
 
 def _make_download(skip_existing: bool = False) -> Download:
@@ -126,7 +126,7 @@ class TestSkipExistingComparesItemIds:
         dst = tmp_path / "Song.flac"
         dst.write_bytes(b"x")
 
-        with patch("waves.download.read_item_id", return_value="123"):
+        with patch("bitwave.download.read_item_id", return_value="123"):
             assert dl._existing_same_item_at(dst, _track(123, [])) == dst
 
     def test_different_id_occupant_downloads(self, tmp_path):
@@ -134,7 +134,7 @@ class TestSkipExistingComparesItemIds:
         dst = tmp_path / "Song.flac"
         dst.write_bytes(b"x")
 
-        with patch("waves.download.read_item_id", return_value="123"):
+        with patch("bitwave.download.read_item_id", return_value="123"):
             assert dl._existing_same_item_at(dst, _track(456, [])) is None
 
     def test_uniquified_sibling_with_the_id_skips(self, tmp_path):
@@ -145,7 +145,7 @@ class TestSkipExistingComparesItemIds:
         (tmp_path / "Song_01.flac").write_bytes(b"x")
         ids = {"Song.flac": "123", "Song_01.flac": "456"}
 
-        with patch("waves.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
+        with patch("bitwave.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
             # Not a bare yes: the answer is the numbered copy itself, so the
             # caller skips onto the file that IS this track, never the base.
             assert dl._existing_same_item_at(tmp_path / "Song.flac", _track(456, [])) == tmp_path / "Song_01.flac"
@@ -159,7 +159,7 @@ class TestSkipExistingComparesItemIds:
         (tmp_path / "Song_02.flac").write_bytes(b"x")
         ids = {"Song.flac": "123", "Song_02.flac": "456"}
 
-        with patch("waves.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
+        with patch("bitwave.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
             assert dl._existing_same_item_at(tmp_path / "Song.flac", _track(456, [])) == tmp_path / "Song_02.flac"
 
     def test_untagged_sibling_means_identity_unknown_and_skips(self, tmp_path):
@@ -171,7 +171,7 @@ class TestSkipExistingComparesItemIds:
         (tmp_path / "Song_01.flac").write_bytes(b"x")
         ids = {"Song.flac": "123", "Song_01.flac": ""}
 
-        with patch("waves.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
+        with patch("bitwave.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
             assert dl._existing_same_item_at(tmp_path / "Song.flac", _track(456, [])) == tmp_path / "Song_01.flac"
 
     def test_all_tagged_other_ids_still_download(self, tmp_path):
@@ -183,7 +183,7 @@ class TestSkipExistingComparesItemIds:
         (tmp_path / "Song_02.flac").write_bytes(b"x")
         ids = {"Song.flac": "123", "Song_01.flac": "456", "Song_02.flac": "789"}
 
-        with patch("waves.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
+        with patch("bitwave.download.read_item_id", side_effect=lambda p: ids[pathlib.Path(p).name]):
             assert dl._existing_same_item_at(tmp_path / "Song.flac", _track(999, [])) is None
 
 
@@ -311,7 +311,7 @@ class TestItemIdTagRoundTrip:
         file = tmp_path / "t.m4a"
         file.write_bytes(b"x")
 
-        with patch("waves.metadata.mutagen.File", return_value=fake):
+        with patch("bitwave.metadata.mutagen.File", return_value=fake):
             m = Metadata(path_file=file, target_upc={"MP4": "UPC"}, title="Song", item_id="123")
             m.set_mp4()
             assert fake.tags[f"----:com.apple.iTunes:{ITEM_ID_TAG}"] == b"123"
@@ -323,7 +323,7 @@ class TestItemIdTagRoundTrip:
         file = tmp_path / "t.flac"
         file.write_bytes(b"x")
 
-        with patch("waves.metadata.mutagen.File", return_value=fake):
+        with patch("bitwave.metadata.mutagen.File", return_value=fake):
             m = Metadata(path_file=file, target_upc={"FLAC": "UPC"}, title="Song", item_id="123")
             m.set_flac()
             assert fake.tags[ITEM_ID_TAG] == "123"

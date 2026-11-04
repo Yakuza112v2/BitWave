@@ -3,7 +3,7 @@ the Releases library import reads out of the scan cache."""
 
 from __future__ import annotations
 
-from waves.library_index import LibraryIndex
+from bitwave.library_index import LibraryIndex
 
 
 def _row(folder, album, artist, tracks=()):

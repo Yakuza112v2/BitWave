@@ -19,7 +19,7 @@ Covered here:
 
 Download-side tests build the instance with __new__ (skipping the heavy
 network __init__); bridge-side tests follow the test_ownership_bridge.py
-pattern of binding real WavesBridge methods onto a bare stub.
+pattern of binding real BitWaveBridge methods onto a bare stub.
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from waves.download import Download
-from waves.waves_ui.backend import WavesBridge
+from bitwave.download import Download
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def test_ensure_directory_creates_once_per_instance(downloader: Download, tmp_pa
     # A direct child: makedirs recurses through the mocked name for missing
     # parents, which would inflate the count without meaning extra ensures.
     target = tmp_path / "Album"
-    with patch("waves.download.os.makedirs", wraps=os.makedirs) as makedirs_mock:
+    with patch("bitwave.download.os.makedirs", wraps=os.makedirs) as makedirs_mock:
         for _ in range(4):  # audio + lyrics + cover + explicit pre-ensure
             downloader._ensure_directory(target)
     assert makedirs_mock.call_count == 1
@@ -87,7 +87,7 @@ def test_copy_file_contents_uses_large_buffer_without_copystat(downloader: Downl
     destination = tmp_path / "dst.bin"
     source.write_bytes(b"x" * 1024)
 
-    with patch("waves.download.shutil.copyfileobj", wraps=None) as copy_mock:
+    with patch("bitwave.download.shutil.copyfileobj", wraps=None) as copy_mock:
         downloader._copy_file_contents(source, destination)
 
     (_, _), kwargs = copy_mock.call_args
@@ -141,7 +141,7 @@ def test_segment_fanout_clamped_to_connection_pool(downloader: Download) -> None
         return real_executor(*args, **kwargs)
 
     try:
-        with patch("waves.download.futures.ThreadPoolExecutor", capturing_executor):
+        with patch("bitwave.download.futures.ThreadPoolExecutor", capturing_executor):
             downloader._download_segments([], pathlib.Path("."), None, 0, False, None)
     finally:
         downloader.close_segment_pool()
@@ -165,8 +165,8 @@ class _Stub:
         self._own_cache: dict = {}
         self._own_pending: set = set()
         self._own_pool = _Pool()
-        self._OWN_TTL = WavesBridge._OWN_TTL
-        self._OWN_TTL_BUSY = WavesBridge._OWN_TTL_BUSY
+        self._OWN_TTL = BitWaveBridge._OWN_TTL
+        self._OWN_TTL_BUSY = BitWaveBridge._OWN_TTL_BUSY
         self._downloads_running = lambda: downloads_running
         self._target_quality_rank = lambda: 0
         self._override_target_rank = lambda tid: 0  # no per-item quality choice here
@@ -179,11 +179,11 @@ class _Stub:
             )
         )
         for name in ("ownershipOf", "_would_refetch_atmos", "_record_ownership"):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _Stub))
 
     def seed_stale(self, tid: str) -> None:
         # Older than _OWN_TTL, far younger than _OWN_TTL_BUSY.
-        self._own_cache[tid] = (time.monotonic() - (WavesBridge._OWN_TTL + 2.0), {"owned": True, "quality_rank": 1})
+        self._own_cache[tid] = (time.monotonic() - (BitWaveBridge._OWN_TTL + 2.0), {"owned": True, "quality_rank": 1})
 
 
 def test_ownership_stale_hits_do_not_restat_during_downloads() -> None:
@@ -212,7 +212,7 @@ def test_ownership_misses_still_refresh_during_downloads() -> None:
 def test_record_ownership_skips_realpath_without_symlink_mode() -> None:
     stub = _Stub(downloads_running=False, symlink_to_track=False)
     ev = {"id": 7, "path": "/library/Artist/Album/track.flac", "quality": {"tier": "LOSSLESS"}}
-    with patch("waves.waves_ui.backend.os.path.realpath") as realpath_mock:
+    with patch("bitwave.bitwave_ui.backend.os.path.realpath") as realpath_mock:
         stub._record_ownership(ev)
     realpath_mock.assert_not_called()
     recorded_path = stub._ownership.record.call_args[0][1]
@@ -222,7 +222,7 @@ def test_record_ownership_skips_realpath_without_symlink_mode() -> None:
 def test_record_ownership_resolves_realpath_in_symlink_mode() -> None:
     stub = _Stub(downloads_running=False, symlink_to_track=True)
     ev = {"id": 7, "path": "/library/link.flac", "quality": {"tier": "LOSSLESS"}}
-    with patch("waves.waves_ui.backend.os.path.realpath", return_value="/real/track.flac") as realpath_mock:
+    with patch("bitwave.bitwave_ui.backend.os.path.realpath", return_value="/real/track.flac") as realpath_mock:
         stub._record_ownership(ev)
     realpath_mock.assert_called_once_with("/library/link.flac")
     assert stub._ownership.record.call_args[0][1] == "/real/track.flac"

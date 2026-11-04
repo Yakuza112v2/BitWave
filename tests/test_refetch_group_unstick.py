@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 from tidalapi.exceptions import ObjectNotFound
 
-from waves.waves_ui.backend import _ITEM_FETCH_FAILED, _ITEM_GONE, WavesBridge
+from bitwave.bitwave_ui.backend import _ITEM_FETCH_FAILED, _ITEM_GONE, BitWaveBridge
 
 
 class _Stub:
@@ -28,7 +28,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Sig:

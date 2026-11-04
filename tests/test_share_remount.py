@@ -17,13 +17,13 @@ from threading import Lock
 
 from _dispatch_stub import arm_queue
 
-import waves.waves_ui.backend as backend_mod
-from waves.waves_ui import netmount
-from waves.waves_ui.backend import WavesBridge
+import bitwave.bitwave_ui.backend as backend_mod
+from bitwave.bitwave_ui import netmount
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _bridge(base_path="", origins=None):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b.settings = types.SimpleNamespace(
         data=types.SimpleNamespace(
             download_base_path=base_path,
@@ -367,7 +367,7 @@ def _midflight_bridge(monkeypatch, verdict, remounted=False):
         # their per-row stores go with them (the withdrawn-row assertions
         # below are about exactly that).
         b._emitted_queue += 1
-        backend_mod.WavesBridge._prune_job_tracks(b)
+        backend_mod.BitWaveBridge._prune_job_tracks(b)
 
     b._emit_queue = _emit
     b.statuses = []
@@ -420,7 +420,7 @@ def test_dead_probe_remounts_and_probes_again(monkeypatch):
     b = _bridge(base_path="/Volumes/Media/Music")
     state = {"mounted": False}
     monkeypatch.setattr(
-        WavesBridge,
+        BitWaveBridge,
         "_probe_folder_verdict",
         staticmethod(lambda path, volumes_root="/Volumes": ("ok", path) if state["mounted"] else ("dead", path)),
     )
@@ -432,7 +432,7 @@ def test_failed_remount_keeps_the_dead_verdict(monkeypatch):
     b = _bridge(base_path="/Volumes/Media/Music")
     probes = []
     monkeypatch.setattr(
-        WavesBridge,
+        BitWaveBridge,
         "_probe_folder_verdict",
         staticmethod(lambda path, volumes_root="/Volumes": (probes.append(1), ("dead", path))[1]),
     )

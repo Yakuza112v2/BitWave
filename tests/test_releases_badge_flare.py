@@ -51,7 +51,7 @@ def test_the_releases_badge_pops_in_and_counts_both_ways():
 
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-releases-badge-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-releases-badge-test-")
     env["HOME"] = env["XDG_CONFIG_HOME"]
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],

@@ -36,7 +36,7 @@ from threading import Lock
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -57,7 +57,7 @@ class _Stub:
     """Just enough bridge for the registry."""
 
     def __init__(self, target="HI-RES"):
-        from waves.waves_ui import backend
+        from bitwave.bitwave_ui import backend
 
         self._job_tracks = {}
         # The ledger merge also overlays an expansion's predicted skips
@@ -81,16 +81,16 @@ class _Stub:
         self.settings = type("S", (), {"data": type("D", (), {"download_base_path": ""})()})()
         self._target_tier = lambda: target
         for name in ("_track_lifecycle", "_queue_item", "_queue_mark_changed"):
-            setattr(self, name, getattr(backend.WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(backend.BitWaveBridge, name).__get__(self, _Stub))
 
 
 def test_a_setting_change_leaves_every_queued_row_alone():
     """The bridge has no retarget at all any more: a queued row's request is
     what it was queued at, and applySettings must not reach into the queue."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    assert not hasattr(backend.WavesBridge, "_retarget_unfinished_rows")
-    src = inspect.getsource(backend.WavesBridge.applySettings)
+    assert not hasattr(backend.BitWaveBridge, "_retarget_unfinished_rows")
+    src = inspect.getsource(backend.BitWaveBridge.applySettings)
     block = src[src.index('if "quality_audio" in values:') :]
     assert "retarget" not in block.replace("NOT retarget", ""), block[:400]
     # Not by name. A retarget written inline, whatever it were called, would
@@ -118,13 +118,13 @@ def test_running_event_seeds_the_track_ceiling_and_a_later_one_keeps_it():
 
 
 def test_merge_carries_the_ceiling_from_the_fetch_and_from_the_registry():
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     class _B(_Stub):
         def __init__(self):
             super().__init__()
             self.queueTracksLoaded = _Signal()
-            self._merge_queue_tracks = backend.WavesBridge._merge_queue_tracks.__get__(self, _B)
+            self._merge_queue_tracks = backend.BitWaveBridge._merge_queue_tracks.__get__(self, _B)
 
     b = _B()
     b._job_tracks[1] = {"2": {"id": "2", "title": "b", "status": "running", "pct": 0.0, "expected": "HI-RES"}}
@@ -142,7 +142,7 @@ def test_merge_carries_the_ceiling_from_the_fetch_and_from_the_registry():
 
 
 def test_merge_seed_and_load_queue_tracks_read_the_catalog_ceiling(monkeypatch):
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     monkeypatch.setattr(backend, "_quality_label", lambda o: getattr(o, "adv", ""))
     monkeypatch.setattr(backend, "name_builder_title", lambda t: getattr(t, "name", ""))
@@ -168,7 +168,7 @@ _STEREO = (["STEREO"], ["LOSSLESS"], "LOSSLESS")
 
 def test_expected_word_names_atmos_whenever_the_run_fetches_it():
     """Issue #45: the prediction follows the engine's own Atmos condition."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     assert backend._expected_word(_media(*_DUAL), True) == "ATMOS"
     assert backend._expected_word(_media(*_DUAL), False) == "HI-RES"
@@ -178,7 +178,7 @@ def test_expected_word_names_atmos_whenever_the_run_fetches_it():
 
 
 def test_merge_seed_predicts_atmos_for_a_source_fetched_in_atmos(monkeypatch):
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     monkeypatch.setattr(backend, "name_builder_title", lambda t: "S")
     src = _media(*_DUAL)
@@ -191,7 +191,7 @@ def test_merge_seed_predicts_atmos_for_a_source_fetched_in_atmos(monkeypatch):
 def test_drawer_states_the_floor_and_holds_it():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-queue-expected-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-queue-expected-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -225,15 +225,15 @@ def _run_scenario() -> int:
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

@@ -17,10 +17,10 @@ from _dispatch_stub import arm_notify
 from tidalapi.exceptions import ObjectNotFound
 from tidalapi.media import Quality, Track
 
-from waves.helper.exceptions import DownloadIncomplete
-from waves.ownership import OwnershipStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge, _PlanEntry, _TrackedDownload
+from bitwave.helper.exceptions import DownloadIncomplete
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge, _PlanEntry, _TrackedDownload
 
 
 class _Signal:
@@ -38,7 +38,7 @@ class _InlinePool:
 
 def _bind(obj, *names):
     for name in names:
-        setattr(obj, name, getattr(WavesBridge, name).__get__(obj, type(obj)))
+        setattr(obj, name, getattr(BitWaveBridge, name).__get__(obj, type(obj)))
 
 
 def _track(tid, duration=200):
@@ -195,7 +195,7 @@ class _Engine:
 
 
 def _merge_bridge(session_tracks: dict):
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     bridge.tidal = SimpleNamespace(session=SimpleNamespace(track=lambda tid: session_tracks[int(tid)]))
     return bridge
@@ -398,9 +398,9 @@ def _cut(tid, dur, explicit):
 
 
 def _dedup_bridge(mode):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=Quality.hi_res_lossless))
-    b._waves_prefs = {"explicit_mode": mode}
+    b._bitwave_prefs = {"explicit_mode": mode}
     _bind(b, "_track_key", "_max_quality_rank", "_dedup_tracks")
     return b
 

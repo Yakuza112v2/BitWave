@@ -2,11 +2,11 @@
 
 WHAT THIS FENCES OFF
 --------------------
-A scenario that builds a real ``WavesBridge`` inherits whatever config
+A scenario that builds a real ``BitWaveBridge`` inherits whatever config
 directory the environment points at, and on a developer's machine that is
 the packaged app's own: ``~/Library/Application Support/BitWave`` (or the
 platform equivalent). The bridge then adopts the user's settings, writes
-its startup lines and tracebacks into the user's ``waves_dev.log``, and,
+its startup lines and tracebacks into the user's ``bitwave_dev.log``, and,
 if a library root is configured, starts a REAL scan of the user's music
 library from its constructor.
 
@@ -34,14 +34,14 @@ def test_every_offscreen_bridge_scenario_sandboxes_its_config_dir():
     unsandboxed = []
     for path in sorted(TESTS_DIR.glob("test_*.py")):
         src = path.read_text()
-        builds_bridge = "WavesBridge(" in src and "QQmlApplicationEngine" in src
+        builds_bridge = "BitWaveBridge(" in src and "QQmlApplicationEngine" in src
         if builds_bridge and "XDG_CONFIG_HOME" not in src:
             unsandboxed.append(path.name)
 
     assert not unsandboxed, (
-        "these scenarios build a real WavesBridge without an XDG_CONFIG_HOME of "
+        "these scenarios build a real BitWaveBridge without an XDG_CONFIG_HOME of "
         "their own, so they run against the packaged app's config dir: they adopt "
         "the user's settings, write into the user's log, and start a real scan of "
         "the user's library. Give each one "
-        'env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-<name>-test-"): ' + ", ".join(unsandboxed)
+        'env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-<name>-test-"): ' + ", ".join(unsandboxed)
     )

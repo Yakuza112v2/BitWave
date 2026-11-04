@@ -35,7 +35,7 @@ _EXIT_OK = 0
 _EXIT_BROKEN = 1
 _EXIT_NO_QT = 77
 
-QML_DIR = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML_DIR = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 
 
 def test_main_qml_loads_without_errors_or_warnings():
@@ -43,7 +43,7 @@ def test_main_qml_loads_without_errors_or_warnings():
     bridge installs process-global handlers that must not leak into the suite."""
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-qml-load-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-qml-load-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -84,18 +84,18 @@ def _run_scenario() -> int:
         app.setApplicationName("BitWave")
         app.setOrganizationName("BitWave")
     try:
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     warnings: list[str] = []
     engine = QQmlApplicationEngine()
-    # The bridge must be held in a local: let it be collected and every `waves`
+    # The bridge must be held in a local: let it be collected and every `bitwave`
     # read in the QML resolves against null, which reports as a wall of
     # warnings that look like a regression and are not.
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", "JetBrains Mono")
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     # engine.warnings, NOT qInstallMessageHandler: the message handler misses

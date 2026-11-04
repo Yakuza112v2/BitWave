@@ -5,13 +5,13 @@ Quellcode, Fehlerberichte, Downloads und Updates gehören zu `Yakuza112v2/BitWav
 ## Einmalige Einrichtung
 
 1. Das Repository bleibt während der Umstellung und Abnahme privat.
-2. Der private BitWave-Signierschlüssel wird als geschütztes Actions-Geheimnis `BITWAVE_SIGNING_KEY` hinterlegt. Der zugehörige öffentliche Schlüssel steht in `waves/waves_ui/signing.py`. Der private Schlüssel gehört niemals in den Quellcode.
+2. Der private BitWave-Signierschlüssel wird als geschütztes Actions-Geheimnis `BITWAVE_SIGNING_KEY` hinterlegt. Der zugehörige öffentliche Schlüssel steht in `bitwave/bitwave_ui/signing.py`. Der private Schlüssel gehört niemals in den Quellcode.
 3. GitHub Actions muss für das Repository aktiviert sein. Für Veröffentlichungen genügt das Repository-eigene `GITHUB_TOKEN`.
 4. Vor öffentlichen App-Updates muss das Repository öffentlich sein. Private Releases sind für die anonyme Update-Prüfung der App nicht erreichbar.
 
 ## Version und Testpaket
 
-Die Versionsnummern in `pyproject.toml` und `waves/waves_ui/__init__.py` müssen identisch sein. Ergänze in `CHANGELOG.md` einen Abschnitt `## vX.Y.Z (JJJJ-MM-TT)`.
+Die Versionsnummern in `pyproject.toml` und `bitwave/bitwave_ui/__init__.py` müssen identisch sein. Ergänze in `CHANGELOG.md` einen Abschnitt `## vX.Y.Z (JJJJ-MM-TT)`.
 
 Für einen Test starte unter Actions den Ablauf `release-or-test-build`. Lass `release_tag` leer. Mit `only=windows-x64` oder `only=windows-arm64` lässt sich eine Variante auswählen; ein leeres Feld erstellt beide. Testläufe veröffentlichen kein Release.
 
@@ -25,9 +25,8 @@ Nach erfolgreichen Builds sammelt der Ablauf die Prüfsummen, signiert `SHA256SU
 
 - Programmname und ausführbare Datei müssen BitWave heißen.
 - Oberfläche und Meldungen müssen deutsch sein.
-- Der erste Start darf keine Einstellungen oder Anmeldung aus Waves übernehmen.
+- Der erste Start darf keine Einstellungen oder Anmeldung aus BitWave übernehmen.
 - Beide Windows-Pakete müssen auf der jeweiligen Architektur starten.
 - Prüfsummenliste und Signatur müssen am Release angehängt sein.
 - Ein signiertes Update zwischen zwei BitWave-Versionen muss geprüft werden.
 
-Der ursprüngliche Waves-Schlüssel, dessen Update-Repository und dessen Paketverwaltungen werden nicht verwendet. Die internen Namen `waves`, `waves.dist` und das Manifestfeld `waves-version` bleiben aus Kompatibilitätsgründen erhalten.

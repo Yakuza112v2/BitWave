@@ -13,8 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.waves_ui import preview_peaks
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import preview_peaks
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def test_buckets_are_normalized_and_cover_the_whole_track():
@@ -81,7 +81,7 @@ def test_a_real_wav_gives_the_shape_of_its_loudness(tmp_path):
 
 
 class _Stub:
-    _emit_preview_peaks = WavesBridge._emit_preview_peaks
+    _emit_preview_peaks = BitWaveBridge._emit_preview_peaks
     _PREVIEW_PEAKS_N = 4
 
     def __init__(self, ffmpeg):
@@ -103,12 +103,12 @@ def test_peaks_are_emitted_once_per_clip_and_cached(monkeypatch):
 
     monkeypatch.setattr(preview_peaks, "peaks_from_clip", fake_decode)
     stub = _Stub("ffmpeg")
-    url = "file:///tmp/waves_preview_abc.m4a"
+    url = "file:///tmp/bitwave_preview_abc.m4a"
     stub._emit_preview_peaks("track", "t1", url)
     stub._emit_preview_peaks("track", "t1", url)
     assert len(calls) == 1
     assert stub.sent == [("track", "t1", [0.1, 0.5, 1.0, 0.2])] * 2
-    assert os.path.basename(calls[0]) == "waves_preview_abc.m4a"
+    assert os.path.basename(calls[0]) == "bitwave_preview_abc.m4a"
 
 
 def test_a_failed_decode_or_a_stream_url_sends_an_empty_list(monkeypatch):

@@ -22,9 +22,9 @@ import zipfile
 import pytest
 import requests
 
-from waves.waves_ui import signing
-from waves.waves_ui import updater as u
-from waves.waves_ui.updater import AppUpdater, Release
+from bitwave.bitwave_ui import signing
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.updater import AppUpdater, Release
 
 
 class _QuietHandler(http.server.SimpleHTTPRequestHandler):
@@ -52,12 +52,12 @@ def test_full_selfupdate_round_trip_over_local_http(tmp_path, monkeypatch):
     asset = "bitwave_linux-x64.zip"
     zip_path = web / asset
     with zipfile.ZipFile(zip_path, "w") as zf:
-        zf.writestr("waves.dist/waves", "NEW-BINARY-v9.9.9")
-        zf.writestr("waves.dist/libpython.so", "NEW-BUNDLED-LIB")
+        zf.writestr("bitwave.dist/bitwave", "NEW-BINARY-v9.9.9")
+        zf.writestr("bitwave.dist/libpython.so", "NEW-BUNDLED-LIB")
 
     # --- 3. Sign a SHA256SUMS manifest over that asset (producer side). --------
     digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
-    manifest = f"# waves-version: v9.9.9\n{digest}  {asset}\n".encode()
+    manifest = f"# bitwave-version: v9.9.9\n{digest}  {asset}\n".encode()
     (web / "SHA256SUMS").write_bytes(manifest)
     (web / "SHA256SUMS.sig").write_text(signing.sign(manifest, priv_pem))
 
@@ -66,7 +66,7 @@ def test_full_selfupdate_round_trip_over_local_http(tmp_path, monkeypatch):
         # --- 4. A frozen, configured updater whose "install" is a temp dir. ----
         install_root = tmp_path / "app"
         install_root.mkdir()
-        target = install_root / "waves"
+        target = install_root / "bitwave"
         target.write_text("OLD-BINARY-v0.1.0")
         (install_root / "libpython.so").write_text("OLD-BUNDLED-LIB")
 
@@ -97,7 +97,7 @@ def test_full_selfupdate_round_trip_over_local_http(tmp_path, monkeypatch):
     assert result["ok"] is True
     assert result["version"] == "v9.9.9"
     assert result["relaunch"] is True
-    assert (install_root / "waves").read_text() == "NEW-BINARY-v9.9.9"
+    assert (install_root / "bitwave").read_text() == "NEW-BINARY-v9.9.9"
     assert (install_root / "libpython.so").read_text() == "NEW-BUNDLED-LIB"
     # No backup/staging litter left behind after a clean swap.
     assert not (tmp_path / "app.old").exists()
@@ -116,22 +116,22 @@ def test_full_selfupdate_rejects_tampered_asset_over_local_http(tmp_path, monkey
     asset = "bitwave_linux-x64.zip"
     zip_path = web / asset
     with zipfile.ZipFile(zip_path, "w") as zf:
-        zf.writestr("waves.dist/waves", "LEGIT-BINARY")
+        zf.writestr("bitwave.dist/bitwave", "LEGIT-BINARY")
 
     # Sign the manifest over the LEGIT asset...
     digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
-    manifest = f"# waves-version: v9.9.9\n{digest}  {asset}\n".encode()
+    manifest = f"# bitwave-version: v9.9.9\n{digest}  {asset}\n".encode()
     (web / "SHA256SUMS").write_bytes(manifest)
     (web / "SHA256SUMS.sig").write_text(signing.sign(manifest, priv_pem))
     # ...then a MITM replaces the asset bytes (hash no longer matches the manifest).
     with zipfile.ZipFile(zip_path, "w") as zf:
-        zf.writestr("waves.dist/waves", "MALICIOUS-PAYLOAD")
+        zf.writestr("bitwave.dist/bitwave", "MALICIOUS-PAYLOAD")
 
     base, stop = _serve(web)
     try:
         install_root = tmp_path / "app"
         install_root.mkdir()
-        target = install_root / "waves"
+        target = install_root / "bitwave"
         target.write_text("OLD-BINARY-v0.1.0")
 
         monkeypatch.setattr(u, "is_frozen", lambda: True)
@@ -154,4 +154,4 @@ def test_full_selfupdate_rejects_tampered_asset_over_local_http(tmp_path, monkey
         stop()
 
     # The live install was never touched by the rejected update.
-    assert (install_root / "waves").read_text() == "OLD-BINARY-v0.1.0"
+    assert (install_root / "bitwave").read_text() == "OLD-BINARY-v0.1.0"

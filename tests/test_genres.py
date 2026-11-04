@@ -1,4 +1,4 @@
-"""The Genre tag from MusicBrainz (waves/genres.py).
+"""The Genre tag from MusicBrainz (bitwave/genres.py).
 
 What is pinned: every genre MusicBrainz lists for the release reaches the
 tag, best voted first, in the user's separator; the artist's genres stand in
@@ -21,11 +21,11 @@ from unittest.mock import MagicMock, patch
 import mutagen.flac
 import mutagen.mp4
 
-from waves import genres as genres_mod
-from waves.download import Download
-from waves.genres import SCOPE, GenreLookup, genre_label, join_genres
-from waves.mb_service import NEGATIVE_TTL_SEC, MBService, Pacer
-from waves.metadata import Metadata
+from bitwave import genres as genres_mod
+from bitwave.download import Download
+from bitwave.genres import SCOPE, GenreLookup, genre_label, join_genres
+from bitwave.mb_service import NEGATIVE_TTL_SEC, MBService, Pacer
+from bitwave.metadata import Metadata
 
 RGID = "11111111-1111-1111-1111-111111111111"
 ARTIST = "22222222-2222-2222-2222-222222222222"
@@ -194,7 +194,7 @@ def _mp4_stub():
 def _write(stub, tmp_path, name, **kw):
     file = tmp_path / name
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=stub):
+    with patch("bitwave.metadata.mutagen.File", return_value=stub):
         meta = Metadata(path_file=file, target_upc=_UPC_TARGET, title="Song", artists=[], albumartist=[], **kw)
         assert meta.save() is True
     return stub
@@ -228,12 +228,12 @@ def _engine(lookup) -> Download:
 
 
 def test_the_engine_asks_with_the_releases_facts_and_joins_the_answer(monkeypatch):
-    monkeypatch.setattr("waves.download.get_album_artists", lambda media: ["Artist"])
+    monkeypatch.setattr("bitwave.download.get_album_artists", lambda media: ["Artist"])
     lookup = MagicMock()
     lookup.genres.return_value = ["house", "techno"]
     dl = _engine(lookup)
     track = _track()
-    with patch("waves.download.Track", SimpleNamespace):
+    with patch("bitwave.download.Track", SimpleNamespace):
         dl._genre_prefetch(track)
         assert dl._genre_text(track) == "House / Techno"
     lookup.prefetch.assert_called_once_with("a1", upc=UPC, artist="Artist", title="Album")
@@ -242,7 +242,7 @@ def test_the_engine_asks_with_the_releases_facts_and_joins_the_answer(monkeypatc
 
 def test_the_engine_does_nothing_without_a_lookup_or_an_album():
     dl = _engine(None)
-    with patch("waves.download.Track", SimpleNamespace):
+    with patch("bitwave.download.Track", SimpleNamespace):
         assert dl._genre_text(_track()) == ""
         dl.genre_lookup = MagicMock()
         assert dl._genre_text(SimpleNamespace(id="t1", album=None, artists=[])) == ""
@@ -250,7 +250,7 @@ def test_the_engine_does_nothing_without_a_lookup_or_an_album():
 
 
 def test_the_default_separator_is_a_semicolon():
-    from waves.model.cfg import Settings
+    from bitwave.model.cfg import Settings
 
     assert Settings().metadata_delimiter_genre == "; "
     assert Settings().metadata_genre is False, "opt-in: it sends release facts to musicbrainz.org"
@@ -338,7 +338,7 @@ def test_a_proved_artist_without_genres_on_record_is_read_once(tmp_path):
 
 
 def test_the_fallback_setting_defaults_on_and_rides_under_the_genre_switch():
-    from waves.model.cfg import Settings
+    from bitwave.model.cfg import Settings
 
     assert Settings().metadata_genre_artist_fallback is True
 

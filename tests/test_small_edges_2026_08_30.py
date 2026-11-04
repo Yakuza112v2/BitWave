@@ -1,7 +1,7 @@
 """The small edges: two loggers, one trail; a name that fits; a real errno.
 
 * The breadcrumb dump limiter is per handler, and install put one handler on
-  each of the two logger trees, so an error from a waves.* logger and one from
+  each of the two logger trees, so an error from a bitwave.* logger and one from
   a third-party root-tree logger seconds apart each wrote the whole trail
   inside the window the limiter exists to hold.
 * A factory reset kept the Windows updater's own update.log, which quotes
@@ -27,12 +27,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from waves import download as download_mod
-from waves.download import Download, _staging_path
-from waves.helper import path as path_helper
-from waves.helper.path import PATH_LENGTH_MAX, _longest_stem_that_fits
-from waves.waves_ui import diagnostics
-from waves.waves_ui.backend import _FACTORY_WIPE_SUBDIRS
+from bitwave import download as download_mod
+from bitwave.download import Download, _staging_path
+from bitwave.helper import path as path_helper
+from bitwave.helper.path import PATH_LENGTH_MAX, _longest_stem_that_fits
+from bitwave.bitwave_ui import diagnostics
+from bitwave.bitwave_ui.backend import _FACTORY_WIPE_SUBDIRS
 
 
 # --------------------------------------------------------------------------- #
@@ -54,13 +54,13 @@ def test_two_logger_trees_share_one_dump_limiter():
     crumbs = diagnostics._BreadcrumbHandler(capacity=5)
     crumbs.setFormatter(logging.Formatter("%(message)s"))
     for i in range(3):
-        crumbs.emit(logging.LogRecord("waves.x", logging.INFO, "", 0, f"crumb {i}", None, None))
+        crumbs.emit(logging.LogRecord("bitwave.x", logging.INFO, "", 0, f"crumb {i}", None, None))
     sink = _Sink()
     dumper = diagnostics._CrumbDumpHandler(crumbs, sink)
 
-    # The waves tree's error, then the root tree's a moment later. One handler
+    # The bitwave tree's error, then the root tree's a moment later. One handler
     # instance on both trees is what makes the second one hit the limiter.
-    dumper.emit(logging.LogRecord("waves.download", logging.ERROR, "", 0, "boom", None, None))
+    dumper.emit(logging.LogRecord("bitwave.download", logging.ERROR, "", 0, "boom", None, None))
     first = len(sink.records)
     dumper.emit(logging.LogRecord("urllib3", logging.ERROR, "", 0, "also boom", None, None))
 
@@ -276,7 +276,7 @@ def test_the_extension_always_survives(monkeypatch):
 # F-40: the redactor learns a credential when it is minted, not once at login.
 # --------------------------------------------------------------------------- #
 def test_a_token_persist_tells_the_listener():
-    from waves.config import Tidal
+    from bitwave.config import Tidal
 
     tidal = Tidal.__new__(Tidal)
     seen: list[object] = []
@@ -289,7 +289,7 @@ def test_a_token_persist_tells_the_listener():
 
 
 def test_no_listener_is_not_an_error():
-    from waves.config import Tidal
+    from bitwave.config import Tidal
 
     tidal = Tidal.__new__(Tidal)
     tidal.on_session_credentials = None
@@ -299,7 +299,7 @@ def test_no_listener_is_not_an_error():
 
 
 def test_a_listener_that_raises_never_takes_the_login_down():
-    from waves.config import Tidal
+    from bitwave.config import Tidal
 
     tidal = Tidal.__new__(Tidal)
 
@@ -317,7 +317,7 @@ def test_the_refresh_and_the_persist_both_report():
     persisted, so the persist call alone would miss every one of them."""
     import inspect
 
-    from waves.config import Tidal
+    from bitwave.config import Tidal
 
     assert "_note_session_credentials()" in inspect.getsource(Tidal.token_persist)
     assert "_note_session_credentials()" in inspect.getsource(Tidal._reauthenticate_current_client)
@@ -326,9 +326,9 @@ def test_the_refresh_and_the_persist_both_report():
 def test_the_bridge_installs_itself_as_the_listener():
     import inspect
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    source = inspect.getsource(WavesBridge.__init__)
+    source = inspect.getsource(BitWaveBridge.__init__)
 
     assert "on_session_credentials = self._register_session_secrets" in source
 
@@ -338,6 +338,6 @@ def test_the_registrar_takes_a_session_it_is_handed():
     bridge reads its own. Both must work."""
     import inspect
 
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    assert "session=None" in str(inspect.signature(WavesBridge._register_session_secrets))
+    assert "session=None" in str(inspect.signature(BitWaveBridge._register_session_secrets))

@@ -13,8 +13,8 @@ import sys
 import pytest
 from Crypto.PublicKey import ECC
 
-from waves.waves_ui import signing
-from waves.waves_ui.signing import UPDATE_PUBLIC_KEY, public_key_pem, sign
+from bitwave.bitwave_ui import signing
+from bitwave.bitwave_ui.signing import UPDATE_PUBLIC_KEY, public_key_pem, sign
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -53,9 +53,9 @@ def test_the_readme_prints_the_embedded_key_and_the_commands():
 def test_the_release_footer_puts_the_hash_next_to_each_download():
     from tools.release_verify_notes import verify_notes
 
-    out = verify_notes("# waves-version: v9.9.9\naa11  waves_b.zip\nbb22  waves_a.zip\n")
+    out = verify_notes("# bitwave-version: v9.9.9\naa11  bitwave_b.zip\nbb22  bitwave_a.zip\n")
     assert out.startswith("### 🔐 Download prüfen\n")
-    assert out.index("`waves_a.zip` | `bb22`") < out.index("`waves_b.zip` | `aa11`")
+    assert out.index("`bitwave_a.zip` | `bb22`") < out.index("`bitwave_b.zip` | `aa11`")
     assert public_key_pem().rstrip("\n") in out
     assert "openssl pkeyutl -verify" in out
     assert "#download-prüfen" in out
@@ -77,12 +77,12 @@ def test_the_readme_commands_verify_a_signed_manifest_with_openssl(tmp_path):
     pub_b64 = base64.b64encode(key.public_key().export_key(format="raw")).decode("ascii")
     priv_pem = key.export_key(format="PEM")
     manifest = tmp_path / "SHA256SUMS"
-    asset = tmp_path / "waves_x.zip"
+    asset = tmp_path / "bitwave_x.zip"
     asset.write_bytes(b"build")
     # The Windows runner's lines end in CRLF (the live v0.1.31 manifest has
     # them); the README's check must still match such an asset.
     digest = hashlib.sha256(b"build").hexdigest()
-    manifest.write_bytes(f"# waves-version: v9.9.9\n{digest}  waves_x.zip\r\n{digest}  waves_win.zip\r\n".encode())
+    manifest.write_bytes(f"# bitwave-version: v9.9.9\n{digest}  bitwave_x.zip\r\n{digest}  bitwave_win.zip\r\n".encode())
     (tmp_path / "SHA256SUMS.sig").write_text(sign(manifest.read_bytes(), priv_pem))
     (tmp_path / "bitwave-release.pem").write_text(public_key_pem(pub_b64))
 
@@ -99,7 +99,7 @@ def test_the_readme_commands_verify_a_signed_manifest_with_openssl(tmp_path):
     checked = subprocess.run(
         ["bash", "-c", commands[2]], cwd=tmp_path, capture_output=True, text=True, check=False
     ).stdout
-    assert "waves_x.zip: OK" in checked, checked
+    assert "bitwave_x.zip: OK" in checked, checked
     manifest.write_bytes(manifest.read_bytes() + b"x")
     assert run(commands[1]) != 0, "a tampered manifest must fail the signature check"
 

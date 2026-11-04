@@ -1,4 +1,4 @@
-"""Tests for the fresh-releases hint (waves/fresh_releases.py) and its Qt
+"""Tests for the fresh-releases hint (bitwave/fresh_releases.py) and its Qt
 layer in bridge_releases: the list is read and matched by MBID or name key,
 a hinted follow goes ahead of the round, the schedule shortens on release
 night, a wall-clock jump reads as a wake, and a refusal keeps away.
@@ -21,11 +21,11 @@ import pytest
 from conftest import _InlinePool, _Signal
 from test_releases_backend import _bind, _Stub, _stub, _Timer
 
-from waves import fresh_releases as fr
-from waves.follows import FollowStore
-from waves.tls import tls_context
-from waves.waves_ui import bridge_releases as rel
-from waves.waves_ui.backend import WavesBridge
+from bitwave import fresh_releases as fr
+from bitwave.follows import FollowStore
+from bitwave.tls import tls_context
+from bitwave.bitwave_ui import bridge_releases as rel
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 for _m in (
     "_releases_fresh_on",
@@ -38,7 +38,7 @@ for _m in (
     "_on_rel_fresh_done",
     "_releases_fresh_switched",
 ):
-    setattr(_Stub, _m, getattr(WavesBridge, _m))
+    setattr(_Stub, _m, getattr(BitWaveBridge, _m))
 
 
 def _body(*releases) -> bytes:
@@ -312,9 +312,9 @@ def test_tick_holds_while_gated_off_seeding_or_backing_off(tmp_path):
     s._releases.follow("a", "A", "")
     tick()  # the first round has not read it yet
     s._releases.record_check("a", [])
-    s._waves_prefs["releases_fresh_hints"] = "off"
+    s._bitwave_prefs["releases_fresh_hints"] = "off"
     tick()
-    s._waves_prefs["releases_fresh_hints"] = "on"
+    s._bitwave_prefs["releases_fresh_hints"] = "on"
     s._logged_in = False
     tick()
     s._logged_in = True
@@ -342,7 +342,7 @@ def test_a_wall_clock_jump_reads_at_once(tmp_path, monkeypatch, caplog):
     assert reads == []
     # Asleep for an hour: well past one beat.
     clock[0] += 3600
-    with caplog.at_level("INFO", logger="waves.releases"):
+    with caplog.at_level("INFO", logger="bitwave.releases"):
         tick()
     assert reads == [1]
     assert "woke" in caplog.text
@@ -522,16 +522,16 @@ def test_the_setting_is_on_by_default_and_a_two_way_choice_under_releases():
     from test_releases_settings_placement import _schema_stub
 
     stub = _schema_stub()
-    assert stub._waves_prefs["releases_fresh_hints"] == "on"
-    schema = WavesBridge.settingsSchema(stub)
+    assert stub._bitwave_prefs["releases_fresh_hints"] == "on"
+    schema = BitWaveBridge.settingsSchema(stub)
     section = next(s for s in schema if s["id"] == "releases")
     row = next(f for f in section["fields"] if f["key"] == "releases_fresh_hints")
     assert row["type"] == "enum" and row["value"] == "on"
     assert [o["label"] for o in row["options"]] == ["On", "Off"]
     s = _Stub()
-    s._waves_prefs = {"releases_fresh_hints": "off"}
+    s._bitwave_prefs = {"releases_fresh_hints": "off"}
     assert _bind(s, "_releases_fresh_on")() is False
-    s._waves_prefs = {"releases_fresh_hints": "on"}
+    s._bitwave_prefs = {"releases_fresh_hints": "on"}
     assert _bind(s, "_releases_fresh_on")() is True
 
 

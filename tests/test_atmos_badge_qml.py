@@ -36,7 +36,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 def test_a_release_carrying_atmos_reads_atmos_and_keeps_its_stereo_tiers():
@@ -45,7 +45,7 @@ def test_a_release_carrying_atmos_reads_atmos_and_keeps_its_stereo_tiers():
     # Both roots sandboxed: the bridge resolves its config under one or the
     # other by platform, and the scenario's owned copies land under it too,
     # so one sweep clears everything the run wrote.
-    sandbox = tempfile.mkdtemp(prefix="waves-atmos-badge-test-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-atmos-badge-test-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     try:
@@ -136,28 +136,28 @@ def _run_scenario() -> int:  # noqa: C901 (one straight scenario)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    WavesBridge._library_root = lambda self: ""  # type: ignore[method-assign]
-    WavesBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
-    WavesBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge._library_root = lambda self: ""  # type: ignore[method-assign]
+    BitWaveBridge.loadBrowse = lambda self: None  # type: ignore[method-assign]
+    BitWaveBridge.refreshBrowse = lambda self: None  # type: ignore[method-assign]
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     bridge.settings.data.download_dolby_atmos = False
     # t5 is held in Dolby Atmos, recorded before the page can ask (an answer
     # is cached for its TTL). TIDAL files Atmos under LOW: the mark must land
     # on the ATMOS row, not on LOW.
-    owned_dir = Path(tempfile.mkdtemp(prefix="waves-atmos-badge-owned-", dir=os.environ.get("XDG_CONFIG_HOME")))
+    owned_dir = Path(tempfile.mkdtemp(prefix="bitwave-atmos-badge-owned-", dir=os.environ.get("XDG_CONFIG_HOME")))
     bridge.settings.data.download_base_path = str(owned_dir)
     f = owned_dir / "t5.m4a"
     f.write_text("audio")
     bridge._ownership.record("t5", str(f), "LOW", audio_mode="DOLBY_ATMOS")
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

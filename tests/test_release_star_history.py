@@ -115,7 +115,7 @@ def sandbox(tmp_path: Path) -> Path:
     _write(private / "README.md", _readme(""))
     _write(private / "keep.txt", "published\n")
     # Something new, so the snapshot actually differs from the public tip.
-    _write(private / "waves" / "app.py", "print(1)\n")
+    _write(private / "bitwave" / "app.py", "print(1)\n")
     _write(private / "RELEASING.md", "never published\n")
     _git(private, "add", "-A")
     _git(private, "commit", "-m", "private tree")
@@ -311,14 +311,14 @@ def test_a_marker_in_the_published_tree_refuses_the_release(sandbox: Path):
     """The commit hook only sees added lines of a commit and can be bypassed;
     the release reads every text file of the final tree with the same markers
     and refuses on a hit, naming the place but never the line."""
-    _write(sandbox / "waves" / "notes.py", "# a comment\n# as EARLIER we agreed, the value is 42\nx = 1\n")
+    _write(sandbox / "bitwave" / "notes.py", "# a comment\n# as EARLIER we agreed, the value is 42\nx = 1\n")
     _git(sandbox, "add", "-A")
     _git(sandbox, "commit", "-m", "a line the hook never saw")
 
     proc = _dry_run(sandbox)
     assert proc.returncode != 0, f"a marker was published:\n{proc.stdout}"
     assert "matches the PII / authorship markers" in proc.stderr
-    assert "waves/notes.py:2" in proc.stderr, proc.stderr
+    assert "bitwave/notes.py:2" in proc.stderr, proc.stderr
     # The location is enough; the offending text must not be echoed anywhere.
     assert "we agreed" not in proc.stderr and "we agreed" not in proc.stdout
     assert "value is 42" not in proc.stderr and "value is 42" not in proc.stdout
@@ -341,12 +341,12 @@ def test_the_public_owner_inside_a_github_url_is_not_a_hit(sandbox: Path):
     assert proc.returncode == 0, proc.stderr
 
     # The other markers are still live around it, in any case.
-    _write(sandbox / "waves" / "x.py", f"# https://github.com/{_OWNER}/BitWave and Relay-Id-Beta\n")
+    _write(sandbox / "bitwave" / "x.py", f"# https://github.com/{_OWNER}/BitWave and Relay-Id-Beta\n")
     _git(sandbox, "add", "-A")
     _git(sandbox, "commit", "-m", "a URL beside a marker")
     proc = _dry_run(sandbox)
     assert proc.returncode != 0
-    assert "waves/x.py:1" in proc.stderr
+    assert "bitwave/x.py:1" in proc.stderr
 
 
 def test_a_missing_guard_hook_refuses_the_release(sandbox: Path):

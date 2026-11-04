@@ -18,10 +18,10 @@ from unittest.mock import patch
 from _dispatch_stub import arm_queue
 from tidalapi.media import Quality
 
-from waves.waves_ui import updater as updater_mod
-from waves.waves_ui.backend import WavesBridge, _link_tiles_of
+from bitwave.bitwave_ui import updater as updater_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge, _link_tiles_of
 
-QML_DIR = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML_DIR = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 MAIN_QML = (QML_DIR / "Main.qml").read_text(encoding="utf-8")
 SETTINGS_QML = (QML_DIR / "SettingsPage.qml").read_text(encoding="utf-8")
 
@@ -57,13 +57,13 @@ class _AlbumTracksStub:
     def _set_status(self, text):  # a failed fetch now says so
         pass
 
-    loadAlbumTracks = WavesBridge.loadAlbumTracks
-    _start_album_tracks_fetch = WavesBridge._start_album_tracks_fetch
-    _record_album_members = WavesBridge._record_album_members
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    loadAlbumTracks = BitWaveBridge.loadAlbumTracks
+    _start_album_tracks_fetch = BitWaveBridge._start_album_tracks_fetch
+    _record_album_members = BitWaveBridge._record_album_members
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self, session_album=None):
         self._album_tracks_cache = {}
@@ -113,7 +113,7 @@ def test_a_failed_album_refetch_still_answers_the_row():
 
 
 class _InstallStub:
-    installAppUpdate = WavesBridge.installAppUpdate
+    installAppUpdate = BitWaveBridge.installAppUpdate
 
     def __init__(self):
         self._app_update_inflight = False
@@ -156,15 +156,15 @@ def test_a_pending_cancel_is_not_discarded_by_a_second_click():
 
 
 class _RetryStub:
-    retryQueueItem = WavesBridge.retryQueueItem
-    _retry_queue_refetch = WavesBridge._retry_queue_refetch
-    _on_queue_retry_refetched = WavesBridge._on_queue_retry_refetched
-    _queue_item = WavesBridge._queue_item
-    _reindex_queue = WavesBridge._reindex_queue
-    _remove_rows_where = WavesBridge._remove_rows_where
-    _remove_row = WavesBridge._remove_row
-    _row_object = WavesBridge._row_object
-    _start_retry = WavesBridge._start_retry
+    retryQueueItem = BitWaveBridge.retryQueueItem
+    _retry_queue_refetch = BitWaveBridge._retry_queue_refetch
+    _on_queue_retry_refetched = BitWaveBridge._on_queue_retry_refetched
+    _queue_item = BitWaveBridge._queue_item
+    _reindex_queue = BitWaveBridge._reindex_queue
+    _remove_rows_where = BitWaveBridge._remove_rows_where
+    _remove_row = BitWaveBridge._remove_row
+    _row_object = BitWaveBridge._row_object
+    _start_retry = BitWaveBridge._start_retry
 
     def __init__(self, session_track=None):
         self._queue = [
@@ -274,7 +274,7 @@ def test_save_settings_notifies_the_settings_page():
         _settings_save_lock=Lock(),
     )
     stub._submit_settings_write = lambda: stub.settings.save()
-    WavesBridge._save_settings(stub)
+    BitWaveBridge._save_settings(stub)
     assert stub.settingsPersistedExternally.emits == [()]
 
 
@@ -287,7 +287,7 @@ def test_settings_page_listens_for_external_persists():
 
 
 class _BrowsePageStub:
-    openBrowsePage = WavesBridge.openBrowsePage
+    openBrowsePage = BitWaveBridge.openBrowsePage
 
     def __init__(self, cached, fresh_sections):
         self._logged_in = True
@@ -345,7 +345,7 @@ def test_link_tiles_of_extracts_only_link_rows():
 
 
 class _CategoryStub:
-    downloadPlaylistCategory = WavesBridge.downloadPlaylistCategory
+    downloadPlaylistCategory = BitWaveBridge.downloadPlaylistCategory
 
     def __init__(self):
         self._logged_in = True
@@ -391,7 +391,7 @@ def test_category_download_warms_the_tree_under_the_rollup_id():
 
 
 class _BestOfBothStub:
-    downloadAlbumBestOfBoth = WavesBridge.downloadAlbumBestOfBoth
+    downloadAlbumBestOfBoth = BitWaveBridge.downloadAlbumBestOfBoth
 
     def __init__(self, plan=None, identity_id="a1", scan_raises=False, scan_complete=True):
         self._objs = {"album": {"a1": SimpleNamespace(id="a1")}}
@@ -422,7 +422,7 @@ class _BestOfBothStub:
             "_queued_quality_value",
             "_target_tier",
         ):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, WavesBridge))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, BitWaveBridge))
 
     def _set_status(self, text):
         self.statuses.append(text)
@@ -445,7 +445,7 @@ class _BestOfBothStub:
 def test_best_of_both_guards_the_button_before_the_scan():
     stub = _BestOfBothStub()
     with patch(
-        "waves.waves_ui.backend._build_merge_plan",
+        "bitwave.bitwave_ui.backend._build_merge_plan",
         return_value=(SimpleNamespace(id="a2", full_name="Album DX"), {"a2": []}, ""),
     ):
         stub.downloadAlbumBestOfBoth("a1")
@@ -458,7 +458,7 @@ def test_best_of_both_guards_the_button_before_the_scan():
 def test_best_of_both_same_identity_keeps_the_button_waiting():
     stub = _BestOfBothStub()
     with patch(
-        "waves.waves_ui.backend._build_merge_plan",
+        "bitwave.bitwave_ui.backend._build_merge_plan",
         return_value=(SimpleNamespace(id="a1", full_name="Album"), {"a1": []}, ""),
     ):
         stub.downloadAlbumBestOfBoth("a1")
@@ -542,7 +542,7 @@ def test_best_of_both_plans_at_the_clicked_albums_choice_and_carries_it_to_the_i
     carried: list = []
     stub.setQualityOverride = lambda mid, word: carried.append((mid, word))
     with patch(
-        "waves.waves_ui.backend._build_merge_plan",
+        "bitwave.bitwave_ui.backend._build_merge_plan",
         return_value=(SimpleNamespace(id="a2", full_name="Album DX"), {"a2": []}, ""),
     ):
         stub.downloadAlbumBestOfBoth("a1")
@@ -563,7 +563,7 @@ def test_best_of_both_carries_an_atmos_choice_to_the_identity():
     seen: list = []
     stub._merge_rank_fn = lambda quality=None: (seen.append(quality), (lambda o: 0))[1]
     with patch(
-        "waves.waves_ui.backend._build_merge_plan",
+        "bitwave.bitwave_ui.backend._build_merge_plan",
         return_value=(SimpleNamespace(id="a2", full_name="Album DX"), {"a2": []}, ""),
     ):
         stub.downloadAlbumBestOfBoth("a1")
@@ -577,7 +577,7 @@ def test_best_of_both_without_a_choice_plans_at_the_setting_and_carries_nothing(
     stub._merge_rank_fn = lambda quality=None: (seen.append(quality), (lambda o: 0))[1]
     stub.setQualityOverride = lambda mid, word: (_ for _ in ()).throw(AssertionError("no choice to carry"))
     with patch(
-        "waves.waves_ui.backend._build_merge_plan",
+        "bitwave.bitwave_ui.backend._build_merge_plan",
         return_value=(SimpleNamespace(id="a2", full_name="Album DX"), {"a2": []}, ""),
     ):
         stub.downloadAlbumBestOfBoth("a1")

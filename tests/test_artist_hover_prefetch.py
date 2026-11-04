@@ -10,7 +10,7 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Sig:
@@ -30,11 +30,11 @@ class _Pool:
 
 
 class _Stub:
-    loadArtist = WavesBridge.loadArtist
-    prefetchArtist = WavesBridge.prefetchArtist
-    _start_artist_build = WavesBridge._start_artist_build
+    loadArtist = BitWaveBridge.loadArtist
+    prefetchArtist = BitWaveBridge.prefetchArtist
+    _start_artist_build = BitWaveBridge._start_artist_build
 
-    _artist_art_summary = staticmethod(WavesBridge._artist_art_summary)
+    _artist_art_summary = staticmethod(BitWaveBridge._artist_art_summary)
 
     def __init__(self, *, fail=False, collapse=False):
         self.threadpool = _Pool()
@@ -263,7 +263,7 @@ def test_the_five_section_reads_are_in_flight_together():
     import threading
     import time
 
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     gate = threading.Barrier(5, timeout=2.0)
 
@@ -301,7 +301,7 @@ def test_the_five_section_reads_are_in_flight_together():
 def test_the_section_fan_out_reports_to_diagnostics():
     from pathlib import Path
 
-    src = (Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "backend.py").read_text(encoding="utf-8")
+    src = (Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "backend.py").read_text(encoding="utf-8")
     assert 'diagnostics.register_pool("artist", ARTIST_GAUGE)' in src
 
 

@@ -48,7 +48,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _WIN_W, _WIN_H = 1100, 720
 
@@ -56,7 +56,7 @@ _WIN_W, _WIN_H = 1100, 720
 def test_search_results_open_finished_and_build_only_what_they_show():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-searchbuild-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-searchbuild-test-")
     proc = subprocess.run(  # (fixed argv: this file, one flag)
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -169,16 +169,16 @@ def _run_scenario() -> int:
     try:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     patch_offline()
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -241,7 +241,7 @@ def _run_scenario() -> int:
     q("sortBox.currentIndex = 0; root.sortAsc = false")
     q("root.searchArtistsExpanded = false; root.searchAlbumsExpanded = false; root.searchTracksExpanded = false")
     q("root.searchVideosExpanded = false; root.searchPlaylistsExpanded = false; root.searchMixesExpanded = false")
-    if not q("waves.libraryIndexReady()"):
+    if not q("bitwave.libraryIndexReady()"):
         print("the library reads as unanswered with none configured", file=sys.stderr)
         return _EXIT_PRECONDITION
     settle(50)
@@ -416,7 +416,7 @@ def _run_scenario() -> int:
     # ---- Fence 5: a search before the library has answered ----------------
     bridge._library_index = None
     bridge._library_root = lambda: "/library"  # configured, so "not yet" is a real state
-    if q("waves.libraryIndexReady()"):
+    if q("bitwave.libraryIndexReady()"):
         print("could not make the index read as unanswered", file=sys.stderr)
         return _EXIT_PRECONDITION
     emit(_results("d"))

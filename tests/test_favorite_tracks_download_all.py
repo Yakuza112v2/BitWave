@@ -19,9 +19,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.waves_ui.backend import _FAV_TRACKS_GROUP_ID, _LIBRARY_PAGE, WavesBridge, _ScanStopped
+from bitwave.bitwave_ui.backend import _FAV_TRACKS_GROUP_ID, _LIBRARY_PAGE, BitWaveBridge, _ScanStopped
 
-QML = (Path(__file__).parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+QML = (Path(__file__).parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 class _Signal:
@@ -72,9 +72,9 @@ class _Favorites:
 
 
 class _Stub:
-    downloadFavoriteTracks = WavesBridge.downloadFavoriteTracks
-    resolveFavoriteTracks = WavesBridge.resolveFavoriteTracks
-    _all_favorites = WavesBridge._all_favorites
+    downloadFavoriteTracks = BitWaveBridge.downloadFavoriteTracks
+    resolveFavoriteTracks = BitWaveBridge.resolveFavoriteTracks
+    _all_favorites = BitWaveBridge._all_favorites
 
     def __init__(
         self,
@@ -192,7 +192,7 @@ def test_a_stop_mid_scan_queues_nothing(monkeypatch):
 
         return check
 
-    monkeypatch.setattr("waves.waves_ui.backend._stop_check_for", stop_check_for)
+    monkeypatch.setattr("bitwave.bitwave_ui.backend._stop_check_for", stop_check_for)
     stub.downloadFavoriteTracks()
     assert stub.tidal.session.user.favorites.calls >= 1, "the stop must land mid-scan, not before it"
     assert stub._tracksQueued.emits == []
@@ -313,8 +313,8 @@ def test_resolve_needs_a_login():
     [
         f'mediaId: "{GID}"',  # the button and the backend share one group id
         'visible: root.libraryCategory === "tracks"',
-        "waves.resolveFavoriteTracks()",
-        "waves.downloadFavoriteTracks()",
+        "bitwave.resolveFavoriteTracks()",
+        "bitwave.downloadFavoriteTracks()",
         "function onFavoriteTracksResolved(count)",
     ],
 )
@@ -337,4 +337,4 @@ def test_the_confirm_dialog_names_tracks_and_calls_the_slot():
     assert gate
     body = gate.group(0)
     assert '" track?" : " tracks?"' in body
-    assert 'p.kind === "favTracks"' in body and "waves.downloadFavoriteTracks()" in body
+    assert 'p.kind === "favTracks"' in body and "bitwave.downloadFavoriteTracks()" in body

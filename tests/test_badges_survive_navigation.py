@@ -43,7 +43,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _HELD = 4  # albums (and artists) the library holds
 _ABSENT = 2  # albums it does not, so a pass cannot come from "everything is on"
@@ -52,7 +52,7 @@ _ABSENT = 2  # albums it does not, so a pass cannot come from "everything is on"
 def test_badges_do_not_arrive_again_on_every_navigation():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-badge-nav-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-badge-nav-")
     env["HOME"] = env["XDG_CONFIG_HOME"]  # nothing in the scenario may reach the real home
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
@@ -105,15 +105,15 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
     patch_offline()
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.matching import presence_key
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.matching import presence_key
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     asked = {"n": 0}
 
-    class CountingBridge(WavesBridge):
+    class CountingBridge(BitWaveBridge):
         # Every overload the real bridge registers, or Qt dispatches straight to
         # the base class and this counter silently measures nothing (see
         # test_presence_call_budget for the scar).
@@ -122,7 +122,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
         @Slot(str, str, str, int, int, int, result="QVariant")
         def libraryAlbumPresence(self, artist, title, year, num_tracks, duration=0, explicit=-1):
             asked["n"] += 1
-            return WavesBridge.libraryAlbumPresence(self, artist, title, year, num_tracks, duration, explicit)
+            return BitWaveBridge.libraryAlbumPresence(self, artist, title, year, num_tracks, duration, explicit)
 
     index: dict = {}
     rows: list[dict] = []
@@ -161,7 +161,7 @@ def _run_scenario() -> int:  # (a linear boot -> drive -> measure scenario)
     bridge = CountingBridge(tidal=None)
     bridge._library_index = index
     bridge._library_track_index = {}
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", "JetBrains Mono")
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

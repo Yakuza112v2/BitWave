@@ -32,12 +32,12 @@ from tests.test_favorite_albums_artists_download_all import (
     _Favorites,
     _Stub,
 )
-from waves.waves_ui import ffmpeg_manager as fm
-from waves.waves_ui import updater as u
-from waves.waves_ui.backend import _FAV_ARTISTS_GROUP_ID, WavesBridge
-from waves.waves_ui.updater import AppUpdater, Release, UpdaterError, user_facing_error
+from bitwave.bitwave_ui import ffmpeg_manager as fm
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.backend import _FAV_ARTISTS_GROUP_ID, BitWaveBridge
+from bitwave.bitwave_ui.updater import AppUpdater, Release, UpdaterError, user_facing_error
 
-QML_DIR = pathlib.Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml"
+QML_DIR = pathlib.Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml"
 MAIN = (QML_DIR / "Main.qml").read_text(encoding="utf-8")
 SETTINGS = (QML_DIR / "SettingsPage.qml").read_text(encoding="utf-8")
 FFMGR = (QML_DIR / "FfmpegManager.qml").read_text(encoding="utf-8")
@@ -59,7 +59,7 @@ class _InlinePool:
 
 def _bind(obj, *names):
     for name in names:
-        setattr(obj, name, getattr(WavesBridge, name).__get__(obj, type(obj)))
+        setattr(obj, name, getattr(BitWaveBridge, name).__get__(obj, type(obj)))
 
 
 # ---- #1: the first failed swap keeps its reason on screen ----------------------
@@ -151,16 +151,16 @@ def _brew(monkeypatch, lines, code=0):
 # comes first, before anything is downloaded.
 _REAL_BREW = [
     "==> Upgrading 1 outdated package:",
-    "iamprivacy/waves/waves 1.0.0 -> 1.1.0",
-    "==> Upgrading waves",
+    "Yakuza112v2/bitwave/bitwave 1.0.0 -> 1.1.0",
+    "==> Upgrading bitwave",
     "==> Downloading https://github.com/Yakuza112v2/BitWave/releases/download/v1.1.0/bitwave_macos.zip",
     "==> Downloading from https://objects.githubusercontent.com/github-production-release-asset/x",
     "######################################################################## 100.0%",
-    "==> Backing App 'BitWave.app' up to '/opt/homebrew/Caskroom/waves/1.0.0/BitWave.app'",
+    "==> Backing App 'BitWave.app' up to '/opt/homebrew/Caskroom/bitwave/1.0.0/BitWave.app'",
     "==> Removing App '/Applications/BitWave.app'",
     "==> Moving App 'BitWave.app' to '/Applications/BitWave.app'",
-    "==> Purging files for version 1.0.0 of Cask waves",
-    "🍺  waves was successfully upgraded!",
+    "==> Purging files for version 1.0.0 of Cask bitwave",
+    "🍺  bitwave was successfully upgraded!",
 ]
 
 
@@ -177,7 +177,7 @@ def test_a_brew_failure_shows_fixed_wording_and_logs_the_tail(monkeypatch, caplo
     lines = [
         "==> Downloading https://github.com/Yakuza112v2/BitWave/releases/download/v1.1.0/bitwave_macos.zip",
         "curl: (6) Could not resolve host: github.com",
-        "Error: Download failed on Cask 'waves' with message: Download failed",
+        "Error: Download failed on Cask 'bitwave' with message: Download failed",
     ]
     up = _brew(monkeypatch, lines, code=1)
     with caplog.at_level(logging.WARNING, logger=u.logger.name), pytest.raises(UpdaterError) as info:

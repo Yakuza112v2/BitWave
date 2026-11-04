@@ -33,11 +33,11 @@ import ast
 import inspect
 import textwrap
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _slot_ast(name: str) -> ast.FunctionDef:
-    source = textwrap.dedent(inspect.getsource(getattr(WavesBridge, name)))
+    source = textwrap.dedent(inspect.getsource(getattr(BitWaveBridge, name)))
     return ast.parse(source).body[0]
 
 
@@ -91,7 +91,7 @@ def test_no_slot_resolves_media_objects_on_the_gui_thread():
     resolvers = {"_get_artist", "_get_album", "_get_track"}
     offenders: list[str] = []
 
-    for name, member in vars(WavesBridge).items():
+    for name, member in vars(BitWaveBridge).items():
         if not callable(member) or name.startswith("__"):
             continue
         try:

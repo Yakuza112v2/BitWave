@@ -15,13 +15,13 @@ Die offiziellen Downloads findest du unter [Releases](https://github.com/Yakuza1
 
 ## Eigene Einstellungen
 
-BitWave startet eigenständig. Einstellungen, Anmeldung, Zwischenspeicher und Update-Daten werden nicht aus Waves übernommen. Der normale Datenordner ist `%APPDATA%\BitWave`. Ein nicht installiert ausgeführter Entwicklungsstand verwendet `BitWave-dev`. `XDG_CONFIG_HOME` kann den Basisordner für Tests überschreiben.
+BitWave startet eigenständig. Der normale Datenordner ist `%APPDATA%\BitWave`. Ein nicht installiert ausgeführter Entwicklungsstand verwendet `BitWave-dev`. `XDG_CONFIG_HOME` kann den Basisordner für Tests überschreiben.
 
 ## Updates
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-Während der Umstellung bleibt das Repository privat. Öffentliche App-Updates sind verfügbar, sobald das Repository öffentlich ist und ein signiertes BitWave-Release veröffentlicht wurde. Bestehende Waves-Installationen bleiben eigenständig; BitWave wird separat installiert.
+Während der Umstellung bleibt das Repository privat. Öffentliche App-Updates sind verfügbar, sobald das Repository öffentlich ist und ein signiertes BitWave-Release veröffentlicht wurde. 
 
 ## Download prüfen
 
@@ -55,10 +55,8 @@ Benötigt werden Windows und Python 3.12 oder 3.13.
 
 ```powershell
 poetry install --all-extras --with dev
-poetry run python -m waves.waves_ui
+poetry run python -m bitwave.bitwave_ui
 ```
-
-Der interne Python-Paketname bleibt aus Kompatibilitätsgründen `waves`. Anwendung und installierbares Projekt heißen BitWave.
 
 ## Windows-Paket erstellen
 
@@ -67,5 +65,3 @@ poetry run make build-windows
 ```
 
 Die automatischen Windows-Builds laufen über GitHub Actions. Die Einrichtung der Signierung und die Veröffentlichung sind in [BITWAVE_RELEASE.md](BITWAVE_RELEASE.md) beschrieben.
-
-

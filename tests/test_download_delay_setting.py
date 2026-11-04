@@ -5,7 +5,7 @@ THE BUG
 ``download_delay`` is a BitWave setting: it appears in ``_FLAG_FIELDS``, on the
 Settings page under Downloads, and its two companion fields "Minimum/Maximum
 download delay (s)" were live. The flag itself was never read by anything in
-``waves/``.
+``bitwave/``.
 
 The engine takes it as a PARAMETER and relies on the caller to forward it.
 BitWave forwarded nothing, so each dispatch fell back to a different default and
@@ -31,9 +31,9 @@ from unittest.mock import patch
 
 from _dispatch_stub import arm_dispatch
 
-from waves.download import Download
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -96,7 +96,7 @@ class _Stub:
         self._queue_lock = Lock()
         self.settings = SimpleNamespace(
             data=SimpleNamespace(
-                download_base_path="/tmp/waves-out",
+                download_base_path="/tmp/bitwave-out",
                 download_delay=delay,
                 downloads_concurrent_max=2,
                 download_dolby_atmos=False,
@@ -181,7 +181,7 @@ def _media():
 def _run(*, delay: bool, collection: bool) -> _RecordingDownload:
     stub = _Stub(delay)
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._download(
+        BitWaveBridge._download(
             stub,
             _media(),
             "album" if collection else "track",
@@ -233,7 +233,7 @@ def _run_merge(delay: bool) -> _RecordingDownload:
     stub = _Stub(delay)
     plan = [(_media(), 1, 1, "i-1"), (_media(), 2, 1, "i-2")]
     with patch.object(backend, "_as_member_of", lambda src, *a: src):
-        WavesBridge._download_merge_plan(
+        BitWaveBridge._download_merge_plan(
             stub,
             stub.dl,
             SimpleNamespace(list_item=_Signal(), track_event=_Signal()),
@@ -267,7 +267,7 @@ def test_every_engine_dispatch_forwards_the_delay():
     import inspect
     import re
 
-    source = inspect.getsource(WavesBridge)
+    source = inspect.getsource(BitWaveBridge)
     # The three ways a job reaches the engine: a collection, a single item, and
     # the merge fan-out's pool.submit(dl.item, ...).
     dispatches = len(re.findall(r"\bdl\.items?\(|\bdl\.item,", source))
@@ -285,4 +285,4 @@ def test_every_engine_dispatch_forwards_the_delay():
     # The dispatches live in _start_job (the job body, built when a row's
     # turn comes) and the merge fan-out.
     for name in ("_start_job", "_download_merge_plan"):
-        assert "download_delay" in inspect.getsource(getattr(WavesBridge, name)), f"{name} stopped forwarding it"
+        assert "download_delay" in inspect.getsource(getattr(BitWaveBridge, name)), f"{name} stopped forwarding it"

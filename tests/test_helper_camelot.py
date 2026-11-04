@@ -1,6 +1,6 @@
 """Tests for Camelot wheel notation conversions."""
 
-from waves.helper.camelot import (
+from bitwave.helper.camelot import (
     CamelotNotation,
     KeyScale,
     alphanumeric_to_classic,

@@ -23,7 +23,7 @@ from types import SimpleNamespace
 
 import tidalapi
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # ----- fixture: a small but shape-faithful home/feed/static payload ---------
 
@@ -144,8 +144,8 @@ def _offline_session(payload: dict) -> tidalapi.Session:
     return session
 
 
-def _rows_bridge(payload: dict) -> WavesBridge:
-    b = WavesBridge.__new__(WavesBridge)
+def _rows_bridge(payload: dict) -> BitWaveBridge:
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._objs = {k: {} for k in ("album", "artist", "track", "playlist", "video", "mix")}
     b._objs_max = 50
     b._objs_lock = Lock()
@@ -179,7 +179,7 @@ def _card(kind: str, cid: str) -> dict:
 
 
 def test_browse_root_dedupes_home_rows_by_title(monkeypatch):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     # Explore contributes no chips or quick links; For You contributes one row.
     monkeypatch.setattr(b, "_browse_fetch", lambda *a: SimpleNamespace(categories=[]), raising=False)
     monkeypatch.setattr(
@@ -217,7 +217,7 @@ def _row(title: str, ids, kind: str = "cards", **extra) -> dict:
 
 
 def test_browse_root_drops_rows_contained_in_a_bigger_row(monkeypatch):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     monkeypatch.setattr(b, "_browse_fetch", lambda *a: SimpleNamespace(categories=[]), raising=False)
     big = [f"a{n}" for n in range(25)]
     monkeypatch.setattr(
@@ -245,7 +245,7 @@ def test_browse_root_drops_rows_contained_in_a_bigger_row(monkeypatch):
 
 def test_browse_root_keeps_the_first_of_two_identical_rows():
     rows = [_row("New Albums", "abcd"), _row("Suggested new albums", "dcba")]
-    kept = WavesBridge._drop_contained_rows(rows)
+    kept = BitWaveBridge._drop_contained_rows(rows)
     # Mutual containment: exactly one row survives, and it is the first.
     assert [r["title"] for r in kept] == ["New Albums"]
 
@@ -254,4 +254,4 @@ def test_browse_root_drops_a_row_contained_in_one_that_is_itself_dropped():
     # A ⊆ B ⊆ C: only the row carrying the whole set is left, whatever the
     # order the chain arrives in.
     rows = [_row("B", "abcdef"), _row("A", "abcd"), _row("C", "abcdefgh")]
-    assert [r["title"] for r in WavesBridge._drop_contained_rows(rows)] == ["C"]
+    assert [r["title"] for r in BitWaveBridge._drop_contained_rows(rows)] == ["C"]

@@ -25,7 +25,7 @@ import threading
 
 import pytest
 
-from waves.waves_ui import app as waves_app
+from bitwave.bitwave_ui import app as bitwave_app
 
 
 @pytest.fixture
@@ -33,23 +33,23 @@ def crash_log(tmp_path, monkeypatch):
     """Install the real crash diagnostics against a temp crash.log, and put
     every global it touches back afterwards."""
     path = tmp_path / "crash.log"
-    monkeypatch.setattr(waves_app, "_crash_log_path", lambda: path)
+    monkeypatch.setattr(bitwave_app, "_crash_log_path", lambda: path)
 
     prev_excepthook = sys.excepthook
     prev_thread_hook = threading.excepthook
-    prev_file = waves_app._crash_log_file
+    prev_file = bitwave_app._crash_log_file
     was_enabled = faulthandler.is_enabled()
 
-    waves_app._install_crash_diagnostics()
+    bitwave_app._install_crash_diagnostics()
     try:
         yield path
     finally:
         # faulthandler must stop pointing at the handle we are about to close.
         faulthandler.disable()
-        handle = waves_app._crash_log_file
+        handle = bitwave_app._crash_log_file
         if handle is not None:
             handle.close()
-        waves_app._crash_log_file = prev_file
+        bitwave_app._crash_log_file = prev_file
         sys.excepthook = prev_excepthook
         threading.excepthook = prev_thread_hook
         if was_enabled:
@@ -82,7 +82,7 @@ def test_a_registered_secret_never_reaches_crash_log(crash_log):
     # Register through the very module object app.py holds: another test file
     # re-imports the diagnostics module under a fresh name, which would
     # otherwise give us a different _redactor than the one _record scrubs with.
-    diagnostics = waves_app.diagnostics
+    diagnostics = bitwave_app.diagnostics
 
     secret = "sk-live-9f3ac21be77d4410"  # noqa: S105
     diagnostics.register_secret(secret, "‹secret›")

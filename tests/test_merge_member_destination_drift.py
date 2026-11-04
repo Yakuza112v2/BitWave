@@ -3,7 +3,7 @@
 WHAT THIS FENCES OFF
 --------------------
 A best-of-both merge borrows the higher-quality copy of each song and writes it
-into one assembled album folder. A member (``waves_identity_id`` set) may skip
+into one assembled album folder. A member (``bitwave_identity_id`` set) may skip
 only when the copy already on disk sits in THIS job's destination folder,
 otherwise the skip leaves a hole in the merged album while the job reports done.
 
@@ -43,8 +43,8 @@ from unittest.mock import MagicMock
 
 from tidalapi import Album, Track
 
-from waves.download import Download
-from waves.waves_ui.backend import _as_member_of, _TrackedDownload
+from bitwave.download import Download
+from bitwave.bitwave_ui.backend import _as_member_of, _TrackedDownload
 
 _TITLE = "The Better Life : Dead Love"  # the colon is stripped on disk
 _LEGACY_DIR = "[2011] The Better Life  Dead Love"  # doubled space, pre-0.1.17

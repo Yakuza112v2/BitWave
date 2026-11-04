@@ -1,4 +1,4 @@
-"""The download slot ledger (waves/download_slots.py), on its own.
+"""The download slot ledger (bitwave/download_slots.py), on its own.
 
 A track used to hold its place in the download fan-out from first byte to
 last step, so three tracks copying onto a slow library volume kept the
@@ -16,8 +16,8 @@ from threading import Event
 
 import pytest
 
-from waves import download_slots
-from waves.download_slots import StreamSlots
+from bitwave import download_slots
+from bitwave.download_slots import StreamSlots
 
 
 class _Clock:
@@ -183,7 +183,7 @@ def test_a_zero_cooldown_frees_the_slot_at_once():
 
 def test_the_cooldown_is_logged_like_the_old_delay(caplog):
     ledger = _ledger(_Clock())
-    with caplog.at_level("DEBUG", logger="waves.slots"):
+    with caplog.at_level("DEBUG", logger="bitwave.slots"):
         _acquire(ledger, streams=1, cooldown=3.5).release()
     assert "Next download will start in 3.5 seconds." in caplog.text
 
@@ -230,7 +230,7 @@ def test_a_seat_is_refused_on_low_disk(monkeypatch, caplog):
     ledger = _ledger()
     monkeypatch.setattr(download_slots, "_temp_free_bytes", lambda: download_slots.TEMP_FREE_MARGIN_BYTES - 1)
     ticket = _acquire(ledger, streams=1, seats=3)
-    with caplog.at_level("INFO", logger="waves.slots"):
+    with caplog.at_level("INFO", logger="bitwave.slots"):
         assert ticket.try_finishing_seat() is False
     assert "low disk" in caplog.text
     assert ledger.held() == 1 and ledger.seats() == 0

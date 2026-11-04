@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _RecordingSignal:
@@ -55,7 +55,7 @@ class _Stub:
         self.appUpdateChecked = signal
         self.threadpool = _InlinePool()
         for name in ("checkAppUpdate", "_emit_from_worker"):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _Stub))
 
 
 class _Updater:
@@ -103,11 +103,11 @@ def test_guard_covers_the_signal_attribute_access_too():
     # On a deleted QObject even reading the signal attribute raises, which is
     # why _emit_from_worker resolves the name inside its guard.
     class _DeletedBridge:
-        _emit_from_worker = WavesBridge._emit_from_worker
+        _emit_from_worker = BitWaveBridge._emit_from_worker
 
         @property
         def appUpdateChecked(self):
-            raise RuntimeError("Internal C++ object (WavesBridge) already deleted.")
+            raise RuntimeError("Internal C++ object (BitWaveBridge) already deleted.")
 
     _DeletedBridge()._emit_from_worker("appUpdateChecked", False, "", "", False)  # must not raise
 
@@ -120,7 +120,7 @@ def test_guard_does_not_hide_programming_errors():
             raise TypeError("wrong argument count")
 
     class _Bridge:
-        _emit_from_worker = WavesBridge._emit_from_worker
+        _emit_from_worker = BitWaveBridge._emit_from_worker
         appUpdateChecked = _Arity()
 
     with pytest.raises(TypeError):

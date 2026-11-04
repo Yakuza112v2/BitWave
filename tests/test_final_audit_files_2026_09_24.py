@@ -35,8 +35,8 @@ import mutagen.mp4
 from mutagen import MutagenError
 from tidalapi import Track
 
-from waves.download import Download
-from waves.metadata import ITEM_ID_TAG, Metadata, read_item_id
+from bitwave.download import Download
+from bitwave.metadata import ITEM_ID_TAG, Metadata, read_item_id
 
 TARGET_UPC = {"FLAC": "UPC", "MP4": "UPC", "MP3": "UPC"}
 
@@ -86,7 +86,7 @@ def _mp3_stub():
 def _write(stub, tmp_path, name, **kw):
     file = tmp_path / name
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=stub):
+    with patch("bitwave.metadata.mutagen.File", return_value=stub):
         assert Metadata(path_file=file, target_upc=TARGET_UPC, **kw).save() is True
     return stub
 
@@ -238,8 +238,8 @@ def test_the_real_flac_fixture_carries_its_item_id(tmp_path):
 # --------------------------------------------------------------------------- #
 def test_a_borrowed_slot_leaves_album_gain_and_peak_unwritten(tmp_path):
     dl = _download(tmp_path)
-    member = _track(_album(2), waves_identity_id="900")
-    with patch("waves.download.Metadata", _RecMeta):
+    member = _track(_album(2), bitwave_identity_id="900")
+    with patch("bitwave.download.Metadata", _RecMeta):
         dl.metadata_write(member, pathlib.Path("t.flac"), True, _stream())
     kw = _RecMeta.last.kw
     assert kw["album_replay_gain"] is None and kw["album_peak_amplitude"] is None
@@ -248,7 +248,7 @@ def test_a_borrowed_slot_leaves_album_gain_and_peak_unwritten(tmp_path):
 
 def test_an_ordinary_track_still_gets_the_album_gain(tmp_path):
     dl = _download(tmp_path)
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         dl.metadata_write(_track(_album(2)), pathlib.Path("t.flac"), True, _stream())
     kw = _RecMeta.last.kw
     assert kw["album_replay_gain"] == -7.36 and kw["album_peak_amplitude"] == 0.98
@@ -357,7 +357,7 @@ def test_the_sweep_treats_an_empty_list_as_empty():
 # --------------------------------------------------------------------------- #
 def test_an_unknown_disc_count_reaches_the_writer_as_zero(tmp_path):
     dl = _download(tmp_path)
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         dl.metadata_write(_track(_album(num_volumes=None)), pathlib.Path("t.flac"), True, _stream())
     assert _RecMeta.last.kw["totaldisc"] == 0
     assert _RecMeta.last.kw["discnumber"] == 2
@@ -365,7 +365,7 @@ def test_an_unknown_disc_count_reaches_the_writer_as_zero(tmp_path):
 
 def test_a_known_disc_count_still_reaches_the_writer(tmp_path):
     dl = _download(tmp_path)
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         dl.metadata_write(_track(_album(num_volumes=3)), pathlib.Path("t.flac"), True, _stream())
     assert _RecMeta.last.kw["totaldisc"] == 3
 
@@ -413,7 +413,7 @@ def test_a_mutagen_read_error_on_a_video_is_logged_not_raised(tmp_path):
     def _boom(**kw):
         raise MutagenError("malformed atom")
 
-    with patch("waves.download.Metadata", _boom):
+    with patch("bitwave.download.Metadata", _boom):
         assert dl.metadata_write_video(_video(), tmp_path / "v.mp4") is False
     assert dl.fn_logger.exception.called
 
@@ -424,5 +424,5 @@ def test_an_os_read_error_on_a_video_is_logged_not_raised(tmp_path):
     def _boom(**kw):
         raise OSError("transient read error")
 
-    with patch("waves.download.Metadata", _boom):
+    with patch("bitwave.download.Metadata", _boom):
         assert dl.metadata_write_video(_video(), tmp_path / "v.mp4") is False

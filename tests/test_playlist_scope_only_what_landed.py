@@ -41,8 +41,8 @@ from unittest.mock import patch
 import pytest
 from tidalapi import Album, Track
 
-from waves.constants import PLAYLIST_EXTENSION, PLAYLIST_EXTENSION_LEGACY, PLAYLIST_PREFIX
-from waves.download import Download
+from bitwave.constants import PLAYLIST_EXTENSION, PLAYLIST_EXTENSION_LEGACY, PLAYLIST_PREFIX
+from bitwave.download import Download
 
 _TITLE = "Album X"
 _M3U8 = f"{PLAYLIST_PREFIX}{_TITLE}{PLAYLIST_EXTENSION}"

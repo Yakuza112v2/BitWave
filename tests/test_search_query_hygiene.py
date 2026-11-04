@@ -1,6 +1,6 @@
 """Issue #39: a pasted title with a line break never reached TIDAL as typed.
 
-Two backend rules behind ``WavesBridge.search``:
+Two backend rules behind ``BitWaveBridge.search``:
 
 * every run of whitespace in the query collapses to one space before it is
   sent, so a multi-line paste searches the words the field shows, and
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from test_search_stale_revalidate import _STALE_STAMP, _payload, _payloads, _Stub, _wire
 
-from waves.waves_ui import backend
+from bitwave.bitwave_ui import backend
 
 
 def test_interior_whitespace_collapses_before_the_wire(monkeypatch):

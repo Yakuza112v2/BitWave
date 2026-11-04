@@ -3,7 +3,7 @@ directory via ``..`` path traversal (pathvalidate leaves ``..`` untouched)."""
 
 from __future__ import annotations
 
-from waves.helper import path as p
+from bitwave.helper import path as p
 
 
 def test_no_traversal_neutralizes_dot_components():
@@ -41,13 +41,13 @@ def test_path_file_sanitize_keeps_folder_path_depth(tmp_path):
     assert str(out.resolve()).startswith(str(base.resolve()))
 
 
-def test_config_dir_is_waves_specific():
+def test_config_dir_is_bitwave_specific():
     # BitWave must never share per-user state (token.json, settings.json) with an
     # installed Tidaler / tidal-dl-ng: a fresh install has to start signed out.
     import os
 
-    from waves import __config_dirname__
-    from waves.helper.path import path_config_base, path_file_settings, path_file_token
+    from bitwave import __config_dirname__
+    from bitwave.helper.path import path_config_base, path_file_settings, path_file_token
 
     assert __config_dirname__ in ("BitWave", "BitWave-dev")
     assert os.path.basename(path_config_base()).startswith("BitWave")

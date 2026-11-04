@@ -9,8 +9,8 @@ Only the em dash may be rewritten.
 
 from __future__ import annotations
 
-from waves.model.cfg import HelpSettings
-from waves.waves_ui.backend import WavesBridge
+from bitwave.model.cfg import HelpSettings
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
@@ -24,7 +24,7 @@ def _help_for(text: str) -> str:
         probe = text
 
     stub._help = _Help()
-    return WavesBridge._help_for(stub, "probe")
+    return BitWaveBridge._help_for(stub, "probe")
 
 
 def test_commas_survive():
@@ -43,7 +43,7 @@ def test_delimiter_help_advertises_the_real_default():
 
 
 def test_missing_key_is_empty():
-    assert WavesBridge._help_for(_Stub_with_no_help(), "nope") == ""
+    assert BitWaveBridge._help_for(_Stub_with_no_help(), "nope") == ""
 
 
 def _Stub_with_no_help():

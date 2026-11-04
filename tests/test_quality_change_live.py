@@ -14,7 +14,7 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
@@ -27,7 +27,7 @@ def _signal():
 
 def _apply_stub():
     stub = _Stub()
-    stub._waves_prefs = {}
+    stub._bitwave_prefs = {}
     stub.settings = SimpleNamespace(
         data=SimpleNamespace(quality_audio="LOW_320K", ffmpeg_source="system", downloads_concurrent_max=3),
         save=lambda: None,
@@ -43,9 +43,9 @@ def _apply_stub():
     stub._restore_ffmpeg_flags = lambda: None
     stub._restore_ffmpeg_path = lambda: None
     stub._ffmpeg_source_label = lambda: "system"
-    stub._waves_pref_bool = lambda key: False
+    stub._bitwave_pref_bool = lambda key: False
     # The master switch reads False above, so the armed check is a no-op.
-    stub._notify_master_armed = WavesBridge._notify_master_armed.__get__(stub, type(stub))
+    stub._notify_master_armed = BitWaveBridge._notify_master_armed.__get__(stub, type(stub))
     stub.ownershipChanged = _signal()
     stub.targetTierChanged = _signal()  # the DEFAULT mark in a badge's quality menu (issue #36)
     stub.editionMergeChanged = _signal()
@@ -63,7 +63,7 @@ def _apply_stub():
 
 
 def _apply(stub, values):
-    WavesBridge.applySettings.__get__(stub, type(stub))(values)
+    BitWaveBridge.applySettings.__get__(stub, type(stub))(values)
 
 
 def test_quality_audio_change_reapplies_session_settings():

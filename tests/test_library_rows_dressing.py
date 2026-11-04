@@ -19,14 +19,14 @@ from datetime import date
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge, _album_row_ident
+from bitwave.bitwave_ui.backend import BitWaveBridge, _album_row_ident
 
 
 class _Stub:
-    _LIBRARY_DRESSED = WavesBridge._LIBRARY_DRESSED
-    _dress_library_row = WavesBridge._dress_library_row
-    _dress_library_rows = WavesBridge._dress_library_rows
-    _dress_panel_rows = WavesBridge._dress_panel_rows
+    _LIBRARY_DRESSED = BitWaveBridge._LIBRARY_DRESSED
+    _dress_library_row = BitWaveBridge._dress_library_row
+    _dress_library_rows = BitWaveBridge._dress_library_rows
+    _dress_panel_rows = BitWaveBridge._dress_panel_rows
 
     def __init__(self, stamp=3, fail=False):
         self._library_stamp = stamp
@@ -143,10 +143,10 @@ class _InlinePool:
 
 
 class _LoadStub(_Stub):
-    loadLibrary = WavesBridge.loadLibrary
-    loadMoreLibrary = WavesBridge.loadMoreLibrary
-    _lib_status = WavesBridge._lib_status
-    _lib_count = staticmethod(WavesBridge._lib_count)
+    loadLibrary = BitWaveBridge.loadLibrary
+    loadMoreLibrary = BitWaveBridge.loadMoreLibrary
+    _lib_status = BitWaveBridge._lib_status
+    _lib_count = staticmethod(BitWaveBridge._lib_count)
 
     def __init__(self, page):
         super().__init__(stamp=5)
@@ -232,8 +232,8 @@ def _release():
 
 
 class _PanelStub(_Stub):
-    loadAlbumTracks = WavesBridge.loadAlbumTracks
-    _start_album_tracks_fetch = WavesBridge._start_album_tracks_fetch
+    loadAlbumTracks = BitWaveBridge.loadAlbumTracks
+    _start_album_tracks_fetch = BitWaveBridge._start_album_tracks_fetch
 
     def __init__(self, album):
         super().__init__(stamp=5)

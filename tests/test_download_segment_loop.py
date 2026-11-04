@@ -26,9 +26,9 @@ from unittest.mock import MagicMock
 
 import requests
 
-from waves.download import Download
-from waves.model.downloader import DownloadSegmentResult
-from waves.progress import Progress
+from bitwave.download import Download
+from bitwave.model.downloader import DownloadSegmentResult
+from bitwave.progress import Progress
 
 
 def _bridge(total: float) -> tuple[Download, int]:

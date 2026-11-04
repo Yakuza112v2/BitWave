@@ -30,12 +30,12 @@ from unittest.mock import MagicMock, patch
 import mutagen.flac
 import mutagen.mp4
 
-import waves.download as download_mod
-from waves import metadata as metadata_mod
-from waves.download import Download
-from waves.ownership import OwnershipStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge, _copy_is_current, _measure_file_quality
+import bitwave.download as download_mod
+from bitwave import metadata as metadata_mod
+from bitwave.download import Download
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge, _copy_is_current, _measure_file_quality
 
 
 # ---- measuring an adopted file --------------------------------------------------
@@ -121,7 +121,7 @@ def _recorder(store):
         _downloadRecorded=_Signal(),
     )
     stub._evict_own_cache_locked = lambda: None
-    stub._record_ownership = WavesBridge._record_ownership.__get__(stub, type(stub))
+    stub._record_ownership = BitWaveBridge._record_ownership.__get__(stub, type(stub))
     return stub
 
 
@@ -173,7 +173,7 @@ def _mp4_with(**tags):
 
 
 def _carry(old, new) -> int:
-    with patch("waves.metadata.mutagen.File", side_effect=[old, new]):
+    with patch("bitwave.metadata.mutagen.File", side_effect=[old, new]):
         return metadata_mod.carry_over_tags("/music/old.flac", "/tmp/new.flac")
 
 
@@ -246,7 +246,7 @@ def test_different_containers_carry_nothing():
 
 
 def test_an_unreadable_old_copy_carries_nothing():
-    with patch("waves.metadata.mutagen.File", side_effect=[None, _flac_with()]):
+    with patch("bitwave.metadata.mutagen.File", side_effect=[None, _flac_with()]):
         assert metadata_mod.carry_over_tags("/music/old.flac", "/tmp/new.flac") == 0
 
 

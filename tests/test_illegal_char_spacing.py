@@ -19,8 +19,8 @@ from types import SimpleNamespace
 
 from tidalapi import Album, Track, Video
 
-from waves.constants import FORMAT_TEMPLATE_EXPLICIT
-from waves.helper.path import format_path_media
+from bitwave.constants import FORMAT_TEMPLATE_EXPLICIT
+from bitwave.helper.path import format_path_media
 
 _SLASHED = "The Better Life / Dead Love"
 

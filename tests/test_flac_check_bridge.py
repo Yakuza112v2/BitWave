@@ -26,9 +26,9 @@ from types import SimpleNamespace
 import pytest
 from conftest import _InlinePool, _Signal
 
-from waves import flac_verify as fv
-from waves.waves_ui import backend, bridge_flac
-from waves.waves_ui.bridge_flac import FlacCheckMixin
+from bitwave import flac_verify as fv
+from bitwave.bitwave_ui import backend, bridge_flac
+from bitwave.bitwave_ui.bridge_flac import FlacCheckMixin
 
 FFMPEG = shutil.which("ffmpeg")
 needs_ffmpeg = pytest.mark.skipif(FFMPEG is None, reason="needs ffmpeg")
@@ -38,7 +38,7 @@ _METHODS = (
     "flacCheckState",
     "_flac_check_prefs",
     "_flac_check_resume_target",
-    "_flac_check_waves_roots",
+    "_flac_check_bitwave_roots",
     "_flac_check_scope",
     "flacCheckSources",
     "_flac_check_set_pref",
@@ -89,9 +89,9 @@ def _bridge(tmp_path: Path, *, library: str = "", ffmpeg: str | None = None, dow
     b.threadpool = _InlinePool()
     b.flacCheckChanged = _Signal()
     b._library_root = lambda: library
-    b._waves_prefs = {"flac_check_source": "waves", "flac_check_folder": ""}
+    b._bitwave_prefs = {"flac_check_source": "bitwave", "flac_check_folder": ""}
     b.saves: list[dict] = []
-    b._save_waves_prefs = lambda: b.saves.append(dict(b._waves_prefs))
+    b._save_bitwave_prefs = lambda: b.saves.append(dict(b._bitwave_prefs))
     b.revealed: list[str] = []
     b._reveal_in_file_manager = b.revealed.append
     # The worker's hop to the GUI thread, inline.
@@ -226,14 +226,14 @@ def test_scan_without_a_folder_fails_closed(tmp_path):
     assert st["report"] == ""
 
 
-def test_a_waves_library_that_cannot_be_opened_fails_instead_of_reporting_a_clean_scan(tmp_path):
+def test_a_bitwave_library_that_cannot_be_opened_fails_instead_of_reporting_a_clean_scan(tmp_path):
     """The download folder on a share that is not mounted: not an empty
     library. The run fails and says so, writes no report, and an unfinished
     fix's marker stays (that fix's folders were never looked at)."""
     b = _bridge(tmp_path, download=str(tmp_path / "Share not mounted"), ffmpeg="/usr/bin/true")
     key = b.flacCheckSources()["key"]
-    b._waves_prefs["flac_check_resume"] = key
-    assert b.flacCheckState()["resume_source"] == "waves"
+    b._bitwave_prefs["flac_check_resume"] = key
+    assert b.flacCheckState()["resume_source"] == "bitwave"
 
     b.flacCheckResume()
 
@@ -245,8 +245,8 @@ def test_a_waves_library_that_cannot_be_opened_fails_instead_of_reporting_a_clea
     )
     assert st["report"] == ""
     assert not (tmp_path / "config" / bridge_flac.REPORTS_DIR).exists()
-    assert b._waves_prefs["flac_check_resume"] == key
-    assert st["resume_source"] == "waves", "RESUME is still offered"
+    assert b._bitwave_prefs["flac_check_resume"] == key
+    assert st["resume_source"] == "bitwave", "RESUME is still offered"
 
     lib = tmp_path / "Library not mounted"
     b = _bridge(tmp_path, download=str(tmp_path / "Share not mounted"), library=str(lib))
@@ -254,7 +254,7 @@ def test_a_waves_library_that_cannot_be_opened_fails_instead_of_reporting_a_clea
     assert b.flacCheckState()["error"] == "The BitWave library folders could not be opened."
 
 
-def test_a_waves_library_folder_that_cannot_be_opened_is_counted_and_keeps_the_marker(tmp_path):
+def test_a_bitwave_library_folder_that_cannot_be_opened_is_counted_and_keeps_the_marker(tmp_path):
     """One of the two folders gone: the scan finishes over the other, says
     how many folders it could not read, lists them in the report, and does
     not take "nothing left to fix" as true of the folder it never saw."""
@@ -263,13 +263,13 @@ def test_a_waves_library_folder_that_cannot_be_opened_is_counted_and_keeps_the_m
     gone = tmp_path / "Share not mounted"
     b = _bridge(tmp_path, download=str(gone), library=str(lib))
     key = b.flacCheckSources()["key"]
-    b._waves_prefs["flac_check_resume"] = key
+    b._bitwave_prefs["flac_check_resume"] = key
 
     b.flacCheckScan(False)
 
     st = b.flacCheckState()
     assert (st["phase"], st["files"], st["fixable"], st["folders_unreadable"]) == ("done", 1, 0, 1)
-    assert b._waves_prefs["flac_check_resume"] == key, "the unread folder may still hold the unfinished fix's files"
+    assert b._bitwave_prefs["flac_check_resume"] == key, "the unread folder may still hold the unfinished fix's files"
     rows = _report_rows(st["report"])
     assert [(r["status"], r["file"]) for r in rows] == [
         (fv.SET, str(lib / "set.flac")),
@@ -281,7 +281,7 @@ def test_a_waves_library_folder_that_cannot_be_opened_is_counted_and_keeps_the_m
     b.flacCheckScan(False)
     st = b.flacCheckState()
     assert (st["phase"], st["folders_unreadable"]) == ("done", 0)
-    assert b._waves_prefs["flac_check_resume"] == ""
+    assert b._bitwave_prefs["flac_check_resume"] == ""
 
 
 def _locked(folder: Path) -> None:
@@ -300,7 +300,7 @@ def test_a_chosen_folder_that_exists_but_cannot_be_listed_fails(tmp_path):
     _fake_flac(chosen / "a.flac")
     b = _bridge(tmp_path, ffmpeg="/usr/bin/true")
     _choose(b, chosen)
-    b._waves_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
+    b._bitwave_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
     _locked(chosen)
     try:
         b.flacCheckResume()
@@ -308,7 +308,7 @@ def test_a_chosen_folder_that_exists_but_cannot_be_listed_fails(tmp_path):
         os.chmod(chosen, 0o700)
     st = b.flacCheckState()
     assert (st["phase"], st["error"]) == ("failed", "The chosen folder could not be opened.")
-    assert b._waves_prefs["flac_check_resume"] == f"folder:{chosen}"
+    assert b._bitwave_prefs["flac_check_resume"] == f"folder:{chosen}"
 
 
 def test_a_subfolder_that_cannot_be_listed_is_counted(tmp_path):
@@ -321,7 +321,7 @@ def test_a_subfolder_that_cannot_be_listed_is_counted(tmp_path):
     _fake_flac(dl / "Locked" / "a.flac")
     b = _bridge(tmp_path)
     key = b.flacCheckSources()["key"]
-    b._waves_prefs["flac_check_resume"] = key
+    b._bitwave_prefs["flac_check_resume"] = key
     _locked(dl / "Locked")
     try:
         b.flacCheckScan(False)
@@ -329,7 +329,7 @@ def test_a_subfolder_that_cannot_be_listed_is_counted(tmp_path):
         os.chmod(dl / "Locked", 0o700)
     st = b.flacCheckState()
     assert (st["phase"], st["files"], st["fixable"], st["folders_unreadable"]) == ("done", 1, 0, 1)
-    assert b._waves_prefs["flac_check_resume"] == ""
+    assert b._bitwave_prefs["flac_check_resume"] == ""
     assert _report_rows(st["report"])[-1]["status"] == fv.FOLDER_UNREADABLE
 
 
@@ -345,10 +345,10 @@ def test_a_subfolder_no_scan_can_list_never_holds_resume_for_good(tmp_path, monk
         _cut_short_fix(tmp_path, monkeypatch, b, dl, 3)
         key = b.flacCheckState()["scope"]
         assert b.flacCheckState()["folders_unreadable"] == 1
-        assert b._waves_prefs["flac_check_resume"] == key
+        assert b._bitwave_prefs["flac_check_resume"] == key
 
         b2 = _bridge(tmp_path, ffmpeg=FFMPEG)
-        b2._waves_prefs = dict(b._waves_prefs)
+        b2._bitwave_prefs = dict(b._bitwave_prefs)
         b2.flacCheckResume()
         st = b2.flacCheckState()
         assert (st["phase"], st["last"], st["counts"].get(fv.SEALED), st["folders_unreadable"]) == (
@@ -357,17 +357,17 @@ def test_a_subfolder_no_scan_can_list_never_holds_resume_for_good(tmp_path, monk
             2,
             1,
         )
-        assert b2._waves_prefs["flac_check_resume"] == ""
+        assert b2._bitwave_prefs["flac_check_resume"] == ""
         assert b2.flacCheckState()["resume_source"] == ""
 
         # The same within one launch: the cut-short fix's own scan missed it.
         for f in dl.glob("*.flac"):
             f.unlink()
         _cut_short_fix(tmp_path, monkeypatch, b2, dl, 2)
-        assert b2._waves_prefs["flac_check_resume"] == key
+        assert b2._bitwave_prefs["flac_check_resume"] == key
         b2.flacCheckResume()
         assert b2.flacCheckState()["last"] == "fix"
-        assert b2._waves_prefs["flac_check_resume"] == ""
+        assert b2._bitwave_prefs["flac_check_resume"] == ""
     finally:
         os.chmod(dl / "lost+found", 0o700)
 
@@ -387,16 +387,16 @@ def test_a_subfolder_the_cut_short_fix_could_read_keeps_the_marker(tmp_path, mon
     try:
         b.flacCheckScan(False)
         assert (b.flacCheckState()["fixable"], b.flacCheckState()["folders_unreadable"]) == (2, 1)
-        assert b._waves_prefs["flac_check_resume"] == key
+        assert b._bitwave_prefs["flac_check_resume"] == key
         b.flacCheckResume()
         st = b.flacCheckState()
         assert (st["phase"], st["last"], st["fixable"]) == ("done", "fix", 0)
-        assert b._waves_prefs["flac_check_resume"] == key, "the unread folder was never looked at"
+        assert b._bitwave_prefs["flac_check_resume"] == key, "the unread folder was never looked at"
     finally:
         os.chmod(dl / "Later", 0o700)
     b.flacCheckScan(False)
     assert b.flacCheckState()["folders_unreadable"] == 0
-    assert b._waves_prefs["flac_check_resume"] == ""
+    assert b._bitwave_prefs["flac_check_resume"] == ""
 
 
 def test_a_fix_over_a_scan_that_missed_folders(tmp_path):
@@ -412,7 +412,7 @@ def test_a_fix_over_a_scan_that_missed_folders(tmp_path):
         b._flac_check_ffmpeg = lambda: "/usr/bin/true"
         key = b.flacCheckSources()["key"]
         if prior:
-            b._waves_prefs["flac_check_resume"] = key
+            b._bitwave_prefs["flac_check_resume"] = key
         b.flacCheckScan(False)
         assert (b.flacCheckState()["fixable"], b.flacCheckState()["folders_unreadable"]) == (1, 1)
 
@@ -420,7 +420,7 @@ def test_a_fix_over_a_scan_that_missed_folders(tmp_path):
 
         st = b.flacCheckState()
         assert (st["phase"], st["last"], st["folders_unreadable"]) == ("done", "fix", 1)
-        assert b._waves_prefs["flac_check_resume"] == (key if prior else ""), prior
+        assert b._bitwave_prefs["flac_check_resume"] == (key if prior else ""), prior
         assert _report_rows(st["report"])[-1] == {
             **dict.fromkeys(fv.REPORT_COLUMNS, ""),
             "status": fv.FOLDER_UNREADABLE,
@@ -641,7 +641,7 @@ def test_fix_without_candidates_or_without_a_decoder_does_nothing(tmp_path):
 def test_report_names_are_what_the_factory_wipe_knows(tmp_path):
     """The wipe deletes by an anchored pattern; the names the check writes
     must match it, and nothing looser may."""
-    from waves.waves_ui.backend import _FACTORY_WIPE_SUBDIRS
+    from bitwave.bitwave_ui.backend import _FACTORY_WIPE_SUBDIRS
 
     entry = next(e for e in _FACTORY_WIPE_SUBDIRS if e[0] == bridge_flac.REPORTS_DIR)
     _, exact, patterns = entry
@@ -803,7 +803,7 @@ def test_a_locked_cache_is_not_taken_for_a_damaged_one(tmp_path):
 
 
 def test_the_factory_wipe_takes_the_cache_and_its_sidecars():
-    from waves.waves_ui.backend import _FACTORY_WIPE_FILES
+    from bitwave.bitwave_ui.backend import _FACTORY_WIPE_FILES
 
     for suffix in ("", "-journal", "-wal", "-shm"):
         assert fv.CACHE_NAME + suffix in _FACTORY_WIPE_FILES
@@ -816,49 +816,49 @@ def _choose(b: _Stub, folder: Path | str) -> None:
     b.flacCheckSetFolder(str(folder))
 
 
-def test_the_defaults_name_the_waves_library():
-    from waves.waves_ui.backend import WavesBridge
+def test_the_defaults_name_the_bitwave_library():
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    defaults = WavesBridge._default_waves_prefs(SimpleNamespace())
-    assert defaults["flac_check_source"] == "waves"
+    defaults = BitWaveBridge._default_bitwave_prefs(SimpleNamespace())
+    assert defaults["flac_check_source"] == "bitwave"
     assert defaults["flac_check_folder"] == ""
 
 
-def test_sources_report_the_selection_and_the_waves_folders(tmp_path):
+def test_sources_report_the_selection_and_the_bitwave_folders(tmp_path):
     lib = tmp_path / "Library"
     b = _bridge(tmp_path, library=str(lib))
     src = b.flacCheckSources()
-    assert src["source"] == "waves"
+    assert src["source"] == "bitwave"
     assert src["folder"] == ""
-    assert src["waves"] == [str(tmp_path / "Downloads"), str(lib)]
-    assert src["key"] == "waves:" + "\n".join(src["waves"])
+    assert src["bitwave"] == [str(tmp_path / "Downloads"), str(lib)]
+    assert src["key"] == "bitwave:" + "\n".join(src["bitwave"])
 
     other = tmp_path / "Elsewhere"
     _choose(b, other)
     src = b.flacCheckSources()
     assert (src["source"], src["folder"], src["key"]) == ("folder", str(other), f"folder:{other}")
-    assert src["waves"] == [str(tmp_path / "Downloads"), str(lib)], "the BitWave folders are still listed"
+    assert src["bitwave"] == [str(tmp_path / "Downloads"), str(lib)], "the BitWave folders are still listed"
 
 
 def test_choosing_a_folder_takes_only_an_absolute_path_saves_it_and_selects_it(tmp_path):
     b = _bridge(tmp_path)
     for bad in ("", "   ", "relative/music", "./music"):
         b.flacCheckSetFolder(bad)
-    assert b._waves_prefs == {"flac_check_source": "waves", "flac_check_folder": ""}
+    assert b._bitwave_prefs == {"flac_check_source": "bitwave", "flac_check_folder": ""}
     assert b.saves == []
     assert b.flacCheckChanged.emits == []
 
     _choose(b, tmp_path / "Elsewhere")
-    assert b._waves_prefs == {"flac_check_source": "folder", "flac_check_folder": str(tmp_path / "Elsewhere")}
-    assert b.saves[-1] == b._waves_prefs, "the choice is written to the prefs file"
+    assert b._bitwave_prefs == {"flac_check_source": "folder", "flac_check_folder": str(tmp_path / "Elsewhere")}
+    assert b.saves[-1] == b._bitwave_prefs, "the choice is written to the prefs file"
     assert len(b.flacCheckChanged.emits) >= 1
 
-    b.flacCheckSetSource("waves")
-    assert b._waves_prefs["flac_check_source"] == "waves"
-    assert b._waves_prefs["flac_check_folder"] == str(tmp_path / "Elsewhere"), "the folder is kept for next time"
+    b.flacCheckSetSource("bitwave")
+    assert b._bitwave_prefs["flac_check_source"] == "bitwave"
+    assert b._bitwave_prefs["flac_check_folder"] == str(tmp_path / "Elsewhere"), "the folder is kept for next time"
     for bad in ("", "library", "FOLDER", "/etc"):
         b.flacCheckSetSource(bad)
-    assert b._waves_prefs["flac_check_source"] == "waves"
+    assert b._bitwave_prefs["flac_check_source"] == "bitwave"
 
 
 def test_the_choice_cannot_change_while_a_run_is_on(tmp_path):
@@ -866,7 +866,7 @@ def test_the_choice_cannot_change_while_a_run_is_on(tmp_path):
     b._flac_check_state["running"] = True
     _choose(b, tmp_path / "Elsewhere")
     b.flacCheckSetSource("folder")
-    assert b._waves_prefs == {"flac_check_source": "waves", "flac_check_folder": ""}
+    assert b._bitwave_prefs == {"flac_check_source": "bitwave", "flac_check_folder": ""}
     assert b.saves == []
 
 
@@ -886,14 +886,14 @@ def test_a_chosen_folder_scan_walks_that_folder_only(tmp_path):
     assert [r["file"] for r in _report_rows(st["report"])] == [str(other / "Album" / "pick.flac")]
 
 
-def test_the_waves_library_scan_still_walks_both_folders_after_a_folder_was_chosen(tmp_path):
+def test_the_bitwave_library_scan_still_walks_both_folders_after_a_folder_was_chosen(tmp_path):
     lib = tmp_path / "Library"
     b = _bridge(tmp_path, library=str(lib))
     _fake_flac(tmp_path / "Downloads" / "dl.flac")
     _fake_flac(lib / "lib.flac")
     _fake_flac(tmp_path / "Elsewhere" / "pick.flac")
     _choose(b, tmp_path / "Elsewhere")
-    b.flacCheckSetSource("waves")
+    b.flacCheckSetSource("bitwave")
 
     b.flacCheckScan(False)
 
@@ -909,7 +909,7 @@ def test_a_chosen_source_without_a_usable_folder_fails_closed(tmp_path):
         starts: list = []
         b.threadpool = SimpleNamespace(start=starts.append)
         # As a hand-edited prefs file could leave it: the setters never would.
-        b._waves_prefs.update(flac_check_source="folder", flac_check_folder=folder)
+        b._bitwave_prefs.update(flac_check_source="folder", flac_check_folder=folder)
         b.flacCheckScan(False)
         st = b.flacCheckState()
         assert (st["phase"], st["error"]) == ("failed", "Choose a folder first."), folder
@@ -952,13 +952,13 @@ def test_a_fix_is_refused_once_the_selection_names_other_folders(tmp_path):
     assert len(b.flacCheckChanged.emits) == emits + 1
 
     # Back on the folders that were scanned: the fix may go ahead.
-    b.flacCheckSetSource("waves")
+    b.flacCheckSetSource("bitwave")
     b.flacCheckFix()
     assert len(starts) == 1
-    assert b.flacCheckState()["scope"] == "waves:" + str(tmp_path / "Downloads")
+    assert b.flacCheckState()["scope"] == "bitwave:" + str(tmp_path / "Downloads")
 
 
-def test_a_fix_is_refused_once_the_waves_library_folders_moved(tmp_path):
+def test_a_fix_is_refused_once_the_bitwave_library_folders_moved(tmp_path):
     b = _bridge(tmp_path)
     b._flac_check_ffmpeg = lambda: "/usr/bin/true"
     _fake_flac(tmp_path / "Downloads" / "unset.flac")
@@ -1089,14 +1089,14 @@ def test_a_fix_cut_short_is_remembered_and_resume_finishes_it(tmp_path, monkeypa
     dl = tmp_path / "Downloads"
     _cut_short_fix(tmp_path, monkeypatch, b, dl, 3)
     key = b.flacCheckState()["scope"]
-    assert b._waves_prefs["flac_check_resume"] == key, "kept until the fix finishes"
+    assert b._bitwave_prefs["flac_check_resume"] == key, "kept until the fix finishes"
     signed = (dl / "0.flac").read_bytes()
 
     # The next launch: a fresh bridge over the same prefs.
     b2 = _bridge(tmp_path, ffmpeg=FFMPEG)
-    b2._waves_prefs = dict(b._waves_prefs)
+    b2._bitwave_prefs = dict(b._bitwave_prefs)
     st = b2.flacCheckState()
-    assert (st["phase"], st["resume_source"], st["resume_folders"]) == ("idle", "waves", [str(dl)])
+    assert (st["phase"], st["resume_source"], st["resume_folders"]) == ("idle", "bitwave", [str(dl)])
 
     b2.flacCheckResume()
 
@@ -1106,7 +1106,7 @@ def test_a_fix_cut_short_is_remembered_and_resume_finishes_it(tmp_path, monkeypa
     assert (dl / "0.flac").read_bytes() == signed, "a file the first run signed is not written again"
     for i in range(3):
         assert fv.check_file(str(dl / f"{i}.flac"), FFMPEG, deep=True).status == fv.OK
-    assert b2._waves_prefs["flac_check_resume"] == ""
+    assert b2._bitwave_prefs["flac_check_resume"] == ""
     assert b2.flacCheckState()["resume_source"] == ""
 
 
@@ -1117,22 +1117,22 @@ def test_resume_selects_the_chosen_folder_it_was_writing_in_again(tmp_path, monk
     chosen = tmp_path / "Elsewhere"
     _choose(b, chosen)
     _cut_short_fix(tmp_path, monkeypatch, b, chosen, 2)
-    b.flacCheckSetSource("waves")  # the card moved on to the BitWave library
+    b.flacCheckSetSource("bitwave")  # the card moved on to the BitWave library
     st = b.flacCheckState()
     assert (st["resume_source"], st["resume_folders"]) == ("folder", [str(chosen)])
 
     b.flacCheckResume()
 
-    assert b._waves_prefs["flac_check_source"] == "folder"
+    assert b._bitwave_prefs["flac_check_source"] == "folder"
     st = b.flacCheckState()
     assert (st["last"], st["phase"], st["counts"].get(fv.SEALED)) == ("fix", "done", 1)
-    assert b._waves_prefs["flac_check_resume"] == ""
+    assert b._bitwave_prefs["flac_check_resume"] == ""
 
 
 def test_a_resume_that_finds_nothing_left_clears_the_marker_and_writes_nothing(tmp_path):
     b = _bridge(tmp_path, ffmpeg="/usr/bin/true")
     _fake_flac(tmp_path / "Downloads" / "set.flac", b"\x05" * 16)
-    b._waves_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
+    b._bitwave_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
     starts: list = []
     real_start = b.threadpool.start
 
@@ -1146,13 +1146,13 @@ def test_a_resume_that_finds_nothing_left_clears_the_marker_and_writes_nothing(t
 
     assert starts == ["_flac_check_scan_job"], "no fix follows a scan that found nothing"
     assert b.flacCheckState()["last"] == "scan"
-    assert b._waves_prefs["flac_check_resume"] == ""
+    assert b._bitwave_prefs["flac_check_resume"] == ""
 
 
 def test_an_ordinary_scan_never_starts_a_fix(tmp_path):
     b = _bridge(tmp_path, ffmpeg="/usr/bin/true")
     _fake_flac(tmp_path / "Downloads" / "unset.flac")
-    b._waves_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
+    b._bitwave_prefs["flac_check_resume"] = b.flacCheckSources()["key"]
     starts: list = []
     real_start = b.threadpool.start
     b.threadpool = SimpleNamespace(start=lambda w: (starts.append(w.fn.__name__), real_start(w)))
@@ -1161,12 +1161,12 @@ def test_an_ordinary_scan_never_starts_a_fix(tmp_path):
 
     assert starts == ["_flac_check_scan_job"]
     assert b.flacCheckState()["fixable"] == 1
-    assert b._waves_prefs["flac_check_resume"] != "", "files are still left: the marker stays"
+    assert b._bitwave_prefs["flac_check_resume"] != "", "files are still left: the marker stays"
 
 
-def test_no_resume_is_offered_once_the_waves_library_folders_moved(tmp_path):
+def test_no_resume_is_offered_once_the_bitwave_library_folders_moved(tmp_path):
     b = _bridge(tmp_path)
-    b._waves_prefs["flac_check_resume"] = "waves:" + str(tmp_path / "OldDownloads")
+    b._bitwave_prefs["flac_check_resume"] = "bitwave:" + str(tmp_path / "OldDownloads")
     starts: list = []
     b.threadpool = SimpleNamespace(start=starts.append)
     assert b.flacCheckState()["resume_source"] == ""
@@ -1176,6 +1176,6 @@ def test_no_resume_is_offered_once_the_waves_library_folders_moved(tmp_path):
 
 
 def test_the_defaults_hold_no_unfinished_fix():
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    assert WavesBridge._default_waves_prefs(SimpleNamespace())["flac_check_resume"] == ""
+    assert BitWaveBridge._default_bitwave_prefs(SimpleNamespace())["flac_check_resume"] == ""

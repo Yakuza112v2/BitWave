@@ -2,7 +2,7 @@
 
 THE COST THIS FENCES OFF
 ------------------------
-waves.json and settings.json are written atomically WITH AN FSYNC, and both
+bitwave.json and settings.json are written atomically WITH AN FSYNC, and both
 were written synchronously from GUI-thread slots (every pref flip, every
 debounced window-geometry save): the GUI paid a disk sync per save. Saves
 now snapshot their payload on the calling thread (microseconds) and hand the
@@ -13,7 +13,7 @@ Pinned here: the fsync happens off the submitting thread; a burst of submits
 for one file executes first-plus-newest (latest snapshot wins, the same end
 state the old synchronous ordering produced); ``flush`` (the shutdown hook)
 gets everything pending onto disk, inline if the thread cannot finish in
-time; ``_save_waves_prefs`` snapshots at submit time so later mutations
+time; ``_save_bitwave_prefs`` snapshots at submit time so later mutations
 cannot leak into an earlier save; and ``_submit_settings_write`` serializes
 before it returns, which is what keeps the transient ffmpeg re-injection
 that follows it out of the file.
@@ -27,7 +27,7 @@ import threading
 import time
 from typing import ClassVar
 
-from waves.waves_ui.backend import WavesBridge, _SingleFlightWriter
+from bitwave.bitwave_ui.backend import BitWaveBridge, _SingleFlightWriter
 
 
 def test_a_submit_burst_runs_first_plus_newest():
@@ -74,15 +74,15 @@ def test_prefs_save_fsyncs_off_the_calling_thread_and_snapshots(tmp_path, monkey
 
     stub = type("_S", (), {})()
     stub._factory_reset = False
-    stub._waves_prefs = {"motion_background": True}
-    stub._waves_prefs_path = str(tmp_path / "waves.json")
+    stub._bitwave_prefs = {"motion_background": True}
+    stub._bitwave_prefs_path = str(tmp_path / "bitwave.json")
     stub._config_writer = _SingleFlightWriter()
-    WavesBridge._save_waves_prefs(stub)
+    BitWaveBridge._save_bitwave_prefs(stub)
     # Mutating AFTER the save must not reach this save's file content.
-    stub._waves_prefs["motion_background"] = False
+    stub._bitwave_prefs["motion_background"] = False
     stub._config_writer.flush()
 
-    with open(stub._waves_prefs_path) as f:
+    with open(stub._bitwave_prefs_path) as f:
         on_disk = json.load(f)
     assert on_disk == {"motion_background": True}, "the save wrote live state, not its snapshot"
     assert fsync_threads, "the atomic write no longer fsyncs"
@@ -108,7 +108,7 @@ def test_settings_write_serializes_before_returning():
     stub.settings = _Cfg()
     stub._config_writer = _SingleFlightWriter()
 
-    WavesBridge._submit_settings_write(stub)
+    BitWaveBridge._submit_settings_write(stub)
     # The re-injection that follows a save in the app: it must not be able to
     # reach the already-serialized snapshot.
     _Cfg.live_path = "/managed/ffmpeg"
@@ -121,10 +121,10 @@ def test_settings_write_serializes_before_returning():
 def test_shutdown_flush_lands_a_last_moment_pref(tmp_path):
     stub = type("_S", (), {})()
     stub._factory_reset = False
-    stub._waves_prefs = {"volume": 11}
-    stub._waves_prefs_path = str(tmp_path / "waves.json")
+    stub._bitwave_prefs = {"volume": 11}
+    stub._bitwave_prefs_path = str(tmp_path / "bitwave.json")
     stub._config_writer = _SingleFlightWriter()
-    WavesBridge._save_waves_prefs(stub)
+    BitWaveBridge._save_bitwave_prefs(stub)
     stub._config_writer.flush()
-    with open(stub._waves_prefs_path) as f:
+    with open(stub._bitwave_prefs_path) as f:
         assert json.load(f) == {"volume": 11}

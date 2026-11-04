@@ -19,11 +19,11 @@ import pytest
 import tidalapi
 from tidalapi.media import Quality
 
-import waves.config as config_mod
-from waves.config import BaseConfig
-from waves.model.cfg import Settings as ModelSettings
-from waves.waves_ui import backend as backend_mod
-from waves.waves_ui.backend import WavesBridge
+import bitwave.config as config_mod
+from bitwave.config import BaseConfig
+from bitwave.model.cfg import Settings as ModelSettings
+from bitwave.bitwave_ui import backend as backend_mod
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -74,9 +74,9 @@ def test_settings_apply_writes_the_default_tier_over_a_null_setting():
 def _merge_bridge(setting, overrides):
     from tests.test_edition_merge import _recs_of
 
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=setting))
-    bridge._waves_prefs = {"explicit_mode": "explicit"}
+    bridge._bitwave_prefs = {"explicit_mode": "explicit"}
     bridge._merge_recs_factory = lambda: _recs_of
     if overrides is not None:
         bridge._quality_overrides = overrides
@@ -92,7 +92,7 @@ def _standard_and_deluxe():
 
 
 def _plan_editions(bridge, albums):
-    with patch("waves.waves_ui.backend._edition_base_key", lambda album: "one release"):
+    with patch("bitwave.bitwave_ui.backend._edition_base_key", lambda album: "one release"):
         return bridge._merge_editions(list(albums))
 
 
@@ -125,7 +125,7 @@ def test_a_walkless_media_lists_sweep_that_outlives_a_sign_out_stores_nothing():
         stub._browse_gen += 1  # the sign-out lands while the listing is on the wire
         return listing
 
-    with patch("waves.waves_ui.backend.user_media_lists", lists):
+    with patch("bitwave.bitwave_ui.backend.user_media_lists", lists):
         fresh, tree = stub._media_lists(refresh=True, walk=False)
     assert fresh is listing and tree is None, "the caller still gets its answer (its own gen check drops it)"
     assert stub._media_lists_cache is None, "the old account's listing would serve the next account for the TTL"
@@ -136,7 +136,7 @@ def test_a_walkless_media_lists_sweep_on_the_same_account_is_cached():
 
     stub = _ListsStub(on_walk=None)
     listing = {"playlists": [], "mixes": []}
-    with patch("waves.waves_ui.backend.user_media_lists", lambda session: listing):
+    with patch("bitwave.bitwave_ui.backend.user_media_lists", lambda session: listing):
         stub._media_lists(refresh=True, walk=False)
     assert stub._media_lists_cache is not None and stub._media_lists_cache[1] is listing
 
@@ -251,8 +251,8 @@ def _own_max_age_verdict(bridge, calls: list) -> list[str]:
         return ["no _own_max_age timer on the bridge"]
     if not timer.isActive():
         misses.append("the timer is not running")
-    if timer.interval() != WavesBridge._OWN_MAX_AGE_MS:
-        misses.append(f"interval {timer.interval()} != _OWN_MAX_AGE_MS {WavesBridge._OWN_MAX_AGE_MS}")
+    if timer.interval() != BitWaveBridge._OWN_MAX_AGE_MS:
+        misses.append(f"interval {timer.interval()} != _OWN_MAX_AGE_MS {BitWaveBridge._OWN_MAX_AGE_MS}")
     calls.clear()
     timer.timeout.emit()
     if calls != [bridge]:
@@ -273,9 +273,9 @@ def _run_own_max_age_scenario() -> int:
     calls: list = []
     # Replaced on the class BEFORE construction: the timer connects the bound
     # method at __init__, so an instance patch afterwards would miss the tick.
-    WavesBridge._age_ownership_answers = lambda self: calls.append(self)
+    BitWaveBridge._age_ownership_answers = lambda self: calls.append(self)
     app = QGuiApplication.instance() or QGuiApplication([])
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     misses = _own_max_age_verdict(bridge, calls)
     for miss in misses:
         print(miss, file=sys.stderr)
@@ -289,7 +289,7 @@ def test_the_ownership_max_age_timer_is_running_and_ticks_the_aging():
     method is tested by hand, the timer that calls it never was."""
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-own-max-age-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-own-max-age-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-own-max-age"],
         env=env,

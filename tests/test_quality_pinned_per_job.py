@@ -44,8 +44,8 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.media import AudioMode, Quality
 
-from waves.constants import ATMOS_REQUEST_QUALITY
-from waves.waves_ui import backend
+from bitwave.constants import ATMOS_REQUEST_QUALITY
+from bitwave.bitwave_ui import backend
 
 
 class _Session:
@@ -133,7 +133,7 @@ def test_a_job_without_a_pin_is_left_entirely_alone():
 
 
 class _SwitchingTidal:
-    """The session switch as waves/config.py really performs it.
+    """The session switch as bitwave/config.py really performs it.
 
     The two facts that matter, and that a recorder-only stub hides: the Atmos
     request quality is written only when the session has to be BUILT, and the
@@ -254,19 +254,19 @@ def test_the_row_records_the_setting_it_was_queued_at():
     stub.settings = SimpleNamespace(
         data=SimpleNamespace(quality_audio=Quality.hi_res_lossless, download_dolby_atmos=False)
     )
-    stub._queued_quality_value = backend.WavesBridge._queued_quality_value.__get__(stub, type(stub))
+    stub._queued_quality_value = backend.BitWaveBridge._queued_quality_value.__get__(stub, type(stub))
     # The other value a row pins at birth, tested on its own in
     # tests/test_queue_row_pins_the_library_skip.py.
     stub._library_bulk_skip_on = lambda: True
     stub._skip_existing_on = lambda: True
-    qid = backend.WavesBridge._enqueue.__get__(stub, type(stub))("Album", "album")
+    qid = backend.BitWaveBridge._enqueue.__get__(stub, type(stub))("Album", "album")
     assert stub._queue[0]["askQuality"] == Quality.hi_res_lossless.value
     assert stub._queue[0]["qid"] == qid
 
 
 def test_an_unreadable_setting_pins_nothing_rather_than_failing_to_queue():
     stub = SimpleNamespace()  # no settings at all
-    assert backend.WavesBridge._queued_quality_value.__get__(stub, type(stub))() == ""
+    assert backend.BitWaveBridge._queued_quality_value.__get__(stub, type(stub))() == ""
 
 
 @pytest.mark.parametrize(
@@ -276,16 +276,16 @@ def test_an_unreadable_setting_pins_nothing_rather_than_failing_to_queue():
 def test_job_quality_reads_the_row(raw, want):
     stub = SimpleNamespace()
     stub._queue_item = lambda qid: {"qid": qid, "askQuality": raw}
-    assert backend.WavesBridge._job_quality.__get__(stub, type(stub))(1) == want
+    assert backend.BitWaveBridge._job_quality.__get__(stub, type(stub))(1) == want
 
 
 def test_a_missing_row_pins_nothing():
     stub = SimpleNamespace(_queue_item=lambda qid: None)
-    assert backend.WavesBridge._job_quality.__get__(stub, type(stub))(1) is None
+    assert backend.BitWaveBridge._job_quality.__get__(stub, type(stub))(1) is None
 
 
 def test_the_runner_hands_its_rows_quality_to_the_download():
-    src = inspect.getsource(backend.WavesBridge)
+    src = inspect.getsource(backend.BitWaveBridge)
     call = src[src.index("dl = self._build_download(") :]
     call = call[: call.index("\n        )")]
     assert "pinned_quality=self._job_quality(qid)" in call, call
@@ -293,7 +293,7 @@ def test_the_runner_hands_its_rows_quality_to_the_download():
 
 def test_the_skip_rank_follows_the_jobs_quality_not_the_setting():
     stub = SimpleNamespace(settings=SimpleNamespace(data=SimpleNamespace(quality_audio=Quality.low_320k)))
-    rank = backend.WavesBridge._target_quality_rank.__get__(stub, type(stub))
+    rank = backend.BitWaveBridge._target_quality_rank.__get__(stub, type(stub))
     assert rank() == rank(Quality.low_320k)
     assert rank(Quality.hi_res_lossless) > rank(), "a job queued higher must still count as an upgrade"
 

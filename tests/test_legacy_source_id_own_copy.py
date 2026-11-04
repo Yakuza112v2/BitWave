@@ -1,7 +1,7 @@
 """A merged track re-saved over a copy an older BitWave tagged the other way replaces it.
 
 A "best of both" merge fetches a track from one edition (``member.id``, the
-SOURCE id) and files it under another edition's slot (``waves_identity_id``).
+SOURCE id) and files it under another edition's slot (``bitwave_identity_id``).
 Every build up to v0.1.21 stamped the SOURCE id into that file; today's build
 stamps the identity id. A library assembled by an older BitWave is therefore full
 of merged tracks tagged with an id the current build no longer files them under.
@@ -10,7 +10,7 @@ With skipping off (overwrite mode, or a quality upgrade), the engine asks
 ``_is_own_copy`` whether the file at the destination is this item's own to
 replace. Recognizing ONLY the identity id would call the old copy a stranger,
 step around it, and write a ``_01`` duplicate beside it: forever, since the app
-never deletes a user-visible file. ``_waves_owned_ids`` widens "its own" to
+never deletes a user-visible file. ``_bitwave_owned_ids`` widens "its own" to
 both ids, and this file pins that the widening reaches the disk decision.
 """
 
@@ -23,8 +23,8 @@ from unittest.mock import MagicMock
 import pytest
 from tidalapi.media import Track
 
-from waves import download as download_module
-from waves.download import Download, _waves_item_id, _waves_owned_ids
+from bitwave import download as download_module
+from bitwave.download import Download, _bitwave_item_id, _bitwave_owned_ids
 
 SOURCE_ID = "t-1"
 IDENTITY_ID = "identity-9"
@@ -51,7 +51,7 @@ def _identity_from_content(monkeypatch):
 
         return raw[3:].decode() if raw.startswith(b"id-") else ""
 
-    monkeypatch.setattr("waves.download.read_item_id", _read)
+    monkeypatch.setattr("bitwave.download.read_item_id", _read)
 
 
 def _occupy(path_file: pathlib.Path, item_id: str) -> None:
@@ -78,7 +78,7 @@ def _make_download(tmp_path: pathlib.Path, skip_existing: bool, cls: type[Downlo
 
     def _download(media, stream_manifest, path_file, event_stop=None):
         # Today's build files the download under the identity id.
-        path_file.write_bytes(b"id-" + _waves_item_id(media).encode())
+        path_file.write_bytes(b"id-" + _bitwave_item_id(media).encode())
 
         return True, path_file
 
@@ -92,11 +92,11 @@ def _merge_member() -> Track:
     """A best-of-both member: streamed from the source edition, filed under the identity slot.
 
     The shape backend._as_member_of produces (a copy of the source track with
-    ``waves_identity_id`` set), built here without importing the Qt bridge.
+    ``bitwave_identity_id`` set), built here without importing the Qt bridge.
     """
     t = Track.__new__(Track)
     t.id = SOURCE_ID
-    t.waves_identity_id = IDENTITY_ID
+    t.bitwave_identity_id = IDENTITY_ID
     t.audio_modes = []
     t.artists = []
     t.name = "Song"
@@ -155,7 +155,7 @@ class TestTheClaimLandsOnTheOldCopy:
         _occupy(destination, SOURCE_ID)
 
         path_claimed, name_reserved = dl._claim_destination(
-            destination, _waves_item_id(member), _waves_owned_ids(member)
+            destination, _bitwave_item_id(member), _bitwave_owned_ids(member)
         )
 
         assert path_claimed == destination, "the old copy is ours to replace, not to sidestep"
@@ -170,7 +170,7 @@ class TestTheClaimLandsOnTheOldCopy:
         _occupy(destination, STRANGER_ID)
 
         path_claimed, name_reserved = dl._claim_destination(
-            destination, _waves_item_id(member), _waves_owned_ids(member)
+            destination, _bitwave_item_id(member), _bitwave_owned_ids(member)
         )
 
         assert path_claimed == tmp_path / "Song_01.flac"
@@ -257,4 +257,4 @@ class TestTheLiveDownloadPathPassesEveryOwnedId:
             # owned ids, and what mode the fetch delivers.
             assert len(call.args) == 4 and not call.keywords, ast.unparse(call)
             owned = call.args[2]
-            assert isinstance(owned, ast.Call) and ast.unparse(owned.func) == "_waves_owned_ids", ast.unparse(call)
+            assert isinstance(owned, ast.Call) and ast.unparse(owned.func) == "_bitwave_owned_ids", ast.unparse(call)

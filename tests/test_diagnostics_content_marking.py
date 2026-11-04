@@ -26,7 +26,7 @@ import inspect
 import re
 from pathlib import Path
 
-from waves.waves_ui import diagnostics
+from bitwave.bitwave_ui import diagnostics
 
 # Modules whose logging carries user-chosen text. Per the project's diagnostics
 # convention, search terms and track, album or artist names are content.
@@ -72,8 +72,8 @@ def _unmarked_media_names(node, marked: bool = False) -> list[str]:
 def test_content_has_production_call_sites():
     """The whole content tier is dead code without callers. This is the guard
     that failed silently before: zero call sites tree-wide."""
-    from waves import download
-    from waves.waves_ui import backend
+    from bitwave import download
+    from bitwave.bitwave_ui import backend
 
     for module in (backend, download):
         source = inspect.getsource(module)
@@ -85,9 +85,9 @@ def test_content_has_production_call_sites():
 
 def test_the_search_needle_is_marked_wherever_it_is_logged():
     """Both search log lines carry the raw needle. Neither may pass it bare."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
-    source = inspect.getsource(backend.WavesBridge.search)
+    source = inspect.getsource(backend.BitWaveBridge.search)
     logged_needles = [line for line in source.splitlines() if "needle=" in line]
     assert logged_needles, "the search needle is no longer logged; update this guard"
     for line in logged_needles:
@@ -97,7 +97,7 @@ def test_the_search_needle_is_marked_wherever_it_is_logged():
 def test_engine_media_name_logs_are_marked():
     """The download engine logs the track and list names it is working on at
     INFO, which feeds the always-on breadcrumb ring."""
-    from waves import download
+    from bitwave import download
 
     source = inspect.getsource(download)
     for fragment in ("Downloaded item", "Finished list"):
@@ -113,7 +113,7 @@ def test_no_log_line_in_the_engine_builds_a_media_name_bare():
     catches identity PII, but a track or artist name is content: only the
     marker decides whether "also hide titles and searches" can hash it.
     """
-    from waves import download
+    from bitwave import download
 
     tree = ast.parse(Path(download.__file__).read_text(encoding="utf-8"))
     offenders = [
@@ -164,7 +164,7 @@ def test_no_log_line_in_the_engine_builds_a_path_bare():
     with no marker, so an exported bundle with "also hide titles and searches"
     checked still showed exactly which artists, albums and tracks were
     downloaded, and the whole library layout (gap-round finding G-03)."""
-    from waves import download
+    from bitwave import download
 
     tree = ast.parse(Path(download.__file__).read_text(encoding="utf-8"))
     offenders = [

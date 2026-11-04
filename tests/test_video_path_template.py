@@ -20,9 +20,9 @@ from types import SimpleNamespace
 
 from tidalapi import Video
 
-from waves.helper.path import format_path_media
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import _LEGACY_FORMAT_VIDEOS, WavesBridge
+from bitwave.helper.path import format_path_media
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import _LEGACY_FORMAT_VIDEOS, BitWaveBridge
 
 
 def _video(**over) -> Video:
@@ -78,7 +78,7 @@ def test_the_primary_artist_token_falls_back_to_the_first_of_the_list():
 
 
 class _MigrateStub:
-    _migrate_video_template = WavesBridge._migrate_video_template
+    _migrate_video_template = BitWaveBridge._migrate_video_template
 
     def __init__(self, stored: str):
         self.settings = SimpleNamespace(data=SimpleNamespace(format_video=stored))
@@ -103,7 +103,7 @@ def test_every_shipped_default_token_is_documented_in_app():
     must be listed there, or a user who edits it away can never rebuild it."""
     import re
 
-    from waves.waves_ui.backend import _TEMPLATE_TOKENS
+    from bitwave.bitwave_ui.backend import _TEMPLATE_TOKENS
 
     documented = {t[0] for t in _TEMPLATE_TOKENS}
     d = CfgSettings()

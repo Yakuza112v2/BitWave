@@ -47,7 +47,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 # Every surface that shows a release date, and so wears the mark. The two card
 # styles share CardCaption, which is why it is one wearer and not two.
@@ -175,10 +175,10 @@ def test_the_window_is_a_fortnight() -> None:
 def test_the_payload_builders_never_read_the_clock() -> None:
     """The verdict is never stored: nothing that builds or dresses a payload
     may ask what day it is. A payload outlives the day it was built on."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     for name in ("_album_dict", "_track_dict", "_browse_card", "_dress_card", "_build_browse_item"):
-        src = inspect.getsource(getattr(backend.WavesBridge, name))
+        src = inspect.getsource(getattr(backend.BitWaveBridge, name))
         for clock in ("date.today(", "datetime.now(", "time.time(", "utcnow("):
             assert clock not in src, f"{name} reads the clock ({clock}), so its answer goes stale in the cache"
 
@@ -186,7 +186,7 @@ def test_the_payload_builders_never_read_the_clock() -> None:
 def test_an_album_page_header_carries_the_date_its_rows_show(monkeypatch) -> None:
     from test_browse_item_prefetch import _bridge, _Cover, _fake_track, _page
 
-    import waves.waves_ui.backend as backend
+    import bitwave.bitwave_ui.backend as backend
 
     for fn, stub in (("clock", lambda: 0.0), ("done", lambda *a, **k: None), ("event", lambda *a, **k: None)):
         monkeypatch.setattr(backend.devlog, fn, stub, raising=True)
@@ -223,7 +223,7 @@ def test_an_album_page_header_carries_the_date_its_rows_show(monkeypatch) -> Non
 def test_the_mark_follows_the_date_on_every_surface_and_the_clock() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    sandbox = tempfile.mkdtemp(prefix="waves-new-release-mark-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-new-release-mark-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -352,15 +352,15 @@ def _run_scenario() -> int:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

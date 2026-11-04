@@ -17,20 +17,20 @@ from unittest.mock import patch
 
 import pytest
 
-import waves.config as config_mod
-import waves.download as download_mod
-import waves.waves_ui.backend as backend_mod
-from waves.model.cfg import Settings as ModelSettings
-from waves.ownership import path_under
-from waves.waves_ui.backend import _FACTORY_WIPE_FILES, _FACTORY_WIPE_LOG_PATTERNS, WavesBridge
+import bitwave.config as config_mod
+import bitwave.download as download_mod
+import bitwave.bitwave_ui.backend as backend_mod
+from bitwave.model.cfg import Settings as ModelSettings
+from bitwave.ownership import path_under
+from bitwave.bitwave_ui.backend import _FACTORY_WIPE_FILES, _FACTORY_WIPE_LOG_PATTERNS, BitWaveBridge
 
-QML = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 
 
 # ---- worker lifecycle: no cache write across a sign-out -------------------
 class _ListsStub:
-    _media_lists = WavesBridge._media_lists
-    _MEDIA_LISTS_TTL = WavesBridge._MEDIA_LISTS_TTL
+    _media_lists = BitWaveBridge._media_lists
+    _MEDIA_LISTS_TTL = BitWaveBridge._MEDIA_LISTS_TTL
 
     def __init__(self, on_walk):
         self._media_lists_lock = Lock()
@@ -53,8 +53,8 @@ def test_a_media_lists_sweep_that_outlives_a_sign_out_stores_nothing():
         return tree
 
     with (
-        patch("waves.waves_ui.backend.user_media_lists", return_value={"playlists": []}),
-        patch("waves.waves_ui.backend.walk_playlist_tree", walk),
+        patch("bitwave.bitwave_ui.backend.user_media_lists", return_value={"playlists": []}),
+        patch("bitwave.bitwave_ui.backend.walk_playlist_tree", walk),
     ):
         fresh, got = stub._media_lists(refresh=True)
     assert got is tree, "the caller still gets its answer (its own gen check drops it)"
@@ -65,16 +65,16 @@ def test_a_media_lists_sweep_on_the_same_account_still_caches():
     tree = SimpleNamespace(nodes={"f": 1}, playlist_paths={}, partial=False)
     stub = _ListsStub(on_walk=None)
     with (
-        patch("waves.waves_ui.backend.user_media_lists", return_value={"playlists": []}),
-        patch("waves.waves_ui.backend.walk_playlist_tree", return_value=tree),
+        patch("bitwave.bitwave_ui.backend.user_media_lists", return_value={"playlists": []}),
+        patch("bitwave.bitwave_ui.backend.walk_playlist_tree", return_value=tree),
     ):
         stub._media_lists(refresh=True)
     assert stub._folder_tree is tree and stub._media_lists_cache[1] == {"playlists": []}
 
 
 class _FavStub:
-    _favorite_ids = WavesBridge._favorite_ids
-    _FAV_IDS_TTL = WavesBridge._FAV_IDS_TTL
+    _favorite_ids = BitWaveBridge._favorite_ids
+    _FAV_IDS_TTL = BitWaveBridge._FAV_IDS_TTL
 
     def __init__(self):
         self._fav_ids = {}
@@ -94,18 +94,18 @@ def test_favorite_ids_fetched_across_a_sign_out_are_not_cached():
 def test_logout_drops_the_queues_kept_objects_and_the_merge_plans():
     """RETRY on the next account re-fetches by id through the new session,
     instead of downloading through the signed-out account's token."""
-    src = inspect.getsource(WavesBridge.logout)
+    src = inspect.getsource(BitWaveBridge.logout)
     for name in ("_job_objs", "_merge_scanned"):
         assert f'getattr(self, "{name}"' in src and ".clear()" in src, name
     # Plans keep their catalog ids so RETRY rebuilds the merge (final audit
     # C12); the Track objects are dropped (tests/test_final_audit_2026_09_24.py).
-    assert "WavesBridge._unbind_merge_plans(self)" in src
+    assert "BitWaveBridge._unbind_merge_plans(self)" in src
 
 
 # ---- STOP while a click is parked ------------------------------------------
 class _WarmStub:
-    _warm_folder_tree = WavesBridge._warm_folder_tree
-    _on_folder_tree_warmed = WavesBridge._on_folder_tree_warmed
+    _warm_folder_tree = BitWaveBridge._warm_folder_tree
+    _on_folder_tree_warmed = BitWaveBridge._on_folder_tree_warmed
 
     def __init__(self):
         self._logged_in = True
@@ -149,7 +149,7 @@ def test_a_click_parked_behind_the_folder_warm_replays_when_nothing_was_stopped(
 
 
 def test_a_download_refetch_checks_the_stop_generation():
-    src = inspect.getsource(WavesBridge._refetch_for_download)
+    src = inspect.getsource(BitWaveBridge._refetch_for_download)
     assert 'scan_gen = getattr(self, "_scan_gen", 0)' in src
     assert 'scan_gen != getattr(self, "_scan_gen", 0)' in src
 
@@ -157,15 +157,15 @@ def test_a_download_refetch_checks_the_stop_generation():
 # ---- settings defaults -----------------------------------------------------
 def test_every_artist_section_key_the_qml_writes_is_whitelisted():
     """Main.qml builds the key as "artist_sec_" + which + "_collapsed" (and
-    "_expanded"); setWavesPref drops a key the whitelist lacks without a
+    "_expanded"); setBitWavePref drops a key the whitelist lacks without a
     word, so the Videos fold and every SHOW ALL came back reset on launch."""
     main = (QML / "Main.qml").read_text()
-    assert 'setWavesPref("artist_sec_" + which + "_collapsed", v)' in main
-    assert 'setWavesPref("artist_sec_" + which + "_expanded", v)' in main
-    defaults = WavesBridge._default_waves_prefs(SimpleNamespace())
+    assert 'setBitWavePref("artist_sec_" + which + "_collapsed", v)' in main
+    assert 'setBitWavePref("artist_sec_" + which + "_expanded", v)' in main
+    defaults = BitWaveBridge._default_bitwave_prefs(SimpleNamespace())
     keys = [f"artist_sec_{w}_{st}" for w in ("tracks", "albums", "eps", "videos") for st in ("collapsed", "expanded")]
     missing = [k for k in keys if k not in defaults]
-    assert missing == [], f"setWavesPref drops a key the whitelist lacks: {missing}"
+    assert missing == [], f"setBitWavePref drops a key the whitelist lacks: {missing}"
 
 
 def test_factory_reset_takes_the_search_cache():
@@ -216,7 +216,7 @@ def test_the_track_panels_say_when_a_fetch_failed_and_retry_on_expand():
     # an empty playlist): the status line says which (final audit C46).
     assert main.count("No tracks to show, collapse and expand to try again") == 2
     # the album toggle asks again when the cached value is the failure marker
-    assert "if (!root.trackCache[albumId]) waves.loadAlbumTracks(albumId)" in main
+    assert "if (!root.trackCache[albumId]) bitwave.loadAlbumTracks(albumId)" in main
 
 
 def test_a_failed_album_track_fetch_sets_a_status_only_for_an_open_panel():
@@ -247,17 +247,17 @@ def test_a_failed_album_track_fetch_sets_a_status_only_for_an_open_panel():
 
 
 def test_a_failed_home_load_and_scroll_page_say_so():
-    assert "Could not load your recent favorites" in inspect.getsource(WavesBridge.loadHome)
-    assert "Could not load more, scroll again to retry" in inspect.getsource(WavesBridge.loadMoreLibrary)
+    assert "Could not load your recent favorites" in inspect.getsource(BitWaveBridge.loadHome)
+    assert "Could not load more, scroll again to retry" in inspect.getsource(BitWaveBridge.loadMoreLibrary)
 
 
 def test_retry_all_names_the_rows_it_could_not_restart():
-    src = inspect.getsource(WavesBridge._retry_all_with_status)
+    src = inspect.getsource(BitWaveBridge._retry_all_with_status)
     assert "could not be restarted" in src
 
 
 def test_a_rescan_that_raises_leaves_an_error_status_the_settings_page_explains():
-    from waves.waves_ui import bridge_library
+    from bitwave.bitwave_ui import bridge_library
 
     assert 'status = "error"' in inspect.getsource(bridge_library)
     settings = (QML / "SettingsPage.qml").read_text()
@@ -283,19 +283,19 @@ def test_the_cdn_session_retries_a_throttle_but_never_sleeps_long():
 def test_a_worker_that_outlived_the_bridge_is_not_a_crash(caplog):
     import logging
 
-    from waves.worker import Worker
+    from bitwave.worker import Worker
 
     def boom():
         raise RuntimeError("Signal source has been deleted")
 
-    with caplog.at_level(logging.DEBUG, logger="waves"):
+    with caplog.at_level(logging.DEBUG, logger="bitwave"):
         Worker(boom).run()
     assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
 
     def real_crash():
         raise RuntimeError("something else")
 
-    with caplog.at_level(logging.DEBUG, logger="waves"):
+    with caplog.at_level(logging.DEBUG, logger="bitwave"):
         Worker(real_crash).run()
     assert [r for r in caplog.records if r.levelno >= logging.ERROR]
 

@@ -24,9 +24,9 @@ import os
 from threading import Lock
 from types import SimpleNamespace
 
-from waves import missing_tracks
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave import missing_tracks
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -82,7 +82,7 @@ class _Stub:
             "_missing_rows",
             "exportMissingTracks",
         ):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _Stub))
 
     def _emit_from_worker(self, name, *args):
         getattr(self, name).emit(*args)

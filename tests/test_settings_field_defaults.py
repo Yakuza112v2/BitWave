@@ -10,9 +10,9 @@ value.
 
 from __future__ import annotations
 
-from waves.model.cfg import HelpSettings
-from waves.model.cfg import Settings as CfgSettings
-from waves.waves_ui.backend import _FIRST_RUN_OVERRIDES, WavesBridge, _shipped_default
+from bitwave.model.cfg import HelpSettings
+from bitwave.model.cfg import Settings as CfgSettings
+from bitwave.bitwave_ui.backend import _FIRST_RUN_OVERRIDES, BitWaveBridge, _shipped_default
 
 # Every string field the page lets you customize, and whether restoring a
 # shipped default makes sense for it.
@@ -33,7 +33,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
@@ -45,9 +45,9 @@ def _schema_stub():
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub._ffmpeg_flag_prefs = {}
     stub.ffmpegState = lambda: {"status": "none", "source": "none", "path": ""}
     stub._user_ffmpeg_path = lambda: ""
@@ -57,7 +57,7 @@ def _schema_stub():
 
 def _fields_by_key():
     out = {}
-    for section in WavesBridge.settingsSchema(_schema_stub()):
+    for section in BitWaveBridge.settingsSchema(_schema_stub()):
         for f in section["fields"]:
             out[f["key"]] = f
     return out

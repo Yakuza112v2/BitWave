@@ -12,30 +12,30 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from waves.constants import CoverDimensions
-from waves.download import Download
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.constants import CoverDimensions
+from bitwave.download import Download
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # ----- download-folder gate ------------------------------------------------
 
 
 def test_folder_gate_blank_blocks():
-    assert WavesBridge._folder_gate_action("", False) == "block"
-    assert WavesBridge._folder_gate_action("   ", False) == "block"
-    assert WavesBridge._folder_gate_action(None, False) == "block"
+    assert BitWaveBridge._folder_gate_action("", False) == "block"
+    assert BitWaveBridge._folder_gate_action("   ", False) == "block"
+    assert BitWaveBridge._folder_gate_action(None, False) == "block"
 
 
 def test_folder_gate_legacy_default_nudges_once():
     # Existing user still on the old default, not yet warned -> one-time nudge.
-    assert WavesBridge._folder_gate_action("~/download", False) == "nudge"
+    assert BitWaveBridge._folder_gate_action("~/download", False) == "nudge"
     # Once marked prompted, it must never nag again.
-    assert WavesBridge._folder_gate_action("~/download", True) == "ok"
+    assert BitWaveBridge._folder_gate_action("~/download", True) == "ok"
 
 
 def test_folder_gate_real_path_ok():
-    assert WavesBridge._folder_gate_action("/Users/me/Music", False) == "ok"
-    assert WavesBridge._folder_gate_action("/Users/me/Music", True) == "ok"
+    assert BitWaveBridge._folder_gate_action("/Users/me/Music", False) == "ok"
+    assert BitWaveBridge._folder_gate_action("/Users/me/Music", True) == "ok"
 
 
 def test_download_gate_never_probes_the_filesystem():
@@ -45,7 +45,7 @@ def test_download_gate_never_probes_the_filesystem():
     to _gate_reachability on the download worker."""
     fake = MagicMock()
     fake._folder_gate_action = lambda *a: "ok"
-    assert WavesBridge._download_gate(fake) == "ok"
+    assert BitWaveBridge._download_gate(fake) == "ok"
     fake._probe_download_base.assert_not_called()
 
 
@@ -58,15 +58,15 @@ def _gate_fake():
     fake._base_ok = ("", 0.0)  # no recent write: the probe must be consulted
     fake._pending_lock = Lock()
     fake._pending_downloads = []
-    fake._stash_pending_download = WavesBridge._stash_pending_download.__get__(fake)
-    fake._run_pending_downloads = WavesBridge._run_pending_downloads.__get__(fake)
+    fake._stash_pending_download = BitWaveBridge._stash_pending_download.__get__(fake)
+    fake._run_pending_downloads = BitWaveBridge._run_pending_downloads.__get__(fake)
     # Saves go through the guarded helper, which undoes the transient ffmpeg
     # injections before writing (see tests/test_settings_save_guard.py).
     fake._ffmpeg_flag_prefs = {}
     fake._ffmpeg_user_path = ""
-    fake._restore_ffmpeg_flags = WavesBridge._restore_ffmpeg_flags.__get__(fake)
-    fake._restore_ffmpeg_path = WavesBridge._restore_ffmpeg_path.__get__(fake)
-    fake._save_settings = WavesBridge._save_settings.__get__(fake)
+    fake._restore_ffmpeg_flags = BitWaveBridge._restore_ffmpeg_flags.__get__(fake)
+    fake._restore_ffmpeg_path = BitWaveBridge._restore_ffmpeg_path.__get__(fake)
+    fake._save_settings = BitWaveBridge._save_settings.__get__(fake)
     # The disk seam behind _save_settings; route it into the fake's counter.
     fake._submit_settings_write = lambda: fake.settings.save()
     return fake
@@ -75,13 +75,13 @@ def _gate_fake():
 def test_gate_reachability_ok_proceeds():
     fake = _gate_fake()
     fake._probe_download_base = lambda: ("ok", "/some/folder")
-    assert WavesBridge._gate_reachability(fake, lambda: None) is True
+    assert BitWaveBridge._gate_reachability(fake, lambda: None) is True
 
 
 def test_gate_reachability_healed_persists_live_path():
     fake = _gate_fake()
     fake._probe_download_base = lambda: ("healed", "/Volumes/Music 1/Library")
-    assert WavesBridge._gate_reachability(fake, lambda: None) is True
+    assert BitWaveBridge._gate_reachability(fake, lambda: None) is True
     assert fake.settings.data.download_base_path == "/Volumes/Music 1/Library"
     fake.settings.save.assert_called_once()
 
@@ -90,7 +90,7 @@ def test_gate_reachability_dead_holds_retry_and_warns():
     fake = _gate_fake()
     fake._probe_download_base = lambda: ("dead", "/Volumes/Gone/Library")
     retry = lambda: None
-    assert WavesBridge._gate_reachability(fake, retry, "m1") is False
+    assert BitWaveBridge._gate_reachability(fake, retry, "m1") is False
     assert fake._pending_downloads == [("m1", retry)]
     fake.downloadFolderUnreachable.emit.assert_called_once()
 
@@ -101,7 +101,7 @@ def test_keep_download_folder_marks_prompted_and_replays():
     fake = _gate_fake()
     fake._stash_pending_download("a", lambda: ran.append("a"))
     fake._stash_pending_download("b", lambda: ran.append("b"))
-    WavesBridge.keepDownloadFolder(fake)
+    BitWaveBridge.keepDownloadFolder(fake)
     assert fake.settings.data.download_folder_prompted is True
     fake.settings.save.assert_called_once()
     assert ran == ["a", "b"]  # every deferred download actually ran
@@ -114,7 +114,7 @@ def test_dismiss_download_folder_nudge_drops_pending_without_running():
     ran = []
     fake = _gate_fake()
     fake._stash_pending_download("a", lambda: ran.append("go"))
-    WavesBridge.dismissDownloadFolderNudge(fake)
+    BitWaveBridge.dismissDownloadFolderNudge(fake)
     assert ran == []  # nothing downloaded
     assert fake._pending_downloads == []
     fake.settings.save.assert_not_called()
@@ -131,10 +131,10 @@ def test_reveal_download_path_opens_nearest_existing(tmp_path, monkeypatch):
     )
     fake = MagicMock()
     fake.settings.data.download_base_path = str(tmp_path)
-    WavesBridge.revealDownloadPath(fake)
+    BitWaveBridge.revealDownloadPath(fake)
     assert opened[-1] == str(tmp_path)  # existing folder revealed as-is
     fake.settings.data.download_base_path = str(tmp_path / "does" / "not" / "exist")
-    WavesBridge.revealDownloadPath(fake)
+    BitWaveBridge.revealDownloadPath(fake)
     assert opened[-1] == str(tmp_path)  # falls back to nearest existing ancestor
 
 
@@ -144,24 +144,24 @@ def test_reveal_download_path_opens_nearest_existing(tmp_path, monkeypatch):
 @pytest.mark.skipif(backend.OrderDirection is None, reason="tidalapi has no ordered favorites")
 def test_lib_order_kwargs_maps_per_category():
     # self is unused by the method, so calling it unbound is fine.
-    ka = WavesBridge._lib_order_kwargs(None, "albums", ("date", "desc"))
+    ka = BitWaveBridge._lib_order_kwargs(None, "albums", ("date", "desc"))
     assert ka["order"] is backend.AlbumOrder.DateAdded
     assert ka["order_direction"] is backend.OrderDirection.Descending
 
-    kt = WavesBridge._lib_order_kwargs(None, "tracks", ("name", "asc"))
+    kt = BitWaveBridge._lib_order_kwargs(None, "tracks", ("name", "asc"))
     assert kt["order"] is backend.ItemOrder.Name  # tracks use ItemOrder, not *Order.DateAdded
     assert kt["order_direction"] is backend.OrderDirection.Ascending
 
-    assert WavesBridge._lib_order_kwargs(None, "albums", ("release", "asc"))["order"] is backend.AlbumOrder.ReleaseDate
+    assert BitWaveBridge._lib_order_kwargs(None, "albums", ("release", "asc"))["order"] is backend.AlbumOrder.ReleaseDate
 
 
 @pytest.mark.skipif(backend.OrderDirection is None, reason="tidalapi has no ordered favorites")
 def test_lib_order_kwargs_unsupported_is_empty():
     # An order key a category doesn't offer, or no spec at all -> no kwargs
     # (falls back to the API's default order).
-    assert WavesBridge._lib_order_kwargs(None, "artists", ("release", "desc")) == {}
-    assert WavesBridge._lib_order_kwargs(None, "albums", None) == {}
-    assert WavesBridge._lib_order_kwargs(None, "nonsense", ("date", "desc")) == {}
+    assert BitWaveBridge._lib_order_kwargs(None, "artists", ("release", "desc")) == {}
+    assert BitWaveBridge._lib_order_kwargs(None, "albums", None) == {}
+    assert BitWaveBridge._lib_order_kwargs(None, "nonsense", ("date", "desc")) == {}
 
 
 @pytest.mark.skipif(backend.OrderDirection is None, reason="tidalapi has no ordered favorites")
@@ -170,7 +170,7 @@ def test_library_page_default_sort_is_date_desc():
     # descending. tidalapi's raw default is not date-added, so leaving it unset
     # made a tab's default "Recently added" show the wrong order and disagree
     # with the Home previews (which force date-desc).
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._lib_sort = {}
     favorites = MagicMock()
     favorites.albums.return_value = []
@@ -178,7 +178,7 @@ def test_library_page_default_sort_is_date_desc():
     b.tidal = MagicMock()
     b.tidal.session.user.favorites = favorites
 
-    rows, more = WavesBridge._library_page(b, "albums", 0, 10)
+    rows, more = BitWaveBridge._library_page(b, "albums", 0, 10)
 
     assert rows == [] and more is False
     _, kwargs = favorites.albums.call_args

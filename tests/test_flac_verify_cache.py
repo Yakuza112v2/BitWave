@@ -1,4 +1,4 @@
-"""waves.flac_verify.VerdictCache: a second scan of an unchanged library reads
+"""bitwave.flac_verify.VerdictCache: a second scan of an unchanged library reads
 nothing but each file's size and time.
 
 Pinned here: an unchanged file takes the earlier verdict without being opened
@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from waves import flac_verify as fv
+from bitwave import flac_verify as fv
 
 FFMPEG = shutil.which("ffmpeg")
 needs_ffmpeg = pytest.mark.skipif(FFMPEG is None, reason="needs ffmpeg")

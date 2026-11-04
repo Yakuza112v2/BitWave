@@ -17,11 +17,11 @@ import pathlib
 import re
 from unittest import mock
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _ROOT = pathlib.Path(__file__).resolve().parents[1]
-_QML = _ROOT / "waves" / "waves_ui" / "qml" / "SettingsPage.qml"
-_MAIN = _ROOT / "waves" / "waves_ui" / "qml" / "Main.qml"
+_QML = _ROOT / "bitwave" / "bitwave_ui" / "qml" / "SettingsPage.qml"
+_MAIN = _ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _ORDER = [
     "downloads",
@@ -168,22 +168,22 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
     """Just enough state for settingsSchema(), on a defaults-only config."""
-    from waves.model.cfg import HelpSettings
-    from waves.model.cfg import Settings as CfgSettings
+    from bitwave.model.cfg import HelpSettings
+    from bitwave.model.cfg import Settings as CfgSettings
 
     class _Cfg:
         data = CfgSettings()
         help = HelpSettings()
 
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
@@ -195,8 +195,8 @@ def _schema_stub():
 
 
 def _schema():
-    with mock.patch("waves.waves_ui.backend.notifications_supported", return_value=True):
-        return WavesBridge.settingsSchema(_schema_stub())
+    with mock.patch("bitwave.bitwave_ui.backend.notifications_supported", return_value=True):
+        return BitWaveBridge.settingsSchema(_schema_stub())
 
 
 # The other keys a composite row saves under, in the order they are listed.

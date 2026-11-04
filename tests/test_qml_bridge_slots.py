@@ -1,4 +1,4 @@
-"""Every ``waves.<name>`` the QML calls really is reachable from QML.
+"""Every ``bitwave.<name>`` the QML calls really is reachable from QML.
 
 A Python method on the bridge is only visible to QML when it carries a
 ``@Slot`` decorator: without one it never reaches ``staticMetaObject``, the
@@ -9,7 +9,7 @@ bridge tests are written, see tests/conftest.py) passes either way, so a whole
 feature can ship inert with a green suite. That happened: prefetchArtist
 shipped without its decorator and every artist-card hover threw.
 
-This is the gate for it. It reads the QML, collects every ``waves.NAME``
+This is the gate for it. It reads the QML, collects every ``bitwave.NAME``
 reference, and asserts each one is a real member of the bridge's meta object.
 """
 
@@ -18,16 +18,16 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_QML_DIR = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
-_REFERENCE = re.compile(r"\bwaves\.([A-Za-z_]\w*)")
+_QML_DIR = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
+_REFERENCE = re.compile(r"\bbitwave\.([A-Za-z_]\w*)")
 
 
 def _code_only(source: str) -> str:
     """``source`` with its comments and string bodies blanked out.
 
-    Both matter. A prose comment in Main.qml mentions ``waves.json`` (the
+    Both matter. A prose comment in Main.qml mentions ``bitwave.json`` (the
     settings file, not a bridge member), which a naive regex reads as a missing
     slot; and a URL inside a string carries a ``//`` that a line-based comment
     strip would mistake for the start of a comment, swallowing whatever real
@@ -68,7 +68,7 @@ def _bridge_members() -> set[str]:
     back as a QByteArray, which decodes; a property name comes back as ``str``
     already, and calling ``bytes()`` on it raises.
     """
-    mo = WavesBridge.staticMetaObject
+    mo = BitWaveBridge.staticMetaObject
     names = {bytes(mo.method(i).name()).decode() for i in range(mo.methodCount())}
     names |= {str(mo.property(i).name()) for i in range(mo.propertyCount())}
     return names

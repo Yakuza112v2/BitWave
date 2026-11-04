@@ -1,5 +1,5 @@
 """BitWave only ever looks for a downloaded copy in two places: the download
-folder and the library folder (waves/ownership.py set_roots).
+folder and the library folder (bitwave/ownership.py set_roots).
 
 A copy recorded anywhere else, typically under an earlier download folder
 (issue #38), must not read as owned, must never be statted, and must never
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 
-from waves.ownership import OwnershipStore, path_under
+from bitwave.ownership import OwnershipStore, path_under
 
 
 def _file(path):

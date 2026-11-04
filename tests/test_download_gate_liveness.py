@@ -25,43 +25,43 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.download import Download
-from waves.waves_ui.backend import WavesBridge
+from bitwave.download import Download
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class GateHost:
     """Just enough bridge surface for the gate methods to run on."""
 
-    _BASE_OK_TTL_SEC = WavesBridge._BASE_OK_TTL_SEC
-    _WARMUP_DIALOG_DELAY_SEC = WavesBridge._WARMUP_DIALOG_DELAY_SEC
-    _gate_reachability = WavesBridge._gate_reachability
-    _note_download_base_ok = WavesBridge._note_download_base_ok
-    _downloads_running = WavesBridge._downloads_running
-    _stash_pending_download = WavesBridge._stash_pending_download
-    _run_pending_downloads = WavesBridge._run_pending_downloads
-    _probe_download_base = WavesBridge._probe_download_base
+    _BASE_OK_TTL_SEC = BitWaveBridge._BASE_OK_TTL_SEC
+    _WARMUP_DIALOG_DELAY_SEC = BitWaveBridge._WARMUP_DIALOG_DELAY_SEC
+    _gate_reachability = BitWaveBridge._gate_reachability
+    _note_download_base_ok = BitWaveBridge._note_download_base_ok
+    _downloads_running = BitWaveBridge._downloads_running
+    _stash_pending_download = BitWaveBridge._stash_pending_download
+    _run_pending_downloads = BitWaveBridge._run_pending_downloads
+    _probe_download_base = BitWaveBridge._probe_download_base
 
     def _maybe_notify_idle(self):
         # The replay's trailing idle check (the drain banner): no queue here.
         pass
 
-    _probe_folder_verdict = staticmethod(WavesBridge._probe_folder_verdict)
+    _probe_folder_verdict = staticmethod(BitWaveBridge._probe_folder_verdict)
     # Proof of life records the share's origin, and a dead probe may try a
     # remount: real methods, real state (no origins recorded and no mount to
     # statfs here, so both are quiet no-ops in these tests).
-    _remember_share_origin = WavesBridge._remember_share_origin
-    _remount_download_share = WavesBridge._remount_download_share
-    _REMOUNT_COOLDOWN_SEC = WavesBridge._REMOUNT_COOLDOWN_SEC
+    _remember_share_origin = BitWaveBridge._remember_share_origin
+    _remount_download_share = BitWaveBridge._remount_download_share
+    _REMOUNT_COOLDOWN_SEC = BitWaveBridge._REMOUNT_COOLDOWN_SEC
     # Saves go through the guarded helper, which undoes the transient ffmpeg
     # injections before writing (see tests/test_settings_save_guard.py).
-    _save_settings = WavesBridge._save_settings
+    _save_settings = BitWaveBridge._save_settings
 
     def _submit_settings_write(self):
         # The disk seam behind _save_settings; route it into the counter.
         self.settings.save()
 
-    _restore_ffmpeg_flags = WavesBridge._restore_ffmpeg_flags
-    _restore_ffmpeg_path = WavesBridge._restore_ffmpeg_path
+    _restore_ffmpeg_flags = BitWaveBridge._restore_ffmpeg_flags
+    _restore_ffmpeg_path = BitWaveBridge._restore_ffmpeg_path
 
     def __init__(self, base: str = "/Volumes/Share/Music") -> None:
         self.saved = 0
@@ -241,7 +241,7 @@ class _MakedirsHost:
 
 
 def test_makedirs_survives_a_transient_permission_error(tmp_path, monkeypatch):
-    import waves.download as dl_mod
+    import bitwave.download as dl_mod
 
     real_makedirs = dl_mod.os.makedirs
     failures = {"left": 2}
@@ -259,7 +259,7 @@ def test_makedirs_survives_a_transient_permission_error(tmp_path, monkeypatch):
 
 
 def test_makedirs_still_raises_when_the_error_is_permanent(tmp_path, monkeypatch):
-    import waves.download as dl_mod
+    import bitwave.download as dl_mod
 
     def always_denied(path, exist_ok=False):
         raise PermissionError(13, "Permission denied", str(path))

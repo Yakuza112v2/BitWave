@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-MAIN = (Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+MAIN = (Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 def _block(start: str, end: str) -> str:

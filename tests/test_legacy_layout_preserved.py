@@ -17,7 +17,7 @@ import pathlib
 import threading
 from unittest.mock import MagicMock
 
-from waves.download import Download
+from bitwave.download import Download
 
 _LEGACY_DIR = "The Better Life  Dead Love"  # doubled space, pre-0.1.17
 _TIDY_DIR = "The Better Life Dead Love"

@@ -21,7 +21,7 @@ import logging
 
 from conftest import _InlinePool
 
-from waves.waves_ui.backend import WavesBridge, _downloads_banner, _queue_banner
+from bitwave.bitwave_ui.backend import BitWaveBridge, _downloads_banner, _queue_banner
 
 
 class _FakeNotifier:
@@ -55,12 +55,12 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, _Stub)
+    return getattr(BitWaveBridge, name).__get__(stub, _Stub)
 
 
 def _stub(prefs=None):
     s = _Stub()
-    s._waves_prefs = {
+    s._bitwave_prefs = {
         # Armed: these tests are about what an armed BitWave sends. The
         # master-switch tests below flip it themselves.
         "notify_enabled": True,
@@ -71,9 +71,9 @@ def _stub(prefs=None):
         "notify_update_seen": "",
         **(prefs or {}),
     }
-    s._waves_pref_bool = _bind(s, "_waves_pref_bool")
+    s._bitwave_pref_bool = _bind(s, "_bitwave_pref_bool")
     # BitWave in front, the case notify_in_front is about.
-    s._notify_waves_in_front = lambda: True
+    s._notify_bitwave_in_front = lambda: True
     s._notifier = _FakeNotifier()
     s._notify_pool = _InlinePool()
     s._notify_send = _bind(s, "_notify_send")
@@ -101,7 +101,7 @@ def _stub(prefs=None):
     s._scans_in_flight = 0
     s._pending_downloads = []
     s._dl_notify_timer = _Timer()
-    s._save_waves_prefs = lambda: None
+    s._save_bitwave_prefs = lambda: None
     return s
 
 
@@ -163,8 +163,8 @@ def test_every_mode_sends_one_coalesced_banner():
 def test_every_mode_reads_the_pref_when_the_banner_is_due():
     s = _stub(prefs={"notify_downloads": "every"})
     _end(s, "A", "done")
-    s._waves_prefs["notify_downloads"] = "never"
-    s._waves_prefs["notify_failed"] = False
+    s._bitwave_prefs["notify_downloads"] = "never"
+    s._bitwave_prefs["notify_failed"] = False
     s._on_dl_notify()
     assert s._notifier.sent == []
     # Switched off, the batch is dropped, not carried into the next banner.
@@ -225,7 +225,7 @@ def test_counters_reset_even_when_the_mode_is_not_queue():
     _end(s, "A", "done")
     s._notify_queue_idle()
     assert s._notifier.sent == []
-    s._waves_prefs["notify_downloads"] = "queue"
+    s._bitwave_prefs["notify_downloads"] = "queue"
     s._notify_queue_idle()
     # The mode switched after the drain never answers for the old rows.
     assert s._notifier.sent == []
@@ -260,7 +260,7 @@ def test_update_banner_fires_once_per_version():
     s = _stub()
     s._notify_app_update("0.3.0")
     assert s._notifier.sent == [("BitWave 0.3.0 ist verfügbar", "Installation unter Einstellungen → Updates.")]
-    assert s._waves_prefs["notify_update_seen"] == "0.3.0"
+    assert s._bitwave_prefs["notify_update_seen"] == "0.3.0"
     s._notify_app_update("0.3.0")
     assert len(s._notifier.sent) == 1
     s._notify_app_update("0.4.0")
@@ -270,21 +270,21 @@ def test_update_banner_fires_once_per_version():
 def test_update_banner_stays_quiet_for_an_empty_version_and_the_pref():
     s = _stub()
     s._notify_app_update("")
-    s._waves_prefs["notify_app_update"] = False
+    s._bitwave_prefs["notify_app_update"] = False
     s._notify_app_update("0.3.0")
     assert s._notifier.sent == []
     # Off means not remembered either: switching on later still announces it.
-    assert s._waves_prefs["notify_update_seen"] == ""
+    assert s._bitwave_prefs["notify_update_seen"] == ""
 
 
 def test_a_refused_update_banner_is_not_remembered():
     s = _stub()
     s._notifier.ok = False  # no notification service, permission refused
     s._notify_app_update("0.3.0")
-    assert s._waves_prefs["notify_update_seen"] == ""
+    assert s._bitwave_prefs["notify_update_seen"] == ""
     s._notifier.ok = True
     s._notify_app_update("0.3.0")
-    assert s._waves_prefs["notify_update_seen"] == "0.3.0"
+    assert s._bitwave_prefs["notify_update_seen"] == "0.3.0"
     assert len(s._notifier.sent) == 2
 
 
@@ -293,15 +293,15 @@ def test_a_refused_update_banner_is_not_remembered():
 
 def test_banner_breadcrumbs_carry_counts_never_names(caplog):
     s = _stub(prefs={"notify_downloads": "every"})
-    log = logging.getLogger("waves.notify")
+    log = logging.getLogger("bitwave.notify")
     log.addHandler(caplog.handler)
     try:
-        with caplog.at_level("INFO", logger="waves.notify"):
+        with caplog.at_level("INFO", logger="bitwave.notify"):
             _end(s, "Secret Album", "done")
             s._on_dl_notify()
             for status in ("done", "failed"):
                 _end(s, "Secret Album", status)
-            s._waves_prefs["notify_downloads"] = "queue"
+            s._bitwave_prefs["notify_downloads"] = "queue"
             s._notify_queue_idle()
         assert "handed to the OS" in caplog.text
         assert "Secret Album" not in caplog.text
@@ -310,7 +310,7 @@ def test_banner_breadcrumbs_carry_counts_never_names(caplog):
 
 
 def test_defaults_queue_mode_with_every_switch_on():
-    defaults = WavesBridge._default_waves_prefs.__get__(_Stub(), _Stub)()
+    defaults = BitWaveBridge._default_bitwave_prefs.__get__(_Stub(), _Stub)()
     # The master switch ships OFF: not a banner of any kind until the user
     # arms it under Settings, Notifications.
     assert defaults["notify_enabled"] is False
@@ -329,13 +329,13 @@ def test_the_master_switch_off_silences_every_banner():
     _end(s, "A", "done")
     _end(s, "X", "failed")
     s._on_dl_notify()
-    s._waves_prefs["notify_downloads"] = "queue"
+    s._bitwave_prefs["notify_downloads"] = "queue"
     _end(s, "B", "done")
     s._notify_queue_idle()
     s._notify_app_update("0.3.0")
     assert s._notifier.sent == []
     # A refused update banner is not remembered: armed later, it announces.
-    assert s._waves_prefs["notify_update_seen"] == ""
+    assert s._bitwave_prefs["notify_update_seen"] == ""
 
 
 def test_arming_the_master_switch_sends_one_test_banner():
@@ -346,7 +346,7 @@ def test_arming_the_master_switch_sends_one_test_banner():
     assert s._notifier.sent == []
     # The save that turns it on sends the test banner (and on macOS the
     # first send is what raises the OS permission prompt).
-    s._waves_prefs["notify_enabled"] = True
+    s._bitwave_prefs["notify_enabled"] = True
     s._notify_master_armed(False)
     assert s._notifier.sent == [
         ("Benachrichtigungen eingeschaltet", "BitWave meldet hier Neuerscheinungen, abgeschlossene Downloads und Updates.")
@@ -356,16 +356,16 @@ def test_arming_the_master_switch_sends_one_test_banner():
     assert len(s._notifier.sent) == 1
 
 
-def test_in_front_off_holds_banners_only_while_waves_is_in_front():
+def test_in_front_off_holds_banners_only_while_bitwave_is_in_front():
     s = _stub(prefs={"notify_in_front": False, "notify_downloads": "every"})
     _end(s, "A", "done")
     s._on_dl_notify()
     s._notify_app_update("0.3.0")
     assert s._notifier.sent == []
     # Held, not refused by the OS: the update is still announced later.
-    assert s._waves_prefs["notify_update_seen"] == ""
+    assert s._bitwave_prefs["notify_update_seen"] == ""
     # In another app, the same banners go out.
-    s._notify_waves_in_front = lambda: False
+    s._notify_bitwave_in_front = lambda: False
     _end(s, "B", "done")
     s._on_dl_notify()
     s._notify_app_update("0.3.0")
@@ -376,7 +376,7 @@ def test_the_test_banner_ignores_the_in_front_switch():
     # Arming happens in Settings, so BitWave is always in front for it.
     s = _stub(prefs={"notify_enabled": False, "notify_in_front": False})
     s._notify_master_armed = _bind(s, "_notify_master_armed")
-    s._waves_prefs["notify_enabled"] = True
+    s._bitwave_prefs["notify_enabled"] = True
     s._notify_master_armed(False)
     assert [t for t, _m in s._notifier.sent] == ["Benachrichtigungen eingeschaltet"]
 
@@ -384,9 +384,9 @@ def test_the_test_banner_ignores_the_in_front_switch():
 def test_apply_settings_arms_from_the_edge():
     import inspect
 
-    src = inspect.getsource(WavesBridge.applySettings)
+    src = inspect.getsource(BitWaveBridge.applySettings)
     # Snapshot before the loop writes the prefs, judged after it.
-    assert 'notify_before = self._waves_pref_bool("notify_enabled")' in src
+    assert 'notify_before = self._bitwave_pref_bool("notify_enabled")' in src
     assert "self._notify_master_armed(notify_before)" in src
 
 
@@ -430,7 +430,7 @@ def test_only_the_startup_check_hands_on_a_found_version():
 def test_the_startup_check_is_the_automatic_one():
     import inspect
 
-    src = inspect.getsource(WavesBridge.startupUpdateCheck)
+    src = inspect.getsource(BitWaveBridge.startupUpdateCheck)
     assert "self.checkAppUpdate(auto=True)" in src
 
 
@@ -454,7 +454,7 @@ def test_stop_leaves_the_drain_banner_quiet():
 def test_stop_forgets_the_run():
     import inspect
 
-    src = inspect.getsource(WavesBridge.stopAll)
+    src = inspect.getsource(BitWaveBridge.stopAll)
     assert "self._notify_forget_run()" in src
 
 
@@ -518,12 +518,12 @@ def test_replayed_holds_that_all_refuse_settle_the_run():
 def test_retry_paths_take_the_failure_back():
     import inspect
 
-    assert "self._notify_forget_retried([qid])" in inspect.getsource(WavesBridge.retryQueueItem)
-    assert "self._notify_forget_retried(restarted)" in inspect.getsource(WavesBridge._retry_all_with_status)
+    assert "self._notify_forget_retried([qid])" in inspect.getsource(BitWaveBridge.retryQueueItem)
+    assert "self._notify_forget_retried(restarted)" in inspect.getsource(BitWaveBridge._retry_all_with_status)
 
 
 def test_every_mode_counts_past_the_kept_names():
-    from waves.waves_ui.backend import _DL_NOTIFY_KEEP
+    from bitwave.bitwave_ui.backend import _DL_NOTIFY_KEEP
 
     s = _stub(prefs={"notify_downloads": "every"})
     for i in range(_DL_NOTIFY_KEEP + 300):
@@ -587,10 +587,10 @@ def test_a_job_ending_into_the_next_row_sends_nothing():
 def test_idleness_without_a_job_ending_is_noticed():
     import inspect
 
-    init = inspect.getsource(WavesBridge.__init__)
+    init = inspect.getsource(BitWaveBridge.__init__)
     assert "self.scanningChanged.connect(self._maybe_notify_idle)" in init
-    assert "self._maybe_notify_idle()" in inspect.getsource(WavesBridge.resumeQueue)
-    assert "self._maybe_notify_idle()" in inspect.getsource(WavesBridge.dismissDownloadFolderNudge)
+    assert "self._maybe_notify_idle()" in inspect.getsource(BitWaveBridge.resumeQueue)
+    assert "self._maybe_notify_idle()" in inspect.getsource(BitWaveBridge.dismissDownloadFolderNudge)
 
 
 def test_the_last_of_two_jobs_ending_together_writes_the_finished_line():

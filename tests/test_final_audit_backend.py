@@ -23,7 +23,7 @@ from types import SimpleNamespace
 
 from _dispatch_stub import arm_queue
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Sig:
@@ -35,7 +35,7 @@ class _Sig:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Stub:
@@ -178,7 +178,7 @@ class _JobStub:
         self._queue_index = {1: self._queue[0]}
         self._queue_lock = Lock()
         self.settings = SimpleNamespace(
-            data=SimpleNamespace(download_base_path="/tmp/waves-out", download_delay=False, downloads_concurrent_max=2)
+            data=SimpleNamespace(download_base_path="/tmp/bitwave-out", download_delay=False, downloads_concurrent_max=2)
         )
         self.dl = _Engine()
         self.dl_pool = _InlinePool()
@@ -254,15 +254,15 @@ def _drive(stub: _JobStub, *, merge_plan=None) -> _JobStub:
     """Run one job body against ``stub``, start to finish, on this thread."""
     from unittest.mock import patch
 
-    from waves.waves_ui import backend
-    from waves.waves_ui.backend import _JobSpec
+    from bitwave.bitwave_ui import backend
+    from bitwave.bitwave_ui.backend import _JobSpec
 
     media = SimpleNamespace(
         id="m1", name="Album", artist=SimpleNamespace(name="Artist"), artists=[], audio_quality=None, duration=200
     )
     spec = _JobSpec(media, "album", "Album", "{title}", True, "m1", merge_plan)
     with patch.object(backend, "_ProgressSignals", lambda *a, **k: object()):
-        WavesBridge._start_job(stub, 1, spec)
+        BitWaveBridge._start_job(stub, 1, spec)
     return stub
 
 
@@ -334,7 +334,7 @@ def _folder_death_stub(*, dead: bool = True):
     s._last_probe_remounted = False
     s._recovery_dialog_shown = False
     s._recovery_dialog_deadline = 0.0
-    s._WARMUP_DIALOG_DELAY_SEC = WavesBridge._WARMUP_DIALOG_DELAY_SEC
+    s._WARMUP_DIALOG_DELAY_SEC = BitWaveBridge._WARMUP_DIALOG_DELAY_SEC
     # The press settles the row where it stands, the way every other abort
     # reading in the job body does; the row itself stays for the Stopped
     # section, so this records the status rather than delivering it.
@@ -511,21 +511,21 @@ def test_a_clear_credits_only_the_rows_it_actually_removed():
 # that ended up in that folder, by any route, was deleted with the stale
 # copies. The app never deletes a file it did not write.
 # --------------------------------------------------------------------------- #
-def test_the_motion_cache_sweep_is_anchored_to_waves_own_names():
+def test_the_motion_cache_sweep_is_anchored_to_bitwave_own_names():
     """The sweep lives in a closure inside motionVideoUrl, staged 15 s after
     boot: what is pinned here is that it decides by the shared anchored names
     rather than by "everything that is not the current copy", which is what
     made it delete a bystander."""
     import inspect
 
-    from waves.waves_ui import backend as bk
+    from bitwave.bitwave_ui import backend as bk
 
-    source = inspect.getsource(bk.WavesBridge.motionVideoUrl)
+    source = inspect.getsource(bk.BitWaveBridge.motionVideoUrl)
     assert "_MOTION_CACHE_NAMES" in source, "the sweep decides by name shape again, not by what BitWave wrote"
 
 
-def test_the_motion_cache_names_match_only_what_waves_writes():
-    from waves.waves_ui import backend as bk
+def test_the_motion_cache_names_match_only_what_bitwave_writes():
+    from bitwave.bitwave_ui import backend as bk
 
     def swept(name: str) -> bool:
         return any(p.match(name) for p in bk._MOTION_CACHE_NAMES)
@@ -550,8 +550,8 @@ def test_the_motion_cache_names_match_only_what_waves_writes():
 # the exact blindness the mark was added to cure.
 # --------------------------------------------------------------------------- #
 def test_the_perf_line_carries_a_gauges_peak():
-    from waves.poolgauge import PoolGauge
-    from waves.waves_ui import diagnostics
+    from bitwave.poolgauge import PoolGauge
+    from bitwave.bitwave_ui import diagnostics
 
     gauge = PoolGauge(10)
     # Two work items at once, both finished: the pool reads idle now and the

@@ -29,7 +29,7 @@ import os
 
 from test_library_bridge import _album, _make
 
-from waves.waves_ui import bridge_library
+from bitwave.bitwave_ui import bridge_library
 
 
 class _BurstLib:

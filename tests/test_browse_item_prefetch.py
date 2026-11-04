@@ -17,8 +17,8 @@ import pytest
 from conftest import _InlinePool, _Signal
 from tidalapi.media import Track
 
-import waves.waves_ui.backend as backend
-from waves.waves_ui.backend import WavesBridge
+import bitwave.bitwave_ui.backend as backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # ----- fakes ----------------------------------------------------------------
 
@@ -64,7 +64,7 @@ def _fake_track(tid, album):
 
 
 def _bridge(obj, kind):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._logged_in = True
     b._browse_pages = {}
     b._browse_loading = set()
@@ -187,7 +187,7 @@ def _prefetch_bridge(payload=None, fail=False):
             raise RuntimeError("wire down")
         page = dict(payload or _payload(key))
         if record:
-            WavesBridge._record_page_members(b, page)
+            BitWaveBridge._record_page_members(b, page)
         return page
 
     b._build_browse_item = build
@@ -306,7 +306,7 @@ def test_open_within_the_minute_serves_the_cache_without_a_revalidate(monkeypatc
     for w in b.threadpool.workers[1:]:
         w.run()
     assert b.built == ["item:playlist:p1"], "fresh from the hover: no revalidate round trip"
-    now["t"] = 1000.0 + WavesBridge._ITEM_FRESH_S + 1
+    now["t"] = 1000.0 + BitWaveBridge._ITEM_FRESH_S + 1
     b.openBrowseItem("playlist", "p1")
     for w in b.threadpool.workers[2:]:
         w.run()
@@ -337,12 +337,12 @@ def test_a_page_restored_from_disk_revalidates_even_in_the_first_minute_of_uptim
 def test_art_summary_dedupes_and_caps_at_a_screenful():
     rows = [{"id": str(i), "art": f"https://img.test/{i % 5}/160x160.jpg"} for i in range(40)]
     payload = {"key": "k", "header": {"art": "H"}, "sections": [{"items": rows}, {"items": rows}]}
-    out = WavesBridge._page_art_summary(payload)
+    out = BitWaveBridge._page_art_summary(payload)
     assert out == {"key": "k", "art": "H", "rowArts": [f"https://img.test/{i}/160x160.jpg" for i in range(5)]}
     many = [{"id": str(i), "art": f"u{i}"} for i in range(40)]
     # A screenful of rows: the window shows ~12 and the row loader builds
     # a few more just below it.
-    assert len(WavesBridge._page_art_summary({"key": "k", "sections": [{"items": many}]})["rowArts"]) == 16
+    assert len(BitWaveBridge._page_art_summary({"key": "k", "sections": [{"items": many}]})["rowArts"]) == 16
 
 
 # ----- the page is handed over before the disk snapshot -----------------------
@@ -453,7 +453,7 @@ def test_a_hover_leaves_no_info_crumb_and_a_claimed_hover_leaves_an_open(caplog,
 
     monkeypatch.setattr(backend.devlog, "done", _REAL_DEVLOG_DONE, raising=True)
     b = _prefetch_bridge()
-    with caplog.at_level(logging.DEBUG, logger="waves"):
+    with caplog.at_level(logging.DEBUG, logger="bitwave"):
         b.prefetchBrowseItem("playlist", "p1")
         b.threadpool.workers[0].run()
     info = [r.message for r in caplog.records if r.levelno >= logging.INFO]
@@ -462,7 +462,7 @@ def test_a_hover_leaves_no_info_crumb_and_a_claimed_hover_leaves_an_open(caplog,
 
     caplog.clear()
     b = _prefetch_bridge()
-    with caplog.at_level(logging.DEBUG, logger="waves"):
+    with caplog.at_level(logging.DEBUG, logger="bitwave"):
         b.prefetchBrowseItem("playlist", "p1")
         b.openBrowseItem("playlist", "p1")
         b.threadpool.workers[0].run()

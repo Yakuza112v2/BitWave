@@ -80,7 +80,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -121,7 +121,7 @@ def _expected_rows(word: str) -> list[str]:
 def _run_in_subprocess(flag: str) -> tuple[int, str]:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-carved-percent-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-carved-percent-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), flag],
         env=env,

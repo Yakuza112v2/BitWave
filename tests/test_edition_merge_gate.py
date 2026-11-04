@@ -11,26 +11,26 @@ test_discography_video_source.py does.
 
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _AlbumStub:
-    downloadAlbum = WavesBridge.downloadAlbum
+    downloadAlbum = BitWaveBridge.downloadAlbum
 
     def __init__(self, prefs=None):
         self._objs = {"album": {"a1": SimpleNamespace(id="a1", name="Album", artist=SimpleNamespace(name="Band"))}}
         self._merge_plans: dict = {}
         self._merge_scanned: set = set()
         self.settings = SimpleNamespace(data=SimpleNamespace(format_album="{album_title}/{track_title}"))
-        self._default_waves_prefs = _bind(self, "_default_waves_prefs")
+        self._default_bitwave_prefs = _bind(self, "_default_bitwave_prefs")
         self._merge_pref_on = _bind(self, "_merge_pref_on")
-        self._waves_prefs = dict(self._default_waves_prefs())
+        self._bitwave_prefs = dict(self._default_bitwave_prefs())
         if prefs:
-            self._waves_prefs.update(prefs)
+            self._bitwave_prefs.update(prefs)
         self.scans: list = []
         self.downloads: list = []
 
@@ -47,7 +47,7 @@ class _AlbumStub:
 # ---- shipped defaults -------------------------------------------------------
 def test_best_of_both_is_on_by_default():
     stub = _AlbumStub()
-    assert stub._waves_prefs["edition_conflict"] == "merge"
+    assert stub._bitwave_prefs["edition_conflict"] == "merge"
     assert stub._merge_pref_on() is True
 
 

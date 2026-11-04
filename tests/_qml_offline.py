@@ -1,6 +1,6 @@
 """Keep offscreen Main.qml scenarios off the live TIDAL API.
 
-Every scenario that builds ``WavesBridge(tidal=None)`` gets a REAL
+Every scenario that builds ``BitWaveBridge(tidal=None)`` gets a REAL
 cached-token login fired from the bridge's ``__init__``: a network round
 trip whose completion flips ``sessionResolved`` and shows ``loginPanel``,
 a full-window scrim with a fill MouseArea. When that lands mid-scenario
@@ -20,9 +20,9 @@ from __future__ import annotations
 
 def patch_offline() -> None:
     """Make the bridge's cached-token login resolve instantly, offline."""
-    from waves.waves_ui.session import WavesTidal
+    from bitwave.bitwave_ui.session import BitWaveTidal
 
-    WavesTidal.login_token = lambda self: False  # type: ignore[method-assign]
+    BitWaveTidal.login_token = lambda self: False  # type: ignore[method-assign]
 
 
 # The session resolves logged-out (instantly, via patch_offline), so the

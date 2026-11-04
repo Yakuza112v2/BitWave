@@ -1,4 +1,4 @@
-"""Tests for the Releases bridge family (waves/waves_ui/bridge_releases.py).
+"""Tests for the Releases bridge family (bitwave/bitwave_ui/bridge_releases.py).
 
 The store is covered by test_follow_store.py; here the Qt layer over it: a
 step fetches one artist's newest releases with sibling ids and tells a rate
@@ -22,11 +22,11 @@ from types import SimpleNamespace
 import pytest
 from conftest import _InlinePool, _Signal
 
-from waves.follows import DL_QUEUED, DL_WAITING, FollowStore
-from waves.release_delta import collapse_atmos_twins
-from waves.waves_ui import bridge_releases as rel
-from waves.waves_ui import diagnostics
-from waves.waves_ui.backend import WavesBridge
+from bitwave.follows import DL_QUEUED, DL_WAITING, FollowStore
+from bitwave.release_delta import collapse_atmos_twins
+from bitwave.bitwave_ui import bridge_releases as rel
+from bitwave.bitwave_ui import diagnostics
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _FakeNotifier:
@@ -70,7 +70,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, _Stub)
+    return getattr(BitWaveBridge, name).__get__(stub, _Stub)
 
 
 for _m in (
@@ -192,7 +192,7 @@ for _m in (
     "_releases_auto_import_switched",
     "artistImportNoticeNow",
     "dismissArtistImportNotice",
-    "_waves_pref_bool",
+    "_bitwave_pref_bool",
     "_release_type",
     "_releases_check_videos",
     "_artist_recent_videos",
@@ -220,14 +220,14 @@ for _m in (
     "_releases_check_guests",
     "_artist_recent_guests",
 ):
-    if hasattr(WavesBridge, _m):
-        setattr(_Stub, _m, getattr(WavesBridge, _m))
+    if hasattr(BitWaveBridge, _m):
+        setattr(_Stub, _m, getattr(BitWaveBridge, _m))
 
 
 def _stub(tmp_path, *, prefs=None):
     s = _Stub()
     s._releases = FollowStore(str(tmp_path / "releases.sqlite3"))
-    s._waves_prefs = {
+    s._bitwave_prefs = {
         # Armed: the notify tests here are about an armed BitWave's banners.
         "notify_enabled": True,
         "notify_in_front": True,
@@ -251,7 +251,7 @@ def _stub(tmp_path, *, prefs=None):
     s._rel_notify_items = []
     s._notifier = _FakeNotifier()
     s._notify_pool = _InlinePool()
-    s._notify_waves_in_front = lambda: True
+    s._notify_bitwave_in_front = lambda: True
     s._rel_round_done = 0
     s._rel_deep_queue = collections.deque()
     s._rel_deep_turn = False
@@ -561,7 +561,7 @@ def test_notify_fires_once_per_minute_and_honors_the_pref(tmp_path):
     assert s._rel_notify_pending == 0 and s._rel_notify_items == []
     s._rel_notify_pending = 2
     s._rel_notify_items = [{"artist": "A", "title": "x"}]
-    s._waves_prefs["releases_notify"] = False
+    s._bitwave_prefs["releases_notify"] = False
     _bind(s, "_on_rel_notify")()
     assert len(s._notifier.sent) == 1
     # Switched off, the batch is dropped, not carried into the next banner.
@@ -583,11 +583,11 @@ def test_banner_wording():
 
 def test_notify_sends_on_the_shared_pool_and_logs_only_a_handover(tmp_path, caplog):
     s = _stub(tmp_path)
-    # On the logger itself: the diagnostics tests may stop "waves" propagating.
-    log = logging.getLogger("waves.notify")
+    # On the logger itself: the diagnostics tests may stop "bitwave" propagating.
+    log = logging.getLogger("bitwave.notify")
     log.addHandler(caplog.handler)
     try:
-        with caplog.at_level("INFO", logger="waves.notify"):
+        with caplog.at_level("INFO", logger="bitwave.notify"):
             _bind(s, "_releases_notify")("Neu von Lorde", "Virgin")
         assert s._notifier.sent == [("Neu von Lorde", "Virgin")]
         assert "notification handed to the OS" in caplog.text
@@ -595,7 +595,7 @@ def test_notify_sends_on_the_shared_pool_and_logs_only_a_handover(tmp_path, capl
         assert "Lorde" not in caplog.text and "Virgin" not in caplog.text
         caplog.clear()
         s._notifier = _FakeNotifier(ok=False)
-        with caplog.at_level("INFO", logger="waves.notify"):
+        with caplog.at_level("INFO", logger="bitwave.notify"):
             _bind(s, "_releases_notify")("t", "m")
         assert "notification handed to the OS" not in caplog.text
     finally:
@@ -774,7 +774,7 @@ def test_load_followed_carries_the_careers_only_for_the_ledger(tmp_path):
     _bind(s, "loadFollowed")()
     (row,) = s.followedLoaded.emits[-1]
     assert row["career"] == [] and row["total"] == 1
-    s._waves_prefs["releases_follow_view"] = "ledger"
+    s._bitwave_prefs["releases_follow_view"] = "ledger"
     _bind(s, "loadFollowed")()
     (row,) = s.followedLoaded.emits[-1]
     assert [e["id"] for e in row["career"]] == ["x"]
@@ -785,11 +785,11 @@ def test_load_followed_carries_every_release_only_for_the_shelves(tmp_path):
     s._releases.follow("A", "Artist", "")
     s._releases.record_check("A", [{"id": f"r{m}", "date": f"2026-{m:02d}-01", "title": f"R{m}"} for m in range(1, 10)])
     for view in ("roster", "ledger"):
-        s._waves_prefs["releases_follow_view"] = view
+        s._bitwave_prefs["releases_follow_view"] = view
         _bind(s, "loadFollowed")()
         (row,) = s.followedLoaded.emits[-1]
         assert [e["id"] for e in row["releases"]] == ["r9"] and row["total"] == 9, view
-    s._waves_prefs["releases_follow_view"] = "shelves"
+    s._bitwave_prefs["releases_follow_view"] = "shelves"
     _bind(s, "loadFollowed")()
     (row,) = s.followedLoaded.emits[-1]
     assert [e["id"] for e in row["releases"]] == [f"r{m}" for m in range(9, 0, -1)] and row["career"] == []
@@ -837,7 +837,7 @@ def test_a_followed_list_for_a_shape_no_longer_shown_is_dropped(tmp_path):
     held = []
     s.threadpool = type("_Held", (), {"start": lambda self, w: held.append(w)})()
     _bind(s, "loadFollowed")()  # the Ledger's load, still out...
-    s._waves_prefs["releases_follow_view"] = "shelves"
+    s._bitwave_prefs["releases_follow_view"] = "shelves"
     _bind(s, "loadFollowed")()  # ...when the Shelves are picked
     for w in reversed(held):  # the Shelves' load lands first
         w.fn()
@@ -914,9 +914,9 @@ def test_keep_from_is_the_first_of_the_month_n_months_back(tmp_path, monkeypatch
 
     monkeypatch.setattr(rel._dt, "date", _Today)
     assert _bind(s, "_releases_keep_from")() == "2025-10-01"
-    s._waves_prefs["releases_window_months"] = "6"
+    s._bitwave_prefs["releases_window_months"] = "6"
     assert _bind(s, "_releases_keep_from")() == "2026-04-01"
-    s._waves_prefs["releases_window_months"] = "junk"
+    s._bitwave_prefs["releases_window_months"] = "junk"
     assert _bind(s, "_releases_keep_from")() == "2025-10-01"
 
 
@@ -932,7 +932,7 @@ def test_the_window_setting_applies_at_once_both_ways(tmp_path, monkeypatch):
     _bind(s, "loadReleases")()
     assert [r["id"] for r in s.releasesLoaded.emits[-1][0]] == ["new"]
     # Widened: the older release is back at once, no re-check needed.
-    s._waves_prefs["releases_window_months"] = "120"
+    s._bitwave_prefs["releases_window_months"] = "120"
     _bind(s, "_releases_window_changed")()
     assert s.releasesChanged.emits == [()]
     _bind(s, "loadReleases")()
@@ -984,7 +984,7 @@ def test_auto_download_is_off_by_default_and_waits_for_the_day(tmp_path):
     )
     _bind(s, "_releases_auto_download")(fresh)
     assert s.queued == []
-    s._waves_prefs["releases_auto_download"] = True
+    s._bitwave_prefs["releases_auto_download"] = True
     _bind(s, "_releases_auto_download")(fresh)
     assert s.queued == ["now"]
     rows = {r["id"]: r for r in s._releases.feed()}
@@ -1049,7 +1049,7 @@ def test_a_waiting_featured_release_stays_back_once_featured_are_hidden(tmp_path
     fresh = s._releases.record_check("A", [{"id": "a", "date": "2026-01-01"}, *pair, own])
     _bind(s, "_releases_auto_download")(fresh)
     assert s.queued == []
-    s._waves_prefs["releases_featured"] = "hide"
+    s._bitwave_prefs["releases_featured"] = "hide"
     s._releases_today = lambda: "2099-01-01"
     _bind(s, "_releases_drain_auto_downloads")()
     assert s.queued == ["own"]
@@ -1064,12 +1064,12 @@ def test_a_waiting_atmos_twin_stays_back_when_its_kind_is_unticked(tmp_path):
     fresh = s._releases.record_check("A", [{"id": "a", "date": "2026-01-01"}, *_atmos_pair("2099-01-01")])
     _bind(s, "_releases_auto_download")(fresh)
     # Albums unticked while the pair waits: neither edition goes.
-    s._waves_prefs["releases_auto_kinds"] = "ep,single"
+    s._bitwave_prefs["releases_auto_kinds"] = "ep,single"
     s._releases_today = lambda: "2099-01-01"
     _bind(s, "_releases_drain_auto_downloads")()
     assert s.queued == []
     # A twin kept before the kind was stored (a bare day) still goes.
-    s._waves_prefs["releases_auto_kinds"] = "album"
+    s._bitwave_prefs["releases_auto_kinds"] = "album"
     s._releases.meta_set("atmos_waiting", '{"old": "2026-01-01"}')
     _bind(s, "_releases_drain_auto_downloads")()
     assert s.queued == ["old"]
@@ -1116,7 +1116,7 @@ def test_an_atmos_twin_listed_days_after_its_release_follows_it(tmp_path):
 def test_a_late_atmos_twin_stays_back_when_its_release_did_not_download(tmp_path):
     s = _atmos_stub(tmp_path, auto=False)
     _sweep_step(s, _editions("2026-01-02", twin_too=False))
-    s._waves_prefs["releases_auto_download"] = True
+    s._bitwave_prefs["releases_auto_download"] = True
     _sweep_step(s, _editions("2026-01-02"))
     assert s.queued == []
     # Download Dolby Atmos off: the stereo edition only, early or late.
@@ -1588,10 +1588,10 @@ def test_the_musicbrainz_check_takes_every_other_beat_and_records_what_tidal_lac
     s = _mb_stub(tmp_path)
     # The logger is hooked directly: the diagnostics stack may have cut
     # its propagation earlier in the suite.
-    log = logging.getLogger("waves.releases")
+    log = logging.getLogger("bitwave.releases")
     log.addHandler(caplog.handler)
     try:
-        with caplog.at_level("INFO", logger="waves.releases"):
+        with caplog.at_level("INFO", logger="bitwave.releases"):
             _beat(s)
     finally:
         log.removeHandler(caplog.handler)
@@ -1676,18 +1676,18 @@ def test_switching_musicbrainz_off_hides_the_marks_and_on_starts_checking(tmp_pa
     _beat(s)
     _bind(s, "loadFollowed")()
     assert [m["rgid"] for m in s.followedLoaded.emits[-1][0]["missing"]] == ["g3"]
-    s._waves_prefs["releases_musicbrainz"] = False
+    s._bitwave_prefs["releases_musicbrainz"] = False
     _bind(s, "_releases_musicbrainz_switched")(False)
     assert len(s.releasesChanged.emits) == 2
     _bind(s, "loadFollowed")()
     assert s.followedLoaded.emits[-1][0]["missing"] == []
     # The rows stay; the roster never carries marks.
     assert len(s._releases.mb_rows("A")) == 3
-    s._waves_prefs["releases_musicbrainz"] = True
+    s._bitwave_prefs["releases_musicbrainz"] = True
     s._rel_timer.starts = []
     _bind(s, "_releases_musicbrainz_switched")(True)
     assert s._rel_timer.starts == [0]
-    s._waves_prefs["releases_follow_view"] = "roster"
+    s._bitwave_prefs["releases_follow_view"] = "roster"
     _bind(s, "loadFollowed")()
     assert s.followedLoaded.emits[-1][0]["missing"] == []
 
@@ -1700,8 +1700,8 @@ def test_a_musicbrainz_check_from_a_previous_session_is_dropped(tmp_path):
 
 
 def test_release_type_trusts_tidal_then_track_count():
-    assert WavesBridge.__module__  # the helper is module-level in backend
-    from waves.waves_ui.backend import _release_type
+    assert BitWaveBridge.__module__  # the helper is module-level in backend
+    from bitwave.bitwave_ui.backend import _release_type
 
     assert _release_type(SimpleNamespace(type="EP", num_tracks=9)) == "ep"
     assert _release_type(SimpleNamespace(type="SINGLE")) == "single"
@@ -2101,7 +2101,7 @@ def test_switching_the_mirror_off_drops_its_queued_changes_but_not_hand_asks(tmp
     _bind(s, "followOnTidal")("H")
     _drain(s)  # one request goes out (the hand add)
     assert len(favs.calls) == 1
-    s._waves_prefs["follow_mirror_tidal"] = False
+    s._bitwave_prefs["follow_mirror_tidal"] = False
     _bind(s, "_releases_mirror_switched")(False)
     assert s._rel_tidal_out == {}
     s._rel_tidal_timer._active = False
@@ -2248,9 +2248,9 @@ def test_hidden_videos_are_never_read_nor_shown(tmp_path):
     s._releases.follow("A", "Artist", "")
     _step(s)
     assert calls == []
-    s._waves_prefs["releases_videos"] = "show"
+    s._bitwave_prefs["releases_videos"] = "show"
     s._releases.record_videos("A", [{"id": "7", "title": "Clip", "date": "2026-09-01"}])
-    s._waves_prefs["releases_videos"] = "hide"
+    s._bitwave_prefs["releases_videos"] = "hide"
     _bind(s, "loadReleases")(0)
     rows = s.releasesLoaded.emits[-1][0]
     assert all(r["kind"] != "video" for r in rows) and rows
@@ -2277,7 +2277,7 @@ def test_hidden_featured_releases_are_never_shown_announced_nor_downloaded(tmp_p
     s._releases.record_check("A", [{**r, "artist": "x"} for r in fresh])
     _bind(s, "loadReleases")(0)
     assert sorted(r["id"] for r in s.releasesLoaded.emits[-1][0]) == ["c", "n"]
-    s._waves_prefs["releases_featured"] = "show"
+    s._bitwave_prefs["releases_featured"] = "show"
     _bind(s, "_releases_featured_switched")(True)
     assert s.releasesChanged.emits[-1] == ()
     _bind(s, "loadReleases")(0)
@@ -2289,7 +2289,7 @@ def test_showing_videos_again_takes_the_next_read_in_silently(tmp_path):
     s._releases.follow("A", "Artist", "")
     s._releases.record_videos("A", [{"id": "1", "date": "2026-01-01"}])
     assert s._releases.record_videos("A", [{"id": "2", "date": "2026-10-01"}]) != []
-    s._waves_prefs["releases_videos"] = "show"
+    s._bitwave_prefs["releases_videos"] = "show"
     _bind(s, "_releases_videos_switched")(True)
     assert s._releases.record_videos("A", [{"id": "3", "date": "2026-10-02"}]) == []
     assert s.releasesChanged.emits
@@ -2425,7 +2425,7 @@ def test_auto_download_takes_only_the_ticked_kinds(tmp_path):
     _bind(s, "_releases_auto_download")(fresh)
     assert s.queued == ["lp", "sg"]
     # Singles unticked while one waits for its day: it is not fetched.
-    s._waves_prefs["releases_auto_kinds"] = "album"
+    s._bitwave_prefs["releases_auto_kinds"] = "album"
     s._releases_today = lambda: "2099-01-01"
     _bind(s, "_releases_drain_auto_downloads")()
     assert s.queued == ["lp", "sg"]
@@ -2436,9 +2436,9 @@ def test_the_default_kinds_leave_featured_out(tmp_path):
     s = _stub(tmp_path, prefs={"releases_auto_download": True})
     assert _bind(s, "_releases_auto_kinds")() == frozenset({"album", "ep", "single"})
     assert not _bind(s, "_releases_guest_on")()
-    s._waves_prefs["releases_auto_kinds"] = "featured"
+    s._bitwave_prefs["releases_auto_kinds"] = "featured"
     assert _bind(s, "_releases_guest_on")()
-    s._waves_prefs["releases_auto_download"] = False
+    s._bitwave_prefs["releases_auto_download"] = False
     assert not _bind(s, "_releases_guest_on")()
 
 
@@ -2474,7 +2474,7 @@ def test_featured_releases_are_read_only_when_ticked_and_download_the_follows_tr
     # Featured unticked: never read.
     assert _guest_step(s, _guest_artist([feat]))["guests"] == []
     assert s._releases.guest_due("A", int(time.time()))
-    s._waves_prefs["releases_auto_kinds"] = "album,featured"
+    s._bitwave_prefs["releases_auto_kinds"] = "album,featured"
     # The first read is the silent baseline.
     assert _guest_step(s, _guest_artist([feat, comp]))["guests"] == []
     # A day later: the new featured release brings the follow's tracks; a
@@ -2530,7 +2530,7 @@ def test_a_featured_release_dated_ahead_waits_and_a_failed_read_tries_again(tmp_
 
     # A read that fails after Featured was unticked does not wait again.
     def unticked_meanwhile(rid, aid):
-        s._waves_prefs["releases_auto_kinds"] = "album"
+        s._bitwave_prefs["releases_auto_kinds"] = "album"
         raise RuntimeError("dropped")
 
     s._guest_track_keys = unticked_meanwhile

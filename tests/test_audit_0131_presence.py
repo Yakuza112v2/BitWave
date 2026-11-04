@@ -27,9 +27,9 @@ import sys
 
 import pytest
 
-from waves import matching
-from waves.library_index import LibraryIndex, _primary_credit
-from waves.matching import decide_presence, presence_key
+from bitwave import matching
+from bitwave.library_index import LibraryIndex, _primary_credit
+from bitwave.matching import decide_presence, presence_key
 
 # ---- helpers ------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ def test_an_unknown_flag_changes_nothing_about_the_choice():
 
 # ---- #18: the pills weigh the flag the gates weigh -------------------------------
 
-bridge_library = pytest.importorskip("waves.waves_ui.bridge_library")
+bridge_library = pytest.importorskip("bitwave.bitwave_ui.bridge_library")
 LibraryMixin = bridge_library.LibraryMixin
 
 
@@ -198,11 +198,11 @@ def test_the_slots_keep_every_older_overload():
 def _dressing(s):
     """The worker-side dressing bound onto the scan stub, the way the real
     bridge runs it: the live slots it calls are the stub's own."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
-    s._CARD_DRESS_KINDS = WavesBridge._CARD_DRESS_KINDS
+    s._CARD_DRESS_KINDS = BitWaveBridge._CARD_DRESS_KINDS
     s.collectionOwnership = lambda _id: False
-    return lambda card: WavesBridge._dress_card(s, card), lambda cat, row: WavesBridge._dress_library_row(s, cat, row)
+    return lambda card: BitWaveBridge._dress_card(s, card), lambda cat, row: BitWaveBridge._dress_library_row(s, cat, row)
 
 
 def _album_card(explicit):
@@ -270,9 +270,9 @@ def test_a_dressed_track_row_weighs_the_tracks_own_flag(tmp_path):
 
 
 def _call_args(src, name):
-    """The top-level argument lists of every ``waves.<name>(...)`` call."""
+    """The top-level argument lists of every ``bitwave.<name>(...)`` call."""
     out = []
-    for m in re.finditer(r"waves\." + name + r"\(", src):
+    for m in re.finditer(r"bitwave\." + name + r"\(", src):
         depth, i, args, cur = 1, m.end(), [], ""
         while depth:
             ch = src[i]
@@ -291,7 +291,7 @@ def _call_args(src, name):
 def test_every_qml_presence_ask_passes_the_flag():
     """A QML asker left on the five-argument overload asks as if the flag
     were unknown and so vouches for the other edition the gate refuses."""
-    qml = pathlib.Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml" / "Main.qml"
+    qml = pathlib.Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
     src = qml.read_text(encoding="utf-8")
     for name in ("libraryAlbumPresence", "libraryTrackPresence"):
         calls = _call_args(src, name)

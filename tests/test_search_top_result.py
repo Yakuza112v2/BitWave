@@ -45,7 +45,7 @@ _EXIT_REGRESSED = 1
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _WIN_W, _WIN_H = 1100, 900
 
@@ -125,15 +125,15 @@ def _run_scenario(shot: str) -> int:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
         patch_offline()
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
     engine = QQmlApplicationEngine()
-    bridge = WavesBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    bridge = BitWaveBridge(tidal=None)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -217,14 +217,14 @@ def _run_scenario(shot: str) -> int:
     settle(50)
     if q("tracksModel.get(0).id") != "t1":
         failures.append("Popularity sort did not put the most popular track first")
-    if q('waves.wavesPref("search_sort")') != "popularity":
+    if q('bitwave.bitwavePref("search_sort")') != "popularity":
         failures.append("choosing Popularity did not persist search_sort")
     q("sortBox.currentIndex = 0")
     q("sortBox.activated(0)")
     settle(50)
     if q("tracksModel.get(0).id") != "t0":
         failures.append("returning to Relevance did not restore TIDAL's order")
-    if q('waves.wavesPref("search_sort")') != "relevance":
+    if q('bitwave.bitwavePref("search_sort")') != "relevance":
         failures.append("returning to Relevance did not persist search_sort")
 
     if shot:
@@ -260,7 +260,7 @@ def _run_scenario(shot: str) -> int:
 def test_specific_search_answers_at_the_top():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-searchtop-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-searchtop-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario", ""],
         env=env,

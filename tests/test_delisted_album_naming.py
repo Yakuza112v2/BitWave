@@ -19,8 +19,8 @@ from __future__ import annotations
 import pytest
 from tidalapi import Album, Artist, Track
 
-from waves.helper.path import format_path_media
-from waves.model.cfg import Settings
+from bitwave.helper.path import format_path_media
+from bitwave.model.cfg import Settings
 
 TRACK_TEMPLATE = Settings().format_track
 
@@ -156,7 +156,7 @@ def test_a_failed_token_reaches_the_breadcrumbs(caplog):
     track = _track(_summary_album())
     track.__class__ = Exploding
 
-    with caplog.at_level("WARNING", logger="waves.path"):
+    with caplog.at_level("WARNING", logger="bitwave.path"):
         format_path_media("{track_title}", track)
 
     assert any("track_title" in record.getMessage() for record in caplog.records)

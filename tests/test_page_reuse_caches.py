@@ -13,15 +13,15 @@ import json
 from threading import Lock
 from unittest.mock import MagicMock
 
-from waves.page_store import PageStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 # ----- playlists/mixes sweep cache ------------------------------------------
 
 
 def _sweep_bridge(monkeypatch, calls):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._media_lists_cache = None
     b._media_lists_lock = Lock()
     b._folder_tree = None
@@ -51,7 +51,7 @@ def test_media_lists_refresh_is_ttl_limited(monkeypatch):
     assert len(calls) == 1
     # Age the cache past the TTL: the next first-page load re-sweeps.
     ts, data, tree = b._media_lists_cache
-    b._media_lists_cache = (ts - WavesBridge._MEDIA_LISTS_TTL - 1, data, tree)
+    b._media_lists_cache = (ts - BitWaveBridge._MEDIA_LISTS_TTL - 1, data, tree)
     b._media_lists(refresh=True)
     assert len(calls) == 2
 
@@ -69,8 +69,8 @@ def test_library_page_playlists_pages_locally_from_one_sweep(monkeypatch):
     b._lib_sort = {}
     b._sort_local_library = lambda full, spec: full
     b._mix_dict = lambda m: {"id": m}
-    rows0, more0 = WavesBridge._library_page(b, "mixes", 0, 1)
-    rows1, more1 = WavesBridge._library_page(b, "mixes", 1, 1)
+    rows0, more0 = BitWaveBridge._library_page(b, "mixes", 0, 1)
+    rows1, more1 = BitWaveBridge._library_page(b, "mixes", 1, 1)
     assert rows0 == [{"id": "m1"}] and more0 is True
     assert rows1 == [{"id": "m2"}] and more1 is False
     assert len(calls) == 1  # the scroll page never re-swept the account
@@ -80,10 +80,10 @@ def test_library_page_playlists_pages_locally_from_one_sweep(monkeypatch):
 
 
 def test_remember_album_tracks_evicts_oldest_beyond_cap():
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._album_tracks_cache = {}
     b._evict_lock = Lock()
-    cap = WavesBridge._ALBUM_TRACKS_CACHE_MAX
+    cap = BitWaveBridge._ALBUM_TRACKS_CACHE_MAX
     for i in range(cap + 5):
         b._remember_album_tracks(str(i), [{"id": i}])
     assert len(b._album_tracks_cache) == cap
@@ -95,9 +95,9 @@ def test_remember_album_tracks_evicts_oldest_beyond_cap():
 
 
 def test_remember_search_evicts_oldest_beyond_cap():
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._search_cache = {}
-    cap = WavesBridge._SEARCH_CACHE_MAX
+    cap = BitWaveBridge._SEARCH_CACHE_MAX
     for i in range(cap + 3):
         b._remember_search(f"needle{i}", {"artists": []})
     assert len(b._search_cache) == cap
@@ -107,11 +107,11 @@ def test_remember_search_evicts_oldest_beyond_cap():
 def test_pop_cached_honors_ttl():
     import time
 
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._artist_pop_cache = {"a1": (time.monotonic(), 73)}
     assert b._pop_cached("a1") == 73
     assert b._pop_cached("nope") == -1
-    b._artist_pop_cache["a1"] = (time.monotonic() - WavesBridge._ARTIST_POP_TTL - 1, 73)
+    b._artist_pop_cache["a1"] = (time.monotonic() - BitWaveBridge._ARTIST_POP_TTL - 1, 73)
     assert b._pop_cached("a1") == -1  # expired entries read as absent
 
 
@@ -119,7 +119,7 @@ def test_pop_cached_honors_ttl():
 
 
 def _fav_bridge(ids_per_call):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._fav_ids = {}
     favorites = MagicMock()
     calls = []
@@ -143,7 +143,7 @@ def test_favorite_ids_cached_within_ttl_and_refetched_after():
     assert b._favorite_ids("albums") == {"x1"}  # served from cache
     assert len(calls) == 1
     ts, ids = b._fav_ids["albums"]
-    b._fav_ids["albums"] = (time.monotonic() - WavesBridge._FAV_IDS_TTL - 1, ids)
+    b._fav_ids["albums"] = (time.monotonic() - BitWaveBridge._FAV_IDS_TTL - 1, ids)
     assert b._favorite_ids("albums") == {"x1"}  # expired: refetched
     assert len(calls) == 2
 
@@ -151,8 +151,8 @@ def test_favorite_ids_cached_within_ttl_and_refetched_after():
 def test_favorite_ids_failed_refresh_serves_stale():
     import time
 
-    b = WavesBridge.__new__(WavesBridge)
-    b._fav_ids = {"albums": (time.monotonic() - WavesBridge._FAV_IDS_TTL - 1, {"old"})}
+    b = BitWaveBridge.__new__(BitWaveBridge)
+    b._fav_ids = {"albums": (time.monotonic() - BitWaveBridge._FAV_IDS_TTL - 1, {"old"})}
     b.tidal = MagicMock()
     b.tidal.session.user.favorites.albums.side_effect = RuntimeError("blip")
     assert b._favorite_ids("albums") == {"old"}
@@ -162,10 +162,10 @@ def test_favorite_ids_failed_refresh_serves_stale():
 
 
 def test_remember_preview_clip_evicts_and_deletes(tmp_path):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._preview_clips = {}
     b._preview_peaks = {}
-    cap = WavesBridge._PREVIEW_CLIPS_MAX
+    cap = BitWaveBridge._PREVIEW_CLIPS_MAX
     paths = []
     for i in range(cap + 2):
         p = tmp_path / f"clip{i}.m4a"
@@ -181,7 +181,7 @@ def test_remember_preview_clip_evicts_and_deletes(tmp_path):
 
 
 def _cache_bridge(tmp_path):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._logged_in = True
     b._lib_cache = {}
     b._lib_sort = {}

@@ -18,24 +18,24 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
-    """Bare object the real applySettings and setWavesPref get bound onto."""
+    """Bare object the real applySettings and setBitWavePref get bound onto."""
 
-    _waves_pref_bool = WavesBridge._waves_pref_bool
+    _bitwave_pref_bool = BitWaveBridge._bitwave_pref_bool
     # No notify_enabled in these prefs, so the armed check is a no-op.
-    _notify_master_armed = WavesBridge._notify_master_armed
-    setWavesPref = WavesBridge.setWavesPref
+    _notify_master_armed = BitWaveBridge._notify_master_armed
+    setBitWavePref = BitWaveBridge.setBitWavePref
 
     def _library_root(self) -> str:
         # The real resolution: the master switch first, then the chosen source.
-        if not self._waves_pref_bool("library_enabled"):
+        if not self._bitwave_pref_bool("library_enabled"):
             return ""
-        if self._waves_prefs.get("library_source") == "download":
+        if self._bitwave_prefs.get("library_source") == "download":
             return str(self.settings.data.download_base_path or "")
-        return str(self._waves_prefs.get("library_folder") or "")
+        return str(self._bitwave_prefs.get("library_folder") or "")
 
     def _rebuild_library_index(self) -> None:
         self.rescans.append(self._library_root())
@@ -52,12 +52,12 @@ def _stub(*, enabled=False, source="separate", folder="", download_base="/dl"):
     s = _Stub()
     s.rescans = []
     s.drops = []
-    s._waves_prefs = {
+    s._bitwave_prefs = {
         "library_enabled": enabled,
         "library_source": source,
         "library_folder": folder,
     }
-    s._save_waves_prefs = lambda: None  # these tests are about triggers, not persistence
+    s._save_bitwave_prefs = lambda: None  # these tests are about triggers, not persistence
     s.settings = SimpleNamespace(
         data=SimpleNamespace(
             download_base_path=download_base,
@@ -94,7 +94,7 @@ def _stub(*, enabled=False, source="separate", folder="", download_base="/dl"):
 
 
 def _apply(stub, values):
-    WavesBridge.applySettings.__get__(stub, type(stub))(values)
+    BitWaveBridge.applySettings.__get__(stub, type(stub))(values)
 
 
 def test_turning_the_library_on_scans_once():

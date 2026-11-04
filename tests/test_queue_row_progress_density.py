@@ -35,7 +35,7 @@ from pathlib import Path
 
 from test_progress_matrix_stable_width import _EXIT_OK, _EXIT_REGRESSED, _boot
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _WALK = """
  function walk(it, pred){
@@ -89,7 +89,7 @@ def _run_here(flag: str = "--run-queue-row-scenario") -> tuple[int, str]:
 
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-queue-row-density-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-queue-row-density-test-")
     env["HOME"] = env["XDG_CONFIG_HOME"]
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), flag],

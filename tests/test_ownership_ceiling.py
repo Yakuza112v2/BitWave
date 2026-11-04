@@ -28,8 +28,8 @@ from types import SimpleNamespace
 import pytest
 from tidalapi.media import Track
 
-from waves.ownership import OwnershipStore, quality_rank
-from waves.waves_ui.backend import _DEGRADED_RETRY_MAX, _advertised_ceiling, _copy_is_current, _TrackedDownload
+from bitwave.ownership import OwnershipStore, quality_rank
+from bitwave.bitwave_ui.backend import _DEGRADED_RETRY_MAX, _advertised_ceiling, _copy_is_current, _TrackedDownload
 
 
 # --------------------------------------------------------------------------- #
@@ -306,7 +306,7 @@ def _capture_dl(monkeypatch, *, target_rank, stream_quality="LOSSLESS"):
     stream, so the stamping runs without a session or network."""
     from threading import Lock
 
-    from waves import download as download_mod
+    from bitwave import download as download_mod
 
     dl = _TrackedDownload.__new__(_TrackedDownload)
     dl._pinned_quality = None

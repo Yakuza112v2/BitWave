@@ -11,7 +11,7 @@ nothing streamed: the header chart sat at 0 Mb/s while the row said
 
 THE FIX
 -------
-The slot counts the STREAM only (waves/download_slots.py). At stream end a
+The slot counts the STREAM only (bitwave/download_slots.py). At stream end a
 track moves to a finishing seat if one is free and gives its slot back, so
 the next track starts streaming while it finishes; the fan-out runs slots
 plus seats worth of workers so there is a thread to take that slot. With zero
@@ -30,11 +30,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 from tidalapi import Track
 
-from waves import download as engine
-from waves import download_slots
-from waves.download import Download
-from waves.download_slots import StreamSlots
-from waves.progress import Progress
+from bitwave import download as engine
+from bitwave import download_slots
+from bitwave.download import Download
+from bitwave.download_slots import StreamSlots
+from bitwave.progress import Progress
 
 
 @pytest.fixture(autouse=True)

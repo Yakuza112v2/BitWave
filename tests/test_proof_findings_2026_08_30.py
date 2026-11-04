@@ -24,11 +24,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves import download as download_mod
-from waves.download import _os_error_text
-from waves.ownership import OwnershipStore
-from waves.waves_ui import diagnostics
-from waves.waves_ui.backend import WavesBridge
+from bitwave import download as download_mod
+from bitwave.download import _os_error_text
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui import diagnostics
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -51,8 +51,8 @@ class _InlinePool:
 class _SearchStub:
     """The real search slot on the attributes it reads, nothing more."""
 
-    search = WavesBridge.search
-    _search_total = WavesBridge._search_total
+    search = BitWaveBridge.search
+    _search_total = BitWaveBridge._search_total
     _SEARCH_TTL = 60.0
 
     def __init__(self):
@@ -83,7 +83,7 @@ def test_a_superseded_search_worker_cannot_clear_busy_itself(monkeypatch):
     worker whose generation was bumped out from under it leaves busy exactly
     as it found it: whoever bumps the generation owns clearing the flag.
     """
-    from waves.waves_ui import backend as backend_mod
+    from bitwave.bitwave_ui import backend as backend_mod
 
     stub = _SearchStub()
 
@@ -101,7 +101,7 @@ def test_a_superseded_search_worker_cannot_clear_busy_itself(monkeypatch):
 def _logout_stub(tmp_path):
     """A stub carrying every attribute logout touches, and nothing else."""
     stub = SimpleNamespace()
-    stub.logout = WavesBridge.logout.__get__(stub, type(stub))
+    stub.logout = BitWaveBridge.logout.__get__(stub, type(stub))
     stub.busy: list[bool] = []
     stub.statuses: list[str] = []
     stub.stopped = []
@@ -172,7 +172,7 @@ def test_signing_out_clears_the_spinner_it_orphans(tmp_path):
 # N-03: a member that failed and then landed is not a failure.
 # --------------------------------------------------------------------------- #
 class _FolderBumpStub:
-    _bump_folder_group = WavesBridge._bump_folder_group
+    _bump_folder_group = BitWaveBridge._bump_folder_group
 
     def __init__(self, group: dict):
         self._folder_groups = {"fold1": group}
@@ -184,7 +184,7 @@ class _FolderBumpStub:
 
 
 class _ArtistBumpStub:
-    _bump_artist_group = WavesBridge._bump_artist_group
+    _bump_artist_group = BitWaveBridge._bump_artist_group
 
     def __init__(self, group: dict):
         self._artist_groups = {"art1": group}
@@ -242,8 +242,8 @@ def test_a_member_that_really_failed_still_ends_red():
 # N-14: the F-10 release was half a release.
 # --------------------------------------------------------------------------- #
 class _RemoveStub:
-    _remove_rows_where = WavesBridge._remove_rows_where
-    _reindex_queue = WavesBridge._reindex_queue
+    _remove_rows_where = BitWaveBridge._remove_rows_where
+    _reindex_queue = BitWaveBridge._reindex_queue
 
     def __init__(self, rows):
         self._queue = list(rows)
@@ -298,7 +298,7 @@ def test_a_retry_keeps_both_marks():
 # N-14: the F-13 stale refusal left its twin stash behind.
 # --------------------------------------------------------------------------- #
 class _EnqueueStub:
-    _enqueue_albums = WavesBridge._enqueue_albums
+    _enqueue_albums = BitWaveBridge._enqueue_albums
 
     def __init__(self):
         self._scan_gen = 1
@@ -354,7 +354,7 @@ def test_the_first_run_write_backs_survive_an_unwritable_config(method):
     unwritable config folder inside the constructor is a launch with no window.
     These two run from the same constructor and did not."""
     source = inspect.getsource(
-        WavesBridge.__init__ if method == "_migrate_video_template" else getattr(WavesBridge, method)
+        BitWaveBridge.__init__ if method == "_migrate_video_template" else getattr(BitWaveBridge, method)
     )
     # The save the method performs must be inside a try that names OSError.
     assert "self.settings.save()" in source
@@ -366,7 +366,7 @@ def test_a_broken_ownership_file_does_not_take_the_launch_with_it(tmp_path, monk
     gone read-only, a corrupt file, or a migration losing a race it cannot
     resolve was a traceback and no window; an in-memory store forgets what has
     been downloaded until the next launch, and that is all."""
-    source = inspect.getsource(WavesBridge.__init__)
+    source = inspect.getsource(BitWaveBridge.__init__)
     marker = "self._ownership = OwnershipStore(_own_file)"
     assert marker in source, "the guarded construction is gone"
     head = source.split(marker)[0]
@@ -516,7 +516,7 @@ def test_the_unique_suffix_budget_measures_the_path_the_way_the_platform_does(mo
     CJK or emoji suffix was charged three or four units against a cap that
     charges one or two, so a name near the path cap gave up stem it did not
     have to."""
-    from waves.helper import path as path_mod
+    from bitwave.helper import path as path_mod
 
     # A suffix whose two measures differ: three bytes in UTF-8, one UTF-16
     # unit. The path budget must charge the platform's number.
@@ -535,7 +535,7 @@ def test_a_windows_stem_keeps_every_character_the_path_cap_allows(monkeypatch):
     was entitled to keep. The result always fitted, which is why nothing ever
     failed; it was just needlessly short.
     """
-    from waves.helper import path as path_mod
+    from bitwave.helper import path as path_mod
 
     monkeypatch.setattr(path_mod.sys, "platform", "win32")
     monkeypatch.setattr(path_mod, "PATH_LENGTH_MAX", 120)
@@ -555,7 +555,7 @@ def test_a_stem_is_trimmed_to_fit_both_caps(monkeypatch):
     """Whatever the units, the result must satisfy the filename cap in bytes
     AND the path cap in the platform's own measure: that is what the old
     min() was reaching for and what the two-budget form has to keep."""
-    from waves.helper import path as path_mod
+    from bitwave.helper import path as path_mod
 
     monkeypatch.setattr(path_mod, "PATH_LENGTH_MAX", 120)
     parent = pathlib.Path("/" + "d" * 90)
@@ -569,7 +569,7 @@ def test_a_stem_is_trimmed_to_fit_both_caps(monkeypatch):
 
 
 def test_an_ordinary_name_is_untouched():
-    from waves.helper import path as path_mod
+    from bitwave.helper import path as path_mod
 
     got = path_mod._path_with_unique_suffix(pathlib.Path("/music/Artist/Album/Song.flac"), "_01")
 
@@ -583,7 +583,7 @@ def test_the_restart_message_names_a_kept_backup():
     """_apply_macos keeps the entire old bundle whenever it held anything
     foreign, and the only notice was a transient status line this very message
     then overwrote."""
-    source = inspect.getsource(WavesBridge.installAppUpdate)
+    source = inspect.getsource(BitWaveBridge.installAppUpdate)
 
     assert 'result.get("kept_backup"' in source, "the install result's notice is dropped on the floor"
     assert "Restart to finish." in source

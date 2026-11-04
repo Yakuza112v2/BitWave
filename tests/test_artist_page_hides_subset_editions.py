@@ -12,8 +12,8 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Album:
@@ -48,15 +48,15 @@ class _Album:
 
 
 class _Stub:
-    _artist_page_collapses_editions = WavesBridge._artist_page_collapses_editions
-    _hide_subset_editions = WavesBridge._hide_subset_editions
-    _merge_pref_on = WavesBridge._merge_pref_on
-    _waves_pref_bool = WavesBridge._waves_pref_bool
-    _remember_capped = WavesBridge._remember_capped
-    _EDITION_TRACKS_CACHE_MAX = WavesBridge._EDITION_TRACKS_CACHE_MAX
+    _artist_page_collapses_editions = BitWaveBridge._artist_page_collapses_editions
+    _hide_subset_editions = BitWaveBridge._hide_subset_editions
+    _merge_pref_on = BitWaveBridge._merge_pref_on
+    _bitwave_pref_bool = BitWaveBridge._bitwave_pref_bool
+    _remember_capped = BitWaveBridge._remember_capped
+    _EDITION_TRACKS_CACHE_MAX = BitWaveBridge._EDITION_TRACKS_CACHE_MAX
 
     def __init__(self, **prefs):
-        self._waves_prefs = {"collapse_editions": True, "edition_conflict": "merge", **prefs}
+        self._bitwave_prefs = {"collapse_editions": True, "edition_conflict": "merge", **prefs}
         self._edition_tracks_cache = {}
         self._evict_lock = Lock()
 
@@ -163,9 +163,9 @@ class _Sig:
 class _PageStub:
     """Enough of the bridge to drive loadArtist through the cache gate."""
 
-    loadArtist = WavesBridge.loadArtist
-    _start_artist_build = WavesBridge._start_artist_build
-    _artist_art_summary = staticmethod(WavesBridge._artist_art_summary)
+    loadArtist = BitWaveBridge.loadArtist
+    _start_artist_build = BitWaveBridge._start_artist_build
+    _artist_art_summary = staticmethod(BitWaveBridge._artist_art_summary)
 
     def __init__(self, collapse, artist):
         self.threadpool = _Pool()

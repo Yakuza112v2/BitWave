@@ -32,7 +32,7 @@ def test_the_offscreen_qt_platform_can_start():
         pytest.skip("PySide6 not installed (the gui extra): the QML gates are not expected to run here")
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-qt-canary-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-qt-canary-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-probe"],
         env=env,

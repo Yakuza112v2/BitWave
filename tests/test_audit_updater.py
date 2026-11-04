@@ -21,8 +21,8 @@ import tarfile
 
 import pytest
 
-from waves.waves_ui import updater as u
-from waves.waves_ui.updater import AppUpdater, UpdaterError
+from bitwave.bitwave_ui import updater as u
+from bitwave.bitwave_ui.updater import AppUpdater, UpdaterError
 
 
 # ---- helpers ----------------------------------------------------------------

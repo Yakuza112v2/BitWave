@@ -20,8 +20,8 @@ import os
 
 from test_library_bridge import _album, _make
 
-import waves.matching as matching
-from waves.waves_ui import bridge_library
+import bitwave.matching as matching
+from bitwave.bitwave_ui import bridge_library
 
 
 def _bridge(tmp_path):

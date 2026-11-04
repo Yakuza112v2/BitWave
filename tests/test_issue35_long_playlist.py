@@ -31,14 +31,14 @@ from requests.adapters import HTTPAdapter
 from tidalapi import Track
 from tidalapi.exceptions import ObjectNotFound
 
-from waves.config import _API_RETRY_TOTAL, ApiCallStopped, api_waits_wake_for, harden_api_session
-from waves.constants import REQUESTS_TIMEOUT_SEC
-from waves.download import Download
-from waves.helper.exceptions import DownloadIncomplete
-from waves.helper.tidal import get_album_artists
-from waves.progress import Progress
-from waves.waves_ui import backend
-from waves.waves_ui.backend import _collection_incomplete_reason, _TrackedDownload
+from bitwave.config import _API_RETRY_TOTAL, ApiCallStopped, api_waits_wake_for, harden_api_session
+from bitwave.constants import REQUESTS_TIMEOUT_SEC
+from bitwave.download import Download
+from bitwave.helper.exceptions import DownloadIncomplete
+from bitwave.helper.tidal import get_album_artists
+from bitwave.progress import Progress
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import _collection_incomplete_reason, _TrackedDownload
 
 # --- the preparation gate: delisted is a refusal, not a failure --------------
 # Issue #25 settled this rule for the stream fetch. The preparation gate runs
@@ -79,8 +79,8 @@ def _track(track_id: str = "123") -> MagicMock:
 def _stub_name_builders():
     with (
         patch.object(backend, "name_builder_title", return_value="Title"),
-        patch("waves.download.name_builder_item", return_value="Artist - Title"),
-        patch("waves.download.name_builder_title", return_value="Title"),
+        patch("bitwave.download.name_builder_item", return_value="Artist - Title"),
+        patch("bitwave.download.name_builder_title", return_value="Title"),
     ):
         yield
 
@@ -244,9 +244,9 @@ class _QueueCarcass:
     """Just what _enqueue and _set_queue_status touch, with the real methods
     bound on: the row dict they build is the thing under test."""
 
-    _enqueue = backend.WavesBridge._enqueue
-    _queue_item = backend.WavesBridge._queue_item
-    _set_queue_status = backend.WavesBridge._set_queue_status
+    _enqueue = backend.BitWaveBridge._enqueue
+    _queue_item = backend.BitWaveBridge._queue_item
+    _set_queue_status = backend.BitWaveBridge._set_queue_status
 
     def __init__(self) -> None:
         self._queue_seq = 0
@@ -567,7 +567,7 @@ def test_a_retry_wait_off_a_download_thread_is_the_plain_wait_it_always_was():
     retry = _api_retry(_hardened_session())
     api_waits_wake_for(None)
     slept: list[float] = []
-    with patch("waves.config.time.sleep", slept.append):
+    with patch("bitwave.config.time.sleep", slept.append):
         retry.sleep(SimpleNamespace(headers={"Retry-After": "7"}))
     assert slept == [7]
 
@@ -602,8 +602,8 @@ def test_a_guess_made_while_the_setting_was_inert_does_not_suddenly_take_effect(
     asked a different question then ("albums to process"), so a value on disk
     is a guess about something else. An old 60 would quietly add half an hour
     to a long playlist."""
-    from waves.config import _migrate_settings
-    from waves.model.cfg import Settings as ModelSettings
+    from bitwave.config import _migrate_settings
+    from bitwave.model.cfg import Settings as ModelSettings
 
     stale = ModelSettings()
     stale.api_rate_limit_batch_size = 3
@@ -629,8 +629,8 @@ def test_a_tuned_pace_survives_the_migration_running_a_second_time():
     downgrade and back strips the marker and runs this again. It used to reset
     both fields outright, so the pace the user had tuned in between was gone
     with no notice at all."""
-    from waves.config import _migrate_settings
-    from waves.model.cfg import Settings as ModelSettings
+    from bitwave.config import _migrate_settings
+    from bitwave.model.cfg import Settings as ModelSettings
 
     tuned = ModelSettings()
     tuned.api_rate_limit_batch_size = 50

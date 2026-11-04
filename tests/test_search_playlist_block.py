@@ -18,7 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_FAIL = 1
@@ -54,10 +54,10 @@ _ROWS = [
 def test_playlist_rows_expand_and_title_opens_the_page():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    # Sandboxed: this scenario builds a REAL WavesBridge, and a bridge that
+    # Sandboxed: this scenario builds a REAL BitWaveBridge, and a bridge that
     # finds the packaged app's config dir adopts its settings, writes its
     # log, and starts a real scan of the user's music library.
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-playlist-block-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-playlist-block-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -89,8 +89,8 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -102,7 +102,7 @@ def _run_scenario() -> int:
     from tests._qml_offline import PARK_LOGIN_QML, patch_offline
 
     patch_offline()
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
 
     # No live TIDAL API from a unit test. tidal=None still builds a real,
     # unauthenticated session, and the expand's refetch fallback (pl1 is
@@ -118,7 +118,7 @@ def _run_scenario() -> int:
 
     bridge.tidal.session = _NoNetSession()
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

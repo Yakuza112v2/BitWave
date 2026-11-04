@@ -22,9 +22,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 class _Stub:
@@ -32,7 +32,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Sig:
@@ -45,15 +45,15 @@ class _Sig:
 
 def _optin_stub():
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub._saves = 0
 
     def _save():
         stub._saves += 1
 
-    stub._save_waves_prefs = _save
+    stub._save_bitwave_prefs = _save
     stub.settingsPersistedExternally = _Sig()
     stub._startup_checks = 0
 
@@ -66,9 +66,9 @@ def _optin_stub():
 
 def test_accept_enables_persists_refreshes_and_checks():
     stub = _optin_stub()
-    assert stub._waves_prefs["auto_update"] is False, "the prompt exists because this defaults off"
+    assert stub._bitwave_prefs["auto_update"] is False, "the prompt exists because this defaults off"
     _bind(stub, "resolveUpdateOptIn")(True)
-    assert stub._waves_prefs["auto_update"] is True
+    assert stub._bitwave_prefs["auto_update"] is True
     assert stub._saves == 1, "the choice must survive a restart"
     assert stub.settingsPersistedExternally.fired == 1, "the Settings page must not show a stale toggle"
     assert stub._startup_checks == 1, "an accepted prompt checks now, not tomorrow"
@@ -78,19 +78,19 @@ def test_accept_clears_a_stale_throttle_stamp():
     """A user who once enabled then disabled auto-update in Settings still
     carries update_last_check; the accept must clear it so the immediate check
     the button promises is not silently throttled away. Reset to 0, never
-    popped: the key doubles as setWavesPref's whitelist entry, and a dormant
+    popped: the key doubles as setBitWavePref's whitelist entry, and a dormant
     updater's early return in startupUpdateCheck would leave it missing."""
     stub = _optin_stub()
-    stub._waves_prefs["update_last_check"] = 4102444800
+    stub._bitwave_prefs["update_last_check"] = 4102444800
     _bind(stub, "resolveUpdateOptIn")(True)
-    assert stub._waves_prefs["update_last_check"] == 0
+    assert stub._bitwave_prefs["update_last_check"] == 0
     assert stub._startup_checks == 1
 
 
 def test_decline_changes_nothing():
     stub = _optin_stub()
     _bind(stub, "resolveUpdateOptIn")(False)
-    assert stub._waves_prefs["auto_update"] is False
+    assert stub._bitwave_prefs["auto_update"] is False
     assert stub._saves == 0
     assert stub.settingsPersistedExternally.fired == 0
     assert stub._startup_checks == 0, "declining must not fire any outbound request"
@@ -119,7 +119,7 @@ def test_gate_keeps_its_one_time_non_naggy_shape():
     # Both buttons answer for good through the same path.
     assert src.count("updateOptInGate.answer(") == 2
     # The persisted flags live in QSettings (the "setup" block), NOT in
-    # waves.json: the prefs file is written wholesale and a new key there
+    # bitwave.json: the prefs file is written wholesale and a new key there
     # would be pinned into every existing user's file by unrelated saves.
     assert "property bool updatePromptAnswered: false" in src
     assert "property int updatePromptDismissals: 0" in src
@@ -152,7 +152,7 @@ def test_accept_passes_the_real_startup_throttle():
 
     stub.checkAppUpdate = _check
     before = int(time.time())
-    stub._waves_prefs["update_last_check"] = before - 300
+    stub._bitwave_prefs["update_last_check"] = before - 300
     _bind(stub, "resolveUpdateOptIn")(True)
     assert stub._real_checks == 1, "the throttle swallowed the promised immediate check"
-    assert int(stub._waves_prefs["update_last_check"]) >= before, "the check must re-stamp the throttle"
+    assert int(stub._bitwave_prefs["update_last_check"]) >= before, "the check must re-stamp the throttle"

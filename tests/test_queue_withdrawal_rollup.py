@@ -33,8 +33,8 @@ from unittest.mock import patch
 import pytest
 from _dispatch_stub import arm_dispatch, arm_queue
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Sig:
@@ -46,7 +46,7 @@ class _Sig:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Stub:
@@ -573,7 +573,7 @@ def _body_stub(fail=False):
     s._queue_lock = Lock()
     s.settings = SimpleNamespace(
         data=SimpleNamespace(
-            download_base_path="/tmp/waves-out",
+            download_base_path="/tmp/bitwave-out",
             download_delay=False,
             downloads_concurrent_max=2,
             download_dolby_atmos=False,
@@ -715,8 +715,8 @@ def test_a_settled_row_dismissed_from_the_drawer_releases_it_too():
 
 
 class _StartedStub:
-    _bump_artist_group = WavesBridge._bump_artist_group
-    _bump_folder_group = WavesBridge._bump_folder_group
+    _bump_artist_group = BitWaveBridge._bump_artist_group
+    _bump_folder_group = BitWaveBridge._bump_folder_group
 
     def __init__(self, keys=("m1", "m2")):
         grp = {"keys": set(keys), "done": set(), "failed": set(), "prog": {}}

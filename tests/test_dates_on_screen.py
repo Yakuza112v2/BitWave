@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 _DATE_TEXT = re.compile(r"\btext:\s*([^\n]*)")
 _DATE_WORD = re.compile(r"\b(date|vcDate|listed|day)\b")
 _FORMATTERS = ("dateText(", "releasesDateLabel(", "relEntryDate(")

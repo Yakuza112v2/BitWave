@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from test_art_hover_tilt_pref import _bind, _prefs_stub, _schema_stub
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _setter_stub():
     stub = _prefs_stub()
-    stub._save_waves_prefs = lambda: None
+    stub._save_bitwave_prefs = lambda: None
     stub._factory_reset = False
     stub._releases_forget_waiting = lambda: None
     switched: list = []
@@ -31,11 +31,11 @@ def _setter_stub():
 
 
 def test_ships_with_the_artists_own_kinds_and_featured_off():
-    assert _prefs_stub()._waves_prefs["releases_auto_kinds"] == "album,ep,single"
+    assert _prefs_stub()._bitwave_prefs["releases_auto_kinds"] == "album,ep,single"
 
 
 def test_offered_under_the_switch_with_four_choices():
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     releases = next(s for s in schema if s["id"] == "releases")
     field = next((f for f in releases["fields"] if f["key"] == "releases_auto_kinds"), None)
     assert field is not None, "the pick must be reachable from Settings > Releases"
@@ -49,9 +49,9 @@ def test_offered_under_the_switch_with_four_choices():
 
 def test_a_pick_is_stored_in_order_and_featured_switching_is_told_once():
     stub, switched = _setter_stub()
-    set_pref = _bind(stub, "setWavesPref")
+    set_pref = _bind(stub, "setBitWavePref")
     set_pref("releases_auto_kinds", "featured,bogus,album")
-    assert stub._waves_prefs["releases_auto_kinds"] == "album,featured"
+    assert stub._bitwave_prefs["releases_auto_kinds"] == "album,featured"
     # The auto-download switch is still off: featured is not running yet.
     assert switched == []
     set_pref("releases_auto_download", True)

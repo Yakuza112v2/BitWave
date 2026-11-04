@@ -1,4 +1,4 @@
-"""waves.flac_verify: the FLAC signature check and its one write.
+"""bitwave.flac_verify: the FLAC signature check and its one write.
 
 The three guarantees the module makes are pinned here byte for byte: a scan
 never writes; a fix writes exactly the 34 STREAMINFO bytes of a file whose
@@ -20,7 +20,7 @@ from dataclasses import replace
 
 import pytest
 
-from waves import flac_verify as fv
+from bitwave import flac_verify as fv
 
 FFMPEG = shutil.which("ffmpeg")
 needs_ffmpeg = pytest.mark.skipif(FFMPEG is None, reason="needs ffmpeg")

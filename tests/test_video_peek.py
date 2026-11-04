@@ -9,7 +9,7 @@ unexpected. These tests drive it with stubbed playlists, no network.
 
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 def _master(heights):
@@ -32,7 +32,7 @@ class _Stub:
 
 
 def _pick(master):
-    return WavesBridge._pick_peek_stream(_Stub(master), "https://cdn.example/master.m3u8")
+    return BitWaveBridge._pick_peek_stream(_Stub(master), "https://cdn.example/master.m3u8")
 
 
 def test_picks_smallest_variant():
@@ -61,4 +61,4 @@ def test_load_failure_falls_back_to_master():
     stub = _Stub(None)
     stub._load_playlist = lambda url: (_ for _ in ()).throw(RuntimeError("net down"))
     url = "https://cdn.example/master.m3u8"
-    assert WavesBridge._pick_peek_stream(stub, url) == url
+    assert BitWaveBridge._pick_peek_stream(stub, url) == url

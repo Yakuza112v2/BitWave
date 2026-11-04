@@ -35,7 +35,7 @@ the track list itself.
 
 HOW THIS IS DRIVEN
 ------------------
-The carcass is a real WavesBridge (``__new__`` plus ``QObject.__init__``, so the
+The carcass is a real BitWaveBridge (``__new__`` plus ``QObject.__init__``, so the
 class's own Qt signals work and nothing else from ``__init__`` runs). The REAL
 signals are used rather than stand-ins, for two reasons: an empty answer has to
 survive the real QVariant hop to be worth anything, and the marks then land in
@@ -99,9 +99,9 @@ def _bridge(track_ids=("t1", "t2"), other_track_ids=("u1",)):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from PySide6 import QtCore
 
-    from waves.waves_ui import backend as be
+    from bitwave.bitwave_ui import backend as be
 
-    b = be.WavesBridge.__new__(be.WavesBridge)
+    b = be.BitWaveBridge.__new__(be.BitWaveBridge)
     QtCore.QObject.__init__(b)
     b._queue_index = {
         _QID: {"qid": _QID, "media_id": "a1", "type": "album", "collection": True},
@@ -141,7 +141,7 @@ def _bridge(track_ids=("t1", "t2"), other_track_ids=("u1",)):
     # Recorded before the real slot runs, so the log holds arrival order and not
     # the order the slots happen to finish in.
     b._queueOwnedFetched.connect(_note_owned)
-    # The two connections WavesBridge.__init__ makes, in its order.
+    # The two connections BitWaveBridge.__init__ makes, in its order.
     b._queueTracksFetched.connect(b._merge_queue_tracks)
     b._queueOwnedFetched.connect(b._apply_owned_marks)
     b.queueTracksLoaded.connect(_note_rows)
@@ -274,9 +274,9 @@ def test_the_bridge_wires_the_owned_answer_into_the_marks_it_keeps():
     """The tests above connect the signal themselves, so this is where the real
     class's own wiring is held: without it the answer never reaches the GUI
     thread at all and no mark, fresh or stale, would ever be kept."""
-    from waves.waves_ui import backend as be
+    from bitwave.bitwave_ui import backend as be
 
-    tree = ast.parse(textwrap.dedent(inspect.getsource(be.WavesBridge.__init__)))
+    tree = ast.parse(textwrap.dedent(inspect.getsource(be.BitWaveBridge.__init__)))
 
     def _own_attr(node, name):
         # self.<name>, and nothing else that merely ends in the same word.

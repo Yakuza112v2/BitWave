@@ -28,8 +28,8 @@ from types import SimpleNamespace
 from test_library_bridge import _album, _make, _Stub
 from test_library_listing_truncation import _fake_listing
 
-from waves.waves_ui import bridge_library
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import bridge_library
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 for _m in (
     "_library_probe_candidates",
@@ -51,7 +51,7 @@ for _m in (
     "libraryListingShape",
     "libraryListingReconciled",
 ):
-    setattr(_Stub, _m, getattr(WavesBridge, _m))
+    setattr(_Stub, _m, getattr(BitWaveBridge, _m))
 
 
 def _library(tmp_path, *, hide=("C",)):

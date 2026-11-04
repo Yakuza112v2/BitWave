@@ -9,7 +9,7 @@ bound onto a minimal stub so no Qt app or network session is needed.
 
 from __future__ import annotations
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -23,9 +23,9 @@ class _Signal:
 class _Stub:
     """Carries exactly what _bump_group_progress and its callees touch."""
 
-    _queue_item = WavesBridge._queue_item
-    _set_queue_progress = WavesBridge._set_queue_progress
-    _bump_group_progress = WavesBridge._bump_group_progress
+    _queue_item = BitWaveBridge._queue_item
+    _set_queue_progress = BitWaveBridge._set_queue_progress
+    _bump_group_progress = BitWaveBridge._bump_group_progress
 
     def __init__(self, item: dict):
         self._queue = [item]

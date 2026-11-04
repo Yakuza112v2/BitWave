@@ -23,7 +23,7 @@ from __future__ import annotations
 from threading import Lock
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _LIVE_QID = 1
 _GONE_QID = 2
@@ -70,7 +70,7 @@ class _Stub:
             "_queue_item",
             "_queue_mark_changed",
         ):
-            setattr(self, name, getattr(WavesBridge, name).__get__(self, _Stub))
+            setattr(self, name, getattr(BitWaveBridge, name).__get__(self, _Stub))
 
 
 def _event(track_id="9"):

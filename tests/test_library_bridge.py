@@ -16,9 +16,9 @@ from types import SimpleNamespace
 
 from conftest import _InlinePool, _Signal
 
-from waves.library_index import LibraryIndex, cache_file_for_root, root_comparison_key
-from waves.matching import presence_key as _presence_key
-from waves.waves_ui.backend import WavesBridge
+from bitwave.library_index import LibraryIndex, cache_file_for_root, root_comparison_key
+from bitwave.matching import presence_key as _presence_key
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 _METHODS = (
     # Every emit the scan makes off the pool goes through this guard (a scan
@@ -53,9 +53,9 @@ _METHODS = (
     # Which published index a baked card verdict came from.
     "libraryStamp",
     "_library_root",
-    "_waves_pref_bool",
+    "_bitwave_pref_bool",
     "rescanLibrary",
-    "setWavesPref",
+    "setBitWavePref",
     "librarySource",
     "libraryDownloadFolder",
     "_library_bulk_skip_on",
@@ -96,7 +96,7 @@ class _Stub:
 
 
 for _m in _METHODS:
-    setattr(_Stub, _m, getattr(WavesBridge, _m))
+    setattr(_Stub, _m, getattr(BitWaveBridge, _m))
 
 
 def _album(base, rel, files):
@@ -116,7 +116,7 @@ def _make(
     tagmap = tagmap or {}
     s = _Stub()
     s.threadpool = _InlinePool()
-    s._waves_prefs = {
+    s._bitwave_prefs = {
         "library_enabled": library_enabled,
         "library_source": library_source,
         "library_folder": library_folder,
@@ -172,7 +172,7 @@ def _make(
     # to no-ops. _logged_in is False so nothing re-initializes Download.
     s._teardown_library_watch = lambda: None
     s._library_poll_in_flight = False
-    s._save_waves_prefs = lambda: None
+    s._save_bitwave_prefs = lambda: None
     s._save_settings = lambda: None
     s._logged_in = False
     # The scan tail asks the GUI thread to realign the file watcher via this
@@ -267,7 +267,7 @@ def test_master_switch_off_scans_nothing_even_when_configured(tmp_path):
 
 
 def test_turning_the_switch_off_drops_badges(tmp_path):
-    # Committing library_enabled=False (setWavesPref, the applySettings path)
+    # Committing library_enabled=False (setBitWavePref, the applySettings path)
     # invalidates the index: badges drop at once, the generation bump discards
     # any in-flight scan, and no root resolves any more.
     lib = str(tmp_path / "lib")
@@ -276,8 +276,8 @@ def test_turning_the_switch_off_drops_badges(tmp_path):
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("A", "Alb", "2000", 1)["present"]
     gen_before = s._library_gen
-    s.setWavesPref("library_enabled", False)
-    assert s._waves_prefs["library_enabled"] is False
+    s.setBitWavePref("library_enabled", False)
+    assert s._bitwave_prefs["library_enabled"] is False
     assert s._library_index is None
     assert s._library_gen > gen_before
     assert s._library_root() == ""
@@ -292,7 +292,7 @@ def test_separate_source_uses_the_chosen_folder(tmp_path):
 
 
 def test_switching_source_drops_badges_and_waits_for_start_scan(tmp_path):
-    # Committing a new source (setWavesPref, the applySettings path) persists it
+    # Committing a new source (setBitWavePref, the applySettings path) persists it
     # and clears the previous source's badges, but does NOT auto-scan here: the
     # download folder is only indexed once applySettings starts the saved
     # configuration's scan.
@@ -308,8 +308,8 @@ def test_switching_source_drops_badges_and_waits_for_start_scan(tmp_path):
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("A", "Alb", "2000", 1)["present"]
     gen_before = s._library_gen
-    s.setWavesPref("library_source", "download")
-    assert s._waves_prefs["library_source"] == "download"
+    s.setBitWavePref("library_source", "download")
+    assert s._bitwave_prefs["library_source"] == "download"
     assert s.librarySource() == "download"
     assert s._library_index is None  # badges cleared
     assert s._library_scan_status == "unset"
@@ -333,7 +333,7 @@ def test_changing_separate_folder_waits_for_start_scan(tmp_path):
     s = _make(tmp_path, library_source="separate", library_folder=a, tagmap=tagmap)
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("A", "One", "2000", 1)["present"]
-    s.setWavesPref("library_folder", b)
+    s.setBitWavePref("library_folder", b)
     assert s._library_index is None
     assert s.libraryAlbumPresence("A", "One", "2000", 1)["present"] is False
     s.rescanLibrary()
@@ -358,10 +358,10 @@ def test_switching_back_to_a_previous_folder_reopens_its_cache_warm(tmp_path):
     s = _make(tmp_path, library_source="separate", library_folder=a, tagmap=tagmap)
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("A", "One", "2000", 1)["present"]
-    s.setWavesPref("library_folder", b)
+    s.setBitWavePref("library_folder", b)
     s.rescanLibrary()
     assert s.libraryAlbumPresence("B", "Two", "2001", 1)["present"]
-    s.setWavesPref("library_folder", a)  # back to the first folder
+    s.setBitWavePref("library_folder", a)  # back to the first folder
     # Before any scan runs, the reopened cache already holds folder A's albums:
     # that is the warm start (matches_scan_root lets the badges seed from it).
     assert s._library.matches_scan_root(a)
@@ -408,7 +408,7 @@ def test_scan_status_surfaced_and_signaled(tmp_path):
     assert len(s.libraryScanStatusChanged.emits) >= 2
     # An absent folder reports "missing" and re-signals.
     before = len(s.libraryScanStatusChanged.emits)
-    s._waves_prefs["library_folder"] = str(tmp_path / "gone")
+    s._bitwave_prefs["library_folder"] = str(tmp_path / "gone")
     s._library_gen += 1
     s._rebuild_library_index()
     assert s._library_scan_status == "missing"
@@ -443,7 +443,7 @@ def test_presence_carries_local_quality_for_the_badge(tmp_path):
 def test_local_quality_label_includes_the_sample_rate():
     # The rate marks hi-res on its own: a 16-bit/96 kHz file must not be
     # undersold as plain lossless, and above-CD copies show both facts.
-    from waves.matching import local_quality_label as _local_quality_label
+    from bitwave.matching import local_quality_label as _local_quality_label
 
     assert _local_quality_label("flac", 2900, 24, 96000) == "FLAC 24-BIT 96KHZ"
     assert _local_quality_label("flac", 1500, 16, 96000) == "FLAC 96KHZ"
@@ -459,7 +459,7 @@ def test_local_quality_label_covers_every_codec_family():
     # Every audio type a library can hold gets a proper label, not just the
     # popular ones: a user with WAV rips, Ogg Vorbis or a DSD collection must
     # see their format recognized, never a blank or a wrong badge.
-    from waves.matching import local_quality_label as _local_quality_label
+    from bitwave.matching import local_quality_label as _local_quality_label
 
     # Uncompressed / lossless containers, with hi-res facts when above CD.
     assert _local_quality_label("wav", 0, 24, 96000) == "WAV 24-BIT 96KHZ"
@@ -496,7 +496,7 @@ def test_local_quality_label_covers_every_codec_family():
 def test_local_quality_class_bands():
     # The coarse class drives the pill's at-a-glance color: gold hi-res, green
     # lossless, cyan healthy lossy, red small lossy, neutral when unknown.
-    from waves.matching import local_quality_class as _local_quality_class
+    from bitwave.matching import local_quality_class as _local_quality_class
 
     assert _local_quality_class("flac", 0, 24, 96000) == "hires"
     assert _local_quality_class("flac", 0, 16, 96000) == "hires"  # rate alone is hi-res
@@ -788,10 +788,10 @@ def test_a_long_download_batch_still_gets_its_badges(tmp_path, monkeypatch):
     Driven on a fake clock: tracks land every second forever, and the rebuild
     must still happen, roughly on the ceiling's cadence.
     """
-    from waves.waves_ui import bridge_library
+    from bitwave.bitwave_ui import bridge_library
 
     s = _make(tmp_path, library_source="download", download_base=str(tmp_path / "dl"))
-    s._on_download_recorded = WavesBridge._on_download_recorded.__get__(s)
+    s._on_download_recorded = BitWaveBridge._on_download_recorded.__get__(s)
 
     rebuilds: list[int] = []
     s._rebuild_library_index = lambda **kw: rebuilds.append(1)
@@ -830,10 +830,10 @@ def test_a_short_download_batch_still_coalesces(tmp_path, monkeypatch):
     """And the ceiling does not break the debounce it guards: a burst shorter
     than the ceiling still collapses to nothing forced, leaving the ordinary
     settle timer to run one rebuild after the last track."""
-    from waves.waves_ui import bridge_library
+    from bitwave.bitwave_ui import bridge_library
 
     s = _make(tmp_path, library_source="download", download_base=str(tmp_path / "dl"))
-    s._on_download_recorded = WavesBridge._on_download_recorded.__get__(s)
+    s._on_download_recorded = BitWaveBridge._on_download_recorded.__get__(s)
     rebuilds: list[int] = []
     s._rebuild_library_index = lambda **kw: rebuilds.append(1)
     now = {"t": 500.0}
@@ -885,9 +885,9 @@ def test_the_watcher_sync_slot_never_touches_the_disk(tmp_path):
     s = _make(tmp_path, library_folder=str(tmp_path / "lib"))
     s._library_root_is_local = _exploded
     s._library.container_paths = _exploded
-    s._sync_library_watch = WavesBridge._sync_library_watch.__get__(s)
-    s._add_watch_chunk = WavesBridge._add_watch_chunk.__get__(s)
-    s._teardown_library_watch = WavesBridge._teardown_library_watch.__get__(s)  # _make no-ops it
+    s._sync_library_watch = BitWaveBridge._sync_library_watch.__get__(s)
+    s._add_watch_chunk = BitWaveBridge._add_watch_chunk.__get__(s)
+    s._teardown_library_watch = BitWaveBridge._teardown_library_watch.__get__(s)  # _make no-ops it
     s._watched_paths = {"/lib/gone"}
     s._library_watch_pending_add = []
     added: list[list[str]] = []
@@ -997,7 +997,7 @@ def test_offline_new_folder_does_not_resurrect_old_badges(tmp_path):
     )
     s._rebuild_library_index()
     assert s.libraryAlbumPresence("A", "One", "2000", 1)["present"]
-    s.setWavesPref("library_folder", str(tmp_path / "not-plugged-in"))
+    s.setBitWavePref("library_folder", str(tmp_path / "not-plugged-in"))
     assert s._library_index is None  # cleared by the switch
     s.rescanLibrary()  # probe fails: nothing to publish
     assert s._library_index is None, "the old library's badges must not come back"
@@ -1022,8 +1022,8 @@ def test_presence_never_reaches_the_download_engine():
     override so a claim is never the end of the conversation.
 
     Pinned by IMPORT CLOSURE, not by grepping for a substring. The substring
-    version read download.py for the literal "waves.matching", which survives
-    `from waves import matching`, `import waves.matching as m`, an
+    version read download.py for the literal "bitwave.matching", which survives
+    `from bitwave import matching`, `import bitwave.matching as m`, an
     `importlib.import_module` call, and reaching the matcher through any third
     module. Importing the engine in a clean interpreter and looking at what
     landed in sys.modules survives all of those, because it asks what the code
@@ -1037,7 +1037,7 @@ def test_presence_never_reaches_the_download_engine():
     root = pathlib.Path(__file__).resolve().parent.parent
 
     # 1. The whole transitive closure of the engine, however it is spelled.
-    probe = "import sys, waves.download; print('waves.matching' in sys.modules)"
+    probe = "import sys, bitwave.download; print('bitwave.matching' in sys.modules)"
     out = subprocess.run(
         [sys.executable, "-c", probe],
         cwd=str(root),
@@ -1047,19 +1047,19 @@ def test_presence_never_reaches_the_download_engine():
     )
     assert out.returncode == 0, f"could not import the download engine:\n{out.stderr}"
     assert out.stdout.strip() == "False", (
-        "waves.matching is now in the download engine's import closure. The engine "
+        "bitwave.matching is now in the download engine's import closure. The engine "
         "must never consult the presence matcher, however indirectly."
     )
 
     # 2. A lazy import inside a function body never reaches sys.modules until it
     #    runs, so the closure check alone would miss it. Walk the AST at every
     #    depth rather than only the module's top level.
-    engine_tree = ast.parse((root / "waves" / "download.py").read_text(encoding="utf-8"))
+    engine_tree = ast.parse((root / "bitwave" / "download.py").read_text(encoding="utf-8"))
     for node in ast.walk(engine_tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 assert alias.name.split(".")[0:2] != [
-                    "waves",
+                    "bitwave",
                     "matching",
                 ], f"download.py imports the presence matcher at line {node.lineno}"
         elif isinstance(node, ast.ImportFrom):
@@ -1070,9 +1070,9 @@ def test_presence_never_reaches_the_download_engine():
     #    bridge_library: the badge slot and the bulk claim helper. Not the
     #    engine, and not the rest of the bridge: backend reaches presence only
     #    through the bridge's claim helpers, whose answers are skip-or-nothing.
-    backend = (root / "waves" / "waves_ui" / "backend.py").read_text(encoding="utf-8")
+    backend = (root / "bitwave" / "bitwave_ui" / "backend.py").read_text(encoding="utf-8")
     assert "decide_presence" not in backend, "presence answers stay in bridge_library"
-    bridge = (root / "waves" / "waves_ui" / "bridge_library.py").read_text(encoding="utf-8")
+    bridge = (root / "bitwave" / "bitwave_ui" / "bridge_library.py").read_text(encoding="utf-8")
     assert bridge.count("decide_presence") == 2  # the badge slot + _library_claims_album
     assert bridge.count("decide_track_presence") == 2  # the pill slot + _library_claims_track
 
@@ -1154,10 +1154,10 @@ def test_bulk_claim_gate_obeys_both_switches(tmp_path):
     # library_bulk_skip off, or the master switch off, and bulk downloads stop
     # consulting the scan entirely.
     s = _make(tmp_path, library_folder=str(tmp_path))
-    s._waves_prefs["library_bulk_skip"] = False
+    s._bitwave_prefs["library_bulk_skip"] = False
     assert s._library_bulk_skip_on() is False
-    s._waves_prefs["library_bulk_skip"] = True
-    s._waves_prefs["library_enabled"] = False
+    s._bitwave_prefs["library_bulk_skip"] = True
+    s._bitwave_prefs["library_enabled"] = False
     assert s._library_bulk_skip_on() is False
 
 
@@ -1178,7 +1178,7 @@ def test_a_stale_queued_scan_cannot_wipe_the_new_roots_cache(tmp_path):
     }
     s = _make(tmp_path, library_folder=lib_b, tagmap=tagmap)
     s._rebuild_library_index()  # B scanned: its per-root cache is warm
-    s._waves_prefs["library_folder"] = lib_a
+    s._bitwave_prefs["library_folder"] = lib_a
     s._invalidate_library_index()
     s._rebuild_library_index()  # A scanned: A is now the current root
     # A rebuild of A claims the scan but its worker sits queued on the pool...
@@ -1187,7 +1187,7 @@ def test_a_stale_queued_scan_cannot_wipe_the_new_roots_cache(tmp_path):
     s._rebuild_library_index()
     # ...while the user switches back to B. No scan follows the switch here
     # (invalidation never dispatches one), so the stale worker runs last.
-    s._waves_prefs["library_folder"] = lib_b
+    s._bitwave_prefs["library_folder"] = lib_b
     s._invalidate_library_index()
     for w in queued:
         w.run()
@@ -1200,7 +1200,7 @@ def test_a_stale_queued_scan_cannot_wipe_the_new_roots_cache(tmp_path):
 
 
 def test_a_rebuild_straddling_a_folder_change_is_refused(tmp_path):
-    # The other half of the stale-scan family: setWavesPref stores and saves
+    # The other half of the stale-scan family: setBitWavePref stores and saves
     # the new folder BEFORE _invalidate_library_index bumps the generation, so
     # a trailing rebuild dispatched from the pool in that gap captures the OLD
     # generation and index while resolving the NEW root. Scanning that pair
@@ -1215,7 +1215,7 @@ def test_a_rebuild_straddling_a_folder_change_is_refused(tmp_path):
     s = _make(tmp_path, library_folder=old_lib, tagmap=tagmap)
     s._library.opened_for_key = root_comparison_key(old_lib)  # as the real open stamps it
     s._rebuild_library_index()  # the old folder's cache is warm
-    s._waves_prefs["library_folder"] = new_lib  # the pref lands first...
+    s._bitwave_prefs["library_folder"] = new_lib  # the pref lands first...
     s._rebuild_library_index()  # ...and the trailing rebuild fires in the gap
     assert s._library.matches_scan_root(old_lib), "the straddling rebuild restamped the old cache"
     assert len(list(s._library.iter_albums())) == 1, "the old folder's warm cache was wiped"
@@ -1247,7 +1247,7 @@ def test_a_folder_change_closes_the_retired_index(tmp_path):
     s = _make(tmp_path, library_folder=lib_a, tagmap={da: {"album": "AlbumA", "artist": "ArtistA", "date": "2001"}})
     s._rebuild_library_index()
     retired = s._library
-    s._waves_prefs["library_folder"] = str(tmp_path / "libB")
+    s._bitwave_prefs["library_folder"] = str(tmp_path / "libB")
     s._invalidate_library_index()
     assert retired is not s._library
     assert _closed(retired), "the retired index kept its sqlite connection open"
@@ -1267,7 +1267,7 @@ def test_a_scan_held_index_closes_when_its_scan_ends_not_before(tmp_path):
     queued = []
     s.threadpool = SimpleNamespace(start=lambda w, priority=0: queued.append(w))
     s._rebuild_library_index()  # claims the scan; its worker sits queued holding ``held``
-    s._waves_prefs["library_folder"] = str(tmp_path / "libB")
+    s._bitwave_prefs["library_folder"] = str(tmp_path / "libB")
     s._invalidate_library_index()
     assert not _closed(held), "closed under a scan that still holds it"
     for w in queued:
@@ -1437,7 +1437,7 @@ def test_a_read_that_failed_once_is_not_remembered_as_an_empty_library(tmp_path)
     kept. Keeping a FAILURE there (a cache locked by a writer, a share that
     blinked) turned one transient error into "you own nothing" for the whole
     life of that index: every badge dark until the next publish."""
-    from waves.waves_ui.bridge_library import SqlPresenceIndex
+    from bitwave.bitwave_ui.bridge_library import SqlPresenceIndex
 
     class _Flaky:
         def __init__(self):
@@ -1459,7 +1459,7 @@ def test_a_read_that_failed_once_is_not_remembered_as_an_empty_library(tmp_path)
 def test_a_settled_answer_is_still_only_resolved_once(tmp_path):
     """The other half: a real answer is kept, or every badge on the page pays
     for a table read that cannot change until the next publish."""
-    from waves.waves_ui.bridge_library import SqlPresenceIndex
+    from bitwave.bitwave_ui.bridge_library import SqlPresenceIndex
 
     class _Counting:
         def __init__(self):
@@ -1481,7 +1481,7 @@ def test_a_capped_memo_holds_its_cap_while_several_threads_fill_it():
     eviction is a read of the first key followed by a delete with two threads
     in it. Under the lock it cannot lose the cap or raise mid-iteration; the
     backend's own caches solve it the same way."""
-    from waves.waves_ui.bridge_library import _remember
+    from bitwave.bitwave_ui.bridge_library import _remember
 
     d: dict = {}
     errors: list[str] = []
@@ -1540,7 +1540,7 @@ def test_a_publish_sweeps_before_it_freezes(tmp_path, monkeypatch):
     under the water."""
     import gc as _gc
 
-    from waves.waves_ui import bridge_library as bl
+    from bitwave.bitwave_ui import bridge_library as bl
 
     calls: list[str] = []
     frozen = [0]

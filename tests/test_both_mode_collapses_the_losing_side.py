@@ -40,7 +40,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from waves.waves_ui.backend import WavesBridge, _MergeRec
+from bitwave.bitwave_ui.backend import BitWaveBridge, _MergeRec
 
 
 class _Song:
@@ -74,7 +74,7 @@ def _songs(prefix, explicit, *titles_and_lengths):
 
 
 def _queue(albums, recs, mode, ranks=None):
-    """Run the real WavesBridge._merge_editions over one edition group.
+    """Run the real BitWaveBridge._merge_editions over one edition group.
 
     The bridge is a carcass with only the three things the method reads hung on
     it: the explicit preference, the track-record source, and the audio-rank
@@ -84,13 +84,13 @@ def _queue(albums, recs, mode, ranks=None):
     ``ranks`` maps an album id or a track id to an audio-quality rank, default 1.
     """
     ranks = ranks or {}
-    bridge = WavesBridge.__new__(WavesBridge)
-    bridge._waves_prefs = {"explicit_mode": mode}
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
+    bridge._bitwave_prefs = {"explicit_mode": mode}
     bridge._merge_recs_factory = lambda: (lambda album: recs[id(album)])
     bridge._merge_rank_fn = lambda: (lambda obj: ranks.get(str(getattr(obj, "id", "")), 1))
     # One release, so the split and the collapse are what is under test rather
     # than the edition keying.
-    with patch("waves.waves_ui.backend._edition_base_key", lambda album: "one release"):
+    with patch("bitwave.bitwave_ui.backend._edition_base_key", lambda album: "one release"):
         return bridge._merge_editions(list(albums))
 
 

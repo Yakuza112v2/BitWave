@@ -12,8 +12,8 @@ import pathlib
 import threading
 from unittest.mock import MagicMock
 
-from waves.download import Download
-from waves.waves_ui.backend import _TrackedDownload
+from bitwave.download import Download
+from bitwave.bitwave_ui.backend import _TrackedDownload
 
 HAND_TIMED = "[00:12.30] a line somebody timed by hand\n"
 

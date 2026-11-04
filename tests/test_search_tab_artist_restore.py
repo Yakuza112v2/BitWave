@@ -40,7 +40,7 @@ _EXIT_REGRESSED_SCOPED = 2  # the full page came back holding the favorites subs
 _EXIT_NO_QT = 77
 _EXIT_PRECONDITION = 78
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _WIN_W, _WIN_H = 1100, 720
 
@@ -48,7 +48,7 @@ _WIN_W, _WIN_H = 1100, 720
 def test_the_search_tab_restores_the_artist_it_saved():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-artistrestore-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-artistrestore-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -131,7 +131,7 @@ def _scoped_artist(tag: str) -> dict:
 
 
 def _run_scenario() -> int:
-    # THIS checkout's waves, not the venv's editable install.
+    # THIS checkout's bitwave, not the venv's editable install.
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     try:
         from PySide6.QtCore import QEventLoop, QTimer, QUrl, Slot
@@ -145,8 +145,8 @@ def _run_scenario() -> int:
     try:
         from _qml_offline import PARK_LOGIN_QML, patch_offline
 
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -155,7 +155,7 @@ def _run_scenario() -> int:
 
     loader_calls: list = []
 
-    class _ScriptedBridge(WavesBridge):
+    class _ScriptedBridge(BitWaveBridge):
         """The two artist loaders answer from the scenario instead of the
         network. Both exist because the Back restore has to pick the right one:
         they carry the same id through the same signal."""
@@ -172,7 +172,7 @@ def _run_scenario() -> int:
 
     engine = QQmlApplicationEngine()
     bridge = _ScriptedBridge(tidal=None)
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))

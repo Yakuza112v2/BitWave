@@ -1,20 +1,20 @@
 # Entwicklung von BitWave
 
-BitWave ist eine eigenständige Windows-App auf Grundlage von Waves. Das interne Python-Paket heißt weiterhin `waves`. Oberfläche, Anwendungsdaten, Signierung und Veröffentlichungen gehören zu BitWave.
+BitWave ist eine eigenständige Windows-App. Das Python-Paket heißt `bitwave`, die Oberfläche liegt in `bitwave.bitwave_ui`. Oberfläche, Anwendungsdaten, Signierung und Veröffentlichungen gehören zu BitWave.
 
 ## Aufbau
 
-- `waves/waves_ui/app.py`: Start der Qt-Anwendung, deutsche Standardsprache und Fenster.
-- `waves/waves_ui/backend.py`: Verbindung zwischen QML-Oberfläche, TIDAL und Downloads.
-- `waves/waves_ui/bridge_library.py`: Musiksammlung und Abgleich vorhandener Dateien.
-- `waves/waves_ui/qml/Main.qml`: Hauptfenster, Suche, Warteschlange und Wiedergabe.
-- `waves/waves_ui/qml/SettingsPage.qml`: Einstellungen aus dem Backend-Schema.
-- `waves/waves_ui/qml/Deutsch.js`: deutsche Übersetzungen; `deutsch.tsv` enthält den lesbaren Katalog.
-- `waves/waves_ui/updater.py` und `signing.py`: Updates aus dem BitWave-Repository und Signaturprüfung.
+- `bitwave/bitwave_ui/app.py`: Start der Qt-Anwendung, deutsche Standardsprache und Fenster.
+- `bitwave/bitwave_ui/backend.py`: Verbindung zwischen QML-Oberfläche, TIDAL und Downloads.
+- `bitwave/bitwave_ui/bridge_library.py`: Musiksammlung und Abgleich vorhandener Dateien.
+- `bitwave/bitwave_ui/qml/Main.qml`: Hauptfenster, Suche, Warteschlange und Wiedergabe.
+- `bitwave/bitwave_ui/qml/SettingsPage.qml`: Einstellungen aus dem Backend-Schema.
+- `bitwave/bitwave_ui/qml/Deutsch.js`: deutsche Übersetzungen; `deutsch.tsv` enthält den lesbaren Katalog.
+- `bitwave/bitwave_ui/updater.py` und `signing.py`: Updates aus dem BitWave-Repository und Signaturprüfung.
 
 ## Lokale Arbeit
 
-Python 3.12 oder 3.13 und Poetry verwenden. Abhängigkeiten mit `poetry install --all-extras --with dev` installieren. Die Oberfläche startet mit `poetry run python -m waves.waves_ui`. Tests laufen mit `poetry run pytest`; `poetry check --lock` prüft die Paketdefinition.
+Python 3.12 oder 3.13 und Poetry verwenden. Abhängigkeiten mit `poetry install --all-extras --with dev` installieren. Die Oberfläche startet mit `poetry run python -m bitwave.bitwave_ui`. Tests laufen mit `poetry run pytest`; `poetry check --lock` prüft die Paketdefinition.
 
 Die Oberfläche übersetzt Beschriftungen und Meldungen beim Anzeigen. TIDAL-Titel, Künstlernamen, Albumtitel, Dateipfade und technische Kennungen dürfen dabei nicht verändert werden. Neue Oberflächentexte im deutschen Katalog ergänzen und die QML-Ladetests ausführen.
 

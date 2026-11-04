@@ -1,6 +1,6 @@
 """The shared release-delta core: edition groups, seeding sets, freshness."""
 
-from waves.release_delta import all_group_ids, collapse_atmos_twins, edition_group_ids, split_fresh
+from bitwave.release_delta import all_group_ids, collapse_atmos_twins, edition_group_ids, split_fresh
 
 
 def test_edition_group_ids_own_plus_siblings():

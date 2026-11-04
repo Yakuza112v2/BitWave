@@ -1,4 +1,4 @@
-"""waves.page_store: the account's page snapshot, one sqlite row per page."""
+"""bitwave.page_store: the account's page snapshot, one sqlite row per page."""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.page_store import PageStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import _PAGE_CACHE_VERSION, WavesBridge
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import _PAGE_CACHE_VERSION, BitWaveBridge
 
 V = _PAGE_CACHE_VERSION
 
@@ -112,7 +112,7 @@ def test_the_file_is_a_cache_tuned_store(tmp_path):
 
 
 def _bridge(tmp_path, user="42"):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._logged_in = True
     b._factory_reset = False
     b._lib_cache = {}
@@ -182,7 +182,7 @@ def test_a_wipe_takes_a_saved_snapshot_with_its_sidecars(tmp_path):
 def test_the_reset_closes_the_store_before_the_wipe():
     import inspect
 
-    body = inspect.getsource(WavesBridge.factoryReset)
+    body = inspect.getsource(BitWaveBridge.factoryReset)
     assert body.index("store.close()") < body.index("for name in _FACTORY_WIPE_FILES")
 
 

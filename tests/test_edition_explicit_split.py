@@ -36,8 +36,8 @@ from threading import Lock
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from waves.waves_ui.backend import (
-    WavesBridge,
+from bitwave.bitwave_ui.backend import (
+    BitWaveBridge,
     _align_edition,
     _build_merge_plan,
     _explicit_sides,
@@ -390,10 +390,10 @@ class _DiscoStub:
     """_merge_editions with the group already decided, so the split is what is
     under test rather than the edition keying."""
 
-    _merge_editions = WavesBridge._merge_editions
+    _merge_editions = BitWaveBridge._merge_editions
 
     def __init__(self, mode, recs):
-        self._waves_prefs = {"explicit_mode": mode}
+        self._bitwave_prefs = {"explicit_mode": mode}
         self._recs = recs
         self.settings = SimpleNamespace(data=SimpleNamespace(quality_audio=SimpleNamespace(name="HI_RES_LOSSLESS")))
 
@@ -407,7 +407,7 @@ class _DiscoStub:
 def _disco(mode):
     std, deluxe, clean, recs = _twin_group()
     stub = _DiscoStub(mode, recs)
-    with patch("waves.waves_ui.backend._edition_base_key", lambda a: "one-group"):
+    with patch("bitwave.bitwave_ui.backend._edition_base_key", lambda a: "one-group"):
         plain, plans = stub._merge_editions([std, deluxe, clean])
     return std, deluxe, clean, plain, plans
 
@@ -433,7 +433,7 @@ def test_a_clean_preference_takes_the_clean_side_and_never_merges_into_it():
 
 
 class _ClickStub:
-    downloadAlbumBestOfBoth = WavesBridge.downloadAlbumBestOfBoth
+    downloadAlbumBestOfBoth = BitWaveBridge.downloadAlbumBestOfBoth
 
     def __init__(self, clicked, group, recs, mode="explicit"):
         self._objs = {"album": {"x": clicked}}
@@ -445,7 +445,7 @@ class _ClickStub:
         self._scans_in_flight = 0
         self._scan_count_lock = Lock()
         self.scanningChanged = _Signal()
-        self._waves_prefs = {"explicit_mode": mode}
+        self._bitwave_prefs = {"explicit_mode": mode}
         self.downloadState = _Signal()
         self._albumsQueued = _Signal()
         self.statuses: list = []

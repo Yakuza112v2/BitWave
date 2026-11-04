@@ -11,10 +11,10 @@ from ffmpeg import FFmpegError
 from mutagen.flac import FLAC
 from tidalapi import Track
 
-from waves import download as download_mod
-from waves import flac_verify
-from waves.constants import DownsampleTarget
-from waves.download import Download
+from bitwave import download as download_mod
+from bitwave import flac_verify
+from bitwave.constants import DownsampleTarget
+from bitwave.download import Download
 
 # What a build without libsoxr prints when an aresample filter asks for it.
 _SOXR_STDERR = [
@@ -152,7 +152,7 @@ def test_retry_file_operation_does_not_sleep_after_final_attempt(download_instan
     def operation() -> bool:
         raise PermissionError(32, "The process cannot access the file because it is being used by another process")
 
-    with patch("waves.download.time.sleep") as sleep_mock:
+    with patch("bitwave.download.time.sleep") as sleep_mock:
         result: bool = download_instance._retry_file_operation(operation, "locked operation")
 
     assert result is False
@@ -185,13 +185,13 @@ def test_media_move_and_symlink_skips_symlink_when_unlink_fails(
 
     media = MagicMock()
     media.id = 111
-    media.waves_identity_id = None
+    media.bitwave_identity_id = None
     # The plain download path records the fresh file under its id before
     # post-processing; the symlink step refuses a source without that evidence.
     download_instance._record_name_written(source_path, "111")
 
     with (
-        patch("waves.download.format_path_media", return_value="Tracks/Artist - Title"),
+        patch("bitwave.download.format_path_media", return_value="Tracks/Artist - Title"),
         patch.object(download_instance, "_move_file", return_value=True),
         patch.object(download_instance, "_unlink_with_retry", return_value=False),
         patch.object(pathlib.Path, "symlink_to") as symlink_to_mock,
@@ -234,8 +234,8 @@ def test_downsample_audio_raises_when_output_move_fails(
     ffmpeg_mock.output.return_value = ffmpeg_mock
 
     with (
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.FFmpeg", return_value=ffmpeg_mock),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.FFmpeg", return_value=ffmpeg_mock),
         patch.object(download_instance, "_move_file", return_value=False),
         pytest.raises(OSError),
     ):
@@ -487,8 +487,8 @@ def test_downsample_audio_falls_back_to_swr_when_soxr_fails(
     ffmpeg_mock.execute.side_effect = _ffmpeg_runs(ffmpeg_mock, [_SOXR_STDERR, None])
 
     with (
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.FFmpeg", return_value=ffmpeg_mock),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.FFmpeg", return_value=ffmpeg_mock),
         patch.object(download_instance, "_move_file", return_value=True),
     ):
         download_instance._downsample_audio(source_path)
@@ -502,8 +502,8 @@ def test_downsample_audio_falls_back_to_swr_when_soxr_fails(
     ffmpeg_mock.output.reset_mock()
     ffmpeg_mock.execute.side_effect = _ffmpeg_runs(ffmpeg_mock, [None])
     with (
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.FFmpeg", return_value=ffmpeg_mock),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.FFmpeg", return_value=ffmpeg_mock),
         patch.object(download_instance, "_move_file", return_value=True),
     ):
         download_instance._downsample_audio(source_path)
@@ -515,8 +515,8 @@ def test_downsample_audio_falls_back_to_swr_when_soxr_fails(
     ffmpeg_mock.output.reset_mock()
     ffmpeg_mock.execute.side_effect = _ffmpeg_runs(ffmpeg_mock, [None])
     with (
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.FFmpeg", return_value=ffmpeg_mock),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.FFmpeg", return_value=ffmpeg_mock),
         patch.object(download_instance, "_move_file", return_value=True),
     ):
         download_instance._downsample_audio(source_path)
@@ -543,8 +543,8 @@ def test_downsample_audio_other_failure_raises_without_a_second_run(
     ffmpeg_mock.execute.side_effect = _ffmpeg_runs(ffmpeg_mock, [disk_full, None])
 
     with (
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.FFmpeg", return_value=ffmpeg_mock),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.FFmpeg", return_value=ffmpeg_mock),
         patch.object(download_instance, "_move_file", return_value=True),
         pytest.raises(FFmpegError, match="No space left on device"),
     ):
@@ -587,9 +587,9 @@ def test_extract_flac_seals_only_when_the_downsample_keeps_the_copy(
     flac_mock.info.bits_per_sample = depth
 
     with (
-        patch("waves.download.FFmpeg", return_value=_ffmpeg_ok()),
-        patch("waves.download.FLAC", return_value=flac_mock),
-        patch("waves.download.seal_file") as seal_mock,
+        patch("bitwave.download.FFmpeg", return_value=_ffmpeg_ok()),
+        patch("bitwave.download.FLAC", return_value=flac_mock),
+        patch("bitwave.download.seal_file") as seal_mock,
     ):
         seal_mock.return_value = SimpleNamespace(status=flac_verify.OK, detail="")
         out = download_instance._extract_flac(tmp_path / "merged")
@@ -602,9 +602,9 @@ def test_extract_flac_seal_unreadable_header_still_seals(download_instance: Down
     """When the header cannot be read the seal runs, which is always safe."""
     download_instance.settings = _extract_settings(downsample_enabled=True, downsample_target=DownsampleTarget.BIT16_48)
     with (
-        patch("waves.download.FFmpeg", return_value=_ffmpeg_ok()),
-        patch("waves.download.FLAC", side_effect=OSError("unreadable")),
-        patch("waves.download.seal_file") as seal_mock,
+        patch("bitwave.download.FFmpeg", return_value=_ffmpeg_ok()),
+        patch("bitwave.download.FLAC", side_effect=OSError("unreadable")),
+        patch("bitwave.download.seal_file") as seal_mock,
     ):
         seal_mock.return_value = SimpleNamespace(status=flac_verify.OK, detail="")
         download_instance._extract_flac(tmp_path / "merged")
@@ -627,8 +627,8 @@ def test_extract_flac_seal_follows_the_items_stop(download_instance: Download, t
         return SimpleNamespace(status=flac_verify.CANCELLED, detail="")
 
     with (
-        patch("waves.download.FFmpeg", return_value=_ffmpeg_ok()),
-        patch("waves.download.seal_file", side_effect=seal),
+        patch("bitwave.download.FFmpeg", return_value=_ffmpeg_ok()),
+        patch("bitwave.download.seal_file", side_effect=seal),
     ):
         download_instance._extract_flac(tmp_path / "merged", event_stop)
 
@@ -646,8 +646,8 @@ def test_extract_flac_seal_follows_the_items_stop(download_instance: Download, t
         return SimpleNamespace(status=flac_verify.CANCELLED, detail="")
 
     with (
-        patch("waves.download.FFmpeg", return_value=_ffmpeg_ok()),
-        patch("waves.download.seal_file", side_effect=seal_abort),
+        patch("bitwave.download.FFmpeg", return_value=_ffmpeg_ok()),
+        patch("bitwave.download.seal_file", side_effect=seal_abort),
     ):
         download_instance._extract_flac(tmp_path / "merged", Event())
     assert calls == [False]
@@ -669,7 +669,7 @@ def test_stop_during_the_seal_lands_nothing(download_instance: Download, tmp_pat
     event_stop = Event()
     media = Track.__new__(Track)
     media.id = "123"
-    media.waves_identity_id = None
+    media.bitwave_identity_id = None
     dst = tmp_path / "song.flac"
 
     def extract(path, stop=None):
@@ -691,7 +691,7 @@ def test_stop_during_the_seal_lands_nothing(download_instance: Download, tmp_pat
         patch.object(cls, "_move_file", return_value=True) as move_mock,
         patch.object(cls, "_record_name_written"),
         patch.object(cls, "_note_dir_filled"),
-        patch("waves.download.name_builder_item", return_value="x"),
+        patch("bitwave.download.name_builder_item", return_value="x"),
     ):
         ok, _ = download_instance._perform_actual_download(
             media, dst, None, True, False, SimpleNamespace(is_bts=True), event_stop
@@ -759,7 +759,7 @@ def test_extract_then_downsample_real_ffmpeg_skips_the_seal_and_verifies(
         for part in [dash / "init-stream0.m4s", *sorted(dash.glob("chunk-stream0-*.m4s"))]:
             out.write(part.read_bytes())
 
-    with patch("waves.download.seal_file", wraps=download_mod.seal_file) as seal_spy:
+    with patch("bitwave.download.seal_file", wraps=download_mod.seal_file) as seal_spy:
         extracted = download_instance._extract_flac(merged)
     seal_spy.assert_not_called()
     assert FLAC(extracted).info.md5_signature == 0, "the copy is left for the encoder to replace"

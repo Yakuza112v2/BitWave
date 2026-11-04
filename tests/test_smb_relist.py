@@ -1,5 +1,5 @@
 """Recovering the folders an SMB mount refuses to list
-(waves/waves_ui/smb_relist.py, wired in bridge_library._library_recover_untrusted).
+(bitwave/bitwave_ui/smb_relist.py, wired in bridge_library._library_recover_untrusted).
 
 THE BUG THIS FENCES OFF
 -----------------------
@@ -38,8 +38,8 @@ from types import SimpleNamespace
 import pytest
 from test_library_listing_truncation import _CM, _fake_listing, _mk
 
-from waves.library_index import LibraryIndex
-from waves.waves_ui import smb_relist
+from bitwave.library_index import LibraryIndex
+from bitwave.bitwave_ui import smb_relist
 
 ARTISTS = ("Aphex", "Boards", "Clark", "Dopplereffekt", "Eno", "Fennesz")
 HIDDEN = ("Dopplereffekt", "Eno", "Fennesz")
@@ -408,7 +408,7 @@ def test_a_healthy_library_never_mounts_anything(tmp_path, monkeypatch):
 def test_the_bridge_recovers_straight_after_a_flagged_scan(tmp_path, monkeypatch):
     """The scan seam itself: bridge_library calls this before it builds the
     index, so a recovery lands in the very first publish."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     root, tags = _tagged_library(tmp_path)
     shown = set(ARTISTS[:3])
@@ -425,7 +425,7 @@ def test_the_bridge_recovers_straight_after_a_flagged_scan(tmp_path, monkeypatch
     monkeypatch.setattr(smb_relist, "unmount_share", unmount)
 
     events: list[dict] = []
-    hits = WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True, events.append)
+    hits = BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True, events.append)
     assert hits == len(HIDDEN)
     assert _indexed_artists(idx) == sorted(ARTISTS)
     assert state["mounted"] and state["unmounted"]
@@ -439,7 +439,7 @@ def test_the_bridge_recovers_straight_after_a_flagged_scan(tmp_path, monkeypatch
 def test_a_full_recovery_is_recorded_so_settings_stops_warning(tmp_path, monkeypatch):
     """The listing stays untrusted (the probe by name stays armed), but the
     library is complete, and Settings must say the one instead of the other."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     root, tags = _tagged_library(tmp_path)
     shown = set(ARTISTS[:3])
@@ -456,19 +456,19 @@ def test_a_full_recovery_is_recorded_so_settings_stops_warning(tmp_path, monkeyp
     monkeypatch.setattr(smb_relist, "mount_share", mount)
     monkeypatch.setattr(smb_relist, "unmount_share", unmount)
 
-    WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True)
+    BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True)
     assert idx.last_scan_partial is True  # the share still lists badly
     assert idx.last_listing_reconciled is True  # but nothing is missing
     # A second run indexes nothing new, because there is nothing left to find.
     # That is the steady state, not a failure, so the verdict must hold.
-    WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True)
+    BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True)
     assert idx.last_listing_reconciled is True
 
 
 def test_a_recovery_that_cannot_reach_everything_keeps_warning(tmp_path, monkeypatch):
     """The fresh mount names an artist the recovery then fails to index: the
     library IS short of a folder, and the note has to keep saying so."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     root, tags = _tagged_library(tmp_path)
     shown = set(ARTISTS[:3])
@@ -485,12 +485,12 @@ def test_a_recovery_that_cannot_reach_everything_keeps_warning(tmp_path, monkeyp
     monkeypatch.setattr(smb_relist, "unmount_share", unmount)
     monkeypatch.setattr(idx, "probe_folders", lambda *a, **k: 0)  # every name refuses to index
 
-    WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True)
+    BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True)
     assert idx.last_listing_reconciled is False
 
 
 def test_the_bridge_leaves_a_healthy_scan_alone(tmp_path, monkeypatch):
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     root, tags = _tagged_library(tmp_path)
     idx = LibraryIndex(str(tmp_path / "library.sqlite3"), read_tags=lambda p: tags.get(os.path.dirname(p)))
@@ -504,14 +504,14 @@ def test_the_bridge_leaves_a_healthy_scan_alone(tmp_path, monkeypatch):
     asked = []
     real_dirs = idx.unreliable_dirs
     monkeypatch.setattr(idx, "unreliable_dirs", lambda: asked.append(1) or real_dirs())
-    assert WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True) == 0
+    assert BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True) == 0
     assert asked == []
     assert state["mounted"] == []
 
 
 def test_the_bridge_swallows_a_recovery_that_goes_wrong(tmp_path, monkeypatch):
     """Every failure here must land as "carry on exactly as before"."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     root, tags = _tagged_library(tmp_path)
     shown = set(ARTISTS[:3])
@@ -524,7 +524,7 @@ def test_the_bridge_swallows_a_recovery_that_goes_wrong(tmp_path, monkeypatch):
         raise OSError("the share went away mid-recovery")
 
     monkeypatch.setattr(smb_relist, "relist_folders", boom)
-    assert WavesBridge._library_recover_untrusted(stub, idx, root, lambda: True) == 0
+    assert BitWaveBridge._library_recover_untrusted(stub, idx, root, lambda: True) == 0
     assert _indexed_artists(idx) == sorted(shown)
 
 

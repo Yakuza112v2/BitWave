@@ -26,7 +26,7 @@ Two contracts, pinned with the method-bound stub pattern (no display):
 
 from __future__ import annotations
 
-from waves.waves_ui.app import _BootPacedIncubation
+from bitwave.bitwave_ui.app import _BootPacedIncubation
 
 
 class _Timer:

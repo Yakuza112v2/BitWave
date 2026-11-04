@@ -31,11 +31,11 @@ from types import SimpleNamespace
 
 from tidalapi.media import AudioMode, Quality, Track
 
-from waves.constants import ATMOS_REQUEST_QUALITY
-from waves.download import Download
-from waves.ownership import OwnershipStore, quality_rank
-from waves.waves_ui import backend
-from waves.waves_ui.backend import _delivers_atmos, _TrackedDownload
+from bitwave.constants import ATMOS_REQUEST_QUALITY
+from bitwave.download import Download
+from bitwave.ownership import OwnershipStore, quality_rank
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import _delivers_atmos, _TrackedDownload
 
 ATMOS = AudioMode.dolby_atmos.value
 ATMOS_TIER = str(getattr(ATMOS_REQUEST_QUALITY, "value", ATMOS_REQUEST_QUALITY))
@@ -109,7 +109,7 @@ def test_an_atmos_request_answered_in_stereo_is_logged(caplog):
         dl.tidal = SimpleNamespace(switch_to_atmos_session=lambda: True, restore_normal_session=lambda: True)
         dl.session = SimpleNamespace(track=lambda _id: SimpleNamespace(get_stream=lambda: stream))
         caplog.clear()
-        with caplog.at_level("WARNING", logger="waves.download"):
+        with caplog.at_level("WARNING", logger="bitwave.download"):
             dl._get_track_stream_info(_track(modes=[ATMOS, "STEREO"]))
         return [r.getMessage() for r in caplog.records if "Dolby Atmos" in r.getMessage()]
 
@@ -192,7 +192,7 @@ def test_the_exclusion_apparatus_is_fully_retired():
     import inspect
 
     assert "excluded_count" not in inspect.signature(backend._collection_incomplete_reason).parameters
-    assert "excluded" not in inspect.getsource(backend.WavesBridge._download_merge_plan)
+    assert "excluded" not in inspect.getsource(backend.BitWaveBridge._download_merge_plan)
     qml = (backend.pathlib.Path(backend.__file__).parent / "qml" / "Main.qml").read_text()
     assert "ATMOS ONLY" not in qml
 

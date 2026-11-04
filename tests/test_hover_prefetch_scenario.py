@@ -18,7 +18,7 @@ import tempfile
 import threading
 from pathlib import Path
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_FAIL = 1
@@ -29,8 +29,8 @@ _EXIT_PRECONDITION = 4
 def test_resting_on_a_playlist_card_prefetches_its_page_and_the_click_paints_whole():
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    # Sandboxed: a REAL WavesBridge adopts whatever config dir it finds.
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-hover-prefetch-test-")
+    # Sandboxed: a REAL BitWaveBridge adopts whatever config dir it finds.
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-hover-prefetch-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -72,8 +72,8 @@ def _run_scenario() -> int:
         app.setApplicationName("BitWave")
         app.setOrganizationName("BitWave")
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
@@ -81,7 +81,7 @@ def _run_scenario() -> int:
     from tests._qml_offline import PARK_LOGIN_QML, patch_offline
 
     # Local cover files: the page's art must actually reach Ready offline.
-    art_dir = Path(tempfile.mkdtemp(prefix="waves-hover-art-"))
+    art_dir = Path(tempfile.mkdtemp(prefix="bitwave-hover-art-"))
 
     def cover(name: str, rgb: tuple) -> str:
         img = QImage(64, 64, QImage.Format.Format_RGB32)
@@ -98,9 +98,9 @@ def _run_scenario() -> int:
     gone_art = QUrl.fromLocalFile(str(art_dir / "gone.png")).toString()
 
     patch_offline()  # BEFORE the bridge: its __init__ fires the sign-in check
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -138,9 +138,9 @@ def _run_scenario() -> int:
     def settle(ms: int = 150) -> None:
         pump(lambda: False, ms)
 
-    # WAVES_SCENARIO_GRABS=<dir> saves a window grab at the moments worth
+    # BITWAVE_SCENARIO_GRABS=<dir> saves a window grab at the moments worth
     # eyeballing (a livetest aid, never part of the assertion).
-    grab_dir = os.environ.get("WAVES_SCENARIO_GRABS", "")
+    grab_dir = os.environ.get("BITWAVE_SCENARIO_GRABS", "")
 
     def grab(name: str) -> None:
         if grab_dir:

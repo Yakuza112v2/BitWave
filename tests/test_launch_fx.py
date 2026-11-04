@@ -11,12 +11,12 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MAIN = (ROOT / "waves" / "waves_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+MAIN = (ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
 
 
 def test_every_launch_of_the_version_plays_the_show():
     block = MAIN[MAIN.index("id: bootFx") : MAIN.index("id: bootFx") + 400]
-    assert re.search(r'celebrate: \["0\.2\.0", "0\.2\.1"\]\.indexOf\(waves\.appVersion\) >= 0\n', block)
+    assert re.search(r'celebrate: \["0\.2\.0", "0\.2\.1"\]\.indexOf\(bitwave\.appVersion\) >= 0\n', block)
     assert "launch_fx_seen" not in MAIN
 
 

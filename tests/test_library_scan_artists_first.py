@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import os
 
-import waves.library_index as li
-from waves.library_index import LibraryIndex, _artists_first
+import bitwave.library_index as li
+from bitwave.library_index import LibraryIndex, _artists_first
 
 
 def _c(path):

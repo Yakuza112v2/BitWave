@@ -13,7 +13,7 @@ from types import SimpleNamespace
 
 from test_releases_backend import _bind, _http_429, _stub
 
-from waves.waves_ui import bridge_releases as rel
+from bitwave.bitwave_ui import bridge_releases as rel
 
 
 class _Cache:
@@ -434,7 +434,7 @@ def test_artists_under_the_track_floor_are_left_out_and_come_back_when_it_drops(
     assert [r["name"] for r in payload["matched"]] == ["B"] and payload["skipped"] == 1
     # Not remembered as looked at: a lower floor brings it round.
     assert "a" not in _bind(s, "_releases_seen_norms")()
-    s._waves_prefs["releases_import_min_tracks"] = "3"
+    s._bitwave_prefs["releases_import_min_tracks"] = "3"
     _bind(s, "startArtistImportMore")()
     _bind(s, "_on_rel_import_done")(s._relImportDone.emits[-1])
     assert s.asked == ["B", "A"]
@@ -446,7 +446,7 @@ def test_the_floor_reads_any_shape_and_a_row_that_cannot_say_passes(tmp_path):
     enough = _bind(s, "_releases_enough_tracks")
     assert floor() == 5
     for raw, want in (("7", 7), (7.0, 7), ("junk", 5), ("0", 1), ("5000", 999)):
-        s._waves_prefs["releases_import_min_tracks"] = raw
+        s._bitwave_prefs["releases_import_min_tracks"] = raw
         assert floor() == want, raw
     assert enough({"tracks": 5}, 5) and not enough({"tracks": 4}, 5)
     assert enough({}, 5) and enough({"tracks": "many"}, 5)
@@ -532,7 +532,7 @@ def test_library_follows_under_the_floor_are_counted_and_unfollowed_in_one_go(tm
     assert len(s.followFloorChanged.emits) == 1
     assert _bind(s, "followsUnderFloor")() == 0
     # A lower floor lets B stay; a higher one would take it.
-    s._waves_prefs["releases_import_min_tracks"] = "11"
+    s._bitwave_prefs["releases_import_min_tracks"] = "11"
     assert _bind(s, "followsUnderFloor")() == 1
     # No library: nothing to judge by, nothing is touched.
     s._library_index = None

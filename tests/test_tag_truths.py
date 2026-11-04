@@ -33,8 +33,8 @@ import mutagen.mp4
 import pytest
 from tidalapi import Track
 
-from waves.download import Download
-from waves.metadata import Metadata
+from bitwave.download import Download
+from bitwave.metadata import Metadata
 
 
 def _mp4_stub():
@@ -62,7 +62,7 @@ def _mp3_stub():
 def _write(stub, tmp_path, name, **kw):
     file = tmp_path / name
     file.write_bytes(b"x")
-    with patch("waves.metadata.mutagen.File", return_value=stub):
+    with patch("bitwave.metadata.mutagen.File", return_value=stub):
         assert Metadata(path_file=file, target_upc={"FLAC": "UPC", "MP4": "UPC", "MP3": "UPC"}, **kw).save() is True
     return stub
 
@@ -171,7 +171,7 @@ def test_the_writer_passes_the_count_it_has_and_nothing_more(num_tracks, expecte
     stream = SimpleNamespace(
         album_replay_gain=None, album_peak_amplitude=None, track_replay_gain=None, track_peak_amplitude=None
     )
-    with patch("waves.download.Metadata", _RecMeta):
+    with patch("bitwave.download.Metadata", _RecMeta):
         dl.metadata_write(_track(_album(num_tracks)), pathlib.Path("t.flac"), True, stream)
     assert _RecMeta.last.kw["totaltrack"] == expected
     assert _RecMeta.last.kw["tracknumber"] == 7

@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from types import SimpleNamespace
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Capture(logging.Handler):
@@ -29,7 +29,7 @@ class _Capture(logging.Handler):
 
 
 class _Stub:
-    completeLogin = WavesBridge.completeLogin
+    completeLogin = BitWaveBridge.completeLogin
 
     def __init__(self):
         self.statuses: list[str] = []
@@ -46,16 +46,16 @@ class _Stub:
         self.busy.append(bool(on))
 
 
-def _watching_waves_logger():
+def _watching_bitwave_logger():
     handler = _Capture()
     handler.setFormatter(logging.Formatter("%(message)s"))
-    logger = logging.getLogger("waves")
+    logger = logging.getLogger("bitwave")
     logger.addHandler(handler)
     return logger, handler
 
 
 def test_a_stray_clipboard_paste_is_refused_and_never_logged():
-    logger, handler = _watching_waves_logger()
+    logger, handler = _watching_bitwave_logger()
     try:
         stub = _Stub()
         stub.completeLogin("hunter2 remind mom about tuesday")

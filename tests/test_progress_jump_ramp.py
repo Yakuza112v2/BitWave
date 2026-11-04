@@ -47,7 +47,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -58,7 +58,7 @@ _EXIT_PRECONDITION = 78
 def _run_in_subprocess(flag: str) -> tuple[int, str]:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-jump-ramp-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-jump-ramp-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), flag],
         env=env,

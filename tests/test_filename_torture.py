@@ -27,9 +27,9 @@ from unittest.mock import MagicMock
 import pytest
 from tidalapi import Album, Track
 
-from waves.constants import FILENAME_LENGTH_MAX
-from waves.download import Download
-from waves.helper.path import (
+from bitwave.constants import FILENAME_LENGTH_MAX
+from bitwave.download import Download
+from bitwave.helper.path import (
     file_unique_suffix,
     format_path_media,
     name_comparison_key,

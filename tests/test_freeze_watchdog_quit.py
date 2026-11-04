@@ -32,7 +32,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from waves.waves_ui import diagnostics
+from bitwave.bitwave_ui import diagnostics
 
 
 def _qt_app():
@@ -94,7 +94,7 @@ def test_the_dump_wait_leaves_a_full_tick_of_headroom():
 def test_shutdown_stops_the_watchdog_before_it_drains_the_pools():
     """Order is the whole point: stopping it afterwards is stopping it after
     the drain has already blocked long enough to fire the dump."""
-    from waves.waves_ui.backend import WavesBridge
+    from bitwave.bitwave_ui.backend import BitWaveBridge
 
     order: list[str] = []
 
@@ -133,7 +133,7 @@ def test_shutdown_stops_the_watchdog_before_it_drains_the_pools():
     real_stop = diagnostics.stop_freeze_watchdog
     diagnostics.stop_freeze_watchdog = lambda: order.append("watchdog-stopped")  # type: ignore[assignment]
     try:
-        WavesBridge.shutdown(stub)
+        BitWaveBridge.shutdown(stub)
     finally:
         diagnostics.stop_freeze_watchdog = real_stop  # type: ignore[assignment]
 
@@ -146,7 +146,7 @@ def test_shutdown_stops_the_watchdog_before_it_drains_the_pools():
 _EXIT_PROBE = """
 import faulthandler, sys
 from PySide6.QtCore import QCoreApplication
-from waves.waves_ui import diagnostics
+from bitwave.bitwave_ui import diagnostics
 
 app = QCoreApplication([])
 real_cancel = faulthandler.cancel_dump_traceback_later

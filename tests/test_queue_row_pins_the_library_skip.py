@@ -18,7 +18,7 @@ The row now records the setting once, when it is queued, exactly the way it
 already records the audio quality it will ask for: a change in Settings
 retargets nothing already queued or running, it decides what is queued from
 then on. Both readers, the run's own gate and the expanded row's prediction,
-read that one recorded value (WavesBridge._job_library_skip), so they cannot
+read that one recorded value (BitWaveBridge._job_library_skip), so they cannot
 answer differently.
 
 Everything below drives the real _enqueue, _job_library_skip, _predict_skips
@@ -36,8 +36,8 @@ import pytest
 from _dispatch_stub import arm_dispatch
 from tidalapi.media import Quality
 
-from waves.waves_ui import backend
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Signal:
@@ -62,24 +62,24 @@ class _Stub:
     under test. Every gate answers "go"."""
 
     # The production code under test, running on this carcass.
-    _enqueue = WavesBridge._enqueue
-    _queue_item = WavesBridge._queue_item
-    _set_queue_status = WavesBridge._set_queue_status
-    _job_library_skip = WavesBridge._job_library_skip
-    _job_skip_existing = WavesBridge._job_skip_existing
-    _job_quality = WavesBridge._job_quality
-    _job_atmos = WavesBridge._job_atmos
-    _queued_quality_value = WavesBridge._queued_quality_value
-    _target_tier = WavesBridge._target_tier
-    _target_quality_rank = WavesBridge._target_quality_rank
-    _predict_skips = WavesBridge._predict_skips
-    _download = WavesBridge._download
+    _enqueue = BitWaveBridge._enqueue
+    _queue_item = BitWaveBridge._queue_item
+    _set_queue_status = BitWaveBridge._set_queue_status
+    _job_library_skip = BitWaveBridge._job_library_skip
+    _job_skip_existing = BitWaveBridge._job_skip_existing
+    _job_quality = BitWaveBridge._job_quality
+    _job_atmos = BitWaveBridge._job_atmos
+    _queued_quality_value = BitWaveBridge._queued_quality_value
+    _target_tier = BitWaveBridge._target_tier
+    _target_quality_rank = BitWaveBridge._target_quality_rank
+    _predict_skips = BitWaveBridge._predict_skips
+    _download = BitWaveBridge._download
     # The per-item quality choice _download reads at queue time (issue #36);
     # this carcass holds none, so the ask is the setting's.
-    _ask_quality_for = WavesBridge._ask_quality_for
-    _ask_atmos_for = WavesBridge._ask_atmos_for
-    _quality_override_key = WavesBridge._quality_override_key
-    _row_ask = WavesBridge._row_ask
+    _ask_quality_for = BitWaveBridge._ask_quality_for
+    _ask_atmos_for = BitWaveBridge._ask_atmos_for
+    _quality_override_key = BitWaveBridge._quality_override_key
+    _row_ask = BitWaveBridge._row_ask
 
     def __init__(self, pref) -> None:
         # `pref` is a zero-argument callable, so a test can move the live
@@ -106,7 +106,7 @@ class _Stub:
             data=SimpleNamespace(
                 quality_audio=Quality.high_lossless,
                 download_dolby_atmos=False,
-                download_base_path="/tmp/waves-out",
+                download_base_path="/tmp/bitwave-out",
                 download_delay=False,
                 downloads_concurrent_max=2,
             )
@@ -390,6 +390,6 @@ def test_neither_reader_consults_the_live_setting():
     # The run's reader lives in _start_job now (the job body, built when the
     # row's turn comes); the pin itself is still taken at _enqueue time.
     for name in ("_predict_skips", "_start_job"):
-        src = inspect.getsource(getattr(WavesBridge, name))
+        src = inspect.getsource(getattr(BitWaveBridge, name))
         assert "_job_library_skip(qid)" in src, f"{name} stopped reading the row's pin"
         assert "_library_bulk_skip_on" not in src, f"{name} went back to the live setting"

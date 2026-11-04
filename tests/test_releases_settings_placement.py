@@ -15,9 +15,9 @@ from __future__ import annotations
 import pathlib
 import re
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_QML = pathlib.Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml" / "SettingsPage.qml"
+_QML = pathlib.Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml" / "SettingsPage.qml"
 
 # A third-width tile at the minimum window holds about 36 characters a line
 # over four lines; the label gets one line at a larger size.
@@ -30,22 +30,22 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 def _schema_stub():
     """Just enough state for settingsSchema(), on a defaults-only config."""
-    from waves.model.cfg import HelpSettings
-    from waves.model.cfg import Settings as CfgSettings
+    from bitwave.model.cfg import HelpSettings
+    from bitwave.model.cfg import Settings as CfgSettings
 
     class _Cfg:
         data = CfgSettings()
         help = HelpSettings()
 
     stub = _Stub()
-    stub._default_waves_prefs = _bind(stub, "_default_waves_prefs")
-    stub._waves_prefs = stub._default_waves_prefs()
-    stub._waves_pref_bool = _bind(stub, "_waves_pref_bool")
+    stub._default_bitwave_prefs = _bind(stub, "_default_bitwave_prefs")
+    stub._bitwave_prefs = stub._default_bitwave_prefs()
+    stub._bitwave_pref_bool = _bind(stub, "_bitwave_pref_bool")
     stub.settings = _Cfg()
     stub._help = HelpSettings()
     stub._help_for = _bind(stub, "_help_for")
@@ -61,11 +61,11 @@ def _section(schema, sid):
 
 
 def test_auto_follow_is_on_by_default():
-    assert _schema_stub()._waves_prefs["releases_auto_import"] is True
+    assert _schema_stub()._bitwave_prefs["releases_auto_import"] is True
 
 
 def test_auto_follow_rides_in_the_library_card_not_releases():
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     releases = _section(schema, "releases")
     assert "releases_auto_import" not in [f["key"] for f in releases["fields"]]
     library = next(f for f in _section(schema, "library")["fields"] if f["key"] == "library")
@@ -75,7 +75,7 @@ def test_auto_follow_rides_in_the_library_card_not_releases():
 
 def test_reset_all_restores_auto_follow_on():
     stub = _schema_stub()
-    stub.settingsSchema = lambda: WavesBridge.settingsSchema(stub)
+    stub.settingsSchema = lambda: BitWaveBridge.settingsSchema(stub)
     values = _bind(stub, "_factory_default_values")()
     assert values["releases_auto_import"] is True
 
@@ -83,8 +83,8 @@ def test_reset_all_restores_auto_follow_on():
 def test_releases_and_notifications_words_fit_their_tiles(monkeypatch):
     # Both sections' fields, the banner ones included (the Notifications
     # section only appears where desktop-notifier is installed).
-    monkeypatch.setattr("waves.waves_ui.backend.notifications_supported", lambda: True)
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.notifications_supported", lambda: True)
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     fields = _section(schema, "releases")["fields"] + _section(schema, "notifications")["fields"]
     assert any(f["key"] == "releases_notify" for f in fields)
     for f in fields:
@@ -138,17 +138,17 @@ def test_saving_re_reads_the_library_card_mirrors():
     # edits: a save that left the mirror at the page-open value showed the old
     # value (and took two clicks to change).
     src = _QML.read_text(encoding="utf-8")
-    save = next(line for line in src.splitlines() if "waves.applySettings(page.editMap)" in line)
+    save = next(line for line in src.splitlines() if "bitwave.applySettings(page.editMap)" in line)
     assert "page.syncLibraryMirrors()" in save
     sync = src[src.index("function syncLibraryMirrors()") :]
-    assert 'libraryFollowLive = waves.wavesPref("releases_auto_import") === true' in sync[: sync.index("\n    }")]
-    assert 'libraryMbLookupLive = waves.wavesPref("library_mb_lookup") === true' in sync[: sync.index("\n    }")]
+    assert 'libraryFollowLive = bitwave.bitwavePref("releases_auto_import") === true' in sync[: sync.index("\n    }")]
+    assert 'libraryMbLookupLive = bitwave.bitwavePref("library_mb_lookup") === true' in sync[: sync.index("\n    }")]
 
 
 def test_the_follow_floor_is_five_tracks_and_rides_in_the_library_card():
     stub = _schema_stub()
-    assert stub._waves_prefs["releases_import_min_tracks"] == "5"
-    schema = WavesBridge.settingsSchema(stub)
+    assert stub._bitwave_prefs["releases_import_min_tracks"] == "5"
+    schema = BitWaveBridge.settingsSchema(stub)
     library = next(f for f in _section(schema, "library")["fields"] if f["key"] == "library")
     assert library["min_tracks_key"] == "releases_import_min_tracks"
     assert all(f["key"] != "releases_import_min_tracks" for s in schema for f in s["fields"])
@@ -163,26 +163,26 @@ def test_the_follow_floor_row_sits_under_the_tiles_and_does_not_hold_rescan():
     # The label says the count and the word, not only the stepper's suffix.
     assert 'text: "Follow artists with at least " + libraryCol.minTracksE' in row and 'text: "tracks"' in row
     # Earlier follows under a raised floor: counted, offered for unfollowing.
-    assert "waves.unfollowUnderFloor()" in row and "waves.followsUnderFloor()" in src
+    assert "bitwave.unfollowUnderFloor()" in row and "bitwave.followsUnderFloor()" in src
     assert "function onFollowFloorChanged()" in src
     dirty = next(line for line in src.splitlines() if "readonly property bool libDirty:" in line)
     assert "minTracksE" not in dirty
     # Mirrored like the other library prefs: read on open, after a save and
     # after a reset, and again when the floor moves.
-    assert src.count('Number(waves.wavesPref("releases_import_min_tracks")) || 5') == 4
+    assert src.count('Number(bitwave.bitwavePref("releases_import_min_tracks")) || 5') == 4
 
 
 def test_saving_the_floor_stores_a_count_and_looks_at_the_library_again():
     stub = _Stub()
-    stub._waves_prefs = {"releases_import_min_tracks": "5"}
-    stub._save_waves_prefs = lambda: None
+    stub._bitwave_prefs = {"releases_import_min_tracks": "5"}
+    stub._save_bitwave_prefs = lambda: None
     looks: list = []
     stub._releases_import_floor_changed = lambda: looks.append(1)
-    save = _bind(stub, "setWavesPref")
+    save = _bind(stub, "setBitWavePref")
     for given, stored in ((7, "7"), (7.0, "7"), ("9", "9"), ("0", "1"), ("5000", "999")):
         save("releases_import_min_tracks", given)
-        assert stub._waves_prefs["releases_import_min_tracks"] == stored, given
+        assert stub._bitwave_prefs["releases_import_min_tracks"] == stored, given
     # Four changes: 7.0 after 7 is the same count, and looks again for nothing.
     assert len(looks) == 4
     save("releases_import_min_tracks", "junk")
-    assert stub._waves_prefs["releases_import_min_tracks"] == "999" and len(looks) == 4
+    assert stub._bitwave_prefs["releases_import_min_tracks"] == "999" and len(looks) == 4

@@ -13,10 +13,10 @@ import pathlib
 
 from PySide6.QtGui import QColor, QGuiApplication, QImage
 
-from waves.waves_ui import cover_palette
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui import cover_palette
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
-_QML = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+_QML = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 
 _app = QGuiApplication.instance() or QGuiApplication([])
 
@@ -79,7 +79,7 @@ class _Stub:
 def test_the_bridge_reads_a_cover_once() -> None:
     stub = _Stub()
     stub._cover_palettes = cover_palette.PaletteCache()
-    ask = WavesBridge.coverPalette.__get__(stub, _Stub)
+    ask = BitWaveBridge.coverPalette.__get__(stub, _Stub)
     # Never seen and nothing to read: None, so QML knows to grab.
     assert ask("https://x/a.jpg", None) is None
     first = ask("https://x/a.jpg", _cover(("#e03020", 100)))
@@ -92,7 +92,7 @@ def test_art_draws_the_glow_from_its_own_colors() -> None:
     src = (_QML / "Main.qml").read_text(encoding="utf-8")
     art = src[src.index("    component Art: Rectangle {") : src.index("    component QualTag: Row {")]
     assert 'fragmentShader: "shaders/cover_blend.frag.qsb"' in art
-    assert "waves.coverPalette(key, r.image)" in art
+    assert "bitwave.coverPalette(key, r.image)" in art
     # Grabbed only once raised (or asked for, as the bar's cover is), so a
     # page of idle covers reads nothing.
     assert "if ((!fxRaised && !palWanted) || fxPal !== null" in art

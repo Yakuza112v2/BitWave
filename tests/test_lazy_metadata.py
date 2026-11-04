@@ -1,16 +1,16 @@
-"""Importing ``waves`` must not pay for packaging metadata it may never use.
+"""Importing ``bitwave`` must not pay for packaging metadata it may never use.
 
-``waves/__init__.py`` used to compute ``__name_display__``, ``__version__``
+``bitwave/__init__.py`` used to compute ``__name_display__``, ``__version__``
 and ``__config_dirname__`` at import time: two ``importlib.metadata.version``
 probes plus a ``pyproject.toml`` parse before the first window could appear,
 on every launch, even though most launches read none of them (the UI carries
-its own version literal in ``waves.waves_ui``). They are now computed on
+its own version literal in ``bitwave.bitwave_ui``). They are now computed on
 first attribute access (PEP 562) with the ``is_dev_env()`` verdict cached, so
 a full touch of all three costs at most ONE metadata probe, and a launch that
 touches none costs zero.
 
 The probe counting runs in a subprocess: the test process itself imported
-``waves`` long ago, so only a fresh interpreter can observe import time.
+``bitwave`` long ago, so only a fresh interpreter can observe import time.
 """
 
 from __future__ import annotations
@@ -35,13 +35,13 @@ def _counted(name, *a, **k):
 
 importlib.metadata.version = _counted
 
-import waves
+import bitwave
 
 print("PROBES_AT_IMPORT", len(calls))
 
-dirname = waves.__config_dirname__
-version = waves.__version__
-display = waves.__name_display__
+dirname = bitwave.__config_dirname__
+version = bitwave.__version__
+display = bitwave.__name_display__
 
 print("PROBES_AFTER_ALL_THREE", len(calls))
 print("DIRNAME_OK", dirname in ("BitWave", "BitWave-dev"))
@@ -49,7 +49,7 @@ print("VERSION_NONEMPTY", bool(version))
 print("DISPLAY_NONEMPTY", bool(display))
 
 # Second reads come from the cached globals, not the hook: still no new probe.
-_ = waves.__config_dirname__, waves.__version__, waves.__name_display__
+_ = bitwave.__config_dirname__, bitwave.__version__, bitwave.__name_display__
 print("PROBES_AFTER_REREAD", len(calls))
 """
 
@@ -73,7 +73,7 @@ def _run_probe() -> dict[str, str]:
 
 def test_import_is_free_and_all_three_cost_at_most_one_probe():
     report = _run_probe()
-    assert report["PROBES_AT_IMPORT"] == "0", "importing waves ran a metadata probe"
+    assert report["PROBES_AT_IMPORT"] == "0", "importing bitwave ran a metadata probe"
     assert int(report["PROBES_AFTER_ALL_THREE"]) <= 1, "is_dev_env() verdict is not cached"
     assert report["PROBES_AFTER_REREAD"] == report["PROBES_AFTER_ALL_THREE"]
     assert report["DIRNAME_OK"] == "True"
@@ -82,7 +82,7 @@ def test_import_is_free_and_all_three_cost_at_most_one_probe():
 
 
 def test_unknown_attribute_still_raises():
-    import waves
+    import bitwave
 
     with pytest.raises(AttributeError):
-        _ = waves.no_such_attribute_anywhere
+        _ = bitwave.no_such_attribute_anywhere

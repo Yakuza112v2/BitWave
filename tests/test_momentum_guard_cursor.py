@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_FAIL = 1
@@ -65,7 +65,7 @@ def test_the_guard_wears_the_cursor_of_what_is_beneath() -> None:
 def test_a_hand_under_the_guard_shows_through_and_the_button_keeps_its_hover() -> None:
     env = dict(os.environ)
     env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="waves-guard-cursor-test-")
+    env["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="bitwave-guard-cursor-test-")
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--run-scenario"],
         env=env,
@@ -122,7 +122,7 @@ def _run_scenario() -> int:
         print(f"PySide6 unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
     app = QGuiApplication(sys.argv)
-    qml = Path(tempfile.mkdtemp(prefix="waves-guard-cursor-scene-")) / "scene.qml"
+    qml = Path(tempfile.mkdtemp(prefix="bitwave-guard-cursor-scene-")) / "scene.qml"
     qml.write_text(_SCENE % _guard_block(), encoding="utf-8")
     engine = QQmlApplicationEngine()
     engine.load(QUrl.fromLocalFile(str(qml)))

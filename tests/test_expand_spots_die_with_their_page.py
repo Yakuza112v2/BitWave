@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 # The two writers the rule allows: the reset helper's own line, and the toggle
 # that adds or removes a single row.

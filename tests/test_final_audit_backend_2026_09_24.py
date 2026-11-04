@@ -14,12 +14,12 @@ from unittest.mock import patch
 
 from tidalapi.media import Quality, Track
 
-from waves import config as config_mod
-from waves.ownership import OwnershipStore
-from waves.page_store import PageStore
-from waves.waves_ui import backend
-from waves.waves_ui.backend import (
-    WavesBridge,
+from bitwave import config as config_mod
+from bitwave.ownership import OwnershipStore
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui import backend
+from bitwave.bitwave_ui.backend import (
+    BitWaveBridge,
     _align_edition,
     _build_merge_plan,
     _collapse_editions_by_side,
@@ -31,7 +31,7 @@ from waves.waves_ui.backend import (
     _TrackedDownload,
 )
 
-QML = pathlib.Path(__file__).resolve().parents[1] / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML = pathlib.Path(__file__).resolve().parents[1] / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 
 class _Signal:
@@ -44,7 +44,7 @@ class _Signal:
 
 def _bind(obj, *names):
     for name in names:
-        setattr(obj, name, getattr(WavesBridge, name).__get__(obj, type(obj)))
+        setattr(obj, name, getattr(BitWaveBridge, name).__get__(obj, type(obj)))
 
 
 # ---- C17: a shared ISRC never pairs an album cut with a radio edit -----------
@@ -106,7 +106,7 @@ class _Engine:
 
 
 def _merge_bridge(session_tracks: dict):
-    bridge = WavesBridge.__new__(WavesBridge)
+    bridge = BitWaveBridge.__new__(BitWaveBridge)
     bridge.settings = _FakeSettings()
     bridge.tidal = SimpleNamespace(session=SimpleNamespace(track=lambda tid: session_tracks[int(tid)]))
     return bridge
@@ -182,7 +182,7 @@ def test_a_borrowed_slot_predicts_the_source_editions_tier():
 def test_the_drawer_reads_the_long_album_list():
     import inspect
 
-    src = inspect.getsource(WavesBridge.loadQueueTracks)
+    src = inspect.getsource(BitWaveBridge.loadQueueTracks)
     assert "_album_tracks_full(obj)" in src and "obj.tracks()" not in src
 
 
@@ -202,7 +202,7 @@ def _collapse(mode):
         id(clean): _songs("c", False, ("one", 200), ("two", 240)),
         id(deluxe): _songs("d", True, ("one", 200), ("two", 240), ("bonus", 180)),
     }
-    with patch("waves.waves_ui.backend._edition_base_key", lambda a: "one release"):
+    with patch("bitwave.bitwave_ui.backend._edition_base_key", lambda a: "one release"):
         kept = _collapse_editions_by_side(
             [clean, deluxe],
             lambda a: recs[id(a)],
@@ -230,8 +230,8 @@ def test_both_keeps_one_edition_per_side():
 def test_the_sweep_and_the_artist_page_both_split_before_collapsing():
     import inspect
 
-    assert "_collapse_editions_by_side" in inspect.getsource(WavesBridge._collapse_editions)
-    src = inspect.getsource(WavesBridge._hide_subset_editions)
+    assert "_collapse_editions_by_side" in inspect.getsource(BitWaveBridge._collapse_editions)
+    src = inspect.getsource(BitWaveBridge._hide_subset_editions)
     assert src.count("_collapse_editions_by_side") == 1, "the non-merge branch splits too"
 
 
@@ -269,7 +269,7 @@ def test_a_mix_revalidate_forgets_the_retrieved_mix_first():
 # ---- C22: the presence pill asks with the audio count ------------------------
 def test_the_card_dressing_asks_presence_with_the_audio_count():
     stub = SimpleNamespace(
-        asked=[], _library_stamp=0, _own_generation=0, _CARD_DRESS_KINDS=WavesBridge._CARD_DRESS_KINDS
+        asked=[], _library_stamp=0, _own_generation=0, _CARD_DRESS_KINDS=BitWaveBridge._CARD_DRESS_KINDS
     )
     stub.libraryAlbumPresence = lambda *a: stub.asked.append(a) or {"present": False}
     stub.collectionOwnership = lambda cid: {"verdict": "no"}
@@ -294,7 +294,7 @@ class _InlinePool:
 
 
 def _own_bridge(store, *, quality, atmos_on):
-    b = WavesBridge.__new__(WavesBridge)
+    b = BitWaveBridge.__new__(BitWaveBridge)
     b._ownership = store
     b._own_cache = {}
     b._own_lock = Lock()
@@ -385,7 +385,7 @@ def test_an_adopted_file_is_reported_with_its_path_so_the_button_learns_it(monke
 
 # ---- L05: an editorial page path never leaves TIDAL's API -------------------
 def test_only_relative_pages_paths_are_fetched():
-    ok = WavesBridge._page_path_ok
+    ok = BitWaveBridge._page_path_ok
     assert ok("pages/explore") and ok("pages/data/abc?x=1")
     for bad in ("https://other.example/x", "//other.example/x", "pages//x", "pages/x\\\\y", "/pages/x", "", "explore"):
         assert not ok(bad), bad
@@ -397,13 +397,13 @@ def test_the_video_flag_migration_survives_a_settings_save_failure():
         raise OSError("read-only")
 
     stub = SimpleNamespace(
-        _waves_prefs={}, settings=SimpleNamespace(data=SimpleNamespace(video_download=True), save=boom)
+        _bitwave_prefs={}, settings=SimpleNamespace(data=SimpleNamespace(video_download=True), save=boom)
     )
-    stub._save_waves_prefs = lambda: None
+    stub._save_bitwave_prefs = lambda: None
     _bind(stub, "_migrate_video_flag")
     stub._migrate_video_flag()
     assert stub.settings.data.video_download is False
-    assert stub._waves_prefs["video_flag_migrated"] is True
+    assert stub._bitwave_prefs["video_flag_migrated"] is True
 
 
 # ---- L07: a save already past its gate cannot recreate a removed snapshot ---
@@ -450,7 +450,7 @@ def test_an_atomic_text_write_retries_a_sharing_violation(tmp_path, monkeypatch)
 
     monkeypatch.setattr(config_mod.os, "replace", flaky)
     monkeypatch.setattr(config_mod, "_REPLACE_RETRY_DELAY_SEC", 0.0)
-    target = tmp_path / "waves.json"
+    target = tmp_path / "bitwave.json"
     backend._write_text_atomic(str(target), "{}")
     assert target.read_text() == "{}" and len(tries) == 2
     assert list(tmp_path.iterdir()) == [target], "no temp litter"
@@ -467,7 +467,7 @@ def test_a_hidden_window_slows_the_keep_warm_and_defers_the_ownership_age(monkey
         _remember_share_origin=lambda base: None,
         _own_lock=Lock(),
         _own_cache={"1": (0.0, {"owned": True})},
-        _KEEPWARM_HIDDEN_EVERY=WavesBridge._KEEPWARM_HIDDEN_EVERY,
+        _KEEPWARM_HIDDEN_EVERY=BitWaveBridge._KEEPWARM_HIDDEN_EVERY,
         aged=[],
     )
     stub._forget_ownership_answers = lambda: stub.aged.append(1)
@@ -490,7 +490,7 @@ def test_a_hidden_window_slows_the_keep_warm_and_defers_the_ownership_age(monkey
 
 def test_the_window_tells_the_bridge_when_it_leaves_the_screen():
     src = QML.read_text(encoding="utf-8")
-    assert "onWindowUpChanged: if (waves && waves.windowShown) waves.windowShown(windowUp)" in src
+    assert "onWindowUpChanged: if (bitwave && bitwave.windowShown) bitwave.windowShown(windowUp)" in src
     # onScreen keeps the presentation-stall term: decorative clocks pause on a
     # stalled window, as they did before the bridge hook joined this spot.
     assert "readonly property bool onScreen: windowUp && !presentStalled" in src
@@ -522,7 +522,7 @@ def test_a_hung_probe_does_not_spawn_a_thread_per_tick(monkeypatch):
         gate.wait(5)
         return ("ok", path)
 
-    monkeypatch.setattr(WavesBridge, "_probe_folder_verdict", staticmethod(hang))
+    monkeypatch.setattr(BitWaveBridge, "_probe_folder_verdict", staticmethod(hang))
     stub = SimpleNamespace(
         settings=SimpleNamespace(data=SimpleNamespace(download_base_path="/Volumes/Share/Music")),
         _remount_download_share=lambda path: False,

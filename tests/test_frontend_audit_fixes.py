@@ -11,11 +11,11 @@ from __future__ import annotations
 import pathlib
 import re
 
-QML = pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml"
+QML = pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml"
 MAIN = (QML / "Main.qml").read_text()
 SETTINGS = (QML / "SettingsPage.qml").read_text()
-APP = (pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "app.py").read_text()
-BACKEND = (pathlib.Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "backend.py").read_text()
+APP = (pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "app.py").read_text()
+BACKEND = (pathlib.Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "backend.py").read_text()
 
 
 def _block(src: str, start: str, end: str) -> str:
@@ -213,7 +213,7 @@ def test_the_icon_debug_log_never_touches_the_home_directory():
 def test_icon_debug_lines_before_diagnostics_reach_the_file(tmp_path, monkeypatch):
     """The icon and AUMID lines run before the bridge installs diagnostics;
     they are held and written with the first line after it is installed."""
-    from waves.waves_ui import app as app_mod
+    from bitwave.bitwave_ui import app as app_mod
 
     # Through the app module's own reference: other tests pop the diagnostics
     # module from sys.modules, and app.py keeps the object it imported.
@@ -222,10 +222,10 @@ def test_icon_debug_lines_before_diagnostics_reach_the_file(tmp_path, monkeypatc
     monkeypatch.setattr(diagnostics, "log_path", lambda: None)
     app_mod._icon_debug("BITWAVE icon: early line")
     assert not list(tmp_path.iterdir())
-    monkeypatch.setattr(diagnostics, "log_path", lambda: tmp_path / "waves.log")
+    monkeypatch.setattr(diagnostics, "log_path", lambda: tmp_path / "bitwave.log")
     app_mod._icon_debug("BITWAVE window: late line")
-    text = (tmp_path / "waves-icon-debug.log").read_text(encoding="utf-8")
-    assert text == "BITWAVE icon: early line\nWAVES window: late line\n"
+    text = (tmp_path / "bitwave-icon-debug.log").read_text(encoding="utf-8")
+    assert text == "BITWAVE icon: early line\nBITWAVE window: late line\n"
     assert app_mod._icon_debug_pending == []
 
 

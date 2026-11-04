@@ -35,7 +35,7 @@ from pathlib import Path
 
 import pytest
 
-QML_MAIN = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "Main.qml"
+QML_MAIN = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "Main.qml"
 
 _EXIT_OK = 0
 _EXIT_REGRESSED = 1
@@ -54,7 +54,7 @@ def test_card_progress_bar_keeps_its_outline():
     env["QT_QPA_PLATFORM"] = "offscreen"
     # Sandboxed: a bridge that finds the packaged app's config dir adopts its
     # settings and starts a real scan of the user's music library.
-    sandbox = tempfile.mkdtemp(prefix="waves-card-outline-test-")
+    sandbox = tempfile.mkdtemp(prefix="bitwave-card-outline-test-")
     env["XDG_CONFIG_HOME"] = sandbox
     env["HOME"] = sandbox
     proc = subprocess.run(
@@ -106,15 +106,15 @@ def _run_scenario() -> int:
 
     app = QGuiApplication.instance() or QGuiApplication([])
     try:
-        from waves.waves_ui.app import _load_mono
-        from waves.waves_ui.backend import WavesBridge
+        from bitwave.bitwave_ui.app import _load_mono
+        from bitwave.bitwave_ui.backend import BitWaveBridge
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"Qt platform/backend unavailable: {exc}", file=sys.stderr)
         return _EXIT_NO_QT
 
-    bridge = WavesBridge(tidal=None)
+    bridge = BitWaveBridge(tidal=None)
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("waves", bridge)
+    engine.rootContext().setContextProperty("bitwave", bridge)
     engine.rootContext().setContextProperty("monoFont", _load_mono())
     engine.rootContext().setContextProperty("uiFontFamily", app.font().family())
     engine.load(QUrl.fromLocalFile(str(QML_MAIN)))
@@ -170,7 +170,7 @@ def _run_scenario() -> int:
         failures.append(f"the pill's color {pr},{pg},{pb} is not the button's fill {fr},{fg},{fb}")
 
     # Pixel probe: grab the card, look at the bar's left edge, one pixel in.
-    png = os.path.join(tempfile.mkdtemp(prefix="waves-card-outline-"), "card.png")
+    png = os.path.join(tempfile.mkdtemp(prefix="bitwave-card-outline-"), "card.png")
     q(
         "(function(){" + _WALK + " var c = card(); var b = btn();"
         " var p = b.mapToItem(c, 0, b.height / 2);"

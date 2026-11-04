@@ -16,10 +16,10 @@ from unittest.mock import MagicMock, patch
 
 from pathvalidate.error import ErrorReason, ValidationError
 
-from waves.download import Download
-from waves.helper.path import _shorten_to_valid_length, path_file_sanitize
-from waves.page_store import PageStore
-from waves.waves_ui.backend import _PAGE_CACHE_VERSION, WavesBridge
+from bitwave.download import Download
+from bitwave.helper.path import _shorten_to_valid_length, path_file_sanitize
+from bitwave.page_store import PageStore
+from bitwave.bitwave_ui.backend import _PAGE_CACHE_VERSION, BitWaveBridge
 
 
 def _downloader(tmp_path: pathlib.Path) -> Download:
@@ -72,7 +72,7 @@ def test_a_symlink_into_a_missing_playlist_dir_creates_the_dir(tmp_path: pathlib
     dst.write_text("audio", encoding="utf-8")
     src = tmp_path / "Playlists" / "Road Songs" / "song.flac"  # parent never created
 
-    with patch("waves.download.format_path_media", return_value="Tracks/song"):
+    with patch("bitwave.download.format_path_media", return_value="Tracks/song"):
         out = d.media_move_and_symlink(SimpleNamespace(), src, ".flac")
 
     assert out == dst
@@ -87,7 +87,7 @@ def test_a_failed_symlink_is_logged_and_never_raises(tmp_path: pathlib.Path) -> 
     src = tmp_path / "Playlists" / "PL" / "song.flac"
 
     with (
-        patch("waves.download.format_path_media", return_value="Tracks/song"),
+        patch("bitwave.download.format_path_media", return_value="Tracks/song"),
         patch.object(pathlib.Path, "symlink_to", side_effect=OSError("no symlinks here")),
     ):
         out = d.media_move_and_symlink(SimpleNamespace(), src, ".flac")
@@ -169,17 +169,17 @@ def test_shorten_helper_halves_then_drops_components() -> None:
 
 
 def test_factory_reset_wipes_diagnostic_bundles(tmp_path: pathlib.Path, monkeypatch) -> None:
-    bundle = tmp_path / "waves-diagnostics-20260802-121314-123.txt"
+    bundle = tmp_path / "bitwave-diagnostics-20260802-121314-123.txt"
     bundle.write_text("scrubbed diagnostics", encoding="utf-8")
-    foreign = tmp_path / "waves-diagnostics-notes.txt"
+    foreign = tmp_path / "bitwave-diagnostics-notes.txt"
     foreign.write_text("the user's own notes", encoding="utf-8")
 
     stub = SimpleNamespace(_ownership=SimpleNamespace(close=lambda: None))
-    monkeypatch.setattr("waves.waves_ui.backend.path_config_base", lambda: str(tmp_path))
-    monkeypatch.setattr("waves.waves_ui.backend.OwnershipStore", lambda _p: SimpleNamespace())
-    monkeypatch.setattr("waves.waves_ui.backend.diagnostics.detach_disk_log", lambda: None)
-    monkeypatch.setattr("waves.waves_ui.backend.QtCore.QSettings", lambda: MagicMock())
-    WavesBridge.factoryReset(stub)
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.path_config_base", lambda: str(tmp_path))
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.OwnershipStore", lambda _p: SimpleNamespace())
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.diagnostics.detach_disk_log", lambda: None)
+    monkeypatch.setattr("bitwave.bitwave_ui.backend.QtCore.QSettings", lambda: MagicMock())
+    BitWaveBridge.factoryReset(stub)
 
     assert not bundle.exists(), "the export contains breadcrumbs and must go with the reset"
     assert foreign.exists(), "only the exact timestamped shape may match"
@@ -196,7 +196,7 @@ class _RacingDict(dict):
 
 
 class _SaveStub:
-    _save_page_cache = WavesBridge._save_page_cache
+    _save_page_cache = BitWaveBridge._save_page_cache
 
     def __init__(self, path: pathlib.Path, lib=None):
         self._logged_in = True
@@ -234,27 +234,27 @@ def test_the_save_serializes_one_shot_never_incrementally(tmp_path: pathlib.Path
     a cache change size mid-encode; json.dumps' one-shot C encoder cannot. The
     save must use dumps."""
     stub = _SaveStub(tmp_path / "page_cache.json")
-    with patch("waves.waves_ui.backend.json.dump", side_effect=AssertionError("dump() must not be used")):
+    with patch("bitwave.bitwave_ui.backend.json.dump", side_effect=AssertionError("dump() must not be used")):
         stub._save_page_cache()
     assert (tmp_path / "page_cache.sqlite3").exists()
 
 
 def test_factory_reset_pattern_cannot_match_a_user_file() -> None:
-    from waves.waves_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
+    from bitwave.bitwave_ui.backend import _FACTORY_WIPE_LOG_PATTERNS
 
     def one_pattern_matches(name: str) -> bool:
         return any(pat.match(name) for pat in _FACTORY_WIPE_LOG_PATTERNS)
 
-    assert one_pattern_matches("waves-diagnostics-20260802-121314-123.txt")
+    assert one_pattern_matches("bitwave-diagnostics-20260802-121314-123.txt")
     # The per-root library caches (see cache_file_for_root) and their sidecars.
     assert one_pattern_matches("library-0123456789ab.sqlite3")
     assert one_pattern_matches("library-0123456789ab.sqlite3-wal")
     assert one_pattern_matches("library-0123456789ab.sqlite3-shm")
     for name in (
-        "waves-diagnostics-20260802-121314-123.txt.bak",
-        "my-waves-diagnostics-20260802-121314-123.txt",
-        "waves-diagnostics-2026-08-02.txt",
-        "waves-diagnostics-.txt",
+        "bitwave-diagnostics-20260802-121314-123.txt.bak",
+        "my-bitwave-diagnostics-20260802-121314-123.txt",
+        "bitwave-diagnostics-2026-08-02.txt",
+        "bitwave-diagnostics-.txt",
         # A name a user could plausibly have put beside ours must never match:
         # no digest, wrong digest length, uppercase (ours are hexdigest lower),
         # a prefix or suffix, or a non-sqlite extension.

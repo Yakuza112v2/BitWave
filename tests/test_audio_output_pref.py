@@ -19,7 +19,7 @@ import logging
 import pytest
 from PySide6 import QtMultimedia
 
-from waves.waves_ui.backend import WavesBridge
+from bitwave.bitwave_ui.backend import BitWaveBridge
 
 
 class _Stub:
@@ -27,7 +27,7 @@ class _Stub:
 
 
 def _bind(stub, name):
-    return getattr(WavesBridge, name).__get__(stub, type(stub))
+    return getattr(BitWaveBridge, name).__get__(stub, type(stub))
 
 
 class _Dev:
@@ -73,10 +73,10 @@ class _Sig:
 def stub(monkeypatch):
     monkeypatch.setattr(QtMultimedia, "QMediaDevices", _Devices)
     s = _Stub()
-    s._default_waves_prefs = _bind(s, "_default_waves_prefs")
-    s._waves_prefs = s._default_waves_prefs()
-    s._waves_pref_bool = _bind(s, "_waves_pref_bool")
-    s._save_waves_prefs = lambda: None
+    s._default_bitwave_prefs = _bind(s, "_default_bitwave_prefs")
+    s._bitwave_prefs = s._default_bitwave_prefs()
+    s._bitwave_pref_bool = _bind(s, "_bitwave_pref_bool")
+    s._save_bitwave_prefs = lambda: None
     s._factory_reset = False
     s._media_devices = _Devices()
     s.audioOutputChanged = _Sig()
@@ -88,15 +88,15 @@ def stub(monkeypatch):
         "audioOutputDevice",
         "audioOutputMissing",
         "audioOutputLive",
-        "setWavesPref",
+        "setBitWavePref",
     ):
         setattr(s, name, _bind(s, name))
     return s
 
 
 def test_the_pick_defaults_to_the_system_default(stub):
-    assert stub._waves_prefs["audio_output"] == ""
-    assert stub._waves_prefs["audio_output_name"] == ""
+    assert stub._bitwave_prefs["audio_output"] == ""
+    assert stub._bitwave_prefs["audio_output_name"] == ""
     assert stub.audioOutputDevice() is _SPEAKERS
     assert stub.audioOutputMissing() is False
 
@@ -112,10 +112,10 @@ def test_rows_lead_with_system_default_and_list_each_device_once(stub):
 
 
 def test_a_pick_stores_the_id_and_name_and_tells_the_ui(stub, caplog):
-    with caplog.at_level(logging.INFO, logger="waves.audio"):
-        stub.setWavesPref("audio_output", b"tv".hex())
-    assert stub._waves_prefs["audio_output"] == b"tv".hex()
-    assert stub._waves_prefs["audio_output_name"] == "Living room TV (Miracast)"
+    with caplog.at_level(logging.INFO, logger="bitwave.audio"):
+        stub.setBitWavePref("audio_output", b"tv".hex())
+    assert stub._bitwave_prefs["audio_output"] == b"tv".hex()
+    assert stub._bitwave_prefs["audio_output_name"] == "Living room TV (Miracast)"
     assert stub.audioOutputChanged.fired == 1, "Main.qml only re-resolves the device on audioOutputChanged"
     assert stub.audioOutputDevice() is _TV
     assert stub.audioOutputLive() == "Living room TV (Miracast)"
@@ -125,12 +125,12 @@ def test_a_pick_stores_the_id_and_name_and_tells_the_ui(stub, caplog):
     assert "Living room TV" not in caplog.text
     assert b"tv".hex() not in caplog.text
     # The same pick again changes nothing and stays quiet.
-    stub.setWavesPref("audio_output", b"tv".hex())
+    stub.setBitWavePref("audio_output", b"tv".hex())
     assert stub.audioOutputChanged.fired == 1
 
 
 def test_an_unplugged_pick_falls_back_and_keeps_its_name(stub):
-    stub.setWavesPref("audio_output", b"tv".hex())
+    stub.setBitWavePref("audio_output", b"tv".hex())
     stub._media_devices.outputs = [_SPEAKERS]
     assert stub.audioOutputMissing() is True
     assert stub.audioOutputDevice() is _SPEAKERS, "a gone pick must play through the system default"
@@ -144,22 +144,22 @@ def test_an_unplugged_pick_falls_back_and_keeps_its_name(stub):
         "missing": True,
     }
     # Re-saving the gone pick (a page save, a restart) keeps the name.
-    stub.setWavesPref("audio_output", b"tv".hex())
-    assert stub._waves_prefs["audio_output_name"] == "Living room TV (Miracast)"
+    stub.setBitWavePref("audio_output", b"tv".hex())
+    assert stub._bitwave_prefs["audio_output_name"] == "Living room TV (Miracast)"
 
 
 def test_picking_system_default_clears_the_name(stub):
-    stub.setWavesPref("audio_output", b"tv".hex())
-    stub.setWavesPref("audio_output", "")
-    assert stub._waves_prefs["audio_output"] == ""
-    assert stub._waves_prefs["audio_output_name"] == ""
+    stub.setBitWavePref("audio_output", b"tv".hex())
+    stub.setBitWavePref("audio_output", "")
+    assert stub._bitwave_prefs["audio_output"] == ""
+    assert stub._bitwave_prefs["audio_output_name"] == ""
     assert stub.audioOutputChanged.fired == 2
 
 
 def test_the_pick_has_its_own_playback_section_after_appearance():
     from tests.test_video_hover_peek_pref import _schema_stub
 
-    schema = WavesBridge.settingsSchema(_schema_stub())
+    schema = BitWaveBridge.settingsSchema(_schema_stub())
     ids = [s["id"] for s in schema]
     assert ids.index("playback") == ids.index("appearance") + 1
     playback = schema[ids.index("playback")]
@@ -183,15 +183,15 @@ def test_the_saved_id_is_registered_as_a_secret(stub, monkeypatch):
     """A CoreAudio or PulseAudio id can carry the device's MAC address and a
     WASAPI endpoint id is unique to the machine: the hex and the decoded
     form both go to the redactor, on a pick and on load."""
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     noted = []
     monkeypatch.setattr(backend.diagnostics, "register_secret", lambda v, ph="": noted.append((v, ph)))
-    stub.setWavesPref("audio_output", b"tv".hex())
+    stub.setBitWavePref("audio_output", b"tv".hex())
     assert (b"tv".hex(), "‹audio-output›") in noted
     assert ("tv", "‹audio-output›") in noted
     noted.clear()
-    stub.setWavesPref("audio_output", "")
+    stub.setBitWavePref("audio_output", "")
     assert noted == [], "the system default has no id to hide"
 
 
@@ -201,24 +201,24 @@ def test_a_wrong_shaped_pref_on_disk_goes_back_to_stock(tmp_path, monkeypatch):
     the literal "5". Each goes back to its default and the rest survive."""
     import json
 
-    from waves.waves_ui import backend
+    from bitwave.bitwave_ui import backend
 
     noted = []
     monkeypatch.setattr(backend.diagnostics, "register_secret", lambda v, ph="": noted.append(v))
     s = _Stub()
-    s._default_waves_prefs = _bind(s, "_default_waves_prefs")
-    s._waves_prefs_path = str(tmp_path / "waves.json")
-    (tmp_path / "waves.json").write_text(
+    s._default_bitwave_prefs = _bind(s, "_default_bitwave_prefs")
+    s._bitwave_prefs_path = str(tmp_path / "bitwave.json")
+    (tmp_path / "bitwave.json").write_text(
         json.dumps({"audio_output": ["x"], "explicit_mode": 5, "audio_output_name": "TV", "collapse_editions": False}),
         encoding="utf-8",
     )
-    prefs = _bind(s, "_load_waves_prefs")()
+    prefs = _bind(s, "_load_bitwave_prefs")()
     assert prefs["audio_output"] == ""
     assert prefs["explicit_mode"] == "explicit"
     assert prefs["audio_output_name"] == "TV"
     assert prefs["collapse_editions"] is False, "the rest of the file survives"
     assert noted == [], "an empty id is nothing to hide"
-    (tmp_path / "waves.json").write_text(json.dumps({"audio_output": b"tv".hex()}), encoding="utf-8")
-    prefs = _bind(s, "_load_waves_prefs")()
+    (tmp_path / "bitwave.json").write_text(json.dumps({"audio_output": b"tv".hex()}), encoding="utf-8")
+    prefs = _bind(s, "_load_bitwave_prefs")()
     assert prefs["audio_output"] == b"tv".hex()
     assert b"tv".hex() in noted, "a saved id is registered the moment it is read"

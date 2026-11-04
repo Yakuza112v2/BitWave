@@ -2,13 +2,13 @@
 
 THE BUG
 -------
-The two diagnostics toggles apply live via ``setWavesPref`` but never set
+The two diagnostics toggles apply live via ``setBitWavePref`` but never set
 ``needsRefresh``, and ``refreshSchema()`` is the only thing that re-reads
-``waves.settingsSchema()``. ``onActiveChanged`` clears ``editMap`` on every
+``bitwave.settingsSchema()``. ``onActiveChanged`` clears ``editMap`` on every
 reopen but rebuilds ``groups`` only when ``needsRefresh`` is set, which only the
 Save button does. So after one close and reopen the card rendered the stale
 baked-in values, and the EXPORT REPORT handler pushed **those** booleans back
-through ``setWavesPref`` before calling ``exportDiagnostics()``, which reads the
+through ``setBitWavePref`` before calling ``exportDiagnostics()``, which reads the
 pref it had just clobbered.
 
 The card's own copy invites exactly that sequence: "Turn on, reproduce the
@@ -28,7 +28,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-QML = Path(__file__).resolve().parent.parent / "waves" / "waves_ui" / "qml" / "SettingsPage.qml"
+QML = Path(__file__).resolve().parent.parent / "bitwave" / "bitwave_ui" / "qml" / "SettingsPage.qml"
 
 _DIAG_PREFS = ("verbose_diagnostics", "diagnostics_redact_content")
 
@@ -57,9 +57,9 @@ def _handler_body(source: str, anchor: str) -> str:
 
 def test_export_does_not_rewrite_diagnostics_prefs_from_a_stale_schema():
     """The export handler must call exportDiagnostics and nothing that writes."""
-    body = _handler_body(_source(), "waves.exportDiagnostics()")
+    body = _handler_body(_source(), "bitwave.exportDiagnostics()")
 
-    assert "setWavesPref" not in body, (
+    assert "setBitWavePref" not in body, (
         "the export handler writes the diagnostics prefs before exporting; after a "
         "close-and-reopen it writes the STALE schema value and silently turns the "
         "user's choices off"
@@ -74,8 +74,8 @@ def test_live_applied_diagnostics_toggles_mark_the_schema_stale():
     source = _source()
 
     for key in _DIAG_PREFS:
-        # The toggle handler is the one that calls setWavesPref for this key.
-        anchor = f'waves.setWavesPref("{key}"'
+        # The toggle handler is the one that calls setBitWavePref for this key.
+        anchor = f'bitwave.setBitWavePref("{key}"'
         assert anchor in source, f"{key} is no longer applied live; update this guard"
         body = _handler_body(source, anchor)
 
@@ -96,5 +96,5 @@ def test_the_two_prefs_are_only_written_from_their_own_toggles():
     can push a stale value back at the backend."""
     source = _source()
     for key in _DIAG_PREFS:
-        writes = len(re.findall(rf'setWavesPref\(\s*"{re.escape(key)}"', source))
-        assert writes == 1, f"expected exactly one setWavesPref site for {key}, found {writes}"
+        writes = len(re.findall(rf'setBitWavePref\(\s*"{re.escape(key)}"', source))
+        assert writes == 1, f"expected exactly one setBitWavePref site for {key}, found {writes}"

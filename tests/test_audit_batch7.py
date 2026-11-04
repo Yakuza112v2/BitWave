@@ -18,15 +18,15 @@ import pathlib
 
 import pytest
 
-from waves.download import Download
-from waves.helper.path import check_file_exists
-from waves.ownership import OwnershipStore
-from waves.waves_ui.updater import AppUpdater, UpdaterError
+from bitwave.download import Download
+from bitwave.helper.path import check_file_exists
+from bitwave.ownership import OwnershipStore
+from bitwave.bitwave_ui.updater import AppUpdater, UpdaterError
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-BACKEND_SRC = (ROOT / "waves" / "waves_ui" / "backend.py").read_text()
-MAIN_QML = (ROOT / "waves" / "waves_ui" / "qml" / "Main.qml").read_text()
-BRIDGE_MD = (ROOT / "waves" / "waves_ui" / "BRIDGE.md").read_text()
+BACKEND_SRC = (ROOT / "bitwave" / "bitwave_ui" / "backend.py").read_text()
+MAIN_QML = (ROOT / "bitwave" / "bitwave_ui" / "qml" / "Main.qml").read_text()
+BRIDGE_MD = (ROOT / "bitwave" / "bitwave_ui" / "BRIDGE.md").read_text()
 
 
 # ---------------------------------------------------------------- finding 65
@@ -49,7 +49,7 @@ def test_copy_file_contents_fsyncs_before_returning(tmp_path, monkeypatch):
         synced.append(fd)
         real_fsync(fd)
 
-    monkeypatch.setattr("waves.download.os.fsync", spy_fsync)
+    monkeypatch.setattr("bitwave.download.os.fsync", spy_fsync)
     Download._copy_file_contents(_CopyHost(), src, dst)
     assert synced, "destination file was never fsynced"
     assert dst.read_bytes() == b"x" * 1024
@@ -109,9 +109,9 @@ class _TreeHost:
 
 
 def _tree_setup(tmp_path):
-    install_root = tmp_path / "waves.dist"
+    install_root = tmp_path / "bitwave.dist"
     install_root.mkdir()
-    target = install_root / "waves.bin"
+    target = install_root / "bitwave.bin"
     target.write_bytes(b"OLD")
     (install_root / "lib.so").write_bytes(b"OLDLIB")
     return install_root, target
@@ -119,9 +119,9 @@ def _tree_setup(tmp_path):
 
 def test_tree_swap_missing_executable_restores_old_install(tmp_path):
     install_root, target = _tree_setup(tmp_path)
-    new_tree = tmp_path / "staged" / "waves.dist"
+    new_tree = tmp_path / "staged" / "bitwave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "lib.so").write_bytes(b"NEWLIB")  # no waves.bin in the payload
+    (new_tree / "lib.so").write_bytes(b"NEWLIB")  # no bitwave.bin in the payload
     with pytest.raises(UpdaterError):
         AppUpdater._apply_unix_tree(_TreeHost(), new_tree, target, lambda *_: None)
     assert target.read_bytes() == b"OLD", "old install was not restored"
@@ -131,9 +131,9 @@ def test_tree_swap_missing_executable_restores_old_install(tmp_path):
 
 def test_tree_swap_with_executable_still_succeeds(tmp_path):
     install_root, target = _tree_setup(tmp_path)
-    new_tree = tmp_path / "staged" / "waves.dist"
+    new_tree = tmp_path / "staged" / "bitwave.dist"
     new_tree.mkdir(parents=True)
-    (new_tree / "waves.bin").write_bytes(b"NEW")
+    (new_tree / "bitwave.bin").write_bytes(b"NEW")
     out = AppUpdater._apply_unix_tree(_TreeHost(), new_tree, target, lambda *_: None)
     assert out == target
     assert target.read_bytes() == b"NEW"
