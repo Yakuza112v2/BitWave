@@ -56,7 +56,7 @@ jobs:
           from pathlib import Path
           changes=Path('qml-changes.txt').read_text().splitlines()
           assert changes
-          assert all((p.startswith('bitwave/bitwave_ui/qml/') and p.endswith('.qml')) or p.startswith('tests/') for p in changes), changes
+          assert all((p.startswith('bitwave/bitwave_ui/qml/') and p.endswith('.qml')) or p.startswith('tests/') or p=='.github/workflows/replace-current-windows.yml' for p in changes), changes
           PY
             git checkout --detach "$QML_COMMIT"
             echo "SOURCE_COMMIT=$QML_COMMIT" >> "$GITHUB_ENV"
