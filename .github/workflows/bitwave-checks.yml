@@ -51,3 +51,17 @@ jobs:
           tests/test_cover_round.py
           tests/test_now_rail_loading_qml.py
           tests/test_releases_pane_scroll.py
+          tests/test_issue59_listing_cursor_paging.py
+          tests/test_playlist_folders.py
+          tests/test_folder_tree_freshness.py
+          tests/test_issue46_playlist_duplicates.py
+          tests/test_library_joined.py
+          tests/test_clean_twin_title_spelling.py
+          tests/test_edition_explicit_split.py
+          tests/test_library_bridge.py
+          tests/test_library_probe_fallback.py
+          tests/test_library_save_rescan.py
+          tests/test_releases_import_backend.py
+          tests/test_queue_button_chart_history.py
+          tests/test_factory_reset.py
+          tests/test_audit_batch6.py

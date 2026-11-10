@@ -667,7 +667,7 @@ Barcode	Barcode
 Best of both	Das Beste aus beiden
 Both	Beide
 Check for updates automatically	Automatisch nach Updates suchen
-Choose where your music library lives, then SAVE CHANGES to scan it. BitWave matches your TIDAL browsing against it to badge what you already have. Scanning only ever reads: it never writes, moves or renames anything it finds.	Wähle den Ordner deiner Musiksammlung und anschließend ÄNDERUNGEN SPEICHERN. BitWave liest die Dateien und markiert bereits vorhandene Musik. Dabei werden keine Dateien geändert, verschoben oder umbenannt.
+Choose where your music library lives, then SAVE CHANGES to scan it. BitWave matches your TIDAL browsing against it to badge what you already have. Scanning only ever reads: it never writes, moves or renames anything it finds.	Wähle den Ordner deiner Musiksammlung und anschließend ÄNDERUNGEN SPEICHERN. Ein separater Download-Ordner wird ebenfalls geprüft. BitWave liest die Dateien und markiert bereits vorhandene Musik aus beiden Ordnern. Dabei werden keine Dateien geändert, verschoben oder umbenannt.
 Classic	Klassisch
 Clean	Zensiert
 Concurrent track downloads	Gleichzeitige Titel-Downloads

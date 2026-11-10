@@ -1,5 +1,16 @@
 # Änderungen
 
+## v0.2.3 (2026-11-10)
+
+**BitWave by Yakuza112**
+
+- Ein separater Download-Ordner zählt zusammen mit dem Musikordner zur Musiksammlung. Fertige Downloads werden sofort als vorhanden angezeigt; Sammeldownloads überspringen bereits vorhandene Musik aus beiden Ordnern.
+- Die Playlist-Seite lädt auch bei mindestens 50 Playlists in einem Ordner vollständig. Weitere Playlists und Unterordner werden über alle Seiten hinweg geladen.
+- Das Geschwindigkeitsdiagramm der Warteschlange bewahrt den Verlauf bereits abgeschlossener Abschnitte und zeigt schnelle und langsame Downloadphasen korrekt an.
+- Die Auswahl expliziter oder bereinigter Fassungen erkennt passende Ausgaben auch bei fehlenden Apostrophen oder mit Sternchen zensierten Wörtern. Mehrdeutige Titel und unterschiedlich lange Aufnahmen werden weiterhin getrennt behandelt.
+
+Lade das Windows-ZIP herunter, entpacke es vollständig und starte `BitWave.exe`.
+
 ## v0.2.2 (2026-11-04)
 
 **BitWave by Yakuza112**
