@@ -6,7 +6,7 @@ defaults:
   run:
     shell: bash
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.inputs.release_tag || github.ref }}
+  group: bitwave-windows-release-${{ github.event.inputs.release_tag || github.ref }}
   cancel-in-progress: true
 env:
   ASSET_EXTENSION: .zip
@@ -91,9 +91,7 @@ jobs:
     needs:
     - compute
     - create-release
-    if: always() && needs.compute.result == 'success' && needs['create-release'].result != 'failure' && needs['create-release'].result
-      != 'cancelled' && (startsWith(github.ref, 'refs/tags/') || github.event_name
-      == 'workflow_dispatch')
+    if: ${{ !cancelled() && needs.compute.result == 'success' && needs['create-release'].result == 'success' }}
     strategy:
       fail-fast: false
       matrix:
