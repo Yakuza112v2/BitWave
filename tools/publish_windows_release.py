@@ -33,7 +33,8 @@ def main():
 
     def api(method, path, **kwargs):
         r = session.request(method, API + path, timeout=120, **kwargs)
-        r.raise_for_status()
+        if not r.ok:
+            raise RuntimeError(f"GitHub {method} {path}: {r.status_code}: {r.json().get('message', 'request failed')}")
         return r.json() if r.content else None
 
     commit = args.commit
@@ -132,7 +133,12 @@ def main():
         assert notes, "Release notes are missing"
         body = "\n".join(notes).strip() + "\n\n<details><summary>Download prüfen</summary>\n\n" + verify_notes(manifest.decode()) + "\n</details>"
         beta = "-" in args.tag
-        result = api("PATCH", "/releases/" + str(release["id"]), json={"tag_name": args.tag, "target_commitish": commit, "name": "BitWave " + args.tag.removeprefix("v"), "body": body, "draft": False, "prerelease": beta, "make_latest": "false" if beta else "true"})
+        fields = {"name": "BitWave " + args.tag.removeprefix("v"), "body": body, "draft": False, "prerelease": beta, "make_latest": "false" if beta else "true"}
+        # An existing tag has already been checked above. Do not ask GitHub
+        # to write its ref again merely to publish the attached release.
+        if not ref:
+            fields.update(tag_name=args.tag, target_commitish=commit)
+        result = api("PATCH", "/releases/" + str(release["id"]), json=fields)
         assert not result["draft"] and result["prerelease"] == beta
         assert api("GET", "/git/ref/tags/" + args.tag)["object"]["sha"] == commit
         print("Veröffentlicht und geprüft:", result["html_url"])
