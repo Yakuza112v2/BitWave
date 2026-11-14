@@ -1,5 +1,5 @@
 # BitWave: ausschließlich Windows x64 und ARM64.
-name: release-or-test-build
+name: Windows-Release
 permissions:
   contents: write
 defaults:
@@ -79,12 +79,6 @@ jobs:
       && github.event.inputs.release_tag != '') }}
     runs-on: ubuntu-24.04
     steps:
-    - name: Ausgabestand dem aktuellen Quellcode zuordnen
-      if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag == 'v0.2.2' }}
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v0.2.2" -f sha="${{ github.sha }}" -F force=true
     - name: Create the Release (empty draft, assets attached by the matrix)
       uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
       env:
@@ -98,7 +92,7 @@ jobs:
     - compute
     - create-release
     if: always() && needs.compute.result == 'success' && needs['create-release'].result != 'failure' && needs['create-release'].result
-      != 'cancelled' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/test-build' || github.event_name
+      != 'cancelled' && (startsWith(github.ref, 'refs/tags/') || github.event_name
       == 'workflow_dispatch')
     strategy:
       fail-fast: false
@@ -186,13 +180,7 @@ jobs:
       with:
         name: sha256-${{matrix.OS_ARCH}}
         path: ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}*.sha256
-    - name: Upload Build Artifact (workflow_dispatch / test-build)
-      if: ${{ (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/test-build') && (github.event_name !=
-        'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH)) }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}
-        path: ./dist/${{needs.compute.outputs.OUT_NAME_FILE}}_${{matrix.OS_ARCH}}${{needs.compute.outputs.ASSET_EXTENSION}}
+
     - name: Upload Release Asset
       if: ${{ ((github.event_name != 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) || (github.event_name ==
         'workflow_dispatch' && github.event.inputs.release_tag != '')) && (github.event_name != 'workflow_dispatch' || github.event.inputs.only
@@ -277,7 +265,8 @@ jobs:
         fail_on_unmatched_files: false
         tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
         body_path: RELEASE_NOTES.md
-        make_latest: true
+        prerelease: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-Beta') }}
+        make_latest: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-Beta') && 'false' || 'true' }}
         draft: false
         files: |
           SHA256SUMS
@@ -286,13 +275,11 @@ jobs:
   push:
     tags:
     - v*.*.*
-    branches:
-    - test-build
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Release unter diesem Tag veröffentlichen, z. B. v0.2.1. Leer = nur Testpakete.
-        required: false
+        description: Version veröffentlichen, z. B. v0.2.3-Beta oder v0.2.4.
+        required: true
         default: ''
       only:
         description: 'windows-x64 oder windows-arm64. Leer = beide Windows-Varianten.'

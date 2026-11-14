@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from packaging.version import Version
 from pathlib import Path
 
 from bitwave.bitwave_ui import __version__
@@ -21,14 +22,14 @@ PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
 def test_pyproject_version_matches_app_version():
     packaged = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]["version"]
-    assert packaged == __version__, (
+    assert Version(packaged) == Version(__version__), (
         f"pyproject.toml says {packaged!r} but bitwave.bitwave_ui.__version__ is "
         f"{__version__!r}; bump both in the release commit"
     )
 
 
-def test_app_version_is_a_plain_release_number():
-    """X.Y.Z only: the tag CI builds is this string with a 'v' in front."""
+def test_app_version_is_a_release_or_beta_number():
+    """X.Y.Z or X.Y.Z-Beta: the tag CI builds is this string with a 'v' in front."""
     assert re.fullmatch(
-        r"\d+\.\d+\.\d+", __version__
-    ), f"__version__ {__version__!r} is not a plain X.Y.Z release number"
+        r"\d+\.\d+\.\d+(?:-Beta)?", __version__
+    ), f"__version__ {__version__!r} is not a supported release number"

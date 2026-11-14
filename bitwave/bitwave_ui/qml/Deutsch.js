@@ -2,6 +2,16 @@
 
 // Deutsche Oberflächentexte. Fachbegriffe und Musikinhalte bleiben unverändert.
 var catalogue = {
+  "Available quality": "Verfügbare Qualität",
+  "Hi-Res only": "Nur Hi-Res",
+  "Filter loaded albums and tracks by available Hi-Res quality": "Geladene Alben und Titel nach verfügbarer Hi-Res-Qualität filtern",
+  "No Hi-Res albums or tracks in the loaded search results. Disable the filter to show all results.": "Keine Hi-Res-Alben oder -Titel in den geladenen Suchergebnissen. Schalte den Filter aus, um alle Ergebnisse anzuzeigen.",
+  "Remove from TIDAL favorites": "Aus TIDAL-Favoriten entfernen",
+  "Remove from TIDAL favorites?": "Aus TIDAL-Favoriten entfernen?",
+  "The track will be removed from your TIDAL favorites. Downloaded files will be kept.": "Der Titel wird aus deinen TIDAL-Favoriten entfernt. Heruntergeladene Dateien bleiben erhalten.",
+  "Could not remove the TIDAL favorite. Please try again.": "Der TIDAL-Favorit konnte nicht entfernt werden. Bitte versuche es erneut.",
+  "Track removed from TIDAL favorites. Downloaded files were kept.": "Titel aus TIDAL-Favoriten entfernt. Heruntergeladene Dateien bleiben erhalten.",
+
   "Album": "Album",
   "Albums": "Alben",
   "Artist": "Künstler",

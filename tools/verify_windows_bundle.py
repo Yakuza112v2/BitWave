@@ -14,7 +14,7 @@ def verify(bundle: Path) -> None:
         packaged = bundle / 'ui' / source.name
         assert packaged.is_file(), f'{packaged} fehlt'
         assert hashlib.sha256(packaged.read_bytes()).digest() == hashlib.sha256(source.read_bytes()).digest(), f'Veraltetes Symbol: {packaged}'
-    for name in ['Main.qml', 'SettingsPage.qml', 'Deutsch.js', 'deutsch.tsv', 'bitwave-logo.png']:
+    for name in ['Main.qml', 'SettingsPage.qml', 'Deutsch.js', 'SearchQuality.js', 'deutsch.tsv', 'bitwave-logo.png']:
         source = ROOT / 'bitwave/bitwave_ui/qml' / name
         packaged = bundle / 'bitwave_ui/qml' / name
         assert packaged.is_file(), f'{packaged} fehlt'

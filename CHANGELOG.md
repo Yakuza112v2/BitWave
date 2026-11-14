@@ -1,5 +1,15 @@
 # Änderungen
 
+## v0.2.3-Beta (2026-11-14)
+
+**BitWave by Yakuza112 – Beta**
+
+- **Nur Hi-Res:** Die Suche kann geladene Alben und Titel auf verfügbare Hi-Res-Ausgaben beschränken.
+- **Verfügbare Qualität:** Eine neue Sortierung ordnet die Suchergebnisse nach ihrer angebotenen Audioqualität – unabhängig von der eingestellten Download-Qualität.
+- **TIDAL-Favoriten verwalten:** Unter „Mein TIDAL → Titel“ entfernt ein Klick auf das Herz einen Favoriten nach Bestätigung direkt aus deinem TIDAL-Konto. Heruntergeladene Dateien bleiben erhalten.
+
+Diese Vorabversion wird separat angeboten. Die nächste reguläre Version ist 0.2.4. Entpacke das vollständige Windows-ZIP und starte `BitWave.exe`.
+
 ## v0.2.3 (2026-11-10)
 
 **BitWave by Yakuza112**

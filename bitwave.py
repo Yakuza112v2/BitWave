@@ -124,9 +124,7 @@ along as data files so ``app.py`` finds them next to itself at runtime.
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/bitwave/bitwave_ui/qml=bitwave_ui/qml
 # nuitka-project: --include-data-dir={MAIN_DIRECTORY}/bitwave/bitwave_ui/fonts=bitwave_ui/fonts
 # Only the PNG size ladder is read at runtime (app.py builds the window icon
-# from it); the executable's own icon comes from --macos-app-icon /
-# --windows-icon-from-ico at build time, so a bare icon* glob shipped a second
-# unreachable icon.icns (and an icon.ico) inside every bundle. Windows alone
+# from it); --windows-icon-from-ico embeds the executable icon. The bundle
 # also carries icon.ico: app.py falls back to it if the PNG ladder is ever
 # missing, a net kept from the truncated-ico taskbar incident.
 # nuitka-project: --include-data-files={MAIN_DIRECTORY}/bitwave/ui/icon*.png=ui/

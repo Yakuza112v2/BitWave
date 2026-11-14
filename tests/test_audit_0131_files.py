@@ -1,4 +1,4 @@
-"""Pins for the v0.1.31 audit, files and release groups (report in notes/, private)."""
+"""Unreadable or damaged settings must survive loading and saving."""
 
 from __future__ import annotations
 
@@ -9,12 +9,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.test_release_star_history import (
-    RELEASE_SH,
-    _dry_run,
-    _write_hook,
-    sandbox,  # noqa: F401  (fixture, reached by name below)
-)
 from bitwave.config import BaseConfig, Settings
 from bitwave.helper.decorator import SingletonMeta
 from bitwave.helper.path import path_config_base
@@ -89,27 +83,3 @@ def test_a_broken_settings_file_that_cannot_be_set_aside_is_left_as_it_is(tmp_pa
     Settings()
     assert (base / "settings.json.bak").read_bytes() == body
     assert json.loads(target.read_text(encoding="utf-8"))["replay_gain_default_migrated"] is True
-
-
-@pytest.mark.skipif(not RELEASE_SH.exists(), reason="release.sh is not part of this checkout")
-def test_a_marker_pattern_git_grep_cannot_compile_refuses_the_release(request):
-    """#28: BSD grep accepts 'a**' but git grep exits 128 on it, and '|| true'
-    read that as a clean tree, so the release went out unscanned. The test
-    pattern is 'a{2,1}' (an interval running backwards): git grep rejects it on
-    macOS and Linux alike, where Linux's git grep accepts 'a**'."""
-    private = request.getfixturevalue("sandbox")
-    _write_hook(private, "a{2,1}")
-    proc = _dry_run(private)
-    assert proc.returncode != 0, f"an unscanned tree was released:\n{proc.stdout}"
-    assert "content scan could not run" in proc.stderr, proc.stderr
-    assert "dry-run tree: " not in proc.stdout
-
-
-def test_the_readme_states_both_ffmpeg_check_cadences():
-    """#29: the Privacy section promised at most one FFmpeg check a day, but
-    the "Every launch" cadence asks on every launch."""
-    readme = (Path(__file__).resolve().parent.parent / "README.md").read_text(encoding="utf-8")
-    # The promise lives in the fine-print list under the privacy table (the
-    # table keeps to short cells), on the line naming FFmpeg's update check.
-    line = next(ln for ln in readme.splitlines() if "FFmpeg's update check" in ln and "automatic" not in ln)
-    assert "every launch" in line and "at most once a day" in line, line

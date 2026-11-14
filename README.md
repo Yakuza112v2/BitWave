@@ -4,6 +4,15 @@
 
 BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen TIDAL-Konto. Betreuung: [Yakuza112v2](https://github.com/Yakuza112v2).
 
+## Funktionen
+
+- TIDAL nach Künstlern, Alben und Titeln durchsuchen; Suchergebnisse nach verfügbarer Audioqualität sortieren und auf Hi-Res filtern.
+- Playlists und Favoriten aus „Mein TIDAL“ abrufen und herunterladen. Titel lassen sich direkt aus den TIDAL-Favoriten entfernen.
+- Vorhandene Musik im Musik- und Download-Ordner erkennen und doppelte Downloads vermeiden.
+- Neu hinzugefügte Playlist-Titel erkennen sowie Downloads und Wiedergabe in der App steuern.
+
+Die neuen Suchfilter und das Entfernen von Favoriten stehen zunächst in [0.2.3-Beta](https://github.com/Yakuza112v2/BitWave/releases/tag/v0.2.3-Beta) bereit.
+
 ## Downloads
 
 BitWave wird ausschließlich für **Windows** veröffentlicht.
@@ -14,15 +23,15 @@ BitWave wird ausschließlich für **Windows** veröffentlicht.
 
 Die offiziellen Downloads findest du unter [Releases](https://github.com/Yakuza112v2/BitWave/releases). Entpacke das gesamte ZIP-Archiv und starte `BitWave.exe` im enthaltenen Ordner. Für die Anmeldung und Musikwiedergabe benötigst du ein kostenpflichtiges TIDAL-Konto. Speichere nur Inhalte, zu deren Nutzung du berechtigt bist.
 
-## Eigene Einstellungen
+## Einstellungen
 
-BitWave startet eigenständig. Der normale Datenordner ist `%APPDATA%\BitWave`. Ein nicht installiert ausgeführter Entwicklungsstand verwendet `BitWave-dev`. `XDG_CONFIG_HOME` kann den Basisordner für Tests überschreiben.
+Deine Einstellungen und Anmeldedaten liegen im Datenordner `%APPDATA%\BitWave`.
 
 ## Updates
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-Das Repository und die signierten Windows-Releases sind öffentlich verfügbar.
+Reguläre Updates werden in der App angeboten. Vorabversionen findest du separat unter [Releases](https://github.com/Yakuza112v2/BitWave/releases).
 
 ## Download prüfen
 

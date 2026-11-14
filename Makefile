@@ -1,5 +1,5 @@
 BITWAVE_APP_NAME = "BitWave"
-BITWAVE_VERSION=`grep -m 1 '__version__' bitwave/bitwave_ui/__init__.py | tr -d ' "' | cut -d'=' -f2`
+BITWAVE_VERSION=`grep -m 1 '__version__' bitwave/bitwave_ui/__init__.py | tr -d ' "' | cut -d'=' -f2 | cut -d'-' -f1`
 
 .PHONY: install check test gui-bitwave gui-bitwave-windows build-windows help
 install:

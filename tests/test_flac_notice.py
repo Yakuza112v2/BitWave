@@ -1,6 +1,6 @@
 """The one-time FLAC signature notice (flacNoticeGate) and the dialog buttons.
 
-FLAC files saved by earlier versions (the gap came from tidal-dl-ng) can lack
+FLAC files saved by earlier versions can lack
 their audio signature. After the update a notice says so once, on Browse, and
 offers the Settings check that fixes them.
 
@@ -113,7 +113,6 @@ def test_notice_wording():
     gate = _gate()
     assert 'text: "FLAC files from earlier versions"' in gate
     for phrase in (
-        "tidal-dl-ng, which BitWave grew from",
         '<b><font color=\\"" + root.textHi + "\\">The music in them is intact and plays normally</font></b>',
         "BitWave now adds the signature to everything it saves",
         "without touching the audio",

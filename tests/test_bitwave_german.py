@@ -33,7 +33,7 @@ def test_german_catalogue_and_dynamic_messages():
 def test_windows_release_targets_only():
     import yaml
     root = QML.parents[2]
-    workflow = yaml.safe_load((root / ".github/workflows/release-or-test-build.yml").read_text(encoding="utf-8"))
+    workflow = yaml.safe_load((root / ".github/workflows/windows-release.yml").read_text(encoding="utf-8"))
     matrices = [j["strategy"]["matrix"] for j in workflow["jobs"].values() if "strategy" in j]
     assert matrices
     assert "linux" not in json.dumps(matrices).lower()

@@ -130,6 +130,7 @@ from .bridge_library import (
     _LIBRARY_WATCH_DEBOUNCE_MS,
     LibraryMixin,
 )
+from .bridge_favorites import FavoriteTracksMixin
 from .bridge_releases import REL_AUTO_KINDS, REL_AUTO_KINDS_DEFAULT, ReleasesMixin, releases_auto_kinds_text
 from .ffmpeg_manager import FfmpegCancelled, FfmpegManager, FfmpegUnsupportedPlatform, working_system_ffmpeg
 from .library_proc import LibraryWorker
@@ -4150,7 +4151,7 @@ def _record_in_library(bridge, path: str) -> bool:
 _MB_SERVICE_LOCK = threading.Lock()
 
 
-class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
+class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
     """The single object exposed to QML as the ``bitwave`` context property.
 
     State model at a glance (each field is documented where it is created in
@@ -4444,6 +4445,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
     def __init__(self, tidal: Tidal | None = None, parent: QObject | None = None) -> None:
         super().__init__(parent)
+        self._init_favorite_tracks()
         # A missing settings file means a brand-new install; Settings() writes
         # the file as a side effect, so the check has to happen first.
         from bitwave.helper.path import path_file_settings
@@ -4582,7 +4584,10 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         self._ffmpeg = FfmpegManager(os.path.dirname(self.settings.file_path))
         self._ffmpeg_abort = Event()
         # In-app self-updater (dormant until its repo slug is configured).
-        self._updater = AppUpdater(os.path.dirname(self.settings.file_path), _BITWAVE_VERSION)
+        self._updater = AppUpdater(
+            os.path.dirname(self.settings.file_path), _BITWAVE_VERSION,
+            update_floor=_BITWAVE_VERSION.removesuffix("-Beta"),
+        )
         self._app_update_abort = Event()
         self._app_update_inflight = False
         self._ffmpeg_install_inflight = False
@@ -4667,8 +4672,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # sort is never persisted to the disk page cache (see _save_page_cache).
         self._lib_sort: dict[str, tuple[str, str]] = {}
         # Favorite album/track id sets for the library-scoped artist page, built
-        # lazily and cleared on logout (BitWave never mutates favorites itself, so
-        # the only staleness is an external edit, tolerated like the page caches).
+        # lazily, cleared on logout and invalidated after a favorite is removed.
         self._fav_ids: dict[str, tuple[float, set]] = {}
         self._search_gen = 0  # bumped per search / open-link to drop stale results
         # Recent search payloads by lowercased needle: an identical re-search
@@ -7099,7 +7103,8 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         entry = self._fav_ids.get(kind)
         if entry is not None and time.monotonic() - entry[0] < self._FAV_IDS_TTL:
             return entry[1]
-        gen = getattr(self, "_browse_gen", 0)  # see _media_lists: never cache across a sign-out
+        gen = getattr(self, "_browse_gen", 0)  # never cache across a sign-out
+        epoch = getattr(self, "_favorite_tracks_epoch", 0)
         ids: set[str] = set()
         try:
             for o in self._all_favorites(kind):
@@ -7111,8 +7116,8 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             # reads as "you have nothing by this artist" on every
             # library-scoped page until it expires.
             return entry[1] if entry is not None else ids
-        if gen != getattr(self, "_browse_gen", 0):
-            return ids  # the previous account's favorites, served once to a caller that drops them
+        if gen != getattr(self, "_browse_gen", 0) or epoch != getattr(self, "_favorite_tracks_epoch", 0):
+            return ids  # stale favorites, served once to a caller that drops them
         self._fav_ids[kind] = (time.monotonic(), ids)
         return ids
 
@@ -7541,6 +7546,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         # rows or clear the busy state out from under the newly-chosen category.
         self._lib_gen += 1
         gen = self._lib_gen
+        favorite_epoch = getattr(self, "_favorite_tracks_epoch", 0)
 
         cached = self._lib_cache.get(category)
         if cached is not None:
@@ -7573,6 +7579,11 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                     self._lib_loading.discard(category)
                     return  # keep showing the cached page, never repaint with an error
                 items, more, failed = [], False, True
+            if category == "tracks" and favorite_epoch != getattr(self, "_favorite_tracks_epoch", 0):
+                self._lib_loading.discard(category)
+                if not revalidate and gen == self._lib_gen:
+                    self._set_busy(False)
+                return
             # Guard the cache write with the generation too: a load that started
             # before a logout (which clears the cache and bumps _lib_gen) must not
             # re-populate the cache for the next account. offset stores the *next*
@@ -7630,6 +7641,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         self._lib_loading.add(category)
         offset = cached["offset"]
         gen = self._lib_gen
+        favorite_epoch = getattr(self, "_favorite_tracks_epoch", 0)
         sort = self._lib_sort.get(category)
 
         def work() -> None:
@@ -7644,7 +7656,8 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
                 # next scroll retries the same window.
                 logger.exception("Could not load more of library category %s", category)
                 items, more, failed = [], True, True
-            if gen != self._lib_gen or sort != self._lib_sort.get(category):
+            if (gen != self._lib_gen or sort != self._lib_sort.get(category)
+                    or (category == "tracks" and favorite_epoch != getattr(self, "_favorite_tracks_epoch", 0))):
                 # The category was re-sorted (or the account changed) while
                 # this page was in flight: appending it would splice the OLD
                 # order into the new list and skip a window of the new one.
@@ -7723,6 +7736,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             return  # revalidated moments ago; don't re-fetch per tab flip
         self._home_loading = True
         gen = self._browse_gen  # account generation, bumped on logout
+        favorite_epoch = getattr(self, "_favorite_tracks_epoch", 0)
 
         def tagged(rows: list, kind: str) -> list:
             return [{**r, "kind": kind} for r in rows]
@@ -7756,7 +7770,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
 
             self._home_loading = False
             self._home_reval_ts = time.monotonic()
-            if gen != self._browse_gen:
+            if gen != self._browse_gen or favorite_epoch != getattr(self, "_favorite_tracks_epoch", 0):
                 return  # logged out mid-fetch, see loadBrowse's work()
             # An all-empty landing is more likely a transient fetch failure than
             # a truly empty library: show it on a first load (the QML keeps its
@@ -11579,6 +11593,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
             # an index so the option list can change) and the direction.
             "search_sort": "relevance",
             "search_sort_asc": False,
+            "search_hires_only": False,
             # Window geometry, remembered across launches (issue #6). These
             # store the NORMAL (non-maximized) frame so an un-maximize returns
             # to a sane size; win_max restores the maximized state on top. A
@@ -17359,6 +17374,7 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         every abort event (segment loops check it per chunk, see
         ``download._download_segment``), drop work that has not started, then
         wait a bounded moment for in-flight jobs to unwind."""
+        self._favorite_tracks_closing = True
         # Before any of that: the freeze watchdog. Everything below blocks the
         # GUI thread on purpose, for as long as the pools take to drain, and a
         # watchdog that cannot tick through it fires its pending dump and
@@ -17427,6 +17443,9 @@ class BitWaveBridge(LibraryMixin, FlacCheckMixin, ReleasesMixin, QObject):
         with contextlib.suppress(Exception):
             self._rel_pool.clear()
             self._rel_pool.waitForDone(1000)
+        with contextlib.suppress(Exception):
+            self._favorite_tracks_pool.clear()
+            self._favorite_tracks_pool.waitForDone(1000)
         # And the favorites writes' pool, at most one request.
         with contextlib.suppress(Exception):
             self._rel_tidal_pool.clear()

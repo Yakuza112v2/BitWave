@@ -63,7 +63,7 @@ def test_the_release_footer_puts_the_hash_next_to_each_download():
 
 
 def test_the_workflow_appends_the_footer_after_signing():
-    wf = (ROOT / ".github" / "workflows" / "release-or-test-build.yml").read_text(encoding="utf-8")
+    wf = (ROOT / ".github" / "workflows" / "windows-release.yml").read_text(encoding="utf-8")
     assert "tools/release_verify_notes.py SHA256SUMS" in wf
     assert wf.index("tools/sign_manifest.py") < wf.index("tools/release_verify_notes.py")
     assert wf.index("tools/release_verify_notes.py") < wf.index("name: Set release notes body")

@@ -1038,7 +1038,7 @@ def test_select_legacy_host_gets_nothing_without_a_legacy_asset():
 
 def test_select_published_windows_assets():
     import yaml
-    workflow = yaml.safe_load((Path(__file__).resolve().parents[1] / ".github/workflows/release-or-test-build.yml").read_text(encoding="utf-8"))
+    workflow = yaml.safe_load((Path(__file__).resolve().parents[1] / ".github/workflows/windows-release.yml").read_text(encoding="utf-8"))
     env = workflow["env"]
     assets = [{"name": env["OUT_NAME_FILE"] + "_" + env[k] + env["ASSET_EXTENSION"], "browser_download_url": k} for k in ("ARCH_WINDOWS_X64", "ARCH_WINDOWS_ARM64")]
     assert u._select_asset(assets, "windows", "amd64")[0] == "bitwave_windows-x64.zip"

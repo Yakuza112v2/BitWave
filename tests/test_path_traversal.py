@@ -43,7 +43,7 @@ def test_path_file_sanitize_keeps_folder_path_depth(tmp_path):
 
 def test_config_dir_is_bitwave_specific():
     # BitWave must never share per-user state (token.json, settings.json) with an
-    # installed Tidaler / tidal-dl-ng: a fresh install has to start signed out.
+    # another installed app: a fresh install has to start signed out.
     import os
 
     from bitwave import __config_dirname__

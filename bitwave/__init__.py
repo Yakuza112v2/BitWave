@@ -164,9 +164,7 @@ def name_app() -> str:
 # __config_dirname__ is the per-user state directory name (settings, token,
 # log, managed ffmpeg, updater staging). A hardcoded literal, deliberately
 # independent of the package name: a package rename must never move or strand
-# this folder. It also must never collide with ~/.config/tidaler, where an
-# installed copy of the upstream Tidaler / tidal-dl-ng app keeps ITS login
-# and settings; BitWave state stays fully isolated from every other app's.
+# this folder. BitWave uses its own application data directory.
 def __getattr__(name: str):
     if name == "__name_display__":
         value = name_app()

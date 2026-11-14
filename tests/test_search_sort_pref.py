@@ -38,3 +38,12 @@ def test_the_sort_prefs_round_trip_with_their_types():
     # (the str-coercing path) must not turn "false" into a truthy value.
     b.setBitWavePref("search_sort_asc", "false")
     assert b.bitwavePref("search_sort_asc") is False
+
+
+def test_quality_sort_and_hires_filter_are_remembered():
+    b = _bridge()
+    assert b.bitwavePref("search_hires_only") is False
+    b.setBitWavePref("search_sort", "quality")
+    b.setBitWavePref("search_hires_only", True)
+    assert b.bitwavePref("search_sort") == "quality"
+    assert b.bitwavePref("search_hires_only") is True

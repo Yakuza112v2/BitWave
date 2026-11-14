@@ -1,4 +1,5 @@
 import "Deutsch.js" as I18n
+import "SearchQuality.js" as SearchQuality
 import QtQuick
 import QtQml
 import QtQuick.Controls.Basic
@@ -447,7 +448,10 @@ ApplicationWindow {
     // Both halves of the sort control are pref-backed (search_sort by name,
     // search_sort_asc), so a launch opens on the order last chosen.
     property bool sortAsc: bitwave.bitwavePref("search_sort_asc") === true
-    readonly property var sortKeys: ["relevance", "date", "name", "popularity"]
+    readonly property var sortKeys: ["relevance", "date", "name", "popularity", "quality"]
+    property bool searchHiResOnly: bitwave.bitwavePref("search_hires_only") === true
+    readonly property bool searchTopVisible: searchTop !== null && (!searchHiResOnly || (SearchQuality.audioResult(searchTop) && SearchQuality.isHiRes(searchTop)))
+    property var favoriteTrackPending: ({})
     property bool bioExpanded: false
     property var albumsRaw: []            // unsorted album dicts, re-sorted into albumsModel
     property var tracksRaw: []            // same, for tracksModel
@@ -1534,7 +1538,7 @@ ApplicationWindow {
             rows(k, (!all || expanded) ? n : Math.min(n, 5), h, 8, 1)
             if (all && n > 5) block(15)
         }
-        if (all && searchTop) { block(36); block(searchTop.kind === "album" || searchTop.kind === "playlist" ? 64 : 62) }
+        if (all && searchTopVisible) { block(36); block(searchTop.kind === "album" || searchTop.kind === "playlist" ? 64 : 62) }
         var na = artistsModel.count
         var pitch = artistStrip.cardW + artistRow.spacing
         if (sectionVisible("artists", na)) {
@@ -2767,7 +2771,7 @@ ApplicationWindow {
     }
     function qualSpecFg(q) { return (q === "HI-RES" || q === "VIDEO") ? goldContTx : q === "LOSSLESS" ? greenContTx : q === "HIGH" ? "#a6e7f1" : textLo }
     function statusColor(s) { return s === "running" ? accent : s === "done" ? accent : s === "failed" ? red : s === "queued" ? cyanDim : textLo }
-    function sectionVisible(name, count) { return count > 0 && (filterType === "all" || filterType === name) }
+    function sectionVisible(name, count) { return count > 0 && (!searchHiResOnly || name === "albums" || name === "tracks") && (filterType === "all" || filterType === name) }
 
     // ---- Console helpers: ASCII download bar + popularity-meter segments ----
     // asciiBar renders a monospace progress bar of filled (█) + dim (░) cells.
@@ -3744,6 +3748,32 @@ ApplicationWindow {
         var nl = Math.max(1, lines - 1)
         return { shown: 1, more: n - 1, nameLines: nl, h: sim(1, nl, n - 1) }
     }
+    Popup {
+        id: favoriteRemovePrompt
+        objectName: "favoriteRemovePrompt"
+        property string trackId: ""
+        property string trackTitle: ""
+        parent: Overlay.overlay; anchors.centerIn: parent
+        width: Math.min(440, root.width - 40); padding: 22
+        modal: true; focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle { radius: 12; color: root.surface2; border.color: root.outline }
+        contentItem: ColumnLayout {
+            spacing: 16
+            Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.PlainText; text: I18n.t("Remove from TIDAL favorites?"); color: root.textHi; font.bold: true; font.pixelSize: 18 }
+            Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.PlainText; text: favoriteRemovePrompt.trackTitle; color: root.accent; font.pixelSize: 15 }
+            Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.PlainText; text: I18n.t("The track will be removed from your TIDAL favorites. Downloaded files will be kept."); color: root.textLo; font.pixelSize: 14 }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight; spacing: 12
+                SpecBtn { label: "Cancel"; onClicked: favoriteRemovePrompt.close() }
+                SpecBtn {
+                    objectName: "confirmFavoriteRemoval"; label: "Remove"; danger: true
+                    onClicked: { bitwave.removeFavoriteTrack(favoriteRemovePrompt.trackId); favoriteRemovePrompt.close() }
+                }
+            }
+        }
+    }
+
     // The one hover bubble for text a card had to cut short: the full title,
     // a full artist name, or the whole credit list behind "+N more". It lives
     // in the window's overlay, so no row clips it or draws over it.
@@ -13701,6 +13731,7 @@ ApplicationWindow {
         property string art: ""
         property string year: ""
         property string date: ""
+        property bool favoriteTrack: false
         property bool playlistRow: false
         property bool playlistFresh: false
         property string duration: ""
@@ -13884,6 +13915,27 @@ ApplicationWindow {
                         mediaId: trow.tId; albumId: trow.albumId; catalog: trow.quality; atmos: trow.atmos
                         pickable: trow.kind !== "video"
                     }
+                }
+                Rectangle {
+                    objectName: "removeFavorite_" + trow.tId
+                    visible: trow.favoriteTrack
+                    Layout.preferredWidth: 30; Layout.preferredHeight: 30; Layout.alignment: Qt.AlignVCenter
+                    radius: 7; color: favoriteMouse.containsMouse ? root.surface3 : "transparent"
+                    border.color: favoriteMouse.containsMouse ? root.outline : "transparent"
+                    opacity: root.favoriteTrackPending[trow.tId] ? 0.35 : 1
+                    Text { anchors.centerIn: parent; text: "♥"; color: root.accent; font.pixelSize: 21 }
+                    MouseArea {
+                        id: favoriteMouse; anchors.fill: parent; hoverEnabled: true
+                        enabled: !root.favoriteTrackPending[trow.tId]
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            favoriteRemovePrompt.trackId = trow.tId
+                            favoriteRemovePrompt.trackTitle = trow.title
+                            favoriteRemovePrompt.open()
+                        }
+                    }
+                    ToolTip.visible: favoriteMouse.containsMouse
+                    ToolTip.text: I18n.t("Remove from TIDAL favorites")
                 }
                 DownloadButton {
                     id: trDl
@@ -17881,6 +17933,25 @@ ApplicationWindow {
             else
                 bitwave.downloadPlaylistCategory(path)
         }
+        function onFavoriteTrackBusy(id, busy) {
+            var pending = Object.assign({}, root.favoriteTrackPending)
+            if (busy) pending[id] = true
+            else delete pending[id]
+            root.favoriteTrackPending = pending
+        }
+        function onFavoriteTrackRemoved(id) {
+            for (var i = libTracksModel.count - 1; i >= 0; --i)
+                if (String(libTracksModel.get(i).id) === id) libTracksModel.remove(i)
+            root.libLoadingMore = false
+            var sections = []
+            for (var j = 0; j < root.homeSections.length; ++j) {
+                var sec = Object.assign({}, root.homeSections[j])
+                if (sec.target === "tracks") sec.items = sec.items.filter(function(row) { return String(row.id) !== id })
+                if (sec.items.length) sections.push(sec)
+            }
+            root.homeSections = sections
+            if (root.libraryOpen && root.libraryCategory === "tracks") bitwave.loadLibrary("tracks", true)
+        }
         function onHomeLoaded(sections) {
             if (root.libraryCategory !== "home") return
             root.libLoadingMore = false      // Home is one self-contained landing
@@ -17898,6 +17969,8 @@ ApplicationWindow {
         function onDownloadFolderRecovered() { root.folderUnreachable = false }
         function onFfmpegMissingBlocked() { root.ffmpegBlocked = true }
         function onLoggedInChanged() {
+            root.favoriteTrackPending = ({})
+            favoriteRemovePrompt.close()
             // Drop every QML-side copy of Browse data when the account flips:
             // the landing embeds personalized For You rows, and the backend's
             // own logout cache-clear can't reach these copies. Re-fetch right
@@ -18751,8 +18824,9 @@ ApplicationWindow {
                         }
                         ComboBox {
                             id: sortBox
-                            implicitHeight: 44; implicitWidth: 156
-                            model: ["Relevance", "Release date", "Name", "Popularity"]
+                            implicitHeight: 44; implicitWidth: 194
+                            objectName: "searchSort"
+                            model: ["Relevance", "Release date", "Name", "Popularity", "Available quality"]
                             currentIndex: Math.max(0, root.sortKeys.indexOf(bitwave.bitwavePref("search_sort")))
                             onActivated: { bitwave.setBitWavePref("search_sort", root.sortKeys[currentIndex]); root.resortSearch() }
                             background: Rectangle { radius: 8; color: root.surface2; border.color: sortBox.popup.visible ? root.accent : root.outline }
@@ -18798,10 +18872,20 @@ ApplicationWindow {
                             }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.sortAsc = !root.sortAsc; bitwave.setBitWavePref("search_sort_asc", root.sortAsc); root.resortSearch() } }
                         }
-                        // The audio-quality picker that used to sit here was a duplicate of
-                        // the Quality setting in Settings; it set the same value but never
-                        // filtered results. Results are now capped to the Settings quality,
-                        // so the redundant control is gone.
+                        SpecBtn {
+                            objectName: "searchHiResFilter"
+                            label: "Hi-Res only"; primary: root.searchHiResOnly
+                            onClicked: {
+                                root.searchHiResOnly = !root.searchHiResOnly
+                                bitwave.setBitWavePref("search_hires_only", root.searchHiResOnly)
+                                if (root.searchHiResOnly && root.filterType !== "albums" && root.filterType !== "tracks") root.filterType = "all"
+                                results.contentY = 0
+                                root.resortSearch()
+                            }
+                            ToolTip.visible: hiresHover.hovered
+                            ToolTip.text: I18n.t("Filter loaded albums and tracks by available Hi-Res quality")
+                            HoverHandler { id: hiresHover }
+                        }
                     }
 
                     // ---- Type chips -------------------------------------------------
@@ -18811,7 +18895,7 @@ ApplicationWindow {
                         Layout.fillWidth: true; Layout.leftMargin: 22; Layout.topMargin: 8; spacing: 8
                         visible: root.signedIn && root.hasResults && !root.artistOpen && !root.settingsOpen && !root.libraryOpen && !root.releasesOpen && !root.browseOpen
                         Repeater {
-                            model: [["all", "All"], ["artists", "Artists"], ["albums", "Albums"], ["tracks", "Tracks"], ["videos", "Videos"], ["playlists", "Playlists"], ["mixes", "Mixes"]]
+                            model: root.searchHiResOnly ? [["all", "All"], ["albums", "Albums"], ["tracks", "Tracks"]] : [["all", "All"], ["artists", "Artists"], ["albums", "Albums"], ["tracks", "Tracks"], ["videos", "Videos"], ["playlists", "Playlists"], ["mixes", "Mixes"]]
                             delegate: Rectangle {
                                 id: tchip
                                 required property var modelData
@@ -19539,6 +19623,14 @@ ApplicationWindow {
                     onScreen: root.onScreen
                 }
 
+                Text {
+                    objectName: "hiResEmptyHint"
+                    visible: root.searchHiResOnly && root.hasResults && albumsModel.count === 0 && tracksModel.count === 0 && !root.searchTopVisible
+                    width: parent.width; wrapMode: Text.Wrap; topPadding: 24; bottomPadding: 24
+                    text: I18n.t("No Hi-Res albums or tracks in the loaded search results. Disable the filter to show all results.")
+                    color: root.textLo; font.pixelSize: 15
+                }
+
                 // TOP RESULT
                 // TIDAL names one best match in every search reply, and for a
                 // specific query ("this song by this artist") it is reliably
@@ -19552,10 +19644,10 @@ ApplicationWindow {
                 // a pointer, not a move. A one-item Repeater rather than a
                 // lone Loader so each search rebuilds the row, like every
                 // section row.
-                SectionHeader { id: topHead; opacity: root.searchReveal; visible: root.filterType === "all" && root.searchTop !== null; label: "TOP RESULT" }
+                SectionHeader { id: topHead; opacity: root.searchReveal; visible: root.filterType === "all" && root.searchTopVisible; label: "TOP RESULT" }
                 Repeater {
                     id: searchTopRep
-                    model: root.searchTop ? [root.searchTop] : []
+                    model: root.searchTopVisible ? [root.searchTop] : []
                     delegate: Loader {
                         id: topLd
                         required property var modelData
@@ -19709,7 +19801,7 @@ ApplicationWindow {
                     // this label on screen, and that flag is pref-backed, so a
                     // launch with no search at all drew a lone SHOW LESS over an
                     // empty page.
-                    visible: root.filterType === "all" && artistsModel.count > 0
+                    visible: !root.searchHiResOnly && root.filterType === "all" && artistsModel.count > 0
                              && (root.searchArtistsExpanded || artistStrip.contentWidth > artistStrip.width + 1)
                     expanded: root.searchArtistsExpanded
                     count: artistsModel.count
@@ -22373,6 +22465,7 @@ ApplicationWindow {
                     id: libTracksList
                     cat: "tracks"; model: libTracksModel
                     delegate: TrackRow {
+                        favoriteTrack: true
                         required property var model
                         width: ListView.view.width
                         tId: model.id; title: model.title; artistName: model.artist; artistId: model.artist_id
@@ -23405,9 +23498,10 @@ ApplicationWindow {
     function applySort(inPlace) {
         var dir = root.sortAsc ? 1 : -1
         function ordered(raw, hasPop) {
-            var arr = (raw || []).slice()
+            var arr = SearchQuality.select(raw, root.searchHiResOnly && hasPop)
             if (sortBox.currentIndex === 1) arr.sort(function(a, b){ return dir * ((a.listed || a.date || a.year || "").localeCompare(b.listed || b.date || b.year || "")) })
             else if (sortBox.currentIndex === 2) arr.sort(function(a, b){ return dir * a.title.localeCompare(b.title) })
+            else if (sortBox.currentIndex === 4 && hasPop) return SearchQuality.byQuality(arr, root.sortAsc)
             else if (sortBox.currentIndex === 3 && hasPop) arr.sort(function(a, b){ return dir * ((a.popularity || 0) - (b.popularity || 0)) })
             else if (root.sortAsc) arr.reverse()  // Relevance (or no popularity data): the API's order, the arrow flips it
             return arr
@@ -26079,7 +26173,7 @@ ApplicationWindow {
 
     // FLAC signature notice: once per install, after updating from a version
     // that could save FLAC files without their audio signature (the gap came
-    // from tidal-dl-ng). It waits for Browse with every first-run prompt
+    // in older files). It waits for Browse with every first-run prompt
     // gone, and any answer, a click-away included, retires it for good
     // (setupSettings.flacNoticeSeen).
     Rectangle {

@@ -623,9 +623,15 @@ class AppUpdater:
         app_dir: str | os.PathLike,
         current_version: str,
         repo: str | None = None,
+        *,
+        update_floor: str | None = None,
     ) -> None:
         self.app_dir = Path(app_dir)
         self.current_version = current_version
+        # A separately distributed beta can be newer code than the stable
+        # release with the same numeric version. Keep its display version,
+        # while waiting for the next numbered stable update.
+        self.update_floor = update_floor or current_version
         self.repo = (repo if repo is not None else REPO).strip().strip("/")
         self.os_key, self.arch = _os_arch()
         # Windows: the result of an install whose detached swap helper is
@@ -765,7 +771,7 @@ class AppUpdater:
             return False, self.current_version, ""
         rel = self.latest(session)
         latest_v = rel.version if rel else ""
-        avail = bool(rel and _is_newer(latest_v, self.current_version))
+        avail = bool(rel and _is_newer(latest_v, self.update_floor))
         # Callers display this next to a "v" of their own; hand back the bare
         # version, not the tag (a "v0.1.3" tag otherwise renders as "vv0.1.3").
         return avail, self.current_version, latest_v.lstrip("vV")
@@ -1106,7 +1112,7 @@ class AppUpdater:
             return None
         self._clear_swap_outcome()
         pending = self._read_armed_marker()
-        if pending is None or not _is_newer(pending.get("version", ""), self.current_version):
+        if pending is None or not _is_newer(pending.get("version", ""), getattr(self, "update_floor", self.current_version)):
             return None  # the swap landed after all, or nothing is staged: the ordinary path clears up
         message = self._swap_failure_message(reason)
         self.swap_failure = message
@@ -1188,7 +1194,7 @@ class AppUpdater:
         # with the flag false (it was a fresh install then) and would otherwise
         # travel on unchanged into a result that says this call staged it.
         pending = {**pending, "already_staged": True}
-        if not _is_newer(pending.get("version", ""), self.current_version):
+        if not _is_newer(pending.get("version", ""), getattr(self, "update_floor", self.current_version)):
             # The swap landed: this IS the staged build. Clear the leftovers.
             self._clear_armed_marker()
             _rmtree(new_tree)

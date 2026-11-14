@@ -1,6 +1,6 @@
 # Entwicklung von BitWave
 
-BitWave ist eine eigenständige Windows-App. Das Python-Paket heißt `bitwave`, die Oberfläche liegt in `bitwave.bitwave_ui`. Oberfläche, Anwendungsdaten, Signierung und Veröffentlichungen gehören zu BitWave.
+BitWave ist eine Windows-App. Das Python-Paket heißt `bitwave`, die Oberfläche liegt in `bitwave.bitwave_ui`. Oberfläche, Anwendungsdaten, Signierung und Veröffentlichungen gehören zu BitWave.
 
 ## Aufbau
 
@@ -20,6 +20,6 @@ Die Oberfläche übersetzt Beschriftungen und Meldungen beim Anzeigen. TIDAL-Tit
 
 ## Windows-Pakete und Updates
 
-`make build-windows` erstellt das Windows-Paket. Der Veröffentlichungsablauf baut ausschließlich Windows x64 und Windows ARM64. Hilfsaufgaben dürfen auf anderen GitHub-Runnern laufen; daraus entstehen keine weiteren App-Versionen. Details stehen in `BITWAVE_RELEASE.md`.
+`make build-windows` erstellt das Windows-Paket. Der Veröffentlichungsablauf erstellt Windows-Pakete; regulär angeboten wird x64. Hilfsaufgaben dürfen auf anderen GitHub-Runnern laufen; daraus entstehen keine weiteren App-Versionen. Details stehen in `BITWAVE_RELEASE.md`.
 
 Der private Signierschlüssel gehört ausschließlich in das Actions-Geheimnis `BITWAVE_SIGNING_KEY`. Er darf niemals im Quellcode, Paket oder Protokoll auftauchen. Der öffentliche Prüfschlüssel liegt in `signing.py` und in der deutschen Anleitung.

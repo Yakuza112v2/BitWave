@@ -1,4 +1,4 @@
-name: BitWave checks
+name: BitWave prüfen
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  migration-checks:
+  checks:
     runs-on: ubuntu-24.04
     env:
       QT_QPA_PLATFORM: offscreen
@@ -24,7 +24,7 @@ jobs:
           python-version: '3.13'
       - name: Check package and lock file
         run: poetry check --lock
-      - name: Check independent identity, signing, updates and QML
+      - name: Anwendung, Signaturen, Updates und Oberfläche prüfen
         run: >-
           poetry run pytest -q
           tests/test_settings_fit.py
@@ -65,3 +65,8 @@ jobs:
           tests/test_queue_button_chart_history.py
           tests/test_factory_reset.py
           tests/test_audit_batch6.py
+          tests/test_search_quality.py
+          tests/test_favorite_tracks.py
+          tests/test_search_sort_pref.py
+          tests/test_beta_updates.py
+          tests/test_quality_favorites_qml.py
