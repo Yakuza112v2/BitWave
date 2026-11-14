@@ -66,7 +66,7 @@ def test_the_workflow_appends_the_footer_after_signing():
     wf = (ROOT / ".github" / "workflows" / "windows-release.yml").read_text(encoding="utf-8")
     assert "tools/release_verify_notes.py SHA256SUMS" in wf
     assert wf.index("tools/sign_manifest.py") < wf.index("tools/release_verify_notes.py")
-    assert wf.index("tools/release_verify_notes.py") < wf.index("name: Set release notes body")
+    assert wf.index("tools/release_verify_notes.py") < wf.index("tools/publish_windows_release.py")
 
 
 @pytest.mark.skipif(not _openssl3(), reason="needs bash and OpenSSL 3 on PATH")

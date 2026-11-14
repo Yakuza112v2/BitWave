@@ -247,28 +247,13 @@ jobs:
         source $VENV
         { echo; echo '<details><summary>Download prüfen</summary>'; echo; poetry run python tools/release_verify_notes.py SHA256SUMS; echo; echo '</details>'; } >> RELEASE_NOTES.md
         echo "----- RELEASE_NOTES.md -----"; cat RELEASE_NOTES.md
-    - name: Set release notes body
+    - name: Geprüfte Dateien ohne doppelte Release-Einträge veröffentlichen
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
       run: |
-        if [ -s RELEASE_NOTES.md ]; then
-          gh release edit "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --notes-file RELEASE_NOTES.md
-        fi
-    - name: Publish manifest + signature
-      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
-      env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      with:
-        fail_on_unmatched_files: false
-        tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
-        body_path: RELEASE_NOTES.md
-        prerelease: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-Beta') }}
-        make_latest: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-Beta') && 'false' || 'true' }}
-        draft: false
-        files: |
-          SHA256SUMS
-          SHA256SUMS.sig
+        source $VENV
+        poetry run python tools/publish_windows_release.py "$RELEASE_TAG" --commit "${{ github.sha }}" --manifest SHA256SUMS --signature SHA256SUMS.sig
 'on':
   push:
     tags:

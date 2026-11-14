@@ -1,0 +1,36 @@
+name: Windows-Release veröffentlichen
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Zu veröffentlichender Versions-Tag
+        required: true
+      build_run:
+        description: Lauf mit erfolgreich geprüftem Windows-Paket
+        required: true
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: bitwave-windows-release-${{ inputs.release_tag }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-poetry-env
+        with:
+          python-version: '3.13'
+      - name: Paket, Build-Prüfsummen und Signatur prüfen und veröffentlichen
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          BUILD_RUN: ${{ inputs.build_run }}
+        run: |
+          source $VENV
+          poetry run python tools/publish_windows_release.py "$RELEASE_TAG" --build-run "$BUILD_RUN"
