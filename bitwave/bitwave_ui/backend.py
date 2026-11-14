@@ -7558,7 +7558,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # Stale-while-revalidate, but only while the user is still on the
             # first page: re-emitting a fresh first page after infinite scroll
             # has appended more would truncate the list out from under them.
-            if cached["offset"] != _LIBRARY_PAGE or category in self._lib_loading:
+            if cached["offset"] > _LIBRARY_PAGE or category in self._lib_loading:
                 return
             if quiet and time.monotonic() - self._lib_reval_ts.get(category, 0.0) < 60.0:
                 return  # revalidated moments ago; don't re-fetch per tab flip
@@ -7596,7 +7596,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 if (
                     gen == self._lib_gen
                     and entry is not None
-                    and entry["offset"] == _LIBRARY_PAGE
+                    and entry["offset"] <= _LIBRARY_PAGE
                     and (items != entry["items"] or more != entry["more"])
                 ):
                     self._lib_cache[category] = {"items": items, "offset": _LIBRARY_PAGE, "more": more}

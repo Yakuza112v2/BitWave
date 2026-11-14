@@ -151,3 +151,27 @@ def test_removal_outside_current_window_keeps_its_paging():
     b._favorite_tracks_pool.finish()
     assert b._lib_cache["tracks"]["offset"] == 50
     assert len(b._lib_cache["tracks"]["items"]) == 50
+
+
+def test_first_page_still_revalidates_after_a_favorite_is_removed():
+    from bitwave.bitwave_ui.backend import BitWaveBridge, _LIBRARY_PAGE
+    b = bridge()
+    b._lib_cache["tracks"] = {"items": [{"id": str(i)} for i in range(_LIBRARY_PAGE)], "offset": _LIBRARY_PAGE, "more": True}
+    b.removeFavoriteTrack("1")
+    b._favorite_tracks_pool.finish()
+    assert b._lib_cache["tracks"]["offset"] == _LIBRARY_PAGE - 1
+    b._lib_gen = 1
+    b._lib_sort = {}
+    b.threadpool = Pool()
+    b.libraryLoaded = Mock()
+    b._lib_count = lambda cat, rows: len(rows)
+    b._dress_library_rows = lambda cat, rows: rows
+    b._lib_status = lambda *args: "loaded"
+    b._set_busy = Mock()
+    b._library_page = Mock(return_value=([{"id": "new"}], False))
+    BitWaveBridge.loadLibrary(b, "tracks", True)
+    assert len(b.threadpool.jobs) == 1
+    b.threadpool.finish()
+    b._library_page.assert_called_once_with("tracks", 0, _LIBRARY_PAGE)
+    assert b._lib_cache["tracks"]["items"] == [{"id": "new"}]
+    assert b._lib_cache["tracks"]["offset"] == _LIBRARY_PAGE
