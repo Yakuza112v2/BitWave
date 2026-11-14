@@ -163,8 +163,7 @@ def name_app() -> str:
 #
 # __config_dirname__ is the per-user state directory name (settings, token,
 # log, managed ffmpeg, updater staging). A hardcoded literal, deliberately
-# independent of the package name: a package rename must never move or strand
-# this folder. BitWave uses its own application data directory.
+# stable across application updates. BitWave uses its own data directory.
 def __getattr__(name: str):
     if name == "__name_display__":
         value = name_app()

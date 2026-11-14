@@ -1,10 +1,7 @@
-"""BitWave-owned TIDAL session config.
+"""TIDAL session handling for BitWave.
 
-Subclasses the engine's ``bitwave.config.Tidal`` so a correctness fix lands here
-instead of in the shared ``config.py`` method body. Keeping the override out of
-``config.py`` follows the engine/UI seam discipline: engine modules stay close
-to their inherited shape (a habit from the fork era's upstream merges, kept
-because it makes the engine easy to audit), and UI-owned behavior lives here.
+Keeps saved sign-ins intact when a request fails without an authentication
+refusal, while the download engine uses the shared configuration classes.
 """
 
 from __future__ import annotations

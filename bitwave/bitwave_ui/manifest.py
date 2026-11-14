@@ -19,9 +19,8 @@ Re-deriving the correct count from the manifest turns the download loop's
 blanket last-segment leniency into an exact decision: a failed final segment
 is harmless if and only if it is over-generated padding.
 
-This lives in ``bitwave_ui`` rather than ``download.py`` per the engine/UI seam
-discipline: engine modules keep their inherited shape, corrections that exist
-for the UI's benefit live with the UI.
+This helper lets the interface distinguish a spurious segment URL from
+missing audio without changing the download engine's transfer logic.
 """
 
 from __future__ import annotations
