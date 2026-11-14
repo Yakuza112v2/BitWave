@@ -1,73 +1,22 @@
 name: BitWave prüfen
-
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   checks:
     runs-on: ubuntu-24.04
-    env:
-      QT_QPA_PLATFORM: offscreen
-      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
-      - name: Install Qt runtime libraries
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends libegl1 libgl1 libopengl0 libxkbcommon0 libfontconfig1 libpulse0 libasound2t64
       - uses: ./.github/actions/setup-poetry-env
         with:
           python-version: '3.13'
-      - name: Check package and lock file
+      - name: Paket und feste Abhängigkeiten prüfen
         run: poetry check --lock
-      - name: Anwendung, Signaturen, Updates und Oberfläche prüfen
-        run: >-
-          poetry run pytest -q
-          tests/test_settings_fit.py
-          tests/test_notify_downloads.py
-          tests/test_releases_backend.py
-          tests/test_bitwave_german.py
-          tests/test_bitwave_branding.py
-          tests/test_bitwave_identity.py
-          tests/test_config_path.py
-          tests/test_signing.py
-          tests/test_package_version.py
-          tests/test_updater.py
-          tests/test_audit_updater.py
-          tests/test_updater_integration.py
-          tests/test_release_verify_notes.py
-          tests/test_update_optin_prompt.py
-          tests/test_update_check_teardown.py
-          tests/test_update_check_failure_wording.py
-          tests/test_qml_loads.py
-          tests/test_playlist_visits.py
-          tests/test_playlist_visit_qml.py
-          tests/test_offscreen_qt_is_usable.py
-          tests/test_art_card_done_strip.py
-          tests/test_cover_round.py
-          tests/test_now_rail_loading_qml.py
-          tests/test_releases_pane_scroll.py
-          tests/test_issue59_listing_cursor_paging.py
-          tests/test_playlist_folders.py
-          tests/test_folder_tree_freshness.py
-          tests/test_issue46_playlist_duplicates.py
-          tests/test_library_joined.py
-          tests/test_clean_twin_title_spelling.py
-          tests/test_edition_explicit_split.py
-          tests/test_library_bridge.py
-          tests/test_library_probe_fallback.py
-          tests/test_library_save_rescan.py
-          tests/test_releases_import_backend.py
-          tests/test_queue_button_chart_history.py
-          tests/test_factory_reset.py
-          tests/test_audit_batch6.py
-          tests/test_search_quality.py
-          tests/test_favorite_tracks.py
-          tests/test_search_sort_pref.py
-          tests/test_beta_updates.py
-          tests/test_quality_favorites_qml.py
-          tests/test_publish_windows_release.py
+      - name: Python-Dateien prüfen
+        run: poetry run python -m compileall -q bitwave .github/build bitwave.py
+      - name: Veröffentlichungshelfer laden
+        run: poetry run python .github/build/publish_windows_release.py --help

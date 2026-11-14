@@ -31,7 +31,9 @@ Deine Einstellungen und Anmeldedaten liegen im Datenordner `%APPDATA%\BitWave`.
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-Reguläre Updates werden in der App angeboten. Vorabversionen findest du separat unter [Releases](https://github.com/Yakuza112v2/BitWave/releases).
+Reguläre Updates werden in der App angeboten. **0.2.3-Beta muss einmal manuell heruntergeladen und vollständig in einen eigenen Ordner entpackt werden.** Die Update-Prüfung älterer Versionen berücksichtigt keine Vorabversionen und stuft diese Beta gegenüber 0.2.3 als älter ein. Deine Einstellungen bleiben im oben genannten Datenordner erhalten. Die nächste reguläre Version ist 0.2.4 und kann wieder über die App angeboten werden.
+
+[0.2.3-Beta für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.3-Beta/bitwave_windows-x64.zip)
 
 ## Download prüfen
 
@@ -74,4 +76,4 @@ poetry run python -m bitwave.bitwave_ui
 poetry run make build-windows
 ```
 
-Die automatischen Windows-Builds laufen über GitHub Actions. Die Einrichtung der Signierung und die Veröffentlichung sind in [BITWAVE_RELEASE.md](BITWAVE_RELEASE.md) beschrieben.
+Die automatischen Windows-Builds laufen über GitHub Actions. Die benötigten Bau- und Veröffentlichungshelfer liegen unter `.github/build`. Der Workflow „Windows-Release“ erstellt und prüft die Pakete und signiert die Prüfsummen mit dem Repository-Geheimnis `BITWAVE_SIGNING_KEY`. Vorabversionen tragen einen Zusatz wie `-Beta`; die nächste reguläre Version ist `0.2.4`.

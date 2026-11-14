@@ -159,7 +159,7 @@ jobs:
       if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only, matrix.OS_ARCH) }}
       run: |
         source $VENV
-        poetry run python tools/verify_windows_bundle.py dist/BitWave
+        poetry run python .github/build/verify_windows_bundle.py dist/BitWave
     - name: Checksum
       if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.only == '' || contains(github.event.inputs.only,
         matrix.OS_ARCH) }}
@@ -223,7 +223,7 @@ jobs:
       run: |
         if [ -n "$BITWAVE_SIGNING_KEY" ]; then
           source $VENV
-          poetry run python tools/sign_manifest.py SHA256SUMS SHA256SUMS.sig
+          poetry run python .github/build/sign_manifest.py SHA256SUMS SHA256SUMS.sig
         else
           echo "::error::BITWAVE_SIGNING_KEY is not set; a tagged release MUST be signed or the in-app updater (fail-closed) will refuse every update. Add the BITWAVE_SIGNING_KEY secret before tagging."
           exit 1
@@ -245,7 +245,7 @@ jobs:
         # the release public key and the copyable check, generated from the
         # manifest just signed so the page can never disagree with it.
         source $VENV
-        { echo; echo '<details><summary>Download prüfen</summary>'; echo; poetry run python tools/release_verify_notes.py SHA256SUMS; echo; echo '</details>'; } >> RELEASE_NOTES.md
+        { echo; echo '<details><summary>Download prüfen</summary>'; echo; poetry run python .github/build/release_verify_notes.py SHA256SUMS; echo; echo '</details>'; } >> RELEASE_NOTES.md
         echo "----- RELEASE_NOTES.md -----"; cat RELEASE_NOTES.md
     - name: Geprüfte Dateien ohne doppelte Release-Einträge veröffentlichen
       env:
@@ -253,7 +253,7 @@ jobs:
         RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref_name }}
       run: |
         source $VENV
-        poetry run python tools/publish_windows_release.py "$RELEASE_TAG" --commit "${{ github.sha }}" --manifest SHA256SUMS --signature SHA256SUMS.sig
+        poetry run python .github/build/publish_windows_release.py "$RELEASE_TAG" --commit "${{ github.sha }}" --manifest SHA256SUMS --signature SHA256SUMS.sig
 'on':
   push:
     tags:

@@ -33,4 +33,4 @@ jobs:
           BUILD_RUN: ${{ inputs.build_run }}
         run: |
           source $VENV
-          poetry run python tools/publish_windows_release.py "$RELEASE_TAG" --build-run "$BUILD_RUN"
+          poetry run python .github/build/publish_windows_release.py "$RELEASE_TAG" --build-run "$BUILD_RUN"
