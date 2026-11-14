@@ -28,7 +28,7 @@ def arrange(module, monkeypatch, manifest, signature):
     assets = [{"name": n, "id": i, "url": n} for i, n in enumerate(["bitwave_windows-x64.zip", "SHA256SUMS", "SHA256SUMS.sig"])]
     release = {"id": 1, "tag_name": "v0.2.3-Beta", "assets": assets}
     api = Mock()
-    api.request.return_value = SimpleNamespace(content=b"json", raise_for_status=lambda: None, json=lambda: [release])
+    api.request.return_value = SimpleNamespace(ok=True, content=b"json", raise_for_status=lambda: None, json=lambda: [release])
     payloads = {"SHA256SUMS": manifest, "SHA256SUMS.sig": signature.encode(), "bitwave_windows-x64.zip": b"tampered"}
     api.get.side_effect = lambda url, **kw: SimpleNamespace(raise_for_status=lambda: None, iter_content=lambda size: [payloads[url]])
     monkeypatch.setattr(module.requests, "Session", lambda: api)
