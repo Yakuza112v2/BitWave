@@ -191,6 +191,7 @@ def _user_error(exc: BaseException, fallback: str, plain: tuple[type, ...] = (),
 _PROBE_LOCK = Lock()
 
 _prefetch_log = logging.getLogger("bitwave.prefetch")
+_bio_log = logging.getLogger("bitwave.bio")
 _export_log = logging.getLogger("bitwave.queue_export")
 
 
@@ -2596,6 +2597,30 @@ def _artist_popularity(artist) -> int:
         return -1
 
 
+_BIO_FIELDS = ("bio", "bio_source", "bio_url", "bio_until")
+
+
+def _bio_until(rec: dict) -> float:
+    """How long a fallback bio on record may be shown (epoch seconds, 0 for
+    no limit): a Discogs profile until its record expires (Discogs' API
+    terms cap what is shown at six hours old), a Wikipedia intro always."""
+    if (rec.get("source") or "") == "wikipedia":
+        return 0.0
+    return float(rec.get("expires") or 0)
+
+
+def _bio_current(page: dict) -> dict:
+    """``page`` as it may be shown now: a fallback bio past its showing
+    limit is taken off (a copy; the cached page is left for its
+    revalidate). Pure, so the GUI thread can call it on a cached page."""
+    until = float(page.get("bio_until") or 0)
+    if not page.get("bio_source") or until <= 0 or time.time() < until:
+        return page
+    return {**page, "bio": "", "bio_source": "", "bio_url": "", "bio_until": 0.0}
+
+
+
+
 def _release_obj(obj):
     # Some payloads (e.g. an artist's top tracks) omit release_date on both the
     # track and its album stub but still carry tidal_release_date on the track.
@@ -4198,6 +4223,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     albumTracksLoaded = Signal(str, "QVariantList")
     playlistTracksLoaded = Signal(str, "QVariantList")
     artistLoaded = Signal("QVariant")
+    artistBioLanded = Signal("QVariant")
+    artistBioFallbackChanged = Signal()
     artistLoadFailed = Signal(str)  # id; a Back-restore clears its latch on this
     # An artist page's first covers, {id, art, tracks, albums, eps} (URLs),
     # for the QML's warm pool before the page opens: from a hover, and from
@@ -4520,6 +4547,15 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         # (the case users report as working) with no cap on how many can queue.
         self._scan_pool = QtCore.QThreadPool()
         self._scan_pool.setMaxThreadCount(1)
+        # The artist bio fallback (wantArtistBio): one lookup at a time, since
+        # each waits on MusicBrainz's one request a second, and apart from the
+        # UI pool so a slow lookup never holds a page build.
+        self._bio_pool = QtCore.QThreadPool()
+        self._bio_pool.setMaxThreadCount(1)
+        self._bio_lock = Lock()
+        self._bio_wanted: set[str] = set()
+        self._bio_client = None
+        self._bio_stopped = False
         # Bumped by stopAll; a scan ordered under an older value is stale and
         # drops what it gathered instead of queueing it (see _stop_check_for).
         self._scan_gen = 0
@@ -4544,6 +4580,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         # Let the verbose perf sampler report saturation per pool by name.
         diagnostics.register_pool("ui", self.threadpool)
         diagnostics.register_pool("scan", self._scan_pool)
+        diagnostics.register_pool("bio", self._bio_pool)
         diagnostics.register_pool("dl", self.dl_pool)
         # The library scanner's three executors, via gauges: they are
         # ThreadPoolExecutors built and torn down per scan, so what is registered
@@ -6194,7 +6231,99 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     elif kept is not None:
                         kept.discard(gone)
 
+    def _bio_fill(self, payload: dict) -> None:
+        """(any thread) A page TIDAL gave no bio: the fallback bio on record
+        for it, when the setting is on (no request; wantArtistBio asks). A
+        Discogs bio past its six hours is never shown (its API terms)."""
+        if (payload.get("bio") or "") or not self._bitwave_pref_bool("artist_bio_fallback"):
+            return
+        try:
+            rec = self._mb_service_instance().bio_get(str(payload.get("id") or ""))
+        except Exception:
+            _bio_log.debug("bio record read failed", exc_info=True)
+            return
+        if not rec or not rec["source"] or not rec["text"]:
+            return
+        if rec["expired"] and rec["source"] != "wikipedia":
+            return
+        payload["bio"] = rec["text"]
+        payload["bio_source"] = rec["source"]
+        payload["bio_url"] = rec["url"]
+        payload["bio_until"] = _bio_until(rec)
+
+    def _bio_alive(self) -> bool:
+        return not self._bio_stopped and self._bitwave_pref_bool("artist_bio_fallback")
+
+    @Slot(str)
+    def wantArtistBio(self, artist_id: str) -> None:
+        """An artist page or card is showing ``artist_id`` with no bio: look
+        for a fallback one (bitwave.artist_bio) when the setting is on. The
+        answer lands on artistBioLanded, and the cached page takes it."""
+        artist_id = str(artist_id or "")
+        if not artist_id.isdigit() or not self._bio_alive():
+            return
+        with self._bio_lock:
+            if artist_id in self._bio_wanted:
+                return
+            self._bio_wanted.add(artist_id)
+        page = self._artist_cache.get(artist_id)
+        if page is None:
+            # A card filled by a build still under way holds its page here.
+            early = getattr(self, "_artist_card_early", None)  # stubs have none
+            if early:
+                with self._prefetch_lock:
+                    page = early.get(artist_id)
+        page = page or {}
+        name = str(page.get("name") or "")
+        # The evidence the title rule weighs when MusicBrainz has no link
+        # from the TIDAL page: the releases TIDAL lists for the artist.
+        rows = [r for r in (page.get("albums") or []) + (page.get("eps") or []) if isinstance(r, dict)]
+        gen = self._browse_gen
+
+        def work() -> None:
+            from bitwave import artist_bio, musicbrainz
+
+            got = None
+            until = 0.0
+            try:
+                svc = self._mb_service_instance()
+                with self._bio_lock:
+                    client = self._bio_client
+                    if client is None:
+                        client = self._bio_client = musicbrainz.MusicBrainzClient(service=svc, alive=self._bio_alive)
+                devlog.event("bio", "lookup", artist=diagnostics.content(name))
+                got = artist_bio.lookup(client, svc, artist_id, name, rows, alive=self._bio_alive)
+                if got is not None:
+                    until = _bio_until({**(svc.bio_get(artist_id) or {}), "source": got.get("source") or ""})
+            except Exception:
+                _bio_log.exception("artist bio lookup failed")
+            finally:
+                with self._bio_lock:
+                    self._bio_wanted.discard(artist_id)
+            if gen != self._browse_gen or self._bio_stopped:
+                return
+            text = (got or {}).get("text") or ""
+            land = {
+                "id": artist_id,
+                "bio": text,
+                "bio_source": (got or {}).get("source") or "" if text else "",
+                "bio_url": (got or {}).get("url") or "" if text else "",
+                # How long it may be shown: QML treats an answer past it
+                # (a Discogs profile, a "none") as never landed and asks again.
+                "bio_until": until,
+                # Could not ask (offline, a service down): nothing to keep.
+                "failed": got is None,
+            }
+            cached = self._artist_cache.get(artist_id)
+            if text and cached is not None and not (cached.get("bio") or "") and self._bio_alive():
+                self._remember_artist_page(artist_id, {**cached, **{k: land[k] for k in _BIO_FIELDS}})
+            self.artistBioLanded.emit(land)
+
+        self._bio_pool.start(Worker(work))
+
+
     def _remember_artist_page(self, artist_id: str, payload: dict) -> None:
+        self._bio_fill(payload)
         self._remember_capped(self._artist_cache, artist_id, payload, self._ARTIST_CACHE_MAX)
 
     _ALBUM_TRACKS_CACHE_MAX = 200  # small row dicts, a few hundred KB worst case
@@ -6765,7 +6894,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         if cached is not None and bool(cached.get("editions_collapsed", False)) != collapse:
             cached = None
         if cached is not None:
-            self.artistLoaded.emit(cached)
+            self.artistLoaded.emit(_bio_current(cached))
             self._set_status(cached.get("name") or "Artist")
         if not artist_id:
             return
@@ -7172,6 +7301,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     # already fetched this URL, a 480 would be a cold download.
                     "art": _image(artist, 320),
                     "bio": bio,
+                    "bio_source": "",
+                    "bio_url": "",
                     "albums": [
                         self._album_dict(a)
                         for a in self._dedup_albums(albums)
@@ -7185,6 +7316,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     ],
                     "libraryScoped": True,
                 }
+                bio_fill = getattr(self, "_bio_fill", None)  # stubs have none
+                if bio_fill is not None:
+                    bio_fill(payload)
             except Exception:
                 # Same latch as search: one malformed row must fail the load
                 # visibly instead of leaving busy turning for good.
@@ -11547,6 +11681,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # Resting the pointer on a video thumbnail grows a live preview
             # card with sound; off keeps thumbnails still (click to play).
             "video_hover_peek": True,
+            "artist_bio_fallback": False,
             # The player bar's size: "full" gives the waveform 200 px, "mini"
             # 130 px, so the title and credits keep more of the bar.
             "player_size": "full",
@@ -12024,6 +12159,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             self.hoverMotionChanged.emit()
         elif key == "art_hover_tilt":
             self.artHoverTiltChanged.emit()
+        elif key == "artist_bio_fallback":
+            self.artistBioFallbackChanged.emit()
         elif key == "video_hover_peek":
             self.videoHoverPeekChanged.emit()
         elif key == "audio_output" and value != old:
@@ -17434,6 +17571,10 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             worker = getattr(self, "_library_worker", None)
             if worker is not None:
                 worker.close()
+        # A bio lookup sends nothing more once this reads stopped.
+        self._bio_stopped = True
+        with contextlib.suppress(Exception):
+            self._bio_pool.clear()
         for pool in (self.dl_pool, self._scan_pool, self.threadpool):
             pool.clear()
         self.dl_pool.waitForDone(4000)
@@ -18670,6 +18811,17 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "value": self._bitwave_pref_bool("video_hover_peek"),
                 },
                 {
+                    "key": "artist_bio_fallback",
+                    "label": "Fill missing artist bios",
+                    "help": (
+                        "When TIDAL has no biography, shows Wikipedia's intro or the Discogs profile. "
+                        "The artist's TIDAL id or name is sent to musicbrainz.org, wikipedia.org and discogs.com."
+                    ),
+                    "type": "bool",
+                    "value": self._bitwave_pref_bool("artist_bio_fallback"),
+                    "rowToggle": True,
+                },
+                {
                     "key": "player_size",
                     "label": "Player bar",
                     "help": (
@@ -19198,6 +19350,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "hover_control_motion",
                     "art_hover_tilt",
                     "video_hover_peek",
+                    "artist_bio_fallback",
                     "player_size",
                     "queue_ledger_rows",
                 ],

@@ -2,6 +2,15 @@
 
 // Deutsche Oberflächentexte. Fachbegriffe und Musikinhalte bleiben unverändert.
 var catalogue = {
+  "FINALIZING": "ABSCHLUSS",
+  "Fill missing artist bios": "Fehlende Künstlerbiografien ergänzen",
+  "When TIDAL has no biography, shows Wikipedia's intro or the Discogs profile. The artist's TIDAL id or name is sent to musicbrainz.org, wikipedia.org and discogs.com.": "Wenn TIDAL keine Biografie anbietet, wird ein Text von Wikipedia oder Discogs mit Quellenangabe angezeigt. Dafür wird die TIDAL-Künstler-ID oder der Künstlername an MusicBrainz, Wikipedia und Discogs übermittelt.",
+  "From Wikipedia": "Quelle: Wikipedia",
+  "Data provided by Discogs.": "Daten bereitgestellt von Discogs.",
+  "Looking for a biography…": "Biografie wird gesucht …",
+  "No biography on TIDAL.": "Keine Biografie auf TIDAL vorhanden.",
+  "No biography found.": "Keine Biografie gefunden.",
+  "FILL MISSING BIOS": "BIOGRAFIEN ERGÄNZEN",
   "Available quality": "Verfügbare Qualität",
   "Hi-Res only": "Nur Hi-Res",
   "Filter loaded albums and tracks by available Hi-Res quality": "Geladene Alben und Titel nach verfügbarer Hi-Res-Qualität filtern",

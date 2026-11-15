@@ -894,3 +894,12 @@ Remove from TIDAL favorites?	Aus TIDAL-Favoriten entfernen?
 The track will be removed from your TIDAL favorites. Downloaded files will be kept.	Der Titel wird aus deinen TIDAL-Favoriten entfernt. Heruntergeladene Dateien bleiben erhalten.
 Could not remove the TIDAL favorite. Please try again.	Der TIDAL-Favorit konnte nicht entfernt werden. Bitte versuche es erneut.
 Track removed from TIDAL favorites. Downloaded files were kept.	Titel aus TIDAL-Favoriten entfernt. Heruntergeladene Dateien bleiben erhalten.
+Fill missing artist bios	Fehlende Künstlerbiografien ergänzen
+When TIDAL has no biography, shows Wikipedia's intro or the Discogs profile. The artist's TIDAL id or name is sent to musicbrainz.org, wikipedia.org and discogs.com.	Wenn TIDAL keine Biografie anbietet, wird ein Text von Wikipedia oder Discogs mit Quellenangabe angezeigt. Dafür wird die TIDAL-Künstler-ID oder der Künstlername an MusicBrainz, Wikipedia und Discogs übermittelt.
+From Wikipedia	Quelle: Wikipedia
+FINALIZING	ABSCHLUSS
+Data provided by Discogs.	Daten bereitgestellt von Discogs.
+Looking for a biography…	Biografie wird gesucht …
+No biography on TIDAL.	Keine Biografie auf TIDAL vorhanden.
+No biography found.	Keine Biografie gefunden.
+FILL MISSING BIOS	BIOGRAFIEN ERGÄNZEN

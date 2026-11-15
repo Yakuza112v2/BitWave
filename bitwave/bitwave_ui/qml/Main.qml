@@ -105,6 +105,18 @@ ApplicationWindow {
             root.videoHoverPeek = bitwave.bitwavePref("video_hover_peek") !== false
             if (!root.videoHoverPeek && root.peekNow) root.peekClose()
         }
+        function onArtistBioFallbackChanged() {
+            root.artistBioOn = bitwave.bitwavePref("artist_bio_fallback") === true
+            if (root.artistBioOn && root.artistData && root.artistData.id && !root.artistData.bio) root.askBio(root.artistData.id)
+        }
+        function onArtistBioLanded(d) {
+            var id = "" + d.id
+            var a = Object.assign({}, root.bioAsking); delete a[id]; root.bioAsking = a
+            if (d.failed || (!d.bio && !root.artistBioOn)) return
+            var m = Object.assign({}, root.bioLanded)
+            m[id] = { bio: "" + (d.bio || ""), bio_source: "" + (d.bio_source || ""), bio_url: "" + (d.bio_url || ""), bio_until: Number(d.bio_until) || 0 }
+            root.bioLanded = m
+        }
         function onQueueLedgerRowsChanged() {
             root.queueLedgerMaxRows = bitwave.bitwavePref("queue_ledger_rows") || 12
         }
@@ -798,6 +810,40 @@ ApplicationWindow {
     // until the user sets FFmpeg up or explicitly continues degraded.
     property bool ffmpegBlocked: false
     property var artistData: ({})         // payload of the open artist page (artistLoaded)
+    // The artist bio fallback (Settings > Appearance, "Fill missing artist
+    // bios"): when TIDAL has none, Wikipedia's intro or the Discogs profile.
+    // bioLanded keeps what each lookup found this session ({bio, bio_source,
+    // bio_url, bio_until}, bio '' for none) so a page or card patches in
+    // without its payload being replaced; an answer past its bio_until (a
+    // Discogs profile after six hours, a "none" after a week) reads as never
+    // landed. bioAsking marks the lookups in flight. Both are reassigned,
+    // never mutated, so the bindings below re-read them.
+    property bool artistBioOn: bitwave.bitwavePref("artist_bio_fallback") === true
+    property var bioLanded: ({})
+    property var bioAsking: ({})
+    // The bio to show for a page or card payload: TIDAL's own, else one that
+    // landed; a fallback one only while the switch is on.
+    function bioOf(d) {
+        if (!d || !d.id) return ({})
+        var src = d.bio ? d : (root.bioLanded["" + d.id] || ({}))
+        if (!src.bio || (src.bio_source && (!root.artistBioOn || root.bioPast(src)))) return ({})
+        return src
+    }
+    function bioPast(e) {
+        return !!e && Number(e.bio_until) > 0 && Date.now() / 1000 >= Number(e.bio_until)
+    }
+    function bioCredit(src) {
+        return src === "wikipedia" ? I18n.t("From Wikipedia") : src === "discogs" ? I18n.t("Data provided by Discogs.") : ""
+    }
+    function askBio(id) {
+        id = "" + (id || "")
+        var had = root.bioLanded[id]
+        if (!root.artistBioOn || id === "" || root.bioAsking[id] || (had !== undefined && !root.bioPast(had))) return
+        var m = Object.assign({}, root.bioAsking); m[id] = true; root.bioAsking = m
+        bitwave.wantArtistBio(id)
+    }
+    readonly property var pageBioObj: bioOf(artistData)
+    readonly property string pageBio: "" + (pageBioObj.bio || "")
     // Artist-page section collapse: persisted (prefs), so a section a user
     // folds away stays folded on every artist page until reopened. Album/EP
     // hunters shouldn't have to scroll past Top tracks on each visit.
@@ -1039,7 +1085,7 @@ ApplicationWindow {
     // A row just left the active count: "done", "failed", "cancelled", or
     // "removed" when it left the queue outright. Fired after the count moved,
     // so the header button reads the count it lands on.
-    signal queueRowSettled(string status)
+    signal queueRowSettled(string status, int tracks)
 
     // ---- Download-queue grouping (Completed / Failed / Stopped / Downloading / Queued)
     // A finished row lingers 5s with its ✓ DONE chip, then slides up into the
@@ -3593,6 +3639,7 @@ ApplicationWindow {
         root.artistFollowed = !!(root.artistData && root.artistData.id)
                               && bitwave.isFollowed("" + root.artistData.id)
         root.artistTidalRead()
+        if (root.artistData && root.artistData.id && !root.artistData.bio) root.askBio(root.artistData.id)
     }
     // Card rows of the feed list by row uid. Mutated in place and never
     // reassigned: a row re-reads it only when its own sig changes, so a new
@@ -4338,6 +4385,21 @@ ApplicationWindow {
             root.releasesFollowed = bitwave.followedCount()
             if (!on && root.releasesFollowedRows.length > 0)
                 root.releasesFollowedSet(root.releasesFollowedRows.filter(function (r) { return ("" + r.id) !== ("" + aid) }))
+            // An unfollow takes the artist's cards off the feed at once
+            // (the store already dropped them), then the feed is asked again
+            // now rather than after the debounce, so a release another follow
+            // also holds, or a featured row, settles by the store's rule.
+            if (!on) {
+                var keep = function (r) { return ("" + r.via) !== ("" + aid) }
+                var before = root.releasesRows.length + root.relFindRows.length
+                root.releasesRows = root.releasesRows.filter(keep)
+                root.relFindRows = root.relFindRows.filter(keep)
+                if (root.releasesRows.length + root.relFindRows.length !== before) root.releasesApply()
+                if (root.releasesOpen) {
+                    root.releasesLoad()
+                    if (root.releasesFinding) bitwave.searchReleases(root.relFindAsked, root.releasesFilter)
+                }
+            }
             if (root.releasesOpen && root.releasesView === "excluded") root.releasesExcludedLoad()
         }
         // A library import followed many at once (one signal, not one each).
@@ -4351,7 +4413,7 @@ ApplicationWindow {
         function onFollowTidalChanged(aid, fav) {
             if (root.artistData && ("" + root.artistData.id) === ("" + aid)) root.artistTidalRead()
         }
-        function onLoggedInChanged() { root.releasesCounts() }
+        function onLoggedInChanged() { root.releasesCounts(); root.bioAsking = ({}); root.bioLanded = ({}) }
         // The badge is right from the first frame (root has its own onCompleted).
         Component.onCompleted: root.releasesCounts()
     }
@@ -4484,6 +4546,13 @@ ApplicationWindow {
         navPush(); markNav("settings")
         settingsOpen = true; artistOpen = false; libraryOpen = false; releasesOpen = false; browseOpen = false
         Qt.callLater(function() { settingsPage.jumpToCard("downloads") })
+    }
+    // Deep-link to the Appearance card, where "Fill missing artist bios"
+    // lives (from an artist page or card with no bio).
+    function openBioSetting() {
+        navPush(); markNav("settings")
+        settingsOpen = true; artistOpen = false; libraryOpen = false; releasesOpen = false; browseOpen = false
+        Qt.callLater(function() { settingsPage.jumpToCard("appearance") })
     }
     // Deep-link to the FFmpeg card (from the pre-download gate).
     function openFfmpegSetting() {
@@ -10221,14 +10290,17 @@ ApplicationWindow {
                     // final steps are still in flight: twinkle in step with the
                     // queue row for the same item.
                     finishing: db.pct >= 99.9
-                    word: dbFace.shown
+                    word: I18n.t(dbFace.shown)
                     // FINALIZING lights left to right as the final steps land.
                     wordFill: dbFace.shown === "FINALIZING" ? root.dlFin(db.mediaId) : -1
                     // 460ms both ways (the dissolve wants longer than a plain
                     // fade to read as one), instant with motion off. One value
                     // drives every cell, so leaving mid-reveal reverses from
                     // wherever it is. The swap rides on top of it.
-                    property real hoverReveal: db.wordHover ? 1 : 0
+                    // FINALIZING stays up on its own (the percent waits for a
+                    // hover): the final steps are the one stretch where the bar
+                    // alone cannot say what is happening.
+                    property real hoverReveal: (db.wordHover || dbFace.shown === "FINALIZING") ? 1 : 0
                     Behavior on hoverReveal { NumberAnimation { duration: root.hoverMotion ? 460 : 0; easing.type: Easing.InOutSine } }
                     wordReveal: hoverReveal * dbFace.swapK
                 }
@@ -11887,7 +11959,10 @@ ApplicationWindow {
             "A": ["010","101","111","101","101"], "F": ["111","100","110","100","100"],
             "G": ["011","100","101","101","011"], "I": ["1","1","1","1","1"],
             "L": ["100","100","100","100","111"], "N": ["1001","1101","1011","1001","1001"],
-            "Z": ["111","001","010","100","111"] })
+            "Z": ["111","001","010","100","111"],
+            "B": ["110","101","110","101","110"], "C": ["011","100","100","100","011"],
+            "H": ["101","101","111","101","101"], "S": ["011","100","010","001","110"],
+            "U": ["101","101","101","101","111"] })
         // Each glyph's first column within the word, and the word's width:
         // glyph, a column of gap, glyph, ... (digits are all three wide).
         readonly property var wordLayout: {
@@ -12097,7 +12172,6 @@ ApplicationWindow {
         radius: root.btnRad; color: "transparent"
         border.color: qbMa.containsMouse ? root.outline : root.border1
         Behavior on border.color { ColorAnimation { duration: 180 } }
-        transform: Translate { id: qbShk }
 
         readonly property int running: root.activeQueueCount - root.queuedCount
         // The batch: everything that became active since the queue was last
@@ -12105,29 +12179,28 @@ ApplicationWindow {
         property int batchTotal: 0
         property int batchDone: 0
         property int batchFails: 0
+        // The tracks of the batch's settled rows (done or failed), so the
+        // chart can weigh the batch by tracks: an album lands as more than a
+        // single.
+        property real landedW: 0
         property int _lastActive: 0
         property real pct: 0
+        // The batch's totals, counted once a tick (root.queueBatchTotals),
+        // so a frame of the chart costs the same for 5 items or 5,000.
+        property var agg: ({ n: 0, W: 0, L: 0, F: 0, D: 0, nb: 0, fails: 0 })
         function measure() {
             qb.pct = qb.batchTotal > 0
                 ? Math.max(0, Math.min(100, (qb.batchDone + root.queueRunningProgress() / 100) / qb.batchTotal * 100)) : 0
+            qb.agg = root.queueBatchTotals(qb.batchTotal, qb.batchFails, qb.landedW)
         }
-        // Read as soon as the queue wakes, and the finishing flag drops when
-        // it empties: left standing from the last row's finish, it had the
-        // next download open on the whole map before the first tick.
         Timer {
             interval: 250; repeat: true; triggeredOnStart: true; running: root.activeQueueCount > 0
-            onTriggered: { qb.measure(); qb.finFrac = root.queueFinishFraction(); qb._fin = root.queueAllFinishing() }
-            onRunningChanged: if (!running) { qb._fin = false; qb.finFrac = 0 }
+            onTriggered: qb.measure()
         }
-        // Finishing: everything running is at 100% and only the final steps
-        // are left; the chart pours in as they land (finFrac). The arrow
-        // folds away while anything is active, the chart filling the button,
-        // and stays folded through the DONE flash, so DONE sits centered on
-        // its own and the arrow unfolds with QUEUE.
-        property bool _fin: false
-        property real finFrac: 0
-        readonly property bool finishing: _fin && mode === "run"
-        property real fz: finishing || root.activeQueueCount > 0 || mode === "done" ? 1 : 0
+        // The arrow folds away while anything is active, the chart filling
+        // the button, and stays folded through the DONE flash, so DONE sits
+        // centered on its own and the arrow unfolds with QUEUE.
+        property real fz: root.activeQueueCount > 0 || mode === "done" ? 1 : 0
         Behavior on fz { NumberAnimation { duration: 300 } }
 
         property string flash: ""
@@ -12168,16 +12241,16 @@ ApplicationWindow {
                 Text { id: qbMetric; visible: false; textFormat: Text.PlainText; text: I18n.t("QUEUE"); font: qbWord.font }
                 DecryptText {
                     id: qbWord; objectName: "queueButtonWord"; anchors.centerIn: parent; color: qb.tone
-                    // The chart reads the percent while running and draws
-                    // its own DONE as it hands over; the word still sizes the
-                    // slot.
-                    opacity: qb.mode === "run" || qbStart.xT > 0 ? 0 : 1
+                    // The chart draws its own words while running; the word
+                    // still sizes the slot.
+                    opacity: qb.mode === "run" ? 0 : 1
                     font.family: root.uiFont; font.pixelSize: 13; font.bold: true; font.letterSpacing: root.btnTrack
                     font.features: { "tnum": 1 }
                 }
             }
         }
-        // The speed chart, the percent over the speed, and the pour.
+        // The speed chart, the batch along its floor, and the download speed
+        // in its bottom left corner.
         QueueStart { id: qbStart; z: -1; anchors.centerIn: parent; btn: qb }
 
         // The count in LED dots on the page's own color, cut into the
@@ -12200,17 +12273,25 @@ ApplicationWindow {
             Behavior on scale { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.2 } }
             visible: scale > 0.01; opacity: qbDone.badgeOp
             transform: Scale { origin.x: qbBadge.width / 2; origin.y: 6.5; xScale: qbDone.bump; yScale: qbDone.bump }
-            function fmt(v) { return v > 99 ? "99+" : "" + v }
+            // The true count up to 999, then 1k to 9k, then 9k+.
+            function fmt(v) { return v > 9999 ? "9k+" : v > 999 ? Math.floor(v / 1000) + "k" : "" + v }
+            // When the last roll began: a change that comes sooner switches
+            // at once, or a steady stream of landings keeps it mid-roll.
+            property real _rollT: 0
             Component.onCompleted: { if (value > 0) qbNew.text = fmt(value); _last = value }
             onValueChanged: {
                 if (value <= 0) { _last = 0; return }
                 if (_last <= 0) { qbNew.text = fmt(value); _last = value; t = 1; return }
                 dir = value > _last ? 1 : -1
-                qbOld.text = fmt(_last); qbNew.text = fmt(value); _last = value
-                qbRoll.restart()
+                var o = fmt(_last), nw = fmt(value), now = Date.now()
+                _last = value
+                // A change that keeps the same text (1,203 to 1,202) does not roll.
+                if (o === nw) return
+                qbOld.text = o; qbNew.text = nw
+                if (now - _rollT < 600) { qbRoll.stop(); t = 1; _rollT = now; return }
+                _rollT = now; qbRoll.restart()
             }
             NumberAnimation { id: qbRoll; target: qbBadge; property: "t"; from: 0; to: 1; duration: 300; easing.type: Easing.OutCubic }
-            Rectangle { id: qbErr; anchors.fill: parent; radius: parent.radius; color: root.red; opacity: 0 }
             Text {
                 id: qbOld
                 textFormat: Text.PlainText
@@ -12227,12 +12308,6 @@ ApplicationWindow {
                 color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; opacity: 0
             }
             LedCount { cur: qbNew.text; old: qbOld.text; t: qbBadge.t; dir: qbBadge.dir }
-        }
-        SequentialAnimation {
-            id: qbErrAnim
-            NumberAnimation { target: qbErr; property: "opacity"; to: 1; duration: 60 }
-            PauseAnimation { duration: 450 }
-            NumberAnimation { target: qbErr; property: "opacity"; to: 0; duration: 320 }
         }
         // Sticky while anything in the queue has failed, breathing on the LED
         // clock; overhangs the corner so it never widens the button.
@@ -12251,42 +12326,50 @@ ApplicationWindow {
         readonly property real bx: qbBadge.x + qbBadge.width / 2
         readonly property real by: qbBadge.y + 6.5
         QueueDone { id: qbDone; objectName: "queueButtonDone"; cx: qb.bx; cy: qb.by; bw: qbBadge.width; z: 4 }
-        function finish() { qbDone.play(root.activeQueueCount === 0, qb.mapToItem(null, qb.bx, qb.by).y) }
-
-        SequentialAnimation {
-            id: qbShake
-            NumberAnimation { target: qbShk; property: "x"; to: -3; duration: 40 }
-            NumberAnimation { target: qbShk; property: "x"; to: 3; duration: 60 }
-            NumberAnimation { target: qbShk; property: "x"; to: -2; duration: 50 }
-            NumberAnimation { target: qbShk; property: "x"; to: 2; duration: 50 }
-            NumberAnimation { target: qbShk; property: "x"; to: 0; duration: 40 }
+        // A batch of more than 20 items sparks only at its end, not per
+        // landing; the last download always plays.
+        function finish() {
+            var last = root.activeQueueCount === 0
+            if (!last && qb.batchTotal > 20) return
+            qbDone.play(last, qb.mapToItem(null, qb.bx, qb.by).y)
         }
         Timer { id: qbFlashT; onTriggered: qb.flash = "" }
+        // A delta burst (a thousand rows queued, a RETRY ALL) moves the
+        // counts once per row: the totals are measured once, after it.
+        property bool _measureDue: false
+        function measureSoon() {
+            if (qb._measureDue) return
+            qb._measureDue = true
+            Qt.callLater(function () { qb._measureDue = false; qb.measure() })
+        }
         function say(m, ms) { qb.flash = m; qbFlashT.interval = ms; qbFlashT.restart() }
         Connections {
             target: root
             function onActiveQueueCountChanged() {
                 var a = root.activeQueueCount, d = a - qb._lastActive
                 if (d > 0) {
-                    if (qb._lastActive === 0) { qb.batchTotal = 0; qb.batchDone = 0; qb.batchFails = 0 }
+                    if (qb._lastActive === 0) {
+                        qb.batchTotal = 0; qb.batchDone = 0; qb.batchFails = 0; qb.landedW = 0
+                        // The last batch's totals never reach the new batch's chart.
+                        qb.agg = ({ n: 0, W: 0, L: 0, F: 0, D: 0, nb: 0, fails: 0 })
+                    }
                     qb.batchTotal += d
                     if (qb.flash === "done") qb.flash = ""
                 }
                 qb._lastActive = a
-                qb.measure()
+                qb.measureSoon()
             }
-            function onQueueRowSettled(status) {
-                if (status === "done" || status === "failed") qb.batchDone += 1
+            function onQueueRowSettled(status, tracks) {
+                if (status === "done" || status === "failed") { qb.batchDone += 1; qb.landedW += Math.max(1, tracks) }
                 else qb.batchTotal = Math.max(qb.batchDone, qb.batchTotal - 1)
-                qb.measure()
+                if (status === "failed") qb.batchFails += 1
+                qb.measureSoon()
+                // DONE only when the batch lands whole: mid batch the chart
+                // keeps the button and the count's sparks say it.
                 if (status === "done") {
-                    if (root.activeQueueCount > 0) qb.say("done", 650)
-                    else if (qb.batchFails === 0) qb.say("done", 1600)
+                    if (root.activeQueueCount === 0 && qb.batchFails === 0) qb.say("done", 1600)
                     qb.finish()
-                } else if (status === "failed") {
-                    qb.batchFails += 1
-                    qbErrAnim.restart(); qbShake.restart(); qb.say("fail", 1200)
-                }
+                } else if (status === "failed") qb.say("fail", 1200)
             }
         }
         MouseArea { id: qbMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; z: 10; onClicked: qb.clicked() }
@@ -12310,267 +12393,141 @@ ApplicationWindow {
         // Drawn at device resolution, shown at logical size.
         readonly property real s: Screen.devicePixelRatio
         width: lw * s; height: lh * s; scale: 1 / s
-        readonly property bool run: btn !== null && btn.mode === "run"
-        readonly property bool on: run || xT > 0
-        // The handoff: when the pour gave way to DONE (0 while none plays),
-        // and whether that was the batch's last download (the same call the
-        // button makes for its flash). A queue that went
-        // idle starts its next batch fresh, however soon it comes.
-        property double xT: 0
-        property bool xEnd: false
-        property bool fresh: false
-        // On the mode itself, not on run: the last row empties the queue
-        // first, so the button passes through idle on its way to DONE.
-        Connections {
-            target: st.btn
-            function onModeChanged() { if (st.btn.mode === "done" && st.finT > 0 && st.xT === 0) { st.xT = Date.now(); st.xEnd = root.activeQueueCount === 0 } }
-        }
+        readonly property bool on: btn !== null && btn.mode === "run"
+        // A queue that went idle starts its next batch fresh, however soon
+        // it comes. The chart is only ever off mid batch behind a FAIL
+        // flash, and a run of failures keeps the history it had.
+        property bool fresh: true
         Connections {
             target: root
             function onActiveQueueCountChanged() { if (root.activeQueueCount === 0) st.fresh = true }
         }
         opacity: on ? 1 : 0
         visible: opacity > 0
-        readonly property real pct: btn ? btn.pct : 0
+        readonly property var agg: btn ? btn.agg : null
         readonly property real rate: bitwave.downloadMbps || 0
         readonly property string spdText: root.queueSpeedText()
-        // The last speed read, so the tag keeps it at 100% once the stream
-        // has stopped and the speed reads nothing.
-        property string lastSp: ""
-        onSpdTextChanged: if (spdText !== "") lastSp = spdText
         property double bootT: 0
-        property double offT: -1e9
-        // sv is the speed on a log scale (2 Mb/s is 0, 400 Mb/s is 1),
-        // eased; ph is distance traveled, so a speed change bends the
-        // sparks instead of jumping them. prof is the speed at every percent
-        // the head has passed: the mean speed while bytes were arriving since
-        // its last step (accS over accT). The percent mostly steps when a
-        // track settles, after its stream has gone quiet, so a level read at
-        // the step itself read nothing and the whole chart lay flat behind
-        // the head.
-        property real sv: 0
-        property real ph: 0
-        property double _lt: 0
-        property var prof: []
-        property int profK: 0
-        property real accS: 0
-        property real accT: 0
-        function track(t) {
-            var dt = st._lt > 0 ? Math.max(0, Math.min(100, t - st._lt)) : 16
-            st._lt = t
-            var m = bitwave.paused ? 0 : st.rate, tgt = m > 0 ? clamp((Math.log(m) / Math.LN10 - 0.301) / 2.301) : 0
-            st.sv += (tgt - st.sv) * (1 - Math.exp(-dt / 300))
-            st.ph += dt / 1000 * (0.06 + 2.4 * st.sv)
-            var k = Math.min(100, Math.floor(st.pct))
-            // A new batch starts a new chart (the boot clears it); the dip
-            // between two downloads of one batch keeps it. Stretches with
-            // no speed reading at all (finishing, paused) carry the last level.
-            if (st.prof.length !== 101) {
-                var z = []; for (var i = 0; i <= 100; ++i) z.push(0)
-                st.prof = z; st.profK = 0; st.accS = 0; st.accT = 0
-            }
-            if (m > 0) { st.accS += tgt * dt; st.accT += dt }
-            if (st.profK < k) {
-                var lv = st.accT > 0 ? st.accS / st.accT : st.profK > 0 ? st.prof[st.profK - 1] : 0
-                while (st.profK < k) { st.prof[st.profK] = lv; st.profK++ }
-                st.accS = 0; st.accT = 0
-            }
-        }
-        function profH(k, B) {
-            var N = Math.min(st.profK, Math.max(0, Math.floor(st.pct))), P = st.prof
-            if (k >= N) return B[3] * (0.1 + 0.78 * st.sv)
-            var a = P[Math.max(0, k - 1)] || 0, b = P[k] || 0, c = k + 1 < N ? P[k + 1] || 0 : b
-            return B[3] * (0.1 + 0.78 * (a + 2 * b + c) / 4)
-        }
+        // What it draws from, kept between frames: the whole batch's trace
+        // (tr: a speed sample every 250 ms of wall time, over the download
+        // clock dc, which runs only while something is left to download),
+        // and the eased batch (P landed plus in flight, Pd downloaded,
+        // Lw landed, all 0 to 1) and speed ceiling (mx).
+        property var es: ({})
+        // The look of the speed's words and of the speed itself: the words'
+        // ink alpha, the dark keyline round each glyph (alpha, width), their
+        // size, and the speed's fill and line alphas.
+        property real wordAlpha: 1
+        property real keyAlpha: 0.9
+        property real keyWidth: 2.5
+        property real wordPx: 9
+        property real areaAlpha: 0.22
+        property real lineAlpha: 0.8
 
-        // ---- the finish ----
-        // finT is when the finish began (latched as finishing starts, let go
-        // only if the batch drops back under 100%); fv is the real finish
-        // steps, eased.
-        property double finT: 0
-        property real fv: 0
-        property double _ft: 0
-        readonly property bool pouring: finT > 0
-        function finning(t) {
-            var b = st.btn
-            if (b && b.finishing && st.finT === 0) { st.finT = t; st.fv = 0; st._ft = t }
-            if (st.finT > 0 && !(b && b.finishing) && st.pct < 100) st.finT = 0
-            if (st.finT === 0) return false
-            var goal = b && b.finishing ? b.finFrac : 1, dt = Math.max(0, t - st._ft)
-            st._ft = t
-            st.fv += (goal - st.fv) * (1 - Math.exp(-dt / 220))
-            return true
-        }
-        function ease(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2 }
-        function lerp(a, b, u) { return a + (b - a) * u }
-        function pour(ctx, t, dim) {
-            var B = box(), x0 = B[0], y0 = B[1], w = B[2], h = B[3], bot = y0 + h
-            var f = st.fv, tau = t - st.finT, sec = t / 1000
-            var ta = clamp(tau / 350)   // the download's tag hands over
-            var H = [], m = 0
-            for (var k = 0; k <= 100; ++k) { H.push(profH(k, B)); m += H[k] / 101 }
-            var X = function (k) { return x0 + w * k / 100 }
-            // The skyline settles to its mean level, which rises as the file
-            // fills, to the brim; the surface rocks less as it comes up.
-            var sl = ease(clamp(tau / 900)), L = lerp(m, h + 1.5, f)
-            var surf = function (k) { return lerp(H[k], L + Math.sin(k * 0.21 - sec * 5.5) * 1.1 * (1 - f) + Math.sin(k * 0.09 + sec * 3.1) * 0.6, sl) }
-            ctx.beginPath(); ctx.moveTo(X(0), bot)
-            for (k = 0; k <= 100; ++k) ctx.lineTo(X(k), bot - surf(k))
-            ctx.lineTo(X(100), bot); ctx.closePath()
-            var g = ctx.createLinearGradient(0, y0, 0, bot)
-            g.addColorStop(0, rgba((0.5 + 0.25 * f) * dim)); g.addColorStop(1, rgba((0.1 + 0.3 * f) * dim))
-            ctx.fillStyle = g; ctx.fill()
-            ctx.beginPath(); ctx.moveTo(X(0), bot - surf(0))
-            for (k = 1; k <= 100; ++k) ctx.lineTo(X(k), bot - surf(k))
-            ctx.strokeStyle = rgba(0.9 * dim, 0.25); ctx.lineWidth = 1; ctx.stroke()
-            // Bubbles rising through it.
-            for (var j = 0; j < 9; ++j) {
-                var u = (sec * (0.35 + 0.3 * hash(j)) + hash(j + 4)) % 1, kb = Math.floor(hash(j + 11) * 100)
-                ctx.fillStyle = rgba(0.5 * (1 - u) * sl * dim, 0.5); ctx.fillRect(X(kb), bot - u * surf(kb), 1, 1)
-            }
-            if (ta < 1) tag(ctx, B, x0 + w, bot - H[100], dim * (1 - ta))
-            finTag(ctx, B, x0 + w - 1, bot - surf(100), dim * ta)
-        }
-        // The finish's tag: what share of the file is put together, right
-        // aligned on the surface at the end.
-        function finTag(ctx, B, ax, ay, dim) {
-            if (dim <= 0.01) return
-            var tx = Math.min(ax - 5, B[0] + B[2] - 3), ty = tagY(B, ay)
+        function say(ctx, str, x, y, px, al, col, dim) {
             ctx.save(); ctx.globalCompositeOperation = "source-over"
-            ctx.fillStyle = rgba(0.6 * dim); ctx.fillRect(ax - 4, ay - 0.5, 3, 1)
-            keyed(ctx, Math.round(st.fv * 100) + "%", tx, ty, st.tagPx, "right", ink(root.textHi, dim), dim)
-            keyed(ctx, "building", tx, ty + st.tagGap, st.tagPx, "right", rgba(0.95 * dim, 0.35), dim)
+            keyed(ctx, str, x, y, px, al, col, dim)
             ctx.restore()
         }
-
-        // ---- the download ----
-        function chart(ctx, t, dim, ta) {
-            var B = box(), x0 = B[0], y0 = B[1], w = B[2], h = B[3], bot = y0 + h, fx = x0 + w * st.pct / 100
-            // A fresh start sweeps in from the left, white at its edge.
-            var bk = clamp((t - st.bootT) / 540)
-            if (bk < 1) { ctx.save(); ctx.beginPath(); ctx.rect(x0 - 1, y0 - 1, w * bk + 1, h + 2); ctx.clip() }
-            var N = Math.max(0, Math.floor(st.pct)), hd = bot - profH(N, B)
-            var g = ctx.createLinearGradient(0, y0, 0, bot)
-            g.addColorStop(0, rgba(0.5 * dim)); g.addColorStop(1, rgba(0.1 * dim))
-            ctx.beginPath(); ctx.moveTo(x0, bot)
-            for (var k = 0; k < N; ++k) ctx.lineTo(x0 + w * k / 100, bot - profH(k, B))
-            ctx.lineTo(fx, hd); ctx.lineTo(fx, bot); ctx.closePath()
-            ctx.fillStyle = g; ctx.fill()
-            ctx.beginPath(); ctx.moveTo(x0, bot - profH(0, B))
-            for (k = 1; k < N; ++k) ctx.lineTo(x0 + w * k / 100, bot - profH(k, B))
-            ctx.lineTo(fx, hd)
-            ctx.strokeStyle = rgba(0.9 * dim, 0.15); ctx.lineWidth = 1; ctx.stroke()
-            // The level it is running at, ruled ahead to the end, over a
-            // dotted floor.
-            ctx.fillStyle = rgba(0.16 * dim)
-            for (var dx = fx + 2; dx < x0 + w; dx += 3) ctx.fillRect(dx, hd - 0.4, 1.2, 0.8)
-            ctx.fillStyle = rgba(0.12 * dim)
-            for (dx = fx + 1; dx < x0 + w; dx += 3) ctx.fillRect(dx, bot - 1.2, 1.2, 0.8)
-            // Sparks off the head, as many and as fast as the speed.
-            for (var j = 0; j < 8; ++j) {
-                if (j >= 2 + 6 * st.sv) break
-                var u = (st.ph * (0.9 + 0.5 * hash(j)) + hash(j + 5)) % 1
-                ctx.fillStyle = rgba((1 - u) * 0.7 * dim, 0.6)
-                ctx.fillRect(fx - 1 - u * 5 * hash(j + 9), hd - u * (4 + 6 * st.sv), 1, 1)
-            }
-            ctx.fillStyle = rgba(0.3 * dim, 0.3); ctx.fillRect(fx - 0.5, y0, 1, h)
-            ctx.fillStyle = rgba(dim, 0.85); ctx.fillRect(fx - 1, hd - 1, 2, 2)
-            tag(ctx, B, fx, hd, dim * (ta === undefined ? 1 : ta))
-            if (bk < 1) { ctx.restore(); ctx.fillStyle = rgba(0.8 * (1 - bk), 0.8); ctx.fillRect(x0 + w * bk - 1, y0, 2, h) }
-        }
-        // The tag: the percent over the speed (in the accent), hung off the
-        // head on a short leader and riding up and down with it; ahead of
-        // the head while there is room, behind it after. 9px on 8.75px
-        // lines, about as big as two lines go in the button.
-        readonly property real tagPx: 9
-        readonly property real tagGap: 8.75
-        function tagY(B, y) { return Math.max(B[1] + st.tagPx * 0.74 + 1, Math.min(B[1] + B[3] - st.tagGap - 1.5, y - 1)) }
-        function tag(ctx, B, fx, hd, dim) {
-            var x0 = B[0], w = B[2], P = st.tagPx
-            var spT = st.spdText || (st.pct >= 100 ? st.lastSp : ""), known = spT !== ""
-            var pc = Math.floor(st.pct) + "%", sp = spT || "-- Mb/s"
-            ctx.save(); ctx.globalCompositeOperation = "source-over"
-            var wt = Math.max(tw(ctx, pc, P), tw(ctx, sp, P)), ahead = x0 + w - fx - 6 >= wt
-            var ty = tagY(B, hd)
-            var tx = ahead ? fx + 5 : Math.min(fx - 5, x0 + w - 3), al = ahead ? "left" : "right"
-            ctx.fillStyle = rgba(0.6 * dim); ctx.fillRect(ahead ? fx + 1 : fx - 4, hd - 0.5, 3, 1)
-            keyed(ctx, pc, tx, ty, P, al, ink(root.textHi, dim), dim)
-            keyed(ctx, sp, tx, ty + st.tagGap, P, al, rgba((known ? 0.95 : 0.4) * dim, 0.35), dim)
-            ctx.restore()
-        }
-        // ---- the handoff ----
-        // The pour hands over in 1.35s: the pool tips toward the count and
-        // pours into it as DONE drops in from above, then DONE falls away as
-        // the chart sweeps back in from the left with the batch's history.
-        // The batch's last download plays up to its DONE, holds it as long
-        // as the button's flash, and fades.
-        function handoff(ctx, t, dim) {
-            var u0 = t - st.xT, D = st.xEnd ? 1600 : 1350, B = box(), x0 = B[0], y0 = B[1], w = B[2], h = B[3], bot = y0 + h, sec = t / 1000
-            if (u0 >= D) {
-                // Over: back to the chart, or nothing once the queue is idle
-                // (the button's own word takes over from here).
-                if (st.run || st.xEnd || u0 > D + 1500) st.xT = 0
-                if (st.run) chart(ctx, t, dim)
-                return
-            }
-            var u = st.xEnd ? Math.min(u0, 650) : u0
-            if (st.xEnd) dim *= 1 - ease(clamp((u0 - 1300) / 300))
-            var full = h + 1.5, X = function (k) { return x0 + w * k / 100 }
-            var e = ease(clamp(u / 600))
-            if (e < 1) {
-                var tilt = Math.sin(Math.PI * Math.min(1, e * 1.2)) * 7
-                pool(ctx, B, X, function (k) { return Math.max(0, full * (1 - e) + tilt * (k / 100 - 0.4)) }, dim)
-                var bp = st.btn.mapToItem(st, st.btn.bx, st.btn.by), bx = bp.x / st.s, by = bp.y / st.s
-                for (var j = 0; j < 10; ++j) {
-                    var q = clamp((e - 0.06 * j) / 0.45)
-                    if (q <= 0 || q >= 1) continue
-                    var sx = x0 + w * (0.72 + 0.03 * hash(j)), sy = bot - full * (1 - e) - 1
-                    var px = lerp(sx, bx - 2, q), py = lerp(sy, by + 2, q) - Math.sin(Math.PI * q) * 4
-                    ctx.fillStyle = rgba(0.9 * dim * (1 - q * 0.6), 0.6); ctx.fillRect(px - 0.75, py - 0.75, 1.5, 1.5)
+        function draw(ctx, t, dim) {
+            var B = box(), x0 = B[0], y0 = B[1], w = B[2], h = B[3], bot = y0 + h, i
+            var G = st.agg || { W: 0, L: 0, F: 0, D: 0 }, E = st.es
+            var wall = E.t > 0 ? Math.max(0, t - E.t) : 0, dt = Math.min(100, wall)
+            E.t = t
+            var ez = function (cur, to, tau) { return cur === undefined ? to : cur + (to - cur) * (1 - Math.exp(-dt / tau)) }
+            var W = Math.max(1, G.W), P = Math.min(1, (G.L + G.F) / W), Lw = Math.min(1, G.L / W)
+            // The download alone, 0 to 1: the speed's front, complete at the
+            // right edge when the last bytes land, whatever the finish steps
+            // still do. The download clock runs only while it is short of
+            // that, so the trace holds still through the finish steps.
+            var Pd = Math.min(1, (G.L + (G.D || 0)) / W), dl = Pd < 0.999
+            if (!(E.dc >= 0)) E.dc = 0
+            if (dl) E.dc += wall
+            // A sample every 250 ms of wall time, so a slow frame rate
+            // (settled, or the window away) keeps the clock.
+            if (!E.ht || t - E.ht > 60000) E.ht = t - 250
+            // The trace: the whole batch's speed over the download clock, the
+            // same samples while anything downloads, each entry the speed
+            // summed over its n samples at their mean time. Past two entries
+            // a pixel, neighbors merge in pairs, so a long batch costs the
+            // same as a short one and the line keeps one to two points a
+            // pixel.
+            var Tr = E.tr || (E.tr = []), C = 2 * Math.max(8, Math.floor(w))
+            while (t - E.ht >= 250) {
+                E.ht += 250
+                var mb = bitwave.paused ? 0 : st.rate
+                if (!dl) continue
+                Tr.push({ t: Math.max(0, E.dc - (t - E.ht)), sum: mb, n: 1 })
+                if (Tr.length > C) {
+                    var half = []
+                    for (i = 0; i + 1 < Tr.length; i += 2) {
+                        var u = Tr[i], v = Tr[i + 1], k = u.n + v.n
+                        half.push({ t: (u.t * u.n + v.t * v.n) / k, sum: u.sum + v.sum, n: k })
+                    }
+                    if (Tr.length % 2) half.push(Tr[Tr.length - 1])
+                    E.tr = Tr = half
                 }
             }
-            var bk = clamp((u - 700) / 480)
-            if (bk > 0) {
-                ctx.save(); ctx.beginPath(); ctx.rect(x0 - 1, y0 - 1, w * ease(bk) + 1, h + 2); ctx.clip()
-                chart(ctx, t, dim, clamp((u - 1100) / 200)); ctx.restore()
-                if (bk < 1) { ctx.fillStyle = rgba(0.9 * dim * (1 - bk), 0.85); ctx.fillRect(x0 + w * ease(bk) - 1, y0, 2, h) }
+            E.P = ez(E.P, P, 250); E.Lw = ez(E.Lw, Lw, 300); E.Pd = ez(E.Pd, Pd, 250)
+            // The live tip: the speed right now, eased, so the line's front
+            // moves between samples instead of waiting for the next one.
+            E.cur = ez(E.cur, bitwave.paused ? 0 : st.rate, 300)
+            var N = Tr.length, mx = Math.max(1, E.cur)
+            for (i = 0; i < N; ++i) mx = Math.max(mx, Tr[i].sum / Tr[i].n)
+            E.mx = ez(E.mx, mx, 600)
+            // Settled: nothing arriving and nothing left to ease, so four
+            // frames a second draw the same picture.
+            st.calm = (bitwave.paused || st.rate <= 0) && t - st.bootT > 600
+                && Math.abs(E.P - P) < 0.002 && Math.abs(E.Lw - Lw) < 0.002 && Math.abs(E.Pd - Pd) < 0.002
+                && Math.abs(E.mx - mx) < 0.01 * mx
+
+            // The speed over the download clock, from the left edge (the
+            // batch's start) to its front, which keeps step with the download
+            // (eased the same) and reaches the right edge as its last bytes
+            // land. The clock is spread over that span, so a short album
+            // fills the button as fully as a long queue, and both stand
+            // still through the finish steps. While the batch has not moved
+            // yet (the first tracks still starting) it grows a pixel a sample.
+            var top = h - 3
+            var fx = x0 + w * E.P, lx = x0 + w * Math.min(E.P, E.Lw)
+            var R = Math.min(x0 + w, Math.max(x0 + w * E.Pd, x0 + Math.min(N, w * 0.12)))
+            var Tw = Math.max(1, E.dc)
+            var X = function (q) { return x0 + (R - x0) * Math.min(1, Tr[q].t / Tw) }
+            var Y = function (q) { return bot - top * (Tr[q].sum / Tr[q].n) / E.mx }
+            var yc = bot - top * E.cur / E.mx
+            if (N > 0) {
+                ctx.beginPath(); ctx.moveTo(x0, bot)
+                for (i = 0; i < N; ++i) ctx.lineTo(X(i), Y(i))
+                ctx.lineTo(R, yc); ctx.lineTo(R, bot); ctx.closePath()
+                ctx.fillStyle = rgba(st.areaAlpha * dim); ctx.fill()
+                ctx.beginPath(); ctx.moveTo(X(0), Y(0))
+                for (i = 1; i < N; ++i) ctx.lineTo(X(i), Y(i))
+                ctx.lineTo(R, yc)
+                ctx.strokeStyle = rgba(st.lineAlpha * dim, 0.15); ctx.lineWidth = 1; ctx.stroke()
             }
-            var din = ease(clamp((u - 150) / 380)), dout = ease(clamp((u - 720) / 360))
-            word(ctx, B, din * (1 - dout), lerp(-15, 0, din) + 15 * dout, dim)
-        }
-        // The pool as the pour left it, tipped by y(k), its height at
-        // percent k.
-        function pool(ctx, B, x, y, a) {
-            var bot = B[1] + B[3]
-            ctx.beginPath(); ctx.moveTo(x(0), bot)
-            for (var k = 0; k <= 100; ++k) ctx.lineTo(x(k), bot - y(k))
-            ctx.lineTo(x(100), bot); ctx.closePath()
-            var g = ctx.createLinearGradient(0, B[1], 0, bot)
-            g.addColorStop(0, rgba(0.75 * a)); g.addColorStop(1, rgba(0.4 * a))
-            ctx.fillStyle = g; ctx.fill()
-            ctx.beginPath(); ctx.moveTo(x(0), bot - y(0))
-            for (k = 1; k <= 100; ++k) ctx.lineTo(x(k), bot - y(k))
-            ctx.strokeStyle = rgba(0.9 * a, 0.25); ctx.lineWidth = 1; ctx.stroke()
-        }
-        // The button's DONE, drawn here so it can move with the handoff: the
-        // same face, size and green, with a dark keyline.
-        function word(ctx, B, a, dy, dim) {
-            if (a <= 0) return
-            ctx.save(); ctx.globalCompositeOperation = "source-over"
-            ctx.font = "bold 13px \"" + root.uiFont + "\""; ctx.textAlign = "center"; ctx.textBaseline = "middle"
-            var x = B[0] + B[2] / 2, y = B[1] + B[3] / 2 + 0.5 + dy
-            ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = ink(root.bg, 0.85 * a * dim); ctx.strokeText("DONE", x, y)
-            ctx.fillStyle = ink(root.green, a * dim); ctx.fillText("DONE", x, y)
-            ctx.restore()
+            // The batch along the floor: landed bright, in flight pale.
+            ctx.fillStyle = rgba(0.1 * dim); ctx.fillRect(x0, bot - 1.5, w, 1.5)
+            ctx.fillStyle = ink(root.textHi, 0.75 * dim); ctx.fillRect(x0, bot - 1.5, lx - x0, 1.5)
+            ctx.fillStyle = ink(root.textHi, 0.3 * dim); ctx.fillRect(lx, bot - 1.5, fx - lx, 1.5)
+            // The dot on the speed line's live tip.
+            if (N > 0) { ctx.fillStyle = rgba(0.95 * dim, 0.4); ctx.fillRect(Math.min(R - 1, x0 + w - 2), yc - 1, 2, 2) }
+            // The download speed in the bottom left corner, its baseline far
+            // enough over the floor that the slash's tail and the glyphs'
+            // keyline (half its width below the baseline) end a clear pixel
+            // over the floor's line.
+            var spT = st.spdText, ty = bot - 1.5 - st.keyWidth / 2 - 2.5
+            say(ctx, spT || "-- Mb/s", x0 + 3, ty, st.wordPx, "left", rgba((spT ? 0.95 : 0.4) * dim, 0.35), dim)
         }
         // Mono text with a dark keyline round each glyph, so it reads where
         // it crosses the chart's line or fill.
         function keyed(ctx, str, x, y, px, al, col, dim) {
             ctx.font = "bold " + px + "px \"" + root.mono + "\""; ctx.textAlign = al; ctx.textBaseline = "alphabetic"
-            ctx.lineJoin = "round"; ctx.lineWidth = 2.5; ctx.strokeStyle = ink(root.bg, 0.9 * dim)
-            ctx.strokeText(str, x, y); ctx.fillStyle = col; ctx.fillText(str, x, y)
+            if (st.keyWidth > 0 && st.keyAlpha > 0) {
+                ctx.lineJoin = "round"; ctx.lineWidth = st.keyWidth; ctx.strokeStyle = ink(root.bg, st.keyAlpha * dim)
+                ctx.strokeText(str, x, y)
+            }
+            ctx.globalAlpha = st.wordAlpha; ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.globalAlpha = 1
         }
-        function tw(ctx, str, px) { ctx.font = "bold " + px + "px \"" + root.mono + "\""; return ctx.measureText(str).width }
         // The accent at alpha a, mixed c of the way to white.
         function rgba(a, c) {
             var k = c || 0, A = root.accent
@@ -12578,8 +12535,6 @@ ApplicationWindow {
                 + Math.round(255 * (A.b + (1 - A.b) * k)) + "," + Math.max(0, a) + ")"
         }
         function ink(c, a) { return "rgba(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + "," + Math.round(c.b * 255) + "," + Math.max(0, a) + ")" }
-        function hash(i) { var r = Math.sin(i * 12.9898) * 43758.5453; return r - Math.floor(r) }
-        function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v }
         // The inside of the border, read off the button itself.
         function box() {
             if (st.btn) { var a = st.btn.mapToItem(st, 0, 0); return [a.x / st.s + 1.5, a.y / st.s + 1.5, st.btn.width - 3, st.btn.height - 3] }
@@ -12587,23 +12542,21 @@ ApplicationWindow {
         }
 
         onOnChanged: {
-            var t = Date.now()
-            // A fresh batch sweeps in; a beat off (the DONE between two
-            // downloads) comes back as it was.
-            if (on) { if (t - offT > 2500 || st.fresh) { bootT = t; prof = [] } st.fresh = false } else offT = t
+            // A fresh batch starts a fresh history; a beat off (the FAIL
+            // flash mid batch, however many in a row) comes back as it was.
+            if (on) { if (st.fresh) { st.es = ({}); bootT = Date.now() } st.fresh = false }
         }
         // Full rate only while something moves. A queue that is paused, or
         // waiting with nothing arriving (offline, a NAS that went away), has
-        // a chart that has settled, and at zero speed its sparks drift well
-        // under a pixel a frame, so four frames a second look the same. A
-        // speed or a pause wakes it at once, and a hidden window draws
-        // nothing (the clocks are wall time, so it picks up where it is).
+        // a chart that has settled once its numbers have eased in, and four
+        // frames a second keep its history ticking. A speed or a pause wakes
+        // it at once, and a hidden window draws nothing (the clocks are wall
+        // time, so it picks up where it is).
         property bool calm: false
-        readonly property bool busy: !calm || xT > 0 || pouring || (btn !== null && btn.finishing)
+        readonly property bool busy: !calm
         readonly property bool paused: bitwave.paused
         onRateChanged: calm = false
         onPausedChanged: calm = false
-        onPctChanged: if (calm) requestPaint()
         Timer { interval: st.busy ? 16 : 250; repeat: true; running: st.visible && root.windowUp; onTriggered: st.requestPaint() }
         onPaint: {
             var ctx = getContext("2d")
@@ -12614,12 +12567,7 @@ ApplicationWindow {
             var B = box(), r = root.btnRad - 1.5
             ctx.beginPath(); ctx.roundedRect(B[0], B[1], B[2], B[3], r, r); ctx.clip()
             ctx.globalCompositeOperation = "lighter"
-            var t = Date.now(), dim = bitwave.paused ? 0.5 : 1
-            track(t)
-            st.calm = (bitwave.paused || st.rate <= 0) && st.sv < 0.002 && t - st.bootT > 600
-            if (st.xT > 0) handoff(ctx, t, dim)
-            else if (finning(t)) pour(ctx, t, dim)
-            else chart(ctx, t, dim)
+            draw(ctx, Date.now(), bitwave.paused ? 0.5 : 1)
         }
     }
 
@@ -17388,6 +17336,7 @@ ApplicationWindow {
         root.qidAt = at
         root.lingerQids = ling
         root.completedCount = c; root.failedCount = f; root.stoppedCount = s; root.downloadingCount = d; root.queuedCount = q
+        root._qwDirty = true
         root.lingerCount = ling.length
         root.activeQueueCount = a
     }
@@ -17408,7 +17357,7 @@ ApplicationWindow {
         else if (grp === "failed") root.failedCount += d
         else if (grp === "stopped") root.stoppedCount += d
         else if (grp === "downloading") root.downloadingCount += d
-        else root.queuedCount += d
+        else { root.queuedCount += d; root._qwDirty = true }
         // The one funnel every section count passes through, so it is where
         // the header pulse is named: the section that GREW. A promotion bumps
         // two sections in the same tick, one down and one up, and only the
@@ -17465,6 +17414,31 @@ ApplicationWindow {
             any = true
         }
         return any
+    }
+    property int _qwCount: -1
+    property bool _qwDirty: true
+    property real _qwSum: 0
+    property int _qwWalks: 0
+    function queueBatchTotals(total, fails, landedW) {
+        var m = queueModel, i, r, w
+        if (root._qwDirty || root._qwCount !== root.queuedCount) {
+            var qlo = queueGroupStart("queued"), qhi = Math.min(m.count, qlo + root.queuedCount), qs = 0
+            for (i = qlo; i < qhi; ++i) qs += Math.max(1, m.get(i).tracks || 0)
+            root._qwSum = qs; root._qwCount = root.queuedCount; root._qwDirty = false; root._qwWalks += 1
+        }
+        var lo = queueGroupStart("downloading"), hi = Math.min(m.count, lo + root.downloadingCount)
+        var runW = 0, F = 0, D = 0, nb = 0
+        for (i = lo; i < hi; ++i) {
+            r = m.get(i)
+            if (r.status !== "running") continue
+            w = Math.max(1, r.tracks || 0)
+            var p = Math.min(100, r.progress || 0) / 100, fin = root.queueFinish[r.qid] || 0
+            runW += w
+            F += w * (0.85 * p + (p >= 0.999 ? 0.15 * fin : 0))
+            D += w * p
+            if (p >= 0.999) ++nb
+        }
+        return { n: total, W: landedW + runW + root._qwSum, L: landedW, F: F, D: D, nb: nb, fails: fails }
     }
     // Re-point the index entries of model rows lo..hi after a shift.
     function queueIndexFix(lo, hi) {
@@ -17532,7 +17506,7 @@ ApplicationWindow {
             m.setProperty(i, "status", it.status)
             if (queueActiveStatus(was) !== queueActiveStatus(it.status)) {
                 root.activeQueueCount += queueActiveStatus(it.status) ? 1 : -1
-                if (queueActiveStatus(was)) root.queueRowSettled(it.status)
+                if (queueActiveStatus(was)) root.queueRowSettled(it.status, row.tracks || 0)
             }
         }
         // Wall-clock stamp of when the row finished: the root lingerClock
@@ -17547,7 +17521,7 @@ ApplicationWindow {
         if (row.progress !== it.progress) m.setProperty(i, "progress", it.progress)
         if (row.name !== it.name) m.setProperty(i, "name", it.name)
         if (row.artist !== it.artist) m.setProperty(i, "artist", it.artist || "")
-        if (row.tracks !== it.tracks) m.setProperty(i, "tracks", it.tracks || 0)
+        if (row.tracks !== it.tracks) { m.setProperty(i, "tracks", it.tracks || 0); root._qwDirty = true }
         var qv = it.quality || ""
         if (row.quality !== qv) m.setProperty(i, "quality", qv)
         var ex = it.expected || ""
@@ -17582,7 +17556,7 @@ ApplicationWindow {
         for (var k = 0; k < idxs.length; ++k) {
             var at = idxs[k], row = m.get(at), qid = row.qid
             queueGroupBump(row.uiGroup, -1)
-            if (queueActiveStatus(row.status)) { root.activeQueueCount -= 1; root.queueRowSettled("removed") }
+            if (queueActiveStatus(row.status)) { root.activeQueueCount -= 1; root.queueRowSettled("removed", row.tracks || 0) }
             if (row.status === "done" && !row.moved) queueLingerDrop(qid)
             // A row that has left the queue takes its per-qid state with it:
             // the expanded track list AND the expansion flag itself (see
@@ -20155,27 +20129,79 @@ ApplicationWindow {
                         }
                         // Collapsed bio preview (never taller than the photo)
                         Text {
-                            visible: (root.artistData.bio || "") !== "" && !root.bioExpanded
-                            text: I18n.t(root.artistData.bio || "")
+                            visible: root.pageBio !== "" && !root.bioExpanded
+                            text: root.pageBio
                             textFormat: Text.PlainText  // never interpret remote bio as rich text (no auto <img> fetch)
                             color: root.textLo; font.pixelSize: 13; width: parent.width
                             wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
                         }
                         Text {
                             textFormat: Text.PlainText
-                            visible: (root.artistData.bio || "") !== ""
-                            text: I18n.t(root.bioExpanded ? "SHOW LESS" : "READ MORE")
+                            visible: root.pageBio !== ""
+                            text: root.bioExpanded ? I18n.t("SHOW LESS") : I18n.t("READ MORE")
                             color: root.accent; font.pixelSize: 12; font.letterSpacing: 0.8
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.bioExpanded = !root.bioExpanded }
+                        }
+                        // A bio from Wikipedia or Discogs: its source's credit,
+                        // linking to the page it came from.
+                        Text {
+                            objectName: "artistBioCredit"
+                            textFormat: Text.PlainText
+                            // Under the full text once it is open (below).
+                            visible: root.pageBio !== "" && !!root.pageBioObj.bio_source && !root.bioExpanded
+                            text: root.bioCredit(root.pageBioObj.bio_source)
+                            color: pageCreditMa.containsMouse ? root.accent : root.textDim; font.pixelSize: 12
+                            MouseArea {
+                                id: pageCreditMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: Qt.openUrlExternally("" + root.pageBioObj.bio_url)
+                            }
+                        }
+                        // No bio: say so, with the switch that fills it while it
+                        // is off, or that one is on its way while it is on.
+                        Row {
+                            objectName: "artistBioMissing"
+                            visible: root.pageBio === "" && !!root.artistData.id
+                                     && (!root.artistBioOn || !!root.bioAsking["" + root.artistData.id])
+                            spacing: 10
+                            Text {
+                                id: pageNoBio
+                                textFormat: Text.PlainText
+                                text: root.artistBioOn ? I18n.t("Looking for a biography…") : I18n.t("No biography on TIDAL.")
+                                color: root.textDim; font.pixelSize: 13; font.italic: true
+                            }
+                            Text {
+                                objectName: "artistBioFill"
+                                visible: !root.artistBioOn
+                                textFormat: Text.PlainText; text: I18n.t("FILL MISSING BIOS")
+                                color: pageFillMa.containsMouse ? root.accent : root.accentDim
+                                font.pixelSize: 12; font.letterSpacing: 0.8
+                                anchors.baseline: pageNoBio.baseline
+                                MouseArea {
+                                    id: pageFillMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.openBioSetting()
+                                }
+                            }
                         }
                     }
                 }
                 // Full bio appears below the header only when expanded
                 Text {
-                    visible: (root.artistData.bio || "") !== "" && root.bioExpanded
-                    text: I18n.t(root.artistData.bio || "")
+                    visible: root.pageBio !== "" && root.bioExpanded
+                    text: root.pageBio
                     textFormat: Text.PlainText  // never interpret remote bio as rich text (no auto <img> fetch)
                     color: root.textLo; font.pixelSize: 13; width: parent.width; wrapMode: Text.WordWrap; lineHeight: 1.3
+                }
+                // The open bio's credit, under the text it credits.
+                Text {
+                    objectName: "artistBioCreditOpen"
+                    textFormat: Text.PlainText
+                    visible: root.pageBio !== "" && !!root.pageBioObj.bio_source && root.bioExpanded
+                    text: root.bioCredit(root.pageBioObj.bio_source)
+                    color: pageCreditOpenMa.containsMouse ? root.accent : root.textDim; font.pixelSize: 12
+                    MouseArea {
+                        id: pageCreditOpenMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: Qt.openUrlExternally("" + root.pageBioObj.bio_url)
+                    }
                 }
 
                 // Top tracks: first 5 only, SHOW ALL reveals the rest. Both

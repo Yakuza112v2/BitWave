@@ -1,5 +1,20 @@
 # Änderungen
 
+## v0.2.5 (2026-11-15)
+
+**BitWave by Yakuza112**
+
+- **Künstlerbiografien ergänzen:** Unter „Einstellungen → Darstellung“ lassen sich fehlende TIDAL-Biografien durch Texte von Wikipedia oder Discogs mit verlinkter Quellenangabe ergänzen. Die Funktion ist standardmäßig ausgeschaltet.
+- Die Warteschlangen-Schaltfläche zeigt die Download-Geschwindigkeit ohne Restzeit an.
+- Neue Veröffentlichungen gefolgter Künstler werden nach dem Start oder „JETZT PRÜFEN“ in der Regel innerhalb etwa einer Minute gefunden. Erreichbarkeit und Antwortzeiten von TIDAL können dies beeinflussen.
+- Nach dem Entfolgen eines Künstlers verschwinden dessen Veröffentlichungen sofort aus der Neuerscheinungsübersicht.
+- Die Geschwindigkeitskurve nutzt bei kurzen Alben die ganze Schaltfläche und bewahrt schnelle und langsame Abschnitte des Downloads.
+- Während der letzten Download-Schritte erscheint „ABSCHLUSS“ auch ohne Mauszeiger über der Schaltfläche.
+
+Hi-Res-Filter, die Sortierung nach verfügbarer Qualität und das Entfernen von TIDAL-Favoriten aus der bisherigen Beta sind ebenfalls enthalten. Das türkisfarbene BitWave-Symbol bleibt erhalten.
+
+Diese reguläre Version wird über die Update-Prüfung angeboten. Alternativ das vollständige Windows-ZIP entpacken und `BitWave.exe` starten. Vorhandene Einstellungen bleiben erhalten.
+
 ## v0.2.3-Beta (2026-11-14)
 
 **BitWave by Yakuza112 – Beta**
@@ -8,7 +23,7 @@
 - **Verfügbare Qualität:** Eine neue Sortierung ordnet die Suchergebnisse nach ihrer angebotenen Audioqualität – unabhängig von der eingestellten Download-Qualität.
 - **TIDAL-Favoriten verwalten:** Unter „Mein TIDAL → Titel“ entfernt ein Klick auf das Herz einen Favoriten nach Bestätigung direkt aus deinem TIDAL-Konto. Heruntergeladene Dateien bleiben erhalten.
 
-Diese Vorabversion wird separat angeboten. Die nächste reguläre Version ist 0.2.4. Entpacke das vollständige Windows-ZIP und starte `BitWave.exe`.
+Diese Vorabversion wurde separat angeboten. Die Funktionen sind seit 0.2.5 regulär enthalten.
 
 ## v0.2.3 (2026-11-10)
 
