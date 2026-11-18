@@ -2,6 +2,11 @@
 
 // Deutsche Oberflächentexte. Fachbegriffe und Musikinhalte bleiben unverändert.
 var catalogue = {
+  "That's not the sign-in link yet. Copy the full link from your browser.": "Das ist noch nicht der richtige Anmeldelink. Kopiere die vollständige Adresse aus der Browser-Adressleiste.",
+  "Could not start login": "Anmeldung konnte nicht gestartet werden",
+  "Finish signing in, then paste the URL back": "Melde dich im Browser an und füge danach die Weiterleitungsadresse hier ein",
+  "Sign-in failed. Try again.": "Anmeldung fehlgeschlagen. Bitte starte die Browser-Anmeldung erneut.",
+  "SIGNING IN…": "ANMELDUNG LÄUFT …",
   "FINALIZING": "ABSCHLUSS",
   "Fill missing artist bios": "Fehlende Künstlerbiografien ergänzen",
   "When TIDAL has no biography, shows Wikipedia's intro or the Discogs profile. The artist's TIDAL id or name is sent to musicbrainz.org, wikipedia.org and discogs.com.": "Wenn TIDAL keine Biografie anbietet, wird ein Text von Wikipedia oder Discogs mit Quellenangabe angezeigt. Dafür wird die TIDAL-Künstler-ID oder der Künstlername an MusicBrainz, Wikipedia und Discogs übermittelt.",
@@ -396,7 +401,7 @@ var catalogue = {
   "Click away to leave it alone.": "Klicke außerhalb, um nichts zu ändern.",
   "SAVE CHANGES applies this and starts the scan.": "„Änderungen speichern“ übernimmt die Auswahl und startet die Prüfung.",
   "Open the TIDAL login in your browser and sign in.": "Öffne die TIDAL-Anmeldung im Browser und melde dich an.",
-  "Paste the URL you land on back here.": "Nach der TIDAL-Anmeldung kann „Seite nicht gefunden“ erscheinen. Das ist normal. Kopiere die vollständige Adresse aus der Browser-Adressleiste und füge sie hier ein.",
+  "Paste the URL you land on back here.": "Nach der TIDAL-Anmeldung kann „Seite nicht gefunden“ erscheinen. Diese Anzeige ist normal, wenn die Adresse /android/login/auth mit einem Anmeldecode enthält. Klicke dort nicht auf „Home“. Kopiere die vollständige Adresse aus der Browser-Adressleiste und füge sie hier ein.",
   "Follow artists to see their new releases": "Folge Künstlern, um ihre Neuerscheinungen zu sehen",
   "Search for an artist, album, or track to begin": "Suche zum Einstieg nach einem Künstler, Album oder Titel",
   "Search TIDAL for an artist. Their new releases will show up in the feed.": "Suche auf TIDAL nach einem Künstler. Seine Neuerscheinungen erscheinen dann in der Übersicht.",

@@ -186,6 +186,120 @@ def _user_error(exc: BaseException, fallback: str, plain: tuple[type, ...] = (),
     return diagnostics.scrub(user_facing_error(exc, fallback, plain, **nouns)).strip() or fallback
 
 
+# Sign-in panel wording, one line per way a pasted link can fail. Fixed text
+# only: nothing from the paste, the exception, or the response ever reaches it.
+_LOGIN_MSG_NO_CODE = (
+    'Das ist die Startseite der TIDAL-Anmeldung. Melde dich zuerst im Browser an. '
+    'Wenn danach „Seite nicht gefunden“ erscheint, kopiere die vollständige Adresse '
+    'dieser Seite aus der Adressleiste hierher. Klicke dort nicht auf „Home“.'
+)
+_LOGIN_MSG_WRONG_LINK = (
+    'Dieser Link gehört nicht zum Abschluss der Anmeldung. Öffne die Browser-Anmeldung '
+    'erneut und melde dich bei TIDAL an. Kopiere danach die vollständige Adresse der '
+    'Seite „Seite nicht gefunden“ hierher, ohne dort auf „Home“ zu klicken.'
+)
+_LOGIN_MSG_EMPTY = 'Füge zuerst den vollständigen Link aus der Browser-Adressleiste in das Feld oben ein.'
+_LOGIN_MSG_NOT_URL = 'Das ist kein gültiger HTTPS-Link. Kopiere die vollständige Adresse aus der Browser-Adressleiste hierher.'
+_LOGIN_MSG_REFUSED = (
+    'TIDAL hat den Anmeldelink abgelehnt. Er kann abgelaufen sein oder bereits benutzt worden sein. '
+    'Klicke auf „BROWSER-ANMELDUNG ERNEUT ÖFFNEN“, melde dich erneut an und füge den neuen Link ein.'
+)
+_LOGIN_MSG_NETWORK = (
+    'BitWave konnte TIDAL nicht erreichen. Prüfe deine Internetverbindung. '
+    'Klicke danach auf „BROWSER-ANMELDUNG ERNEUT ÖFFNEN“ und melde dich erneut an.'
+)
+_LOGIN_MSG_ACCOUNT = (
+    'TIDAL hat dein Konto noch nicht bestätigt. Prüfe, ob dein TIDAL-Abonnement aktiv ist. '
+    'Klicke danach auf „BROWSER-ANMELDUNG ERNEUT ÖFFNEN“ und melde dich erneut an.'
+)
+_LOGIN_MSG_SAVE = (
+    'Die Anmeldung konnte auf diesem Computer nicht gespeichert werden. Prüfe die Schreibrechte '
+    'für den BitWave-Einstellungsordner. Klicke danach auf „BROWSER-ANMELDUNG ERNEUT ÖFFNEN“ '
+    'und melde dich erneut an.'
+)
+
+
+def _redirect_has_code(url: str) -> bool:
+    """True when a pasted sign-in URL carries the one-time ``code`` tidalapi reads."""
+    try:
+        return bool(urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("code"))
+    except ValueError:
+        return False
+
+
+def _is_tidal_login_page(url: str) -> bool:
+    """True for a link to TIDAL's own login site (the page the sign-in starts on)."""
+    try:
+        host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return False
+    return host == "login.tidal.com"
+
+
+def _is_request_error(exc: BaseException) -> bool:
+    """A requests failure, or one raised from it, whose text carries the URL it asked.
+
+    tidalapi turns an HTTPError into its own exceptions (ObjectNotFound,
+    TooManyRequests) with ``raise ... from``, so the URL rides along in the
+    chained cause and a full traceback would print it all the same.
+    """
+    import requests
+
+    return any(isinstance(e, requests.RequestException) for e in _exception_chain(exc))
+
+
+def _exception_chain(exc: BaseException | None):
+    """The exception, then each one it was raised from, nearest first (eight at most)."""
+    seen = 0
+    while exc is not None and seen < 8:
+        yield exc
+        exc = exc.__cause__ or exc.__context__
+        seen += 1
+
+
+def _http_status(exc: BaseException) -> int | None:
+    """The HTTP status behind a failure, read through tidalapi's own exceptions
+    to the HTTPError they were raised from."""
+    for e in _exception_chain(exc):
+        status = getattr(getattr(e, "response", None), "status_code", None)
+        if status is not None:
+            return status
+    return None
+
+
+def _is_save_error(exc: BaseException) -> bool:
+    """An OSError that is a local write failure, not a network one.
+
+    requests' exceptions are OSError subclasses too, so they are ruled out
+    first: a network failure must never read as a disk failure.
+    """
+    import requests
+
+    return isinstance(exc, OSError) and not isinstance(exc, requests.RequestException | ConnectionError | TimeoutError)
+
+
+def _login_failure_message(stage: str, exc: BaseException) -> str:
+    """The sign-in panel's line for a failure at ``stage`` (exchange, session, account).
+
+    The fallback names the stage, so a report quoting it says how far the
+    sign-in got even without a log.
+    """
+    import requests
+
+    if any(isinstance(e, requests.ConnectionError | requests.Timeout | ConnectionError | TimeoutError) for e in _exception_chain(exc)):
+        return _LOGIN_MSG_NETWORK
+    if stage == "exchange" and _http_status(exc) in (400, 401, 403):
+        return _LOGIN_MSG_REFUSED
+    if stage == "account" and _is_save_error(exc):
+        return _LOGIN_MSG_SAVE
+    step = {"exchange": "Anmeldelink prüfen", "session": "Sitzung öffnen", "account": "Konto bestätigen"}.get(stage, "Anmeldung abschließen")
+    return (
+        f"Die Anmeldung ist beim Schritt „{step}“ fehlgeschlagen. "
+        'Klicke auf „BROWSER-ANMELDUNG ERNEUT ÖFFNEN“ und melde dich erneut an. '
+        'Falls der Fehler erneut auftritt, gib diese Meldung bei deiner Fehlermeldung auf GitHub an.'
+    )
+
+
 # Guards the one in-flight download-folder probe (see _probe_download_base):
 # the check that none is running and the start of a new one are one step.
 _PROBE_LOCK = Lock()
@@ -4218,6 +4332,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     sessionResolvedChanged = Signal()
     statusChanged = Signal()
     busyChanged = Signal()
+    loginErrorChanged = Signal()
+    loginBusyChanged = Signal()
     loginUrlReady = Signal(str)
     searchResults = Signal("QVariant")
     albumTracksLoaded = Signal(str, "QVariantList")
@@ -4677,6 +4793,11 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         self._session_resolved = False
         self._busy = False
         self._status = "Starting…"
+        # The sign-in panel's own feedback. The status bar sits under the
+        # panel's overlay, so a failed sign-in reported only there looked like
+        # nothing happened at all (issues #7, #56, #63).
+        self._login_error = ""
+        self._login_busy = False
         # Live tidalapi objects from the last search/artist page, keyed by id,
         # so QML can expand an album, open an artist, or queue a download by id.
         self._objs: dict[str, dict[str, object]] = {
@@ -5461,6 +5582,12 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     def _get_status(self) -> str:
         return self._status
 
+    def _get_login_error(self) -> str:
+        return self._login_error
+
+    def _get_login_busy(self) -> bool:
+        return self._login_busy
+
     def _get_app_version(self) -> str:
         return _BITWAVE_VERSION
 
@@ -5469,6 +5596,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     sessionResolved = Property(bool, _get_session_resolved, notify=sessionResolvedChanged)
     busy = Property(bool, _get_busy, notify=busyChanged)
     status = Property(str, _get_status, notify=statusChanged)
+    loginError = Property(str, _get_login_error, notify=loginErrorChanged)
+    loginBusy = Property(bool, _get_login_busy, notify=loginBusyChanged)
 
     # ----- internal state helpers ---------------------------------------
 
@@ -5534,6 +5663,16 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     def _set_status(self, message: str) -> None:
         self._status = message
         self.statusChanged.emit()
+
+    def _set_login_error(self, message: str) -> None:
+        if message != self._login_error:
+            self._login_error = message
+            self.loginErrorChanged.emit()
+
+    def _set_login_busy(self, value: bool) -> None:
+        if value != self._login_busy:
+            self._login_busy = value
+            self.loginBusyChanged.emit()
 
     def _resolve_ffmpeg(self) -> None:
         """Point ``path_binary_ffmpeg`` at the managed binary when the user has
@@ -5866,6 +6005,10 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
 
     @Slot()
     def beginLogin(self) -> None:
+        if self._login_busy:
+            return
+        self._set_login_error("")
+
         def work() -> None:
             try:
                 # A prior sign-out tears the session down; rebuild it so a fresh
@@ -5873,8 +6016,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 if getattr(self.tidal, "session", None) is None:
                     self._reset_tidal_session()
                 url = self.tidal.session.pkce_login_url()
-            except Exception:
-                logger.exception("Could not obtain login URL")
+            except Exception as exc:
+                logger.warning("Could not obtain login URL (%s)", type(exc).__name__)
+                self._set_login_error("Die Browser-Anmeldung konnte nicht gestartet werden. Prüfe deine Internetverbindung und öffne die Browser-Anmeldung erneut.")
                 self._set_status("Could not start login")
                 return
             self.loginUrlReady.emit(url)
@@ -5886,28 +6030,88 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     def completeLogin(self, redirect_url: str) -> None:
         redirect_url = (redirect_url or "").strip()
         if not redirect_url:
+            # A click on an empty box was the original "does nothing" report.
+            if not self._login_busy:
+                self._set_login_error(_LOGIN_MSG_EMPTY)
+            return
+        # One sign-in at a time. Pasting already submits (the decoder fires
+        # once the URL has landed), so the COMPLETE SIGN-IN click that usually
+        # follows sent the same one-time code a second time, which TIDAL
+        # refuses, and that refusal could be the last word on screen.
+        if self._login_busy:
+            logger.info("Login finalize ignored: a sign-in is already in progress")
             return
         # tidalapi refuses a paste without "https://" by raising with the
         # pasted text INSIDE the exception message, and logger.exception below
         # would persist that verbatim (a stray clipboard entry is exactly what
         # lands here: the flow asks the user to copy a URL). Refuse it first,
         # on tidalapi's own predicate, and log only that it happened.
-        if "https://" not in redirect_url:
+        try:
+            parsed = urllib.parse.urlsplit(redirect_url)
+            is_https = parsed.scheme.lower() == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
+            valid_redirect = is_https and parsed.hostname.lower() in ("tidal.com", "www.tidal.com") and parsed.path == "/android/login/auth" and parsed.port in (None, 443)
+        except ValueError:
+            is_https = valid_redirect = False
+        if not is_https:
             logger.info("Login finalize refused: the pasted text is not an https URL")
-            self._set_status("That isn't the sign-in link. Copy the full URL from the browser.")
+            self._set_status("That's not the sign-in link yet. Copy the full link from your browser.")
+            self._set_login_error(_LOGIN_MSG_NOT_URL)
             return
+        # The browser's address bar holds two https links in this flow: the
+        # TIDAL login page itself, and the "Page not found" page it sends you
+        # to after signing in. Only the second carries the one-time code.
+        if not _redirect_has_code(redirect_url):
+            logger.info("Login finalize refused: the pasted URL carries no sign-in code")
+            self._set_status("That's not the sign-in link yet. Copy the full link from your browser.")
+            self._set_login_error(_LOGIN_MSG_NO_CODE if _is_tidal_login_page(redirect_url) else _LOGIN_MSG_WRONG_LINK)
+            return
+        if not valid_redirect:
+            logger.info("Login finalize refused: the pasted URL is not the TIDAL redirect")
+            self._set_login_error(_LOGIN_MSG_WRONG_LINK)
+            return
+        self._set_login_error("")
+        self._set_login_busy(True)
         self._set_busy(True)
 
         def work() -> None:
             ok = False
+            stage = "exchange"
             try:
                 try:
                     token = self.tidal.session.pkce_get_auth_token(redirect_url)
+                    logger.info("login: code exchanged")
+                    stage = "session"
                     self.tidal.session.process_auth_token(token, is_pkce_token=True)
+                    logger.info("login: session opened")
+                    stage = "account"
                     ok = bool(self.tidal.login_finalize())
-                except Exception:
-                    logger.exception("Login finalize failed")
+                    if not ok:
+                        logger.info("login: TIDAL did not confirm the account")
+                        self._set_login_error(_LOGIN_MSG_ACCOUNT)
+                except Exception as exc:
                     ok = False
+                    if stage == "account" and _is_save_error(exc):
+                        # Type and errno only: an OSError's text is the path.
+                        logger.warning(
+                            "Login finalize failed saving the sign-in (%s, errno %s)",
+                            type(exc).__name__,
+                            getattr(exc, "errno", None),
+                        )
+                    elif _is_request_error(exc):
+                        # Type and HTTP status only: a requests error's text is
+                        # the URL, and past the exchange that URL is
+                        # /users/<account id>. The redactor's account rule
+                        # scrubs that shape too; this keeps it out in the first
+                        # place, as the diagnostics convention asks.
+                        logger.warning(
+                            "Login finalize failed at stage %s (%s, HTTP %s)",
+                            stage,
+                            type(exc).__name__,
+                            _http_status(exc),
+                        )
+                    else:
+                        logger.exception("Login finalize failed at stage %s", stage)
+                    self._set_login_error(_login_failure_message(stage, exc))
                 if ok:
                     # Guarded the way the boot path guards the same call, and
                     # for the same reason: a corrupt page_cache.json must never
@@ -5931,6 +6135,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 # out, on credentials that were already persisted: restarting
                 # then signed in cleanly, so the hang looked random.
                 self._set_busy(False)
+                self._set_login_busy(False)
 
         self.threadpool.start(Worker(work))
 

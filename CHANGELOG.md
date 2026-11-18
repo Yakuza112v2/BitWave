@@ -1,5 +1,16 @@
 # Änderungen
 
+## v0.2.6 (2026-11-18)
+
+**BitWave by Yakuza112**
+
+- TIDAL-Kontonummern werden auch bei fehlgeschlagenen Anmeldungen in Diagnoseprotokollen und beim Diagnose-Export unkenntlich gemacht.
+- Das Anmeldefenster erklärt falsche Links, abgelehnte Anmeldecodes, Verbindungsfehler und Probleme beim Speichern direkt im Fenster.
+- Der Hinweis zur TIDAL-Seite „Seite nicht gefunden“ erklärt, welche Adresse kopiert werden muss und warum „Home“ nicht angeklickt werden soll.
+- Während einer Anmeldung wird ein zweites Absenden verhindert. Fremde Links und TIDAL-Seiten ohne passenden Anmeldecode werden vor der Verarbeitung zurückgewiesen.
+
+Das türkisfarbene BitWave-Symbol und vorhandene Einstellungen bleiben erhalten.
+
 ## v0.2.5 (2026-11-15)
 
 **BitWave by Yakuza112**

@@ -11138,7 +11138,7 @@ ApplicationWindow {
     // at banner scale, with the title scrolling as a marquee (or centered) over it.
     component WelcomeBanner: Rectangle {
         id: banner
-        property string title: "Welcome to BitWave"
+        property string title: I18n.t("Welcome to BitWave")
         property bool marquee: false
         property bool mono: false
         property color ink: "#eef1f4"
@@ -24880,6 +24880,7 @@ ApplicationWindow {
                 SpecBtn {
                     Layout.alignment: Qt.AlignHCenter; primary: true
                     label: loginPanel.urlOpened ? "REOPEN BROWSER LOGIN" : "OPEN BROWSER LOGIN"
+                    enabled: !bitwave.loginBusy
                     onClicked: bitwave.beginLogin()
                 }
                 RowLayout {
@@ -24908,6 +24909,7 @@ ApplicationWindow {
                         anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 6; spacing: 8
                         TextField {
                             id: redirectField
+                            objectName: "redirectField"
                             Layout.fillWidth: true
                             placeholderText: I18n.t("Paste redirect URL here…")
                             color: loginDecoder.decoding ? root.accent : root.textHi
@@ -24923,11 +24925,27 @@ ApplicationWindow {
                         }
                     }
                 }
+                // The panel's own feedback: the status bar sits under this
+                // overlay, so a failure reported only there read as nothing
+                // happening at all (issues #7, #56, #63).
+                Text {
+                    objectName: "loginErrorText"
+                    Layout.fillWidth: true; wrapMode: Text.WordWrap
+                    visible: bitwave.loginError !== ""
+                    textFormat: Text.PlainText; text: bitwave.loginError
+                    color: root.redContTx; font.pixelSize: 13
+                }
                 SpecBtn {
+                    objectName: "loginCompleteBtn"
                     Layout.alignment: Qt.AlignHCenter; primary: true
                     visible: loginPanel.urlOpened
-                    label: "COMPLETE SIGN-IN"
-                    onClicked: bitwave.completeLogin(redirectField.text)
+                    enabled: !bitwave.loginBusy
+                    opacity: enabled ? 1 : 0.6
+                    label: bitwave.loginBusy ? "SIGNING IN…" : "COMPLETE SIGN-IN"
+                    // Mid-decode the field holds the link's start plus scramble;
+                    // send the real link, as Enter does (a scrambled code would be
+                    // refused, and the busy guard would then drop the real one).
+                    onClicked: bitwave.completeLogin(loginDecoder.decoding ? loginDecoder.finish() : redirectField.text)
                 }
             }
         }
