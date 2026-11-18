@@ -9988,7 +9988,9 @@ ApplicationWindow {
         // A live "done" counts: a copy downloaded THIS session is owned the
         // moment the ownership store learns it, and its holder keeps the
         // done word for the session, so the gate must not wait for a restart.
-        readonly property bool canRedownload: (liveSt === "" || liveSt === "done") && owned && ownGateKind !== "" && mediaId !== ""
+        // A completed session record must stay actionable even when ownership
+        // is still resolving, stale, or the downloaded file has been moved.
+        readonly property bool canRedownload: (liveSt === "done" || (liveSt === "" && owned)) && ownGateKind !== "" && mediaId !== ""
         function openRedownload() {
             root.openRedownloadGate({ kind: db.ownGateKind, id: db.mediaId,
                                       title: db.gateTitle !== "" ? db.gateTitle : db.libTitle }, db.ownFolder)
@@ -10528,13 +10530,15 @@ ApplicationWindow {
         // running/queued and a real DOWNLOADED are not clickable, and failed
         // keeps its red frame instead of a green breath.
         HoverHandler { id: dbHover }
+        ToolTip.visible: dbHover.hovered && db.canRedownload
+        ToolTip.text: I18n.t("Click to download again")
         HoverSwell {
             anchors.fill: parent
             // The claim's swell is GOLD like its label and check: the green
             // breath is the download-action language, and this button is
             // currently declining to be one.
             tone: db.libGuess ? root.gold : db.libPartialClaim ? root.cyan : root.accent
-            on: dbHover.hovered && (db.st === "" || db.libClaim)
+            on: dbHover.hovered && (db.st === "" || db.libClaim || db.canRedownload)
         }
     }
 
@@ -26066,16 +26070,17 @@ ApplicationWindow {
                     // track is (that is what the setting asks for). Either
                     // way a Dolby Atmos file is never replaced by a stereo
                     // download; the engine steps aside to a numbered name.
-                    text: I18n.t(libraryClaimGate.isOwned
+                    objectName: "redownloadDescription"
+                    text: libraryClaimGate.isOwned
                         ? ((libraryClaimGate.albumTitle !== ""
-                              ? "BitWave downloaded “" + libraryClaimGate.albumTitle + "” itself, so this is a record, not a guess."
-                              : "BitWave downloaded this itself, so this is a record, not a guess.")
+                              ? "BitWave hat „" + libraryClaimGate.albumTitle + "“ bereits heruntergeladen."
+                              : "BitWave hat dies bereits heruntergeladen.")
                            + (libraryClaimGate.isTrack
-                                ? " Redownloading fetches it fresh and replaces the copy BitWave wrote,"
-                                : " Redownloading fetches every track fresh and replaces the copies BitWave wrote,")
-                           + " including a same-named file it cannot tell apart from its own."
-                           + " A Dolby Atmos file is never replaced by a stereo download; that lands beside it.")
-                        : ((libraryClaimGate.isTrack
+                                ? " Mit „Erneut herunterladen“ wird die Datei neu von TIDAL geladen."
+                                : " Mit „Erneut herunterladen“ werden alle enthaltenen Titel neu von TIDAL geladen.")
+                           + " Eine vorhandene Datei mit gleichem Namen kann dabei ersetzt werden."
+                           + " Dolby-Atmos-Dateien werden durch einen Stereo-Download nicht ersetzt.")
+                        : I18n.t(((libraryClaimGate.isTrack
                             ? (libraryClaimGate.albumTitle !== ""
                                 ? "A file in your music library matches “" + libraryClaimGate.albumTitle + "”."
                                 : "A file in your music library matches this track.")

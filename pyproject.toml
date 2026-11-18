@@ -3,7 +3,7 @@ name = "bitwave"
 authors = [{ name = "Yakuza112v2" }]
 # PEP 440 form of the version reported by bitwave.bitwave_ui.__version__.
 # Gemeinsam mit der angezeigten App-Version aktualisieren.
-version = "0.2.6"
+version = "0.2.7"
 description = "BitWave: Windows-App zum Offline-Speichern von Musik aus dem eigenen TIDAL-Konto"
 readme = "README.md"
 license = "AGPL-3.0-only"

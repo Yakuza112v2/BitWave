@@ -1,5 +1,14 @@
 # Änderungen
 
+## v0.2.7 (2026-11-18)
+
+**BitWave by Yakuza112**
+
+- Nach dem Neuladen einer Playlist bleiben abgeschlossene Titel erneut herunterladbar – auch wenn die Datei inzwischen verschoben oder gelöscht wurde oder die Dateierkennung noch aktualisiert wird.
+- Ein Klick auf „Heruntergeladen“ öffnet die Bestätigung „Erneut herunterladen“. Der bestätigte Download wird tatsächlich neu geladen und nicht als bereits vorhanden übersprungen.
+- Ein Hinweis beim Darüberfahren macht den erneuten Download erkennbar. Laufende und wartende Downloads bleiben gegen doppelte Starts geschützt.
+
+
 ## v0.2.6 (2026-11-18)
 
 **BitWave by Yakuza112**

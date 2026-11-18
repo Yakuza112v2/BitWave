@@ -31,9 +31,9 @@ Deine Einstellungen und Anmeldedaten liegen im Datenordner `%APPDATA%\BitWave`.
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-**0.2.6 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
+**0.2.7 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
 
-[0.2.6 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.6/bitwave_windows-x64.zip)
+[0.2.7 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.7/bitwave_windows-x64.zip)
 
 ## Download prüfen
 

@@ -2,6 +2,7 @@
 
 // Deutsche Oberflächentexte. Fachbegriffe und Musikinhalte bleiben unverändert.
 var catalogue = {
+  "Click to download again": "Zum erneuten Herunterladen anklicken",
   "That's not the sign-in link yet. Copy the full link from your browser.": "Das ist noch nicht der richtige Anmeldelink. Kopiere die vollständige Adresse aus der Browser-Adressleiste.",
   "Could not start login": "Anmeldung konnte nicht gestartet werden",
   "Finish signing in, then paste the URL back": "Melde dich im Browser an und füge danach die Weiterleitungsadresse hier ein",
