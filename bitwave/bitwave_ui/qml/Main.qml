@@ -24867,7 +24867,7 @@ ApplicationWindow {
             implicitHeight: loginCol.implicitHeight + 40
             ColumnLayout {
                 id: loginCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 13
-                WelcomeBanner { Layout.fillWidth: true; Layout.preferredHeight: 75 }
+                WelcomeBanner { Layout.fillWidth: true; Layout.preferredHeight: 75; titleSize: 32 }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 10
                     Text { text: I18n.t("1"); color: root.accent; font.family: root.mono; font.pixelSize: 12; font.bold: true; Layout.alignment: Qt.AlignTop }
