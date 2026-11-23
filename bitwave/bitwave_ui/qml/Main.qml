@@ -8551,7 +8551,7 @@ ApplicationWindow {
         // `visible` is effective visibility, so a hidden pane would fade every
         // strip on it back in the next time the reader opened that pane.
         readonly property bool shown: !!(presence && presence.present
-            && (!presence.anchor || arb.artistId === "" || ("" + presence.anchor) === arb.artistId))
+            && (arb.artistId === "" || (!!presence.anchor && ("" + presence.anchor) === arb.artistId)))
         visible: arb.shown
         // The badge hides at the top, so nothing inside it ever sees a
         // visibility change of its own.
@@ -10002,7 +10002,7 @@ ApplicationWindow {
                     // Only on the profile the library is known to belong to,
                     // when one is (ap.anchor): a namesake's button stays plain.
                     libPartial = !!(ap && ap.present === true
-                        && (!ap.anchor || ("" + db.mediaId) === "" || ("" + db.mediaId) === ("" + ap.anchor)))
+                        && (("" + db.mediaId) === "" || (!!ap.anchor && ("" + db.mediaId) === ("" + ap.anchor))))
                     libSure = false
                     libPath = ""
                     return
