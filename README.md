@@ -10,6 +10,8 @@ BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen 
 - Playlists und Favoriten aus „Mein TIDAL“ abrufen und herunterladen. Titel lassen sich direkt aus den TIDAL-Favoriten entfernen.
 - Vorhandene Musik im Musik- und Download-Ordner erkennen und doppelte Downloads vermeiden.
 - Neu hinzugefügte Playlist-Titel erkennen sowie Downloads und Wiedergabe in der App steuern.
+- Namensgleiche Künstler anhand der eigenen Mediathek zuordnen: eindeutige Wechsel rückgängig machen oder unsichere Vorschläge bestätigen. TIDAL-Favoriten bleiben dabei unverändert.
+- Auf gemeinsam genutzten Künstlerprofilen erkannte fremde Veröffentlichungen getrennt anzeigen und von Benachrichtigungen und automatischen Downloads ausschließen.
 
 Fehlende Künstlerbiografien lassen sich unter „Einstellungen → Darstellung“ optional mit Texten von Wikipedia oder Discogs und verlinkter Quellenangabe ergänzen. Die Funktion ist standardmäßig ausgeschaltet.
 
@@ -31,9 +33,9 @@ Deine Einstellungen und Anmeldedaten liegen im Datenordner `%APPDATA%\BitWave`.
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-**0.2.7 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
+**0.2.8 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
 
-[0.2.7 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.7/bitwave_windows-x64.zip)
+[0.2.8 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.8/bitwave_windows-x64.zip)
 
 ## Download prüfen
 

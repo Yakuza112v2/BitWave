@@ -3324,7 +3324,9 @@ def _album_artists_for_metadata(media):
 _bitwave_download.get_album_artists = _album_artists_for_metadata
 
 
-_VERSION_TOKEN_RE = re.compile(r"[\[(]\s*(explicit|clean|e)\s*[\])]", re.IGNORECASE)
+# The negative squared E glyph is BitWave' own explicit marker (METADATA_EXPLICIT), which
+# the "Mark explicit in title" setting appends to a file's title tag.
+_VERSION_TOKEN_RE = re.compile(r"[\[(]\s*(explicit|clean|e)\s*[\])]|\U0001F174", re.IGNORECASE)
 # Straight, curly and modifier apostrophes plus the backtick and acute accent
 # that stand in for one. TIDAL lists one album as both "Tryin'" and "Tryin".
 _APOSTROPHE_RE = re.compile("['\u2018\u2019\u02bc`\u00b4]")
@@ -4158,6 +4160,17 @@ def _as_member_of(track, identity_album, track_num: int, volume_num: int, identi
     member.volume_num = volume_num
     member.bitwave_identity_id = str(identity_id or getattr(track, "id", "") or "")
     return member
+
+
+def _split_apart(payload: dict, apart: set) -> None:
+    """Move the artist page's releases whose id is in ``apart`` (another
+    same-name artist's, on a shared profile) off its albums and EPs shelves
+    into ``payload["apart"]``, albums first, each shelf's order kept."""
+    if not apart:
+        return
+    payload["apart"] = [d for d in payload["albums"] + payload["eps"] if str(d.get("id")) in apart]
+    payload["albums"] = [d for d in payload["albums"] if str(d.get("id")) not in apart]
+    payload["eps"] = [d for d in payload["eps"] if str(d.get("id")) not in apart]
 
 
 def _artists_list(obj) -> list[dict]:
@@ -7304,7 +7317,10 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "eps": [self._album_dict(a) for a in eps],
                     "tracks": [self._track_dict(t) for t in tops],
                     "videos": [self._video_dict(v) for v in self._dedup_videos(vids)],
+                    "apart": [],
                 }
+                apart_for = getattr(self, "_releases_apart_for", None)
+                _split_apart(payload, apart_for(artist_id) if apart_for is not None else set())
             except Exception:
                 # The dict builders can choke on a partial tidalapi object and
                 # Worker.run only logs an escape: without this arm the artist
@@ -11973,6 +11989,12 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # A fresh install (or a config folder someone moved): defaults are
             # the whole answer and there is nothing to keep.
             logger.debug("No BitWave prefs to load", exc_info=True)
+        except OSError as e:
+            # There but not readable right now (a permission, a flaky disk, a
+            # Windows lock): the file may be fine, so it is neither set aside
+            # nor saved over. Defaults for this session only.
+            logger.warning("Could not read bitwave.json (%s); using defaults for this session", type(e).__name__)
+            self._prefs_unsavable = True
         except Exception:
             # The file IS there and could not be read: truncated by a power
             # loss, half-written by a process that died mid-save, corrupt on
@@ -16948,6 +16970,10 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         seen: set = set()
         artist_key = str(getattr(artist, "id", "") or "")
         foreign = 0
+        # Releases set apart on a shared same-name profile are another
+        # artist's: never part of this one's discography.
+        apart_for = getattr(self, "_releases_apart_for", None)
+        apart = apart_for(artist_key) if apart_for is not None and artist_key else set()
 
         def add(a, into: list) -> None:
             if not _is_album_entity(a):
@@ -16971,6 +16997,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     # stranger's music in the library. Guest releases are
                     # exempt by design, their download already keeps only the
                     # tracks the artist is credited on.
+                    if apart and str(getattr(a, "id", "")) in apart:
+                        foreign += 1
+                        continue
                     if artist_key and _foreign_credit(a, artist_key):
                         foreign += 1
                         logger.info(

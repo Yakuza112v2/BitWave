@@ -1,5 +1,28 @@
 # Änderungen
 
+## v0.2.8 (2026-11-23)
+
+**BitWave by Yakuza112**
+
+### Neu
+
+- BitWave erkennt falsche Folge-Einträge bei namensgleichen TIDAL-Künstlern anhand der Mediathek. Eindeutige Zuordnungen werden automatisch gewechselt und lassen sich mit „RÜCKGÄNGIG“ widerrufen. Bei unsicheren Zuordnungen entscheidest du mit „WECHSELN“ oder „BEIBEHALTEN“. Die Künstlerseite nennt die zugrunde liegenden Alben; „Folge ich“ kennzeichnet Wechsel und Vorschläge. TIDAL-Favoriten bleiben unverändert.
+- „In Mediathek“ berücksichtigt die erkannte Künstlerzuordnung. Auf einem namensgleichen fremden Profil führt ein Hinweis direkt zum Künstler aus der Mediathek.
+- Erkannte fremde Veröffentlichungen auf einem gemeinsam genutzten TIDAL-Profil stehen eingeklappt unter „Andere Künstler namens …“. Sie werden aus Veröffentlichungen, Benachrichtigungen und automatischen Downloads ausgeschlossen.
+
+### Behoben
+
+- Titel mit der Explicit-Kennzeichnung werden wieder als vorhanden in der Mediathek erkannt.
+- Ein nicht entfernbarer alter Update-Ordner stoppt die Installation, bevor die neue Version in einem falschen Unterordner landet.
+- Fehlgeschlagene Veröffentlichungsprüfungen hinterlassen keinen teilweise gespeicherten Stand. Ausstehende automatische Downloads bleiben beim Beenden erhalten.
+- Vorübergehend unlesbare Einstellungsdateien werden nicht durch Standardwerte überschrieben.
+- Videos mit fehlgeschlagenem letztem Abschnitt werden nicht als vollständig heruntergeladen markiert. Vorübergehende Serverfehler werden erneut versucht.
+- Gleichzeitig geladene gleichnamige Editionen reservieren ihre Dateinamen gemeinsam und überschreiben sich nicht gegenseitig.
+- „Symlink im Titelordner erstellen“ berücksichtigt führende Nullen bei Titelnummern und erkennt vorhandene Dateien auch mit der älteren Schreibweise.
+- Lange Playlist-Dateinamen behalten die Endung .m3u8. Kopierte Playlist-Titel werden über eine temporäre Datei gespeichert, damit bei vollem Speicher keine unvollständige Zieldatei entsteht.
+
+Das türkisfarbene BitWave-Logo und die deutsche Oberfläche bleiben erhalten.
+
 ## v0.2.7 (2026-11-18)
 
 **BitWave by Yakuza112**
