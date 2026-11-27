@@ -18063,6 +18063,10 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         # track and must land. The pool holds at most quick sqlite/stat work,
         # so the bound is a formality.
         self._own_pool.waitForDone(2000)
+        # History shares the ownership database. Keep queued writes and let
+        # them finish before closing it, just like finished-track ownership.
+        with contextlib.suppress(Exception):
+            self._history_pool.waitForDone(2000)
         try:
             self._ownership.close()
         except Exception:
