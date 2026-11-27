@@ -1,5 +1,31 @@
 # Änderungen
 
+## v0.2.9 (2026-11-27)
+
+**BitWave by Yakuza112**
+
+### Neu
+
+- **Download-Verlauf:** „VERLAUF“ unten in der Warteschlange öffnet die ab dieser Version erfassten Downloads mit Datum und Uhrzeit. Alben und Playlists lassen sich bis zu den einzelnen Titeln aufklappen. Suche nach Alben, Künstlern und Songs, filtere Inhaltstypen oder sortiere nach neuesten und ältesten Downloads. „Verlauf leeren“ entfernt keine Musikdateien und setzt die Mediathek-Erkennung nicht zurück.
+- **Logo-Equalizer:** Das eigene BitWave-Logo reagiert während einer Hörprobe auf deren Audio. Unter „Einstellungen → Darstellung“ wählst du Wasserwellen, Equalizer-Balken aus Punkten, laufende Punkte oder „Deaktiviert“.
+- **Kürzere Dateinamen:** Optional wird nur der erste Künstler eines Titels im Dateinamen verwendet.
+- **Mein-TIDAL-Schaltfläche:** Der Tab lässt sich unter „Einstellungen → Darstellung“ ein- und ausblenden.
+- **Diagnose und Datenschutz:** Berichte enthalten auf Wunsch CPU, GPU, Arbeitsspeicher und Bildschirm. Eine neue Datenschutzoption blendet diese Hardwareangaben aus. Die ausführliche Diagnose erfasst zusätzlich die CPU-Auslastung der App sowie langsame und geschätzt ausgelassene Frames.
+
+### Verbessert
+
+- Einheitliche Schaltflächen und eine platzsparende Navigation für kleinere Fenster. Die Filter in „Mein TIDAL“ und im Verlauf bleiben in einer Zeile.
+- Die Warteschlangen-Schaltfläche zeigt die Geschwindigkeit der letzten zwölf Sekunden als Balkendiagramm. Fortschritt und aktuelle Geschwindigkeit stehen lesbar darüber.
+- Lange Seiten zeichnen nur die benötigten Zeilen. Auch aufgeklappte große Playlists im Verlauf erzeugen nur die gerade sichtbaren Titelzeilen. Das Nachladen und Aktualisieren des Verlaufs erfolgt seitenweise und im Hintergrund.
+
+### Behoben
+
+- „Hauptkünstler des Albums für Ordner verwenden“ überschreibt nicht mehr die Künstler im Dateinamen. Ohne die neue Beschränkung werden weiterhin die Künstler des jeweiligen Songs verwendet. Compilation-Titel erhalten dadurch nicht mehr fälschlich „Various Artists“ als Künstler im Dateinamen.
+- Vorhandene Dateien bleiben unverändert und werden auch unter älteren Dateinamen anhand ihrer Titelkennung wiedergefunden.
+- Die Fortschrittsbalken für Alben und Playlists aktualisieren sich gleichmäßig. Neue Downloads aktualisieren den Verlauf, ohne die bereits geladene Liste zu verwerfen.
+
+Windows-Version mit deutscher Oberfläche und unverändertem BitWave-Symbol. Bestehende Einstellungen bleiben erhalten.
+
 ## v0.2.8 (2026-11-23)
 
 **BitWave by Yakuza112**

@@ -2,6 +2,20 @@
 
 // Deutsche Oberflächentexte. Fachbegriffe und Musikinhalte bleiben unverändert.
 var catalogue = {
+  "Reports list your processor, graphics card, memory and display. This leaves them out, which can make slowdowns harder to track down.": "Entfernt Prozessor, Grafikkarte, Arbeitsspeicher und Bildschirm aus exportierten Diagnoseberichten.",
+
+  "HISTORY": "VERLAUF",
+  "Download history": "Download-Verlauf",
+  "CLEAR HISTORY": "VERLAUF LEEREN",
+  "Clear your download history?": "Download-Verlauf leeren?",
+  "This clears the list only. Your files stay where they are.": "Nur die Verlaufsliste wird geleert. Deine heruntergeladenen Dateien bleiben erhalten.",
+  "Search history…": "Verlauf suchen …",
+  "Search download history": "Download-Verlauf durchsuchen",
+  "Most recent": "Neueste zuerst",
+  "Oldest first": "Älteste zuerst",
+  "Off": "Deaktiviert",
+  "Use only the track's first artist in file names instead of every track artist. Folders are not affected.": "Verwendet nur den ersten Künstler des Titels im Dateinamen. Die Ordnernamen bleiben unverändert.",
+
   "Click to download again": "Zum erneuten Herunterladen anklicken",
   "That's not the sign-in link yet. Copy the full link from your browser.": "Das ist noch nicht der richtige Anmeldelink. Kopiere die vollständige Adresse aus der Browser-Adressleiste.",
   "Could not start login": "Anmeldung konnte nicht gestartet werden",

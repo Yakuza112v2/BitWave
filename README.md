@@ -6,6 +6,11 @@ BitWave ist eine Windows-App zum Offline-Speichern von Musik aus deinem eigenen 
 
 ## Funktionen
 
+- **Download-Verlauf:** Über „VERLAUF“ unten in der Warteschlange erreichst du die ab dieser Version gespeicherten Downloads. Alben und Playlists zeigen aufklappbar ihre Titel und Speicherzeitpunkte. Suche nach Namen, Künstlern und Titeln, filtere den Inhaltstyp oder sortiere nach dem Alter. „Verlauf leeren“ entfernt ausschließlich die Verlaufsliste.
+- **Logo-Equalizer:** Unter „Einstellungen → Darstellung“ stehen Wasserwellen, Punktbalken, laufende Punkte und „Deaktiviert“ zur Auswahl. Die Animation folgt dem Audio der Hörprobe. Hier lässt sich auch der Tab „Mein TIDAL“ ausblenden.
+- **Dateinamen:** Optional verwendet BitWave nur den ersten Titelkünstler. Die Einstellung für den Hauptkünstler des Albumordners verändert nicht mehr den Künstler im Dateinamen. Vorhandene Dateien behalten ihre Namen und werden weiterhin erkannt.
+- **Diagnose:** Berichte können CPU, GPU, RAM und Bildschirm enthalten. „Hardwareinformationen ausblenden“ unter „Einstellungen → Diagnose“ lässt diese Angaben weg. Die ausführliche Diagnose protokolliert zusätzlich CPU-Auslastung sowie langsame und geschätzt ausgelassene Frames.
+
 - TIDAL nach Künstlern, Alben und Titeln durchsuchen; Suchergebnisse nach verfügbarer Audioqualität sortieren und auf Hi-Res filtern.
 - Playlists und Favoriten aus „Mein TIDAL“ abrufen und herunterladen. Titel lassen sich direkt aus den TIDAL-Favoriten entfernen.
 - Vorhandene Musik im Musik- und Download-Ordner erkennen und doppelte Downloads vermeiden.
@@ -33,9 +38,9 @@ Deine Einstellungen und Anmeldedaten liegen im Datenordner `%APPDATA%\BitWave`.
 
 Die optionale Update-Prüfung verwendet ausschließlich **Yakuza112v2/BitWave**. Vor der Installation prüft die App eine mit dem eigenen BitWave-Schlüssel signierte Prüfsummenliste. Nicht signierte, manipulierte oder ältere Updates werden abgelehnt.
 
-**0.2.8 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
+**0.2.9 ist eine reguläre Version** und wird sowohl von 0.2.3 als auch von 0.2.3-Beta über die Update-Prüfung erkannt. Deine Einstellungen bleiben im oben genannten Datenordner erhalten.
 
-[0.2.8 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.8/bitwave_windows-x64.zip)
+[0.2.9 für Windows herunterladen](https://github.com/Yakuza112v2/BitWave/releases/download/v0.2.9/bitwave_windows-x64.zip)
 
 ## Download prüfen
 

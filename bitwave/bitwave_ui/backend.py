@@ -115,7 +115,7 @@ from bitwave.model.gui_data import ProgressBars
 from bitwave.ownership import OwnershipStore, quality_rank
 from bitwave.page_store import PageStore
 from bitwave.poolgauge import PoolGauge
-from bitwave.bitwave_ui import cover_palette, preview_peaks, proc
+from bitwave.bitwave_ui import cover_palette, logo_eq, preview_peaks, proc
 from bitwave.bitwave_ui.notify import DesktopNotify, notifications_supported
 from bitwave.bitwave_ui.session import BitWaveTidal
 from bitwave.worker import Worker
@@ -137,6 +137,36 @@ from .library_proc import LibraryWorker
 from .updater import AppUpdater, UpdateCancelled, user_facing_error
 
 logger = logging.getLogger("bitwave")
+_history_log = logging.getLogger("bitwave.history")
+# Queue statuses that settle a row, and the download history page size.
+_HISTORY_SETTLED = ("done", "failed", "cancelled")
+_HISTORY_PAGE = 50
+
+
+def _history_stamp(ts: int) -> tuple[str, str]:
+    """A local history date and 24-hour time."""
+    t = time.localtime(ts or 0)
+    return time.strftime("%Y-%m-%d", t), time.strftime("%H:%M", t)
+
+
+def _history_dress(rows: list[dict]) -> list[dict]:
+    """History entries as the page's rows: an id, the display date and time,
+    and the per-track log as a JSON string."""
+    for r in rows:
+        for key in ("kind", "name", "artist", "art", "status", "media_id", "landed"):
+            r[key] = str(r.get(key) or "")
+        r["mix"] = r.get("mix") or "[]"
+        r["saved"], r["total"] = int(r.get("saved") or 0), int(r.get("total") or 0)
+        r["id"] = f"{r.pop('launch')}:{r['qid']}"
+        r["date"], r["time"] = _history_stamp(r.get("finished_at") or 0)
+        for t in r["tracks"]:
+            if t.get("saved_at"):
+                t["savedDate"], t["savedTime"] = _history_stamp(t["saved_at"])
+        # A string role: a list in a ListModel row becomes a nested model.
+        r["tracksJson"] = json.dumps(r.pop("tracks"), ensure_ascii=False)
+    return rows
+
+
 
 
 def _volume_mounted(path: os.PathLike | str, volumes_root: str = "/Volumes") -> bool | None:
@@ -510,6 +540,7 @@ _FLAG_FIELDS = [
     "playlist_create",
     "mark_explicit",
     "use_primary_album_artist",
+    "filename_primary_artist_only",
     "download_dolby_atmos",
     # FFmpeg & FLAC, Tags & Artwork
     "downsample_enabled",
@@ -1079,7 +1110,13 @@ def _build_template_sample():
     trk.media_metadata_tags = ["HIRES_LOSSLESS"]
     trk.id = 123456789
     trk.album = alb
-    trk.artists = [art]
+    # A guest on the track only: the album-artist folder setting and the
+    # file name setting have nothing to show on a one-artist sample.
+    guest = Artist(s, None)
+    guest.name = "Example Guest"
+    guest.id = 12346
+    guest.roles = [Role.featured]
+    trk.artists = [art, guest]
     trk.artist = art
 
     pl = Playlist(s, None)
@@ -1176,6 +1213,7 @@ _FIELD_LABELS = {
     "filename_illegal_replacement": "Illegal-character stand-in",
     "filename_illegal_map": "Per-character stand-ins",
     "use_primary_album_artist": "Primary album artist for folders",
+    "filename_primary_artist_only": "Nur Hauptkünstler im Dateinamen",
     "symlink_to_track": "Symlink into track folder",
     "playlist_create": "Create .m3u8 playlist",
     # Tags & Artwork
@@ -1204,6 +1242,8 @@ _FIELD_LABELS = {
     "metadata_genre_artist_fallback": "Artist genres for unlisted releases",
     "metadata_delimiter_genre": "Genre separator",
 }
+# How the logo moves with a playing preview (see logo_eq.py and WaveMark).
+_LOGO_EQ_LOOKS = ("water", "dots", "scroll", "off")
 
 # Human labels for enum dropdown values, keyed by field then by enum member
 # name (the stored value). Unmapped members fall back to the raw name.
@@ -1235,6 +1275,7 @@ _ENUM_LABELS = {
     },
     "update_cadence": {"launch": "Every launch", "daily": "Once a day"},
     "player_size": {"full": "Full", "mini": "Mini"},
+    "logo_eq": {"water": "Fließende Wasserwellen", "dots": "Equalizer-Balken aus Punkten", "scroll": "Laufende Punkte", "off": "Deaktiviert"},
     "notify_downloads": {"queue": "When the queue finishes", "every": "Every download", "never": "Never"},
     "releases_window_months": {"6": "6 months", "12": "12 months", "24": "24 months"},
     "releases_videos": {"show": "Show", "hide": "Hide"},
@@ -4422,10 +4463,12 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     hoverMotionChanged = Signal()  # hover_control_motion pref flipped; Main.qml re-reads it
     artHoverTiltChanged = Signal()  # art_hover_tilt pref flipped; Main.qml re-reads it
     videoHoverPeekChanged = Signal()  # video_hover_peek pref flipped; Main.qml re-reads it
+    navMyTidalChanged = Signal()  # nav_my_tidal pref flipped; Main.qml re-reads it
     audioOutputsChanged = Signal()  # outputs appeared, vanished, or the system default moved
     audioOutputChanged = Signal()  # the audio_output pref changed; Main.qml re-resolves the device
     queueLedgerRowsChanged = Signal()  # queue_ledger_rows pref changed; Main.qml re-reads it
     playerSizeChanged = Signal()  # player_size pref changed; Main.qml re-reads it
+    logoEqChanged = Signal()  # logo_eq pref changed; Main.qml re-reads it
     diagnosticsExported = Signal(str)  # export finished; arg = bundle path ("" = failed)
     # How many queued tracks failed or are unavailable (property
     # `missingTracks`), and a missing-tracks export finished: the qid it was
@@ -4488,6 +4531,14 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
     ownershipChangedBatch = Signal(str)
     # Pool thread -> GUI thread: arm the batch flush timer.
     _ownAnnounceArm = Signal()
+    # Download history page: one page of entries (rows, more, offset); a
+    # nudge that one entry was written (its id) or the list cleared (""); and
+    # that one entry as the page's filters see it (id, [row] or []).
+    historyLoaded = Signal("QVariantList", bool, int)
+    historyChanged = Signal(str)
+    historyEntry = Signal(str, "QVariantList")
+    # Any thread -> GUI thread (always queued): a queue row settled.
+    _historySettle = Signal(int)
     # A collection (album/playlist/mix) learned new member track ids (a
     # download or browse-open just observed its contents); QML re-queries
     # collectionMemberIds for that id to refresh a collapsed row's badge.
@@ -5280,6 +5331,17 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         self._own_pool = QtCore.QThreadPool()
         self._own_pool.setMaxThreadCount(2)
         diagnostics.register_pool("ownership", self._own_pool)
+        # Download history: one writer thread, so a later snapshot of a row
+        # can never land before an earlier one. The launch id keys entries
+        # with the qid, which restarts every launch.
+        self._history_pool = QtCore.QThreadPool()
+        self._history_pool.setMaxThreadCount(1)
+        diagnostics.register_pool("history", self._history_pool)
+        self._history_launch = uuid4().hex
+        self._history_settled: set[int] = set()
+        # Queued even from the GUI thread (stopAll): the snapshot then runs
+        # after the per-track events already posted, so it sees them.
+        self._historySettle.connect(self._history_settle, QtCore.Qt.ConnectionType.QueuedConnection)
         # ---- Local music-library scan (the "in your library" badge) ----------
         # See bitwave.library_index + bridge_library.LibraryMixin: scans the
         # configured library folder for albums the user already has, downloaded
@@ -10338,6 +10400,123 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         item["reason"] = reason
         self._queue_mark_changed(qid)
         self._emit_queue()
+        if status in _HISTORY_SETTLED and getattr(self, "_history_settled", None) is not None:
+            self._historySettle.emit(qid)
+
+    def _history_settle(self, qid: int, late: bool = False) -> None:
+        """(GUI thread) A queue row reached done, failed or canceled: log it
+        to the download history if it saved anything. Snapshotted here, where
+        the row and its per-track registry live; written on the history pool."""
+        item = self._queue_item(qid)
+        if item is None or item.get("status") not in _HISTORY_SETTLED:
+            return
+        self._history_settled.add(qid)
+        reg = self._job_tracks.get(qid) or {}
+        order = sorted(reg.values(), key=lambda r: (r.get("pos") or 0, r.get("vol", 1), r.get("num", 0)))
+        tracks = [
+            {
+                "id": str(r.get("id", "")),
+                "num": i,
+                "title": r.get("title", ""),
+                "artist": r.get("artist", ""),
+                "album": r.get("album", ""),
+                "status": r.get("status", ""),
+                "quality": r.get("quality", ""),
+                "saved_at": int(r.get("saved_at") or 0),
+            }
+            for i, r in enumerate(order, start=1)
+        ]
+        saved = sum(1 for t in tracks if t["status"] == "done")
+        # History is what BitWave saved. A done row with no per-track record
+        # (nothing reported tracks for it) still saved its item.
+        if saved == 0 and not (item.get("status") == "done" and not tracks):
+            return
+        entry = {
+            "kind": item.get("type", ""),
+            "media_id": str(item.get("media_id", "")),
+            "name": item.get("name", ""),
+            "artist": item.get("artist", ""),
+            "art": item.get("art", ""),
+            "status": item.get("status", ""),
+            "landed": item.get("landed", ""),
+            # Per-tier counts (JSON) when the tracks landed at mixed tiers.
+            "mix": item.get("mixJson", "[]"),
+            "saved": saved,
+            "total": len(tracks) or int(item.get("tracks") or 0),
+            "tracks": tracks,
+        }
+        launch, store = self._history_launch, self._ownership
+
+        def work() -> None:
+            try:
+                # A late track keeps the entry's time, and so its place.
+                store.record_history(launch, qid, entry, keep_time=late)
+            except Exception:
+                _history_log.warning("history: could not record an entry", exc_info=True)
+                return
+            _history_log.info("history: %s entry, %d of %d tracks saved", entry["kind"], saved, entry["total"])
+            self.historyChanged.emit(f"{launch}:{qid}")
+
+        self._history_pool.start(Worker(work))
+
+    @Slot(int, str, bool, int, str)
+    def loadHistory(
+        self, offset: int = 0, kind: str = "", oldest: bool = False, limit: int = 0, query: str = ""
+    ) -> None:
+        """One page of the download history, newest first (or oldest first),
+        only ``kind`` entries when given, only entries matching ``query`` (the
+        page's search box; never logged). ``limit`` rows (a page when 0), so a
+        refresh can reread every row already shown. A local read: no sign-in
+        needed and nothing asks TIDAL."""
+        store, offset, limit = self._ownership, max(0, int(offset)), int(limit) or _HISTORY_PAGE
+
+        def work() -> None:
+            try:
+                rows, more = store.history_page(offset, limit, kind, oldest, query)
+            except Exception:
+                _history_log.warning("history: could not read a page", exc_info=True)
+                rows, more = [], False
+            self.historyLoaded.emit(_history_dress(rows), more, offset)
+
+        self._history_pool.start(Worker(work))
+
+    @Slot(str, str, str)
+    def loadHistoryEntry(self, entry_id: str, kind: str = "", query: str = "") -> None:
+        """One history entry, by the id its row carries, as the page's kind
+        filter and search see it: answered with the row, or with nothing when
+        it does not pass them. A list of thousands of rows then takes a
+        settled download as one row, not a reread of every row shown."""
+        store = self._ownership
+        launch, _, qid = str(entry_id).rpartition(":")
+
+        def work() -> None:
+            try:
+                rows, _ = store.history_page(0, 1, kind, False, query, only=(launch, int(qid)))
+            except Exception:
+                _history_log.warning("history: could not read an entry", exc_info=True)
+                return
+            self.historyEntry.emit(entry_id, _history_dress(rows))
+
+        self._history_pool.start(Worker(work))
+
+    @Slot()
+    def clearHistory(self) -> None:
+        """Empty the download history list. Files are never touched."""
+        store = self._ownership
+        # A track still landing for a row logged before the clear must not
+        # write that row back.
+        self._history_settled.clear()
+
+        def work() -> None:
+            try:
+                store.clear_history()
+            except Exception:
+                _history_log.warning("history: could not clear", exc_info=True)
+                return
+            _history_log.info("history: cleared")
+            self.historyChanged.emit("")
+
+        self._history_pool.start(Worker(work))
 
     def _roll_up_finish(self, qid: int, reg: dict) -> None:
         """The row's finish fraction over its tracks: a settled track counts
@@ -10469,6 +10648,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         # The event carries the full stream description (tier, mode, depth,
         # rate); the row keeps the tier, since that is what a track line has
         # room to say and the rest is already recorded into ownership.
+        # When the file landed, for the download history's per-track log.
+        if ev["status"] == "done" and not row.get("saved_at"):
+            row["saved_at"] = int(time.time())
         delivered = ev.get("quality")
         if isinstance(delivered, dict):
             row["quality"] = _delivered_word(delivered.get("tier"), delivered.get("audio_mode"))
@@ -10523,6 +10705,11 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # 2026-07-13 diagnostics bundle caught it mid-stall).
             ev_done = dict(ev)
             self._own_pool.start(Worker(lambda: self._record_ownership(ev_done)))
+            # A track that lands after its row settled (one finishing under a
+            # STOP) rewrites the row's history entry.
+            item = self._queue_item(qid)
+            if qid in getattr(self, "_history_settled", ()) and item and item.get("status") in _HISTORY_SETTLED:
+                self._history_settle(qid, late=True)
         self.queueTrackState.emit(qid, dict(row))
 
     def _record_ownership(self, ev: dict) -> None:
@@ -11903,9 +12090,15 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # card with sound; off keeps thumbnails still (click to play).
             "video_hover_peek": True,
             "artist_bio_fallback": False,
+            # The My Tidal tab in the top bar; off hides it.
+            "nav_my_tidal": True,
             # The player bar's size: "full" gives the waveform 200 px, "mini"
             # 130 px, so the title and credits keep more of the bar.
             "player_size": "full",
+            # How the logo in the top bar moves with a playing preview:
+            # "water" bends its bitwave over the spectrum, "dots" shows bars of
+            # dots, "scroll" a scrolling history of the sound.
+            "logo_eq": "water",
             # Where previews, videos and hover peeks play: "" follows the
             # system default, else the picked device's id as hex. The name
             # rides along so a pick that is unplugged still reads by name.
@@ -11923,6 +12116,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             # dumps. The redact-content flag applies to exported bundles only.
             "verbose_diagnostics": False,
             "diagnostics_redact_content": False,
+            "diagnostics_hide_hardware": False,
             # Artist-page sections: a collapsed section stays collapsed on
             # every artist page until reopened (album hunters skip the top
             # tracks every time otherwise).
@@ -12173,6 +12367,23 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         QtCore.QTimer.singleShot(15_000, lambda: self.threadpool.start(Worker(copy)))
         return QtCore.QUrl.fromLocalFile(src).toString()
 
+    # ---- Logo equalizer -------------------------------------------------
+
+    @Slot(QtCore.QObject, result=bool)
+    def logoEqAttach(self, player) -> bool:
+        """Tap the preview player's audio for the logo (WaveMark calls this
+        the first time a preview plays, never at launch). False = no tap."""
+        eq = getattr(self, "_logo_eq", None)
+        if eq is None:
+            eq = self._logo_eq = logo_eq.LogoEq()
+        return eq.attach(player)
+
+    @Slot(result="QVariantList")
+    def logoEqLevels(self) -> list:
+        """This tick's 16 band levels, empty when no audio is arriving."""
+        eq = getattr(self, "_logo_eq", None)
+        return eq.levels() if eq is not None else []
+
     @Slot(str, str, "QVariantList", bool, result="QVariantList")
     def playlistVisitNewRows(self, playlist_id, visit, rows, complete):
         from .playlist_visits import PlaylistVisits
@@ -12328,6 +12539,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 value = old
         if key == "player_size" and value not in ("full", "mini"):
             value = old
+        if key == "logo_eq" and value not in _LOGO_EQ_LOOKS:
+            value = old
         if key == "audio_output":
             self._bitwave_prefs["audio_output_name"] = self._audio_output_name_for(value, old)
             _audio_note_secret(value)
@@ -12388,6 +12601,8 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             self.artHoverTiltChanged.emit()
         elif key == "artist_bio_fallback":
             self.artistBioFallbackChanged.emit()
+        elif key == "nav_my_tidal":
+            self.navMyTidalChanged.emit()
         elif key == "video_hover_peek":
             self.videoHoverPeekChanged.emit()
         elif key == "audio_output" and value != old:
@@ -12401,6 +12616,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             self.queueLedgerRowsChanged.emit()
         elif key == "player_size" and value != old:
             self.playerSizeChanged.emit()
+        elif key == "logo_eq" and value != old:
+            logo_eq.log.info("logo equalizer look set to %s", value)
+            self.logoEqChanged.emit()
         elif key == "verbose_diagnostics":
             diagnostics.set_verbose(bool(value))
         elif key == "library_enabled" and value != old:
@@ -12595,6 +12813,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         Content redaction follows the user's checkbox pref; identity PII is
         scrubbed regardless."""
         redact_content = self._bitwave_pref_bool("diagnostics_redact_content")
+        hide_hardware = self._bitwave_pref_bool("diagnostics_hide_hardware")
         # Last chance to tell the redactor what the live credentials are: the
         # bundle re-scrubs every line on the way out, so a token minted by a
         # renewal the app never saw is caught here even in lines written hours
@@ -12605,7 +12824,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
         def work() -> None:
             path = ""
             try:
-                path = diagnostics.export_bundle(redact_content=redact_content)
+                path = diagnostics.export_bundle(redact_content=redact_content, hide_hardware=hide_hardware)
             except Exception:
                 logger.exception("diagnostics export failed")
             QtCore.QMetaObject.invokeMethod(
@@ -17698,6 +17917,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             for it in stopped:
                 it["status"] = "cancelled"
                 self._qdirty_changed[it["qid"]] = None
+        if getattr(self, "_history_settled", None) is not None:
+            for it in stopped:
+                self._historySettle.emit(it["qid"])
         for it in stopped:
             mid = str(it.get("media_id", ""))
             if mid:
@@ -19056,6 +19278,14 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "rowToggle": True,
                 },
                 {
+                    "key": "nav_my_tidal",
+                    "label": "Mein-TIDAL-Schaltfläche",
+                    "help": "Zeigt den Tab „Mein TIDAL“ in der oberen Navigation an. Deaktiviert blendet ihn aus.",
+                    "type": "bool",
+                    "value": self._bitwave_pref_bool("nav_my_tidal"),
+                    "rowToggle": True,
+                },
+                {
                     "key": "player_size",
                     "label": "Player bar",
                     "help": (
@@ -19065,6 +19295,17 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "type": "enum",
                     "value": self._bitwave_prefs.get("player_size", "full"),
                     "options": _enum_options("player_size", ["full", "mini"]),
+                },
+                {
+                    "key": "logo_eq",
+                    "label": "Logo-Equalizer",
+                    "help": (
+                        "Animiert das BitWave-Logo passend zur laufenden Hörprobe: als Wasserwellen, "
+                        "Equalizer-Balken aus Punkten oder laufende Punkte. Deaktiviert bleibt das Logo unverändert."
+                    ),
+                    "type": "enum",
+                    "value": self._bitwave_prefs.get("logo_eq", "water"),
+                    "options": _enum_options("logo_eq", _LOGO_EQ_LOOKS),
                 },
                 {
                     "key": "audio_output",
@@ -19112,6 +19353,15 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     ),
                     "type": "bool",
                     "value": self._bitwave_pref_bool("diagnostics_redact_content"),
+                },
+                {
+                    "key": "diagnostics_hide_hardware",
+                    "label": "Hardwareinformationen ausblenden",
+                    "help": (
+                        "Entfernt Angaben zu Prozessor, Grafikkarte, Arbeitsspeicher und Bildschirm aus exportierten Diagnoseberichten."
+                    ),
+                    "type": "bool",
+                    "value": self._bitwave_pref_bool("diagnostics_hide_hardware"),
                 },
                 {
                     "key": "auto_update",
@@ -19389,7 +19639,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 # Rendered inside the updater / FFmpeg cards (toggle + cadence
                 # segment), not as the generic tile/row controls.
                 f["embedded"] = True
-            if key in ("verbose_diagnostics", "diagnostics_redact_content"):
+            if key in ("verbose_diagnostics", "diagnostics_redact_content", "diagnostics_hide_hardware"):
                 # Rendered inside the diagnostics card next to the export
                 # action, not as generic tiles.
                 f["embedded"] = True
@@ -19522,6 +19772,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "filename_delimiter_artist",
                     "filename_delimiter_album_artist",
                     "use_primary_album_artist",
+                    "filename_primary_artist_only",
                     "symlink_to_track",
                     "playlist_create",
                 ],
@@ -19585,7 +19836,9 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                     "art_hover_tilt",
                     "video_hover_peek",
                     "artist_bio_fallback",
+                    "nav_my_tidal",
                     "player_size",
+                    "logo_eq",
                     "queue_ledger_rows",
                 ],
             },
@@ -19646,7 +19899,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
                 "id": "diagnostics",
                 "card": "diagnostics",
                 "desc": "Help fix bugs with a shareable report, or start over.",
-                "fields": ["verbose_diagnostics", "diagnostics_redact_content"],
+                "fields": ["verbose_diagnostics", "diagnostics_redact_content", "diagnostics_hide_hardware"],
             },
         ]
         for sec in sections:
@@ -19697,6 +19950,7 @@ class BitWaveBridge(FavoriteTracksMixin, LibraryMixin, FlacCheckMixin, ReleasesM
             "delimiter_artist": d.filename_delimiter_artist,
             "delimiter_album_artist": d.filename_delimiter_album_artist,
             "use_primary_album_artist": bool(d.use_primary_album_artist),
+            "primary_artist_only_in_filename": bool(d.filename_primary_artist_only),
             # The preview is the user's proof of what the stand-in settings
             # do before anything downloads, so it launders and applies the
             # values exactly the way the engine does.

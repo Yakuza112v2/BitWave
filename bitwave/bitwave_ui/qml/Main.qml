@@ -31,7 +31,8 @@ ApplicationWindow {
     // Never allow a width that clips the header: the top bar's content
     // (logo, wordmark, nav tabs, queue, connection pill, sign out) sets the
     // real floor. headerRow reports 0 until it is laid out, hence the max.
-    minimumWidth: Math.max(880, Math.ceil(headerRow.implicitWidth) + 139)
+    minimumWidth: 880
+    readonly property bool compactHeader: width < 1360
     minimumHeight: 560
     title: "BitWave by Yakuza112"
     color: bg
@@ -51,6 +52,12 @@ ApplicationWindow {
     // Settings > Appearance > "Player bar": the waveform in the bottom bar is
     // 200 px wide in full and 130 px in mini.
     property string playerSize: bitwave.bitwavePref("player_size") === "mini" ? "mini" : "full"
+    // Settings > Appearance > "Logo equalizer": how the logo in the top bar
+    // moves with a playing preview. "water" bends its bitwave over the
+    // spectrum, "dots" shows bars of dots, "scroll" a scrolling history.
+    function logoEqLook(v) { return v === "dots" || v === "scroll" || v === "off" ? v : "water" }
+    property string logoEq: logoEqLook(bitwave.bitwavePref("logo_eq"))
+    property bool navMyTidal: bitwave.bitwavePref("nav_my_tidal") !== false
     // Whether the library scan is on (saved state). The green done-state
     // button reads IN LIBRARY instead of DOWNLOADED while it is: with a
     // library in the picture "you have this" is the claim that matters, and
@@ -101,9 +108,15 @@ ApplicationWindow {
         function onPlayerSizeChanged() {
             root.playerSize = bitwave.bitwavePref("player_size") === "mini" ? "mini" : "full"
         }
+        function onLogoEqChanged() {
+            root.logoEq = root.logoEqLook(bitwave.bitwavePref("logo_eq"))
+        }
         function onVideoHoverPeekChanged() {
             root.videoHoverPeek = bitwave.bitwavePref("video_hover_peek") !== false
             if (!root.videoHoverPeek && root.peekNow) root.peekClose()
+        }
+        function onNavMyTidalChanged() {
+            root.navMyTidal = bitwave.bitwavePref("nav_my_tidal") !== false
         }
         function onArtistBioFallbackChanged() {
             root.artistBioOn = bitwave.bitwavePref("artist_bio_fallback") === true
@@ -639,86 +652,76 @@ ApplicationWindow {
         }
 
         // ---- rolodex roll ----------------------------------------------------
-        // Each row gets a Rotation bound to its own view (captured at creation,
-        // so rows on backgrounded pages keep working when the user returns).
+        // Rows tilt away as they pass through the top and bottom edge bands.
+        // Only the rows IN a band carry a live angle: each scrolled frame looks
+        // up the few rows under the two bands, sets their angle, and flattens
+        // the ones that left. Every row once carried its own binding on
+        // contentY (one script run per row per scrolled frame, 38 on a list,
+        // 114 on a large artist page): at 120 Hz that alone was ~80 frames
+        // over 20 ms in 10 s of scrolling My Tidal tracks, 10 without it.
         readonly property real rollMax: 9
         readonly property real rollBand: 56
-        // The tilt angle below reads row.mapToItem(fl), which is NOT reactive, so
-        // the binding only re-evaluates on its one live dependency: fl.contentY
-        // (a scroll). A tab switch or a filter change repositions rows without
-        // moving contentY, which would leave every angle frozen at its old value
-        // until the next scroll. Bumping rollTick on those events (see armRoll and
-        // onFlickChanged) is the dependency that forces a recompute on demand.
-        property int rollTick: 0
         Component {
             id: bttRollComp
             Rotation {
                 property Item row
-                property Item fl
                 origin.x: row ? row.width / 2 : 0
                 origin.y: row ? row.height / 2 : 0
                 axis { x: 1; y: 0; z: 0 }
-                angle: {
-                    var _t = btt.rollTick  // re-eval on tab switch / filter / reflow, not only scroll
-                    if (!row || !fl) return 0
-                    // Only row-sized items may tilt. Anything taller (a shelf
-                    // section, an expanded album panel) projects far outside
-                    // the edge band when rotated and shears the whole page.
-                    if (row.height > 160) return 0
-                    var cy = fl.contentY   // binding dependency: re-evaluate on scroll
+            }
+        }
+        // The rotations currently off flat, so a row that left the bands (or
+        // whose page went away) is flattened on the next pass.
+        property var _rolled: []
+        // The row at content point (x, y) of the view, or null. List views
+        // parent delegates directly to contentItem; the column-based pages
+        // nest rows one level down in a page-sized content column, which must
+        // not tilt as a whole. Only row-sized items tilt: anything taller (a
+        // shelf section, an expanded album panel) projects far outside the
+        // edge band when rotated and shears the whole page.
+        function rollRowAt(fl, x, y) {
+            var it = fl.contentItem.childAt(x, y)
+            if (!it || it.width < 100 || it.height < 25) return null
+            if (it.height <= 160) return it
+            if (it.height < fl.height * 0.9) return null
+            var row = it.childAt(x - it.x, y - it.y)
+            return row && row.width > 100 && row.height > 24 && row.height <= 160 ? row : null
+        }
+        function updateRoll() {
+            var fl = flick, next = []
+            if (fl && fl.contentItem) {
+                var vh = fl.height, x = fl.contentX + fl.width / 2
+                // Rows are at least 25 px tall, so 24 px steps miss none.
+                var ys = [0, 24, 48, rollBand, vh - rollBand, vh - 48, vh - 24, vh]
+                for (var i = 0; i < ys.length; i++) {
+                    var row = rollRowAt(fl, x, fl.contentY + ys[i])
+                    if (!row) continue
+                    if (row.transform.length === 0) row.transform = bttRollComp.createObject(row, { row: row })
+                    var r = row.transform[0]
+                    // One of the app's few bespoke transforms: leave it alone.
+                    if (r.row !== row) continue
                     var c = row.mapToItem(fl, 0, 0).y + row.height / 2
-                    if (c < btt.rollBand) return (1 - Math.max(0, c) / btt.rollBand) * btt.rollMax
-                    var vh = fl.height
-                    if (c > vh - btt.rollBand) return -Math.min(1, (c - (vh - btt.rollBand)) / btt.rollBand) * btt.rollMax
-                    return 0
+                    r.angle = c < rollBand ? (1 - Math.max(0, c) / rollBand) * rollMax
+                            : c > vh - rollBand ? -Math.min(1, (c - (vh - rollBand)) / rollBand) * rollMax : 0
+                    if (r.angle !== 0 && next.indexOf(r) < 0) next.push(r)
                 }
             }
+            for (var k = 0; k < _rolled.length; k++)
+                if (_rolled[k] && next.indexOf(_rolled[k]) < 0) _rolled[k].angle = 0
+            _rolled = next
         }
-        function armRow(row, fl) {
-            // Rows with an existing transform are either already armed or own
-            // one of the app's few bespoke transforms; leave both alone.
-            if (row.transform.length > 0) return
-            row.transform = bttRollComp.createObject(row, { row: row, fl: fl })
-        }
-        function armRoll() {
-            var fl = flick
-            if (!fl || !fl.contentItem) return
-            var ci = fl.contentItem
-            for (var i = 0; i < ci.children.length; i++) {
-                var it = ci.children[i]
-                if (it.width < 100 || it.height < 25) continue
-                // List views parent delegates directly to contentItem; the
-                // column-based pages nest rows one level down in a page-sized
-                // content column, which must not tilt as a whole. In both
-                // cases only row-sized items are armed: shelf sections and
-                // grid cells stay flat (the angle binding also re-checks the
-                // cap live, for rows that grow after arming).
-                if (it.height <= 160) { armRow(it, fl); continue }
-                if (it.height < fl.height * 0.9) continue
-                for (var j = 0; j < it.children.length; j++) {
-                    var row = it.children[j]
-                    if (row.width > 100 && row.height > 24 && row.height <= 160) armRow(row, fl)
-                }
-            }
-            // Rows may have moved (a fresh arm, a reflow, a returning tab), so
-            // force every armed angle to recompute now, not on the next scroll.
-            rollTick++
-        }
-        // Bump synchronously too: on a tab switch the returning pane is already
-        // laid out, so its rows can re-tilt correctly in the same frame it
-        // appears (no stale-then-correct flash); armRoll then re-checks post-layout.
-        onFlickChanged: { btt.rollTick++; Qt.callLater(armRoll) }
-        Component.onCompleted: Qt.callLater(armRoll)
-        // Delegates recycle and result columns repopulate; contentHeight moves
-        // in both cases, so it doubles as the re-arm signal.
-        // The angles re-tilt on every change (rollTick), cheap. The ARM walk
-        // (every child, a transform created per new row) waits for the height
-        // to settle: an expand animates contentHeight for ~280 ms, and walking
-        // per frame for its whole run bought nothing a walk at the end does not.
-        Timer { id: bttArmSettle; interval: 60; onTriggered: btt.armRoll() }
+        // Synchronously on a tab switch: the returning pane is already laid
+        // out, so its rows tilt in the same frame it appears (no flat-then-
+        // tilted flash); the deferred pass re-checks after the layout.
+        onFlickChanged: { updateRoll(); Qt.callLater(updateRoll) }
+        Component.onCompleted: Qt.callLater(updateRoll)
+        // Delegates recycle and result columns repopulate without a scroll;
+        // contentHeight moves in both cases.
         Connections {
             target: btt.flick
-            function onContentHeightChanged() { btt.rollTick++; bttArmSettle.restart() }
+            function onContentYChanged() { btt.updateRoll() }
+            function onContentHeightChanged() { btt.updateRoll() }
+            function onHeightChanged() { btt.updateRoll() }
         }
 
         // ---- the INLINE crest pill ------------------------------------------
@@ -1153,7 +1156,7 @@ ApplicationWindow {
     }
     // One mono digit at the ledger's number size, so the number column fits a
     // four-digit playlist position instead of a fixed two-digit width.
-    TextMetrics { id: ledgerDigit; font.family: root.mono; font.pixelSize: 10; text: "0" }
+    TextMetrics { id: ledgerDigit; font.family: root.mono; font.pixelSize: 10; text: I18n.t("0") }
     // Queue drawer width, dragged by the handle on its own edge, and remembered
     // across launches the way the window frame is (0 is the never-saved
     // sentinel). 420 is the floor as well as the default: below it the quality
@@ -1392,7 +1395,9 @@ ApplicationWindow {
         onTriggered: {
             if (root.libraryCategory === "home") {
                 bitwave.loadHome(root.homeSections.length > 0)
-            } else {
+            } else if (root.libraryCategory !== "history") {
+                // History is local and refreshes on historyChanged; TIDAL has
+                // no such category, so a revalidate there emptied the page.
                 var m = libModelFor(root.libraryCategory)
                 if (m && m.count > 0) {
                     libPinRefill = true
@@ -2855,9 +2860,9 @@ ApplicationWindow {
     property string navOrigin: "browse"
     function navSig(s) { return s.v + "|" + (s.key || "") + "|" + (s.id || "") + "|" + (s.cat || "") }
     function navSnapshot() {
-        if (settingsOpen) return { v: "settings", label: "Settings" }
-        if (libraryOpen) return { v: "library", cat: libraryCategory, label: "My Tidal" }
-        if (releasesOpen) return { v: "releases", view: releasesView, label: "Releases" }
+        if (settingsOpen) return { v: "settings", label: I18n.t("Settings") }
+        if (libraryOpen) return { v: "library", cat: libraryCategory, label: libraryCategory === "history" ? "Download history" : "My Tidal" }
+        if (releasesOpen) return { v: "releases", view: releasesView, label: I18n.t("Releases") }
         if (artistOpen) return { v: "artist", id: artistData ? "" + artistData.id : "",
                                  label: artistData ? (artistData.name || "Artist") : "Artist",
                                  // Which of the artist's TWO pages this is. My
@@ -2878,7 +2883,7 @@ ApplicationWindow {
                                        : browsePage ? (browsePage.title || "Browse")
                                        : (browseTitleHint !== "" ? browseTitleHint : "Browse"),
                                  art: browsePageKey !== "" && !browsePage ? browseArtHint : "" }
-        return { v: "search", label: "Search" }
+        return { v: "search", label: I18n.t("Search") }
     }
     function navPush() {
         if (_navRestoring) return
@@ -2932,7 +2937,7 @@ ApplicationWindow {
     function _navRestore(s) {
         // Restore the snapshot's lit tab; older snapshots without one fall back
         // to the section the snapshot itself shows.
-        navOrigin = s.o || (s.v === "library" ? "library" : s.v === "browse" ? "browse"
+        navOrigin = s.o || (s.v === "library" ? (s.cat === "history" ? "history" : "library") : s.v === "browse" ? "browse"
                           : s.v === "releases" ? "releases"
                           : s.v === "search" ? "search" : navOrigin)
         _navRestoring = true
@@ -3037,7 +3042,7 @@ ApplicationWindow {
     // trail holds the crumb back rather than flash "Browse" and then swap in
     // the real name when the payload arrives (reported from livetesting).
     readonly property string currentNavLabel: settingsOpen ? "Settings"
-        : libraryOpen ? "My Tidal"
+        : libraryOpen ? (libraryCategory === "history" ? "Download history" : "My Tidal")
         : releasesOpen ? "Releases"
         : artistOpen ? (artistData ? (artistData.name || "Artist") : "Artist")
         : browseOpen ? (browsePageKey === "" ? "Browse"
@@ -3093,7 +3098,8 @@ ApplicationWindow {
         return !navIsRoot(navHistory[crumbBase])
     }
     readonly property string crumbSynthLabel:
-        navOrigin === "library" ? "My Tidal" : navOrigin === "releases" ? "Releases"
+        navOrigin === "library" ? "My Tidal" : navOrigin === "history" ? "Download history"
+        : navOrigin === "releases" ? "Releases"
         : navOrigin === "browse" ? "Browse" : "Search"
     function crumbSynthGo() {
         navPush()
@@ -3110,7 +3116,7 @@ ApplicationWindow {
             browsePageKey = ""
             artistOpen = false; settingsOpen = false; libraryOpen = false; releasesOpen = false
             browseOpen = true
-        } else if (navOrigin === "library") {
+        } else if (navOrigin === "library" || navOrigin === "history") {
             artistOpen = false; settingsOpen = false; browseOpen = false
             libraryOpen = true; releasesOpen = false
         } else if (navOrigin === "releases") {
@@ -3204,7 +3210,7 @@ ApplicationWindow {
         // RETURN to the category the user left, not always Home. loadLib is
         // keep-alive: a category whose rows are already on screen keeps them
         // (and its scroll) untouched and only revalidates quietly.
-        loadLib(libraryCategory)
+        loadLib(libraryCategory === "history" ? "home" : libraryCategory)
     }
 
     // ---- Releases ---------------------------------------------------------
@@ -3683,7 +3689,7 @@ ApplicationWindow {
     readonly property int relHeadH: 76      // a feed section head, text at its foot
     // A video's words share its width with the download beside them.
     readonly property int relVideoTextW: relVideoW - 10 - Math.ceil(relDlMeasure.implicitWidth)
-    DownloadButton { id: relDlMeasure; visible: false; label: "Download"; noun: "video" }
+    DownloadButton { id: relDlMeasure; visible: false; label: I18n.t("Download"); noun: "video" }
     // A card arrived since it was last seen (a video's id carries its "v:"
     // mark: an album can share the number).
     function relIsFresh(c) { return !!root.releasesFreshIds[((c && c.kind) === "video" ? "v:" : "") + ((c && c.id) || "")] }
@@ -3843,9 +3849,9 @@ ApplicationWindow {
             Text { Layout.fillWidth: true; wrapMode: Text.Wrap; textFormat: Text.PlainText; text: I18n.t("The track will be removed from your TIDAL favorites. Downloaded files will be kept."); color: root.textLo; font.pixelSize: 14 }
             RowLayout {
                 Layout.alignment: Qt.AlignRight; spacing: 12
-                SpecBtn { label: "Cancel"; onClicked: favoriteRemovePrompt.close() }
+                SpecBtn { label: I18n.t("Cancel"); onClicked: favoriteRemovePrompt.close() }
                 SpecBtn {
-                    objectName: "confirmFavoriteRemoval"; label: "Remove"; danger: true
+                    objectName: "confirmFavoriteRemoval"; label: I18n.t("Remove"); danger: true
                     onClicked: { bitwave.removeFavoriteTrack(favoriteRemovePrompt.trackId); favoriteRemovePrompt.close() }
                 }
             }
@@ -3877,7 +3883,7 @@ ApplicationWindow {
             fullTip.open()
         }
     }
-    TextMetrics { id: fullTipTm; font.pixelSize: 12; text: root.fullTipText }
+    TextMetrics { id: fullTipTm; font.pixelSize: 12; text: I18n.t(root.fullTipText) }
     Popup {
         id: fullTip
         objectName: "fullTip"
@@ -3907,10 +3913,10 @@ ApplicationWindow {
     // A search's years past this one are a section each (`byYear`): a long
     // career is a few heads, not dozens of one-card months.
     function releasesBucketOf(day, today, byYear) {
-        if (day > today) return { key: "upcoming", label: "Upcoming" }
-        if (day === today) return { key: "today", label: "Today" }
-        if (day >= root._relShift(today, -6)) return { key: "week", label: "This week" }
-        if (day.slice(0, 7) === today.slice(0, 7)) return { key: "month", label: "This month" }
+        if (day > today) return { key: "upcoming", label: I18n.t("Upcoming") }
+        if (day === today) return { key: "today", label: I18n.t("Today") }
+        if (day >= root._relShift(today, -6)) return { key: "week", label: I18n.t("This week") }
+        if (day.slice(0, 7) === today.slice(0, 7)) return { key: "month", label: I18n.t("This month") }
         if (byYear && day.slice(0, 4) < today.slice(0, 4)) return { key: "y" + day.slice(0, 4), label: day.slice(0, 4) }
         return { key: day.slice(0, 7), label: root._relMonths[+day.slice(5, 7) - 1] + " " + day.slice(0, 4) }
     }
@@ -3970,7 +3976,7 @@ ApplicationWindow {
             if (!s) { s = { key: b.key, label: b.label, rows: [] }; byKey[b.key] = s; out.push(s) }
             s.rows.push(keep[k].r)
         }
-        if (arrived.length > 0) out.unshift({ key: "new", label: "Just in", rows: arrived.map(function (e) { return e.r }) })
+        if (arrived.length > 0) out.unshift({ key: "new", label: I18n.t("Just in"), rows: arrived.map(function (e) { return e.r }) })
         for (var o = 0; o < out.length; o++) {
             if (out[o].key === "upcoming") continue
             var seq = out[o].rows.map(function (r, at) {
@@ -4020,7 +4026,7 @@ ApplicationWindow {
                 }
                 th = Math.ceil(th)
                 var uid = "r:" + s.key + ":" + k
-                items.push({ uid: uid, rowKind: "row", label: "", cnt: chunk.length, th: th,
+                items.push({ uid: uid, rowKind: "row", label: I18n.t(""), cnt: chunk.length, th: th,
                              sig: cols + "|" + ids.join(",") + "|" + th })
                 cards[uid] = chunk
             }
@@ -4583,6 +4589,10 @@ ApplicationWindow {
             bitwave.loadHome(root.homeSections.length > 0)
             return
         }
+        // Loaded once: after that the list follows each change as it happens
+        // (onHistoryChanged), so reopening it (Back from an album) keeps
+        // every row and its place with nothing to reread.
+        if (cat === "history") { if (!root.historyReady) { libCatHasMore[cat] = false; root.historyLoad(0) } return }
         // Every category pane is keep-alive: switching only changes which one
         // is visible, and each keeps its rows, expansion and scroll for its
         // whole life. A category that already has rows shows them as-is and
@@ -4825,10 +4835,10 @@ ApplicationWindow {
         browsePageKey = key
         browsePageError = false
         browsePageLoading = false
-        browsePage = { key: key, title: "All Playlists",
-                       sections: [{ rowKind: "links", title: "Moods & Activities", items: plChips(browseChips.moods) },
-                                  { rowKind: "links", title: "Genres", items: plChips(browseChips.genres) },
-                                  { rowKind: "links", title: "Decades", items: plChips(browseChips.decades) }] }
+        browsePage = { key: key, title: I18n.t("All Playlists"),
+                       sections: [{ rowKind: "links", title: I18n.t("Moods & Activities"), items: plChips(browseChips.moods) },
+                                  { rowKind: "links", title: I18n.t("Genres"), items: plChips(browseChips.genres) },
+                                  { rowKind: "links", title: I18n.t("Decades"), items: plChips(browseChips.decades) }] }
     }
     function openBrowseCloud(title, chips) {
         var key = "cloud:" + title
@@ -5421,7 +5431,7 @@ ApplicationWindow {
         // Five characters cover "-9:59"; a track past ten minutes (a live
         // side, a mix) needs "-61:23", and the remaining label used to run
         // its last digit past the rail's end into the stop glyph's gap.
-        TextMetrics { id: nrTm; font.family: root.mono; font.pixelSize: 10; text: "0" }
+        TextMetrics { id: nrTm; font.family: root.mono; font.pixelSize: 10; text: I18n.t("0") }
         readonly property int tchars: Math.max(5, 1 + root.fmtMs(root.previewDuration).length)
         readonly property real tw: Math.ceil(nrTm.advanceWidth * tchars + 8)
         readonly property int rw: root.playerSize === "mini" ? 130 : 200
@@ -5825,8 +5835,8 @@ ApplicationWindow {
         onVisibleChanged: if (!visible && outMenu.visible && outMenu.anchorItem === on) outMenu.close()
         readonly property real curW: Math.min(Math.ceil(tmCur.advanceWidth), capW)
         readonly property real prevW: Math.min(Math.ceil(tmPrev.advanceWidth), capW)
-        TextMetrics { id: tmCur; font.family: root.mono; font.pixelSize: 11; text: on.cur }
-        TextMetrics { id: tmPrev; font.family: root.mono; font.pixelSize: 11; text: on.prev }
+        TextMetrics { id: tmCur; font.family: root.mono; font.pixelSize: 11; text: I18n.t(on.cur) }
+        TextMetrics { id: tmPrev; font.family: root.mono; font.pixelSize: 11; text: I18n.t(on.prev) }
         onNameChanged: {
             if (!ready) return
             prev = cur
@@ -6159,7 +6169,7 @@ ApplicationWindow {
                 // the snake's ring around it) never shifts as they march.
                 implicitWidth: peekWaitTm.width + 26
                 implicitHeight: 30
-                TextMetrics { id: peekWaitTm; font: peekWaitTx.font; text: "LOADING VIDEO..." }
+                TextMetrics { id: peekWaitTm; font: peekWaitTx.font; text: I18n.t("LOADING VIDEO...") }
                 Text {
                     id: peekWaitTx
                     anchors.left: parent.left; anchors.leftMargin: 13
@@ -6450,12 +6460,6 @@ ApplicationWindow {
         if (drop > 0) warmArtModel.remove(0, drop)
     }
     ListModel { id: warmArtModel }
-    // Which scene graph is drawing, read once for every cover: on the
-    // Software backend (offscreen runs, a machine with no GPU) a ShaderEffect
-    // draws nothing, so Art paints its plain Images there instead of its
-    // rounded faces (see ArtFace).
-    Item { id: gfxProbe; readonly property bool software: GraphicsInfo.api === GraphicsInfo.Software }
-    readonly property bool roundFaces: !gfxProbe.software
     Item {
         visible: false
         Repeater {
@@ -6484,6 +6488,32 @@ ApplicationWindow {
             }
         }
     }
+
+    // Which scene graph is drawing, read once for every cover: on the
+    // Software backend (offscreen runs, a machine with no GPU) a ShaderEffect
+    // draws nothing, so Art paints its plain Images there instead of its
+    // rounded faces (see ArtFace).
+    Item {
+        id: gfxProbe
+        readonly property bool software: api === GraphicsInfo.Software
+        // One breadcrumb naming the graphics API the window ended up on, so
+        // a "the app is laggy" report shows a software fallback (a VM,
+        // Remote Desktop, a broken driver). The API name only: never the
+        // adapter, vendor or driver, which would identify the machine.
+        readonly property int api: GraphicsInfo.api
+        property bool logged: false
+        function note() {
+            var a = api, g = GraphicsInfo
+            if (logged || a === g.Unknown) return
+            logged = true
+            bitwave.uiLog("gfx", "api " + (a === g.Software ? "Software" : a === g.OpenGL ? "OpenGL"
+                : a === g.Direct3D11 ? "Direct3D11" : a === g.Direct3D12 ? "Direct3D12" : a === g.Vulkan ? "Vulkan"
+                : a === g.Metal ? "Metal" : a === g.Null ? "Null" : "other"), -1)
+        }
+        onApiChanged: note()
+        Component.onCompleted: note()
+    }
+    readonly property bool roundFaces: !gfxProbe.software
 
     // ====================================================================
     // Hover prefetch
@@ -7621,11 +7651,11 @@ ApplicationWindow {
     // constant and the menu can be sized to exactly the columns it shows
     // (a menu with nothing to say about the library stays as narrow as it was
     // before there was an IN LIBRARY mark to fit).
-    TextMetrics { id: qpmWord; font.family: root.mono; font.pixelSize: 10; font.bold: true; text: "LOSSLESS" }
-    TextMetrics { id: qpmSpec; font.family: root.mono; font.pixelSize: 10; text: "16/44.1" }
-    TextMetrics { id: qpmNote; font.family: root.mono; font.pixelSize: 9; text: "NOT OFFERED" }
-    TextMetrics { id: qpmDefault; font.family: root.mono; font.pixelSize: 9; text: "DEFAULT" }
-    TextMetrics { id: qpmHave; font.family: root.mono; font.pixelSize: 9; font.bold: true; text: root.libraryWord }
+    TextMetrics { id: qpmWord; font.family: root.mono; font.pixelSize: 10; font.bold: true; text: I18n.t("LOSSLESS") }
+    TextMetrics { id: qpmSpec; font.family: root.mono; font.pixelSize: 10; text: I18n.t("16/44.1") }
+    TextMetrics { id: qpmNote; font.family: root.mono; font.pixelSize: 9; text: I18n.t("NOT OFFERED") }
+    TextMetrics { id: qpmDefault; font.family: root.mono; font.pixelSize: 9; text: I18n.t("DEFAULT") }
+    TextMetrics { id: qpmHave; font.family: root.mono; font.pixelSize: 9; font.bold: true; text: I18n.t(root.libraryWord) }
     // The word a copy on disk is claimed with, the SAME rule the done face of
     // a Download button follows: with a library in the picture and downloads
     // landing inside it, "you have this" is the claim that matters; with a
@@ -9660,7 +9690,7 @@ ApplicationWindow {
         id: pbar
         property string pid: ""
         property string kind: "artist"
-        property string label: "Preview Artist"
+        property string label: I18n.t("Preview Artist")
         readonly property string st: pbar.pid !== "" ? root.pvSt(pbar.kind, pbar.pid) : ""
         readonly property bool live: st === "playing" || st === "paused"
         readonly property real frac: root.pvFrac(pbar.kind, pbar.pid)
@@ -9840,7 +9870,7 @@ ApplicationWindow {
     component DownloadButton: Rectangle {
         id: db
         property string mediaId: ""
-        property string label: "Download"
+        property string label: I18n.t("Download")
         // The media word the resolved label leads with ("TRACK IN LIBRARY",
         // "ALBUM DOWNLOADED"), so a done button says what it is talking about
         // instead of a bare IN LIBRARY. Derived from the idle label's own
@@ -10767,7 +10797,7 @@ ApplicationWindow {
                 visible: !plRow.isFolder
                 mediaId: plRow.isFolder ? "" : model.id
                 collectionCheck: !plRow.isFolder
-                label: "Download playlist"
+                label: I18n.t("Download playlist")
                 onTap: function(){ bitwave.downloadPlaylist(model.id) }
             }
             Item {
@@ -10778,7 +10808,7 @@ ApplicationWindow {
                 DownloadButton {
                     id: folderBtn
                     mediaId: plRow.isFolder ? plRow.model.id : ""
-                    label: "Download all"
+                    label: I18n.t("Download all")
                     onTap: function(){ bitwave.downloadFolder(folderBtn.mediaId) }
                 }
                 FolderBadge {
@@ -10798,201 +10828,104 @@ ApplicationWindow {
         }
     }
 
-    // ASCII ocean-wave logo (the "Parallax Ocean" mark):
-    // four depth layers of wave glyphs - foam specks, small ripples, rolling swell,
-    // and a big foreground crest - all scrolling left at parallax speeds (back layers
-    // slower) for moving-water depth, rather than flat parallel lines.
+    // BitWave's own logo. The overlay reads real audio bands at 20 Hz;
+    // a single Canvas keeps all three looks cheap even on small windows.
     component WaveMark: Rectangle {
         id: wm
-        property int boxW: 133                        // width
-        property int boxH: 34
-        readonly property real uscale: boxH / 34      // glyph px reference = box height
-        // Front-layer scroll speed (px/sec); back layers scale by their parallax factor.
-        // 46 px/s baseline x 0.21 ~= 9.66 px/s - calm.
-        // One shared loop clock (0..1 over loopSecs); each layer derives its own
-        // offset as (t x k + phase) tiles, the exact math of the README banner GIF
-        // (96 frames @ 14 fps), so box and banner show the same water.
-        property real loopSecs: 96 / 14
-        property real t: 0
-        // Idle-lightning clock: its own slow loop (the storyboard below spans
-        // 20s, longer than the water's ~6.9s loop, so strikes drift across
-        // different wave positions instead of always hitting the same crest).
-        readonly property real idleLoopSecs: 20
-        property real idleT: 0
-        Timer {
-            // Pause while the window is off screen (hidden/minimized). Focus
-            // is deliberately NOT part of the gate: an unfocused window is
-            // still on screen, and the water freezing on every focus change
-            // looked like a rendering glitch (livetest report).
-            running: wm.visible && root.onScreen
-            interval: 50; repeat: true                // 20 Hz step (see delegate note)
-            onTriggered: {
-                if (!root.presentFresh()) return   // no step while unpresented (see the LED clock)
-                wm.t = (wm.t + 0.05 / wm.loopSecs) % 1
-                wm.idleT = (wm.idleT + 0.05 / wm.idleLoopSecs) % 1
-            }
-        }
-        property bool storm: false                    // hover -> ascii lightning strikes
-        // Content is clipped by an inner item inset past the rounded corners, so a
-        // glyph (or bolt) can never poke out a corner, a clip on the rounded
-        // Rectangle itself is rectangular and leaves the corner triangles exposed.
-        readonly property int inset: 3
+        objectName: "bitwaveLogo"
+        property int boxW: 38
+        property int boxH: 38
+        implicitWidth: boxW; implicitHeight: boxH
         width: boxW; height: boxH; radius: 8
-        color: "#04191d"; border.color: root.accentDim; border.width: 1
-
-        Item {
-            id: wmClip
-            anchors.fill: parent; anchors.margins: wm.inset; clip: true
-
-            // Six-layer water lifted verbatim from the README banner GIF generator
-            // (make_logo_gif.py): faint foam up top fading into brighter, denser
-            // swell. k = pattern-tiles traveled per loop (parallax: front faster);
-            // ph = initial offset (0..1 of a tile) so crests don't line up. px is
-            // the GIF's glyph size normalized to the 34px box reference.
-            Repeater {
-                model: [
-                    { yf: 0.05, px: 3.5, op: 0.34, k: 1, ph: 0.00, pat: "   '    .     *   :   .   ", col: root.accentContTx },
-                    { yf: 0.18, px: 4.0, op: 0.46, k: 1, ph: 0.42, pat: ".~-~..-~-.~..-~-.",          col: root.green },
-                    { yf: 0.31, px: 4.0, op: 0.56, k: 2, ph: 0.75, pat: "-.~-..~.-~-..~.-",           col: root.green },
-                    { yf: 0.45, px: 5.0, op: 0.70, k: 2, ph: 0.18, pat: "_.-~-._.,-~-._.-",           col: root.accent },
-                    { yf: 0.59, px: 5.5, op: 0.84, k: 3, ph: 0.60, pat: ".-~^-._,.~-^._.-~",          col: root.accent },
-                    { yf: 0.72, px: 6.5, op: 1.00, k: 3, ph: 0.10, pat: "_.-~^~-._.~^'~._",           col: root.accent }
-                ]
-                delegate: Row {
-                    required property var modelData
-                    readonly property int reps: 9
-                    // One pattern-tile's width, NOT the full repeated strip: the
-                    // (t x k + ph) fraction is in units of a single tile, exactly as
-                    // in the GIF generator, so the drift speed matches the README.
-                    readonly property real tileW: tile.width / reps
-                    y: Math.round(wm.boxH * modelData.yf) - wm.inset
-                    // Stepped by wm.t (a coarse Timer) rather than a per-frame
-                    // animation: a per-frame NumberAnimation forces a scene repaint at
-                    // the display's full refresh (120 Hz on ProMotion), which idled the
-                    // whole app at ~30% CPU. At these drift speeds a 20 Hz step
-                    // (<0.5 px per tick) is visually identical and repaints 6x less.
-                    x: tile.width > 0 ? -Math.round(((wm.t * modelData.k + modelData.ph) % 1) * tileW) : 0
-                    Text { textFormat: Text.PlainText; id: tile; text: I18n.t(modelData.pat.repeat(reps)); font.family: root.mono; font.pixelSize: Math.max(2, Math.round(modelData.px * wm.uscale)); color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
-                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.pat.repeat(reps)); font.family: root.mono; font.pixelSize: tile.font.pixelSize; color: modelData.col; opacity: modelData.op; font.letterSpacing: -0.5 }
-                }
-            }
-
-            // ASCII lightning: four independent strike slots. Each strike picks a
-            // random shape, size and position, then waits a random beat before the
-            // next, so bolts land in different places at different times, sometimes
-            // spread out, sometimes overlapping, instead of a fixed metronome loop.
-            Repeater {
-                model: 4
-                delegate: Text {
-                    id: boltTx
-                    textFormat: Text.PlainText
-                    required property int index
-                    readonly property var shapes: [
-                        "\\\n \\\n /\n/",  "/\n\\\n \\\n  /", "\\\n \\/\n  \\",
-                        "\\\n/\n\\\n \\",  "\\\n \\",          " /\n/\n\\",
-                        "/\n \\\n  \\\n  /", "\\\n \\\n  \\/\n  /\n /"
-                    ]
-                    function strike() {
-                        text = shapes[Math.floor(Math.random() * shapes.length)]
-                        font.pixelSize = Math.max(6, Math.round((7 + Math.random() * 5) * wm.uscale))
-                        x = Math.round(wm.boxW * (0.05 + Math.random() * 0.84)) - wm.inset
-                        y = Math.round(wm.boxH * (Math.random() * 0.16)) - wm.inset
-                        bolt.restart()
-                    }
-                    function rearm(first) {
-                        // First strike after hover lands quickly (slot-staggered);
-                        // afterwards each slot free-runs on its own random beat.
-                        pauseT.interval = first ? index * 140 + Math.random() * 500
-                                                : 150 + Math.random() * 2100
-                        pauseT.restart()
-                    }
-                    color: "#eafffc"
-                    font.family: root.mono
-                    font.bold: true
-                    lineHeight: 0.78
-                    opacity: 0
-                    // One full strike cycle (flicker -> fade to 0). It re-arms itself
-                    // rather than binding `running: wm.storm` so that when the mouse
-                    // leaves mid-strike the bolt finishes fading out instead of
-                    // freezing at whatever opacity it was caught on.
-                    SequentialAnimation on opacity {
-                        id: bolt
-                        running: false
-                        NumberAnimation { to: 1.0;  duration: 40 }
-                        NumberAnimation { to: 0.12; duration: 60 }
-                        NumberAnimation { to: 0.88; duration: 50 }
-                        NumberAnimation { to: 0.0;  duration: 130 }
-                        onStopped: if (wm.storm) boltTx.rearm(false)
-                    }
-                    Timer { id: pauseT; repeat: false; onTriggered: if (wm.storm) boltTx.strike() }
-                    Connections {
-                        target: wm
-                        function onStormChanged() { if (wm.storm && !bolt.running && !pauseT.running) boltTx.rearm(true) }
-                    }
-                }
-            }
-
-            // Idle lightning: a fixed 20-second storm storyboard that loops
-            // identically, seven strikes spread far apart. Big bolts frame the
-            // box left and right, smaller ones scatter between, and the tall
-            // center strike lights the whole box with a brief sheet flash.
-            // Every strike lives the same ~280ms flicker (near-full pre-flash,
-            // dark beat, full flash, dim afterglow, the cadence read from the
-            // README banner). Deliberately sparse: the free-running random
-            // storm above stays a hover-only reward, and these hide while it
-            // runs. `at` is milliseconds into the loop.
-            Rectangle {
-                // Sheet flash for the big center strike: the whole clip blinks
-                // faintly white during that bolt's full-flash beat.
-                anchors.fill: parent
-                color: "#eafffc"
-                readonly property real ms: wm.idleT * wm.idleLoopSecs * 1000 - 9600
-                opacity: wm.storm || ms < 140 || ms >= 280 ? 0 : ms < 210 ? 0.13 : 0.05
-            }
-            Repeater {
-                // Every bolt hangs from the box's top edge (yf 0): with no
-                // clouds drawn, the frame itself is the sky, so a bolt starting
-                // mid-air would read as coming from nowhere. Short bolts are
-                // distant strikes; the tall ones reach down toward the swell.
-                model: [
-                    { at: 1400,  shape: "\\\n \\\n /\n/",          xf: 0.06, yf: 0, px: 9 },   // big, far left
-                    { at: 4200,  shape: "\\\n \\",                 xf: 0.56, yf: 0, px: 5 },   // small
-                    { at: 6800,  shape: " /\n/\n\\",               xf: 0.30, yf: 0, px: 5.5 }, // small
-                    { at: 9600,  shape: "\\\n \\\n  \\/\n  /\n /", xf: 0.45, yf: 0, px: 10 },  // big center + flash
-                    { at: 13000, shape: "\\\n/\n\\\n \\",          xf: 0.74, yf: 0, px: 5 },   // small
-                    { at: 15800, shape: "/\n \\\n  \\\n  /",       xf: 0.88, yf: 0, px: 9 },   // big, far right
-                    { at: 18200, shape: " /\n/\n\\",               xf: 0.18, yf: 0, px: 4.5 }  // small
-                ]
-                delegate: Text {
-                    required property var modelData
-                    readonly property real ms: wm.idleT * wm.idleLoopSecs * 1000 - modelData.at
-                    textFormat: Text.PlainText
-                    text: I18n.t(modelData.shape)
-                    x: Math.round((wm.boxW - 2 * wm.inset) * modelData.xf)
-                    y: Math.round((wm.boxH - 2 * wm.inset) * modelData.yf)
-                    color: "#eafffc"
-                    font.family: root.mono
-                    font.bold: true
-                    font.pixelSize: Math.max(4, Math.round(modelData.px * wm.uscale))
-                    lineHeight: 0.78
-                    opacity: wm.storm || ms < 0 || ms >= 280 ? 0
-                        : ms < 70 ? 0.85
-                        : ms < 140 ? 0
-                        : ms < 210 ? 1 : 0.45
-                }
-            }
+        color: "#eef5fa"
+        property var eqPlayer: null
+        readonly property string eqLook: root.logoEq
+        property var eqLv: []
+        property bool eqOn: false
+        property bool eqTapAsked: false
+        property bool eqTapOk: false
+        property real phase: 0
+        property var dots: []
+        function eqAt(i, n) {
+            if (eqLv.length !== 16) return 0
+            var f = Math.max(0, Math.min(15, i * 15 / Math.max(1, n - 1)))
+            var a = Math.floor(f), b = Math.min(15, a + 1)
+            return eqLv[a] + (eqLv[b] - eqLv[a]) * (f - a)
         }
-
-        // Hover -> storm (lightning). NoButton so it never eats clicks.
-        MouseArea {
-            anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton
-            onEntered: wm.storm = true
-            onExited: wm.storm = false
+        function eqStep() {
+            if (eqLook === "off" || !root.previewPlaying || eqPlayer === null) { eqOn = false; return }
+            if (!eqTapAsked) { eqTapAsked = true; eqTapOk = bitwave.logoEqAttach(eqPlayer) === true }
+            if (!eqTapOk) return
+            var lv = bitwave.logoEqLevels()
+            eqOn = lv.length === 16
+            if (eqOn) {
+                eqLv = lv
+                var peak = 0
+                for (var i = 0; i < lv.length; ++i) peak = Math.max(peak, lv[i])
+                dots = dots.concat([peak]).slice(-16)
+                phase += 0.22
+            }
+            logoCanvas.requestPaint()
+        }
+        onEqLookChanged: { eqOn = false; dots = []; logoCanvas.requestPaint() }
+        onEqOnChanged: logoCanvas.requestPaint()
+        onEqLvChanged: logoCanvas.requestPaint()
+        Timer {
+            interval: 50; repeat: true
+            running: wm.visible && root.onScreen && root.previewPlaying && wm.eqLook !== "off"
+            onTriggered: if (root.presentFresh()) wm.eqStep()
+        }
+        Connections {
+            target: root
+            function onPreviewPlayingChanged() { if (!root.previewPlaying) { wm.eqOn = false; wm.dots = [] } }
+            function onOnScreenChanged() { if (!root.onScreen) wm.eqOn = false }
+        }
+        Image {
+            objectName: "bitwaveLogoImage"
+            anchors.fill: parent; anchors.margins: 2
+            source: "bitwave-logo.png"
+            fillMode: Image.PreserveAspectFit; smooth: true
+            opacity: wm.eqOn && wm.eqLook !== "off" ? 0.20 : 1
+            Behavior on opacity { NumberAnimation { duration: 180 } }
+        }
+        Canvas {
+            id: logoCanvas
+            objectName: "logoEqualizerCanvas"
+            anchors.fill: parent; anchors.margins: 4
+            visible: wm.eqOn && wm.eqLook !== "off"
+            onPaint: {
+                var c = getContext("2d"); c.reset()
+                if (!wm.eqOn || wm.eqLook === "off") return
+                var w = width, h = height
+                if (wm.eqLook === "water") {
+                    var g = c.createLinearGradient(0, 0, w, 0)
+                    g.addColorStop(0, "#00e5d2"); g.addColorStop(1, "#009cff")
+                    for (var layer = 0; layer < 3; ++layer) {
+                        c.beginPath(); c.strokeStyle = g; c.lineWidth = layer === 0 ? 2.3 : 1.2
+                        c.globalAlpha = layer === 0 ? 1 : 0.38
+                        for (var x = 0; x <= 32; ++x) {
+                            var lev = wm.eqAt(x, 33)
+                            var y = h / 2 + Math.sin(x * 0.34 - wm.phase + layer * 1.5) * (0.5 + lev * h * 0.34)
+                            if (x === 0) c.moveTo(0,y); else c.lineTo(x*w/32,y)
+                        }
+                        c.stroke()
+                    }
+                } else {
+                    var cols = 16, rows = 8, dx = w/cols, dy = h/rows
+                    for (var col = 0; col < cols; ++col) {
+                        var level = wm.eqLook === "scroll" ? (wm.dots[col - (16 - wm.dots.length)] || 0) : wm.eqAt(col, cols)
+                        for (var row = 0; row < rows; ++row) {
+                            var lit = row < Math.round(level * rows)
+                            c.fillStyle = lit ? root.accent : root.accentDim
+                            c.globalAlpha = lit ? 1 : 0.16
+                            c.beginPath(); c.arc((col+0.5)*dx, h-(row+0.5)*dy, Math.max(0.55,Math.min(dx,dy)*0.30),0,Math.PI*2);c.fill()
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // Clipboard glyph that "decrypt-fills" on paste. Shared by the search bar and
-    // the login redirect field so both get the identical paste affordance.
     component PasteGlyph: Rectangle {
         id: pg
         signal clicked()
@@ -11052,7 +10985,7 @@ ApplicationWindow {
     // outlined with the label warming textLo -> textHi on hover.
     component SpecBtn: Rectangle {
         id: sb
-        property string label: ""
+        property string label: I18n.t("")
         property bool primary: false
         // The red recipe (red on redCont, translucent red border), for the
         // destructive half of a button pair.
@@ -11066,6 +10999,7 @@ ApplicationWindow {
         // headers already use, so it reads as part of the header rather than a
         // dialog button that wandered in.
         property bool compact: false
+        property real labelSize: compact ? 10 : 13
         // A Phosphor glyph in place of the word, on a square of exactly the
         // button height, so it lines up with the worded buttons beside it. For
         // an action whose glyph says it faster than any label could (closing a
@@ -11084,30 +11018,41 @@ ApplicationWindow {
                      : sbTxt.implicitWidth + (iconLed ? icoSize + icoGap : 0) + (compact ? 8 : root.btnPadH) * 2
         implicitHeight: sbTxt.implicitHeight + (compact ? 2 : root.btnPadV) * 2
         radius: compact ? 5 : root.btnRad
-        color: (sbMa.containsMouse && (sb.primary || sb.danger || sb.warn)) ? Qt.lighter(sb.bg, 1.35) : sb.bg
+        // Every button lifts on hover. Secondary has no fill to lighten, so it
+        // takes a faint green wash instead.
+        readonly property bool secondary: !primary && !danger && !warn
+        color: !sbMa.containsMouse ? sb.bg
+             : sb.secondary ? Qt.alpha(root.accentCont, 0.7) : Qt.lighter(sb.bg, 1.35)
         border.width: 1
         border.color: danger ? Qt.alpha(root.red, 0.55)
                     : warn ? Qt.alpha(root.yellow, 0.55)
-                    : (primary ? root.accentDim : root.border1)
+                    : (primary || sbMa.containsMouse ? root.accentDim : Qt.alpha(root.accentDim, 0.55))
         Behavior on color { ColorAnimation { duration: 110 } }
+        Behavior on border.color { ColorAnimation { duration: 110 } }
         Text {
             id: sbTxt; anchors.centerIn: parent
             anchors.horizontalCenterOffset: sb.iconLed ? (sb.icoSize + sb.icoGap) / 2 : 0
+            // Labels are all caps: center the cap height, not the line box, whose
+            // descender room otherwise sits the word high (most visibly at chip scale).
+            anchors.verticalCenterOffset: Math.round(implicitHeight / 2 - sbFm.ascent + sbFm.tightBoundingRect("H").height / 2)
             // Kept loaded while icon-only (empty, invisible): its line height is
             // what makes the square square, so it has to keep measuring.
             visible: !sb.iconOnly
-            textFormat: Text.PlainText; text: I18n.t(sb.label)
+            textFormat: Text.PlainText; text: I18n.t(sb.label).toUpperCase()
             color: sb.danger ? root.red
                  : sb.warn ? root.yellow
-                 : (sb.primary ? root.accent : (sbMa.containsMouse ? root.textHi : root.textLo))
+                 : root.accent   // primary and secondary alike: gray reads as "not selected"
             font.family: sb.compact ? root.mono : root.uiFont
-            font.pixelSize: sb.compact ? 10 : 13; font.bold: true
+            font.pixelSize: sb.labelSize; font.bold: true
             font.letterSpacing: sb.compact ? 1.4 : root.btnTrack
         }
+        FontMetrics { id: sbFm; font: sbTxt.font }
         Ico {
             visible: sb.icon !== ""
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: sb.iconLed ? -(sbTxt.implicitWidth + sb.icoGap) / 2 : 0
+            // Beside a word, the glyph sits on the word's cap-height center.
+            anchors.verticalCenterOffset: sb.iconLed ? sbTxt.anchors.verticalCenterOffset : 0
             name: sb.icon; size: sb.icoSize; bold: 8
             color: sbTxt.color   // one recipe for the word and the glyph, hover included
         }
@@ -11123,7 +11068,7 @@ ApplicationWindow {
     // (accent-tinted) option.
     component GateCard: Rectangle {
         id: gcard
-        property string title: ""
+        property string title: I18n.t("")
         property string desc: ""
         property string chip: ""
         property bool highlight: false
@@ -11335,184 +11280,30 @@ ApplicationWindow {
     // CRT: a burst of scanline static, then the panel strikes in from a collapsed
     // line (x, then y overshoot). Power-off crackles with static and collapses
     // back to a line, leaving a brief afterglow bar. Shared by the nav tabs.
-    component NavTab: Item {
+    component NavTab: SpecBtn {
         id: nt
-        property string label: ""
         property bool active: false
         property int badge: 0
-        signal clicked()
-        implicitHeight: navMetric.implicitHeight + root.btnPadV * 2
-        implicitWidth: navMetric.implicitWidth + root.btnPadH * 2
-
-        // Colors for the CRT look. accent/accentCont/accentDim/accentSoft are
-        // shared app tokens; the dim phosphor-panel tones are local to this look.
-        readonly property color navDimBg:     "#0b171a"
-        readonly property color navDimBorder: "#1f4248"
-        readonly property color navDimHover:  "#2c6267"
-        readonly property color navText:      "#8f949e"
-        readonly property color navTextHi:    "#bcc1c9"
-        readonly property color navStatic:    "#aeb4ad"
-
-        // hidden metric, reserves width so the label never reflows
-        Text { id: navMetric; visible: false; textFormat: Text.PlainText; text: I18n.t(nt.label); font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
-
-        // idle body: dim phosphor panel; gray label that grays → green
+        property string fullLabel: label
+        primary: active
+        compact: root.compactHeader
+        labelSize: root.compactHeader ? 11 : 13
+        Accessible.name: fullLabel
+        HoverHandler { id: navHover }
+        ToolTip.visible: root.compactHeader && navHover.hovered
+        ToolTip.text: fullLabel
         Rectangle {
-            id: navDim; anchors.fill: parent; radius: root.btnRad; color: nt.navDimBg
-            border.width: 1; border.color: navMa.containsMouse ? nt.navDimHover : nt.navDimBorder
-            Behavior on border.color { ColorAnimation { duration: 180 } }
-            Text {
-                anchors.centerIn: parent; text: I18n.t(nt.label); textFormat: Text.PlainText
-                font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack
-                color: navMa.containsMouse ? nt.navTextHi : nt.navText
-                opacity: nt.active ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutQuad } }
-                Behavior on color { ColorAnimation { duration: 180 } }
-            }
+            visible: nt.badge > 0
+            x: parent.width - width / 2; y: -height / 2
+            width: Math.max(16, navCount.implicitWidth + 8); height: 16; radius: 8
+            color: root.accent; border.color: root.surface0
+            Text { id: navCount; anchors.centerIn: parent; text: nt.badge > 99 ? "99+" : "" + nt.badge; color: root.accentText; font.pixelSize: 9; font.bold: true }
         }
-
-        // lit body, collapses in / out like a CRT tube
-        Rectangle {
-            id: navLit; anchors.fill: parent; radius: root.btnRad; color: root.accentCont
-            border.width: 1; border.color: root.accentDim; opacity: 0
-            transform: Scale { id: navSc; origin.x: nt.width / 2; origin.y: nt.height / 2; xScale: 0.02; yScale: 0.02 }
-            Text { anchors.centerIn: parent; text: I18n.t(nt.label); textFormat: Text.PlainText; color: root.accent; font.pixelSize: 13; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack }
-        }
-
-        // static: a stack of uneven scan segments that flicker together
-        Item {
-            id: navStat; anchors.fill: parent; opacity: 0; clip: true
-            Column {
-                anchors.centerIn: parent; spacing: 3
-                Repeater { model: 5
-                    delegate: Rectangle {
-                        required property int index
-                        width: nt.width * (0.35 + 0.12 * ((index * 3 + 1) % 5)); height: 2; radius: 1
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        color: index % 2 === 0 ? root.accent : nt.navStatic
-                        opacity: 0.5 + 0.1 * (index % 3)
-                    } }
-            }
-        }
-
-        Rectangle { id: navFlash; anchors.centerIn: parent; width: parent.width; height: 3; radius: 2; color: root.accentSoft; opacity: 0 }
-        Rectangle { id: navAfter; anchors.centerIn: parent; width: 7; height: 3; radius: 2; color: root.accent; opacity: 0 }
-
-        MouseArea { id: navMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: nt.clicked() }
-
-        // A count in the corner (the Releases tab's unseen arrivals), drawn
-        // like the QUEUE button's: LED dots on the page's own color, cut into
-        // the corner. It overhangs the tab instead of widening it, so the row
-        // never shifts. It pops in, counts through every number on the way
-        // up (each step rolls the digits), counts back down when the count
-        // clears, then shrinks away still showing the last number. Everything
-        // keys off the count, never off the badge's own visible.
-        Rectangle {
-            id: ntBadge
-            objectName: "navTabBadge"
-            z: 2
-            property int disp: 0      // the number shown, stepping toward nt.badge
-            property int last: 1      // the last nonzero number, held while it shrinks
-            property int dir: 1
-            property real t: 1
-            readonly property bool on: nt.badge > 0 || disp > 0
-            property real sc: on ? 1 : 0
-            Behavior on sc { NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.2 } }
-            radius: 4; color: root.bg; clip: true
-            height: 13; width: Math.max(13, ntNew.text.length * 6.4 + 5)
-            Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-            x: nt.width - width + 5; y: -5
-            visible: sc > 0.01
-            transform: Scale { origin.x: ntBadge.width / 2; origin.y: 6.5; xScale: ntBadge.sc; yScale: ntBadge.sc }
-            function fmt(v) { return v > 99 ? "99+" : "" + v }
-            Component.onCompleted: { disp = nt.badge; last = Math.max(1, nt.badge); ntNew.text = fmt(last) }
-            // A fresh arrival pops in reading 1, not rolling from the number it last held.
-            onOnChanged: if (on && disp === 0) { ntRoll.stop(); t = 1; ntOld.text = ""; ntNew.text = "1"; last = 1 }
-            onLastChanged: {
-                var was = ntNew.text
-                if (fmt(last) === was) return
-                dir = was === "" || last > parseInt(was) ? 1 : -1
-                ntOld.text = was; ntNew.text = fmt(last)
-                ntRoll.duration = disp !== nt.badge ? 85 : 300
-                ntRoll.restart()
-            }
-            Timer {
-                interval: 90; repeat: true; running: ntBadge.disp !== nt.badge
-                onTriggered: {
-                    var d = nt.badge - ntBadge.disp
-                    var step = Math.max(1, Math.ceil(Math.abs(d) / 6))
-                    ntBadge.disp += d > 0 ? step : -step
-                    if (ntBadge.disp > 0) ntBadge.last = ntBadge.disp
-                }
-            }
-            NumberAnimation { id: ntRoll; target: ntBadge; property: "t"; from: 0; to: 1; duration: 300; easing.type: Easing.OutCubic }
-            Text {
-                id: ntOld
-                textFormat: Text.PlainText
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: (ntBadge.height - height) / 2 - ntBadge.dir * ntBadge.t * ntBadge.height
-                visible: ntBadge.t < 1
-                color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; opacity: 0
-            }
-            Text {
-                id: ntNew
-                objectName: "navTabBadgeText"
-                textFormat: Text.PlainText
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: (ntBadge.height - height) / 2 + ntBadge.dir * (1 - ntBadge.t) * ntBadge.height
-                color: root.accent; font.family: root.mono; font.pixelSize: 9; font.bold: true; opacity: 0
-            }
-            LedCount { cur: ntNew.text; old: ntOld.text; t: ntBadge.t; dir: ntBadge.dir }
-        }
-
-        states: State { name: "on"; when: nt.active
-            PropertyChanges { navLit.opacity: 1 }
-            PropertyChanges { navSc.xScale: 1; navSc.yScale: 1 } }
-        // Choreography rule: the tube must MOVE on the click frame. The static
-        // burst and flash are overlays that ride on top of the strike/collapse,
-        // never gates in front of it; a sequential chain here once meant 130 ms
-        // of dead flicker before anything lit, which read as input lag.
-        transitions: [
-            Transition { to: "on"
-                ParallelAnimation {
-                    SequentialAnimation {   // static burst rides the strike
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.7; duration: 24 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.2; duration: 24 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.6; duration: 21 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.0; duration: 63 } }
-                    SequentialAnimation {
-                        PropertyAction { target: navAfter; property: "opacity"; value: 0 }
-                        PropertyAction { target: navLit; property: "opacity"; value: 1 }
-                        NumberAnimation { target: navSc; property: "xScale"; from: 0.02; to: 1; duration: 83; easing.type: Easing.OutCubic }
-                        ParallelAnimation {
-                            NumberAnimation { target: navSc; property: "yScale"; from: 0.02; to: 1; duration: 111; easing.type: Easing.OutBack }
-                            SequentialAnimation {
-                                NumberAnimation { target: navFlash; property: "opacity"; to: 0.65; duration: 38 }
-                                NumberAnimation { target: navFlash; property: "opacity"; to: 0.0; duration: 128 } } } } } },
-            Transition { from: "on"
-                ParallelAnimation {
-                    SequentialAnimation {   // static crackle rides the collapse
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.75; duration: 24 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.25; duration: 28 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.6; duration: 24 }
-                        NumberAnimation { target: navStat; property: "opacity"; to: 0.0; duration: 77 } }
-                    SequentialAnimation {
-                        NumberAnimation { target: navSc; property: "yScale"; to: 0.05; duration: 90; easing.type: Easing.InCubic }
-                        PropertyAction { target: navLit; property: "opacity"; value: 0 }
-                        ParallelAnimation {
-                            NumberAnimation { target: navSc; property: "xScale"; to: 0.02; duration: 83; easing.type: Easing.InCubic }
-                            NumberAnimation { target: navFlash; property: "opacity"; to: 0.85; duration: 83 } }
-                        ParallelAnimation {
-                            NumberAnimation { target: navFlash; property: "opacity"; to: 0.0; duration: 63 }
-                            SequentialAnimation {
-                                PropertyAction { target: navAfter; property: "opacity"; value: 0.55 }
-                                NumberAnimation { target: navAfter; property: "opacity"; to: 0.0; duration: 306; easing.type: Easing.InQuad } } } } } }
-        ]
     }
 
     component SectionHeader: Item {
         id: secHead
-        property string label: ""
+        property string label: I18n.t("")
         property int count: -1
         // Collapsible mode (artist-page sections): shows a chevron, makes the
         // whole header a click target, and the caller owns the state (so it
@@ -11970,7 +11761,7 @@ ApplicationWindow {
             }
             DownloadButton {
                 id: vDl
-                mediaId: vcell.vid; ownedCheck: true; label: "Download"; noun: "video"
+                mediaId: vcell.vid; ownedCheck: true; label: I18n.t("Download"); noun: "video"
                 anchors.right: parent.right
                 anchors.verticalCenter: vMetaCol.verticalCenter
                 onTap: function(){ bitwave.downloadVideo(vcell.vid) }
@@ -12251,8 +12042,11 @@ ApplicationWindow {
         // word), so neither the slot hugging the word nor the arrow folding
         // away while finishing ever moves the header.
         implicitWidth: 19 + qbMetric.implicitWidth + root.btnPadH * 2
-        radius: root.btnRad; color: "transparent"
-        border.color: qbMa.containsMouse ? root.outline : root.border1
+        // Lit like an active nav tab while Download history (reached from
+        // the drawer) is the page on screen.
+        property bool active: false
+        radius: root.btnRad; color: active ? root.accentCont : "transparent"
+        border.color: active ? root.accentDim : qbMa.containsMouse ? root.outline : root.border1
         Behavior on border.color { ColorAnimation { duration: 180 } }
 
         readonly property int running: root.activeQueueCount - root.queuedCount
@@ -12287,8 +12081,11 @@ ApplicationWindow {
 
         property string flash: ""
         readonly property string mode: flash !== "" ? flash : root.activeQueueCount > 0 ? "run" : "idle"
-        readonly property string word: mode === "run" ? Math.floor(qb.pct) + "%" : mode === "done" ? "DONE" : mode === "fail" ? "FAIL" : "QUEUE"
-        readonly property color tone: mode === "run" ? root.accent : mode === "done" ? root.green : mode === "fail" ? root.red : root.textLo
+        // Running tops out at 99%: the last row's finish steps still run at
+        // 100%, and DONE says the rest (100% would also not fit beside a
+        // three-digit speed).
+        readonly property string word: mode === "run" ? Math.min(99, Math.floor(qb.pct)) + "%" : mode === "done" ? "DONE" : mode === "fail" ? "FAIL" : "QUEUE"
+        readonly property color tone: mode === "run" ? root.accent : mode === "done" ? root.green : mode === "fail" ? root.red : qb.active ? root.accent : root.textLo
         property string _shownMode: ""
         property double _runLeft: 0
         function showWord() {
@@ -12323,17 +12120,57 @@ ApplicationWindow {
                 Text { id: qbMetric; visible: false; textFormat: Text.PlainText; text: I18n.t("QUEUE"); font: qbWord.font }
                 DecryptText {
                     id: qbWord; objectName: "queueButtonWord"; anchors.centerIn: parent; color: qb.tone
-                    // The chart draws its own words while running; the word
-                    // still sizes the slot.
-                    opacity: qb.mode === "run" ? 0 : 1
+                    // Under the chart (which carries the percent) while
+                    // running, gone by the time the chart is half in, and
+                    // back only once it is half out, so the two never show
+                    // at once; the word still sizes the slot.
+                    opacity: Math.max(0, 1 - 2 * qbStart.opacity)
                     font.family: root.uiFont; font.pixelSize: 13; font.bold: true; font.letterSpacing: root.btnTrack
                     font.features: { "tnum": 1 }
                 }
             }
         }
-        // The speed chart, the batch along its floor, and the download speed
-        // in its bottom left corner.
+        // The speed chart, and over it the batch percent, its digits
+        // centered top to bottom, and the download speed in the bottom right
+        // corner (its number, then the unit smaller), fading with the chart.
         QueueStart { id: qbStart; z: -1; anchors.centerIn: parent; btn: qb }
+        Item {
+            id: qbWords
+            objectName: "queueButtonWords"
+            anchors.fill: parent
+            opacity: Math.max(0, 2 * qbStart.opacity - 1); visible: opacity > 0
+            // The percent as it last read while running, so it fades out as
+            // it was instead of turning into DONE or FAIL.
+            property string held: "0%"
+            readonly property string live: qb.mode === "run" ? qb.word : ""
+            onLiveChanged: if (live !== "") held = live
+            QueueWord {
+                id: qbPct
+                objectName: "queueButtonPercent"
+                text: qbWords.held; color: root.accent; font.pixelSize: 14
+                // The digits centered, not the line box (whose room for
+                // descenders would sit them high).
+                readonly property rect tight: qbPm.tightBoundingRect("100%")
+                FontMetrics { id: qbPm; font: qbPct.font }
+                x: 5; y: (qbWords.height - tight.height) / 2 - tight.y - baselineOffset
+            }
+            Item {
+                id: qbSpd
+                objectName: "queueButtonSpeed"
+                readonly property real m: bitwave.downloadMbps || 0
+                readonly property string num: m <= 0 ? "--" : m >= 1000 ? (m / 1000).toFixed(1) : m < 10 ? m.toFixed(1) : "" + Math.round(m)
+                readonly property color ink: m > 0 ? root.accentSoft : root.textDim
+                implicitWidth: qbSpdN.implicitWidth + 1 + qbSpdU.implicitWidth; implicitHeight: qbSpdN.implicitHeight
+                width: implicitWidth; height: implicitHeight
+                x: qbWords.width - 3 - width; y: qbWords.height - height
+                QueueWord { id: qbSpdN; text: qbSpd.num; color: qbSpd.ink; font.pixelSize: 11 }
+                QueueWord {
+                    id: qbSpdU
+                    x: qbSpdN.implicitWidth + 1; y: qbSpdN.baselineOffset - baselineOffset
+                    text: qbSpd.m >= 1000 ? "Gb/s" : "Mb/s"; color: qbSpd.ink; font.pixelSize: 8; font.bold: false
+                }
+            }
+        }
 
         // The count in LED dots on the page's own color, cut into the
         // corner, with digits that roll up when it grows and down when it
@@ -12485,138 +12322,64 @@ ApplicationWindow {
             function onActiveQueueCountChanged() { if (root.activeQueueCount === 0) st.fresh = true }
         }
         opacity: on ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 380; easing.type: Easing.InOutQuad } }
         visible: opacity > 0
-        readonly property var agg: btn ? btn.agg : null
         readonly property real rate: bitwave.downloadMbps || 0
-        readonly property string spdText: root.queueSpeedText()
         property double bootT: 0
-        // What it draws from, kept between frames: the whole batch's trace
-        // (tr: a speed sample every 250 ms of wall time, over the download
-        // clock dc, which runs only while something is left to download),
-        // and the eased batch (P landed plus in flight, Pd downloaded,
-        // Lw landed, all 0 to 1) and speed ceiling (mx).
+        // What it draws from, kept between frames: the samples (hs, each
+        // {t: wall ms, v: Mb/s}, one every 100 ms of the last 12.5 s), the
+        // eased speed they sample (cur) and the eased ceiling (mx).
         property var es: ({})
-        // The look of the speed's words and of the speed itself: the words'
-        // ink alpha, the dark keyline round each glyph (alpha, width), their
-        // size, and the speed's fill and line alphas.
-        property real wordAlpha: 1
-        property real keyAlpha: 0.9
-        property real keyWidth: 2.5
-        property real wordPx: 9
-        property real areaAlpha: 0.22
-        property real lineAlpha: 0.8
+        readonly property real span: 12000
+        readonly property real slot: 500
+        property real barAlpha: 0.6
 
-        function say(ctx, str, x, y, px, al, col, dim) {
-            ctx.save(); ctx.globalCompositeOperation = "source-over"
-            keyed(ctx, str, x, y, px, al, col, dim)
-            ctx.restore()
-        }
         function draw(ctx, t, dim) {
             var B = box(), x0 = B[0], y0 = B[1], w = B[2], h = B[3], bot = y0 + h, i
-            var G = st.agg || { W: 0, L: 0, F: 0, D: 0 }, E = st.es
-            var wall = E.t > 0 ? Math.max(0, t - E.t) : 0, dt = Math.min(100, wall)
+            var E = st.es, dt = E.t > 0 ? Math.min(100, Math.max(0, t - E.t)) : 0
             E.t = t
             var ez = function (cur, to, tau) { return cur === undefined ? to : cur + (to - cur) * (1 - Math.exp(-dt / tau)) }
-            var W = Math.max(1, G.W), P = Math.min(1, (G.L + G.F) / W), Lw = Math.min(1, G.L / W)
-            // The download alone, 0 to 1: the speed's front, complete at the
-            // right edge when the last bytes land, whatever the finish steps
-            // still do. The download clock runs only while it is short of
-            // that, so the trace holds still through the finish steps.
-            var Pd = Math.min(1, (G.L + (G.D || 0)) / W), dl = Pd < 0.999
-            if (!(E.dc >= 0)) E.dc = 0
-            if (dl) E.dc += wall
-            // A sample every 250 ms of wall time, so a slow frame rate
-            // (settled, or the window away) keeps the clock.
-            if (!E.ht || t - E.ht > 60000) E.ht = t - 250
-            // The trace: the whole batch's speed over the download clock, the
-            // same samples while anything downloads, each entry the speed
-            // summed over its n samples at their mean time. Past two entries
-            // a pixel, neighbors merge in pairs, so a long batch costs the
-            // same as a short one and the line keeps one to two points a
-            // pixel.
-            var Tr = E.tr || (E.tr = []), C = 2 * Math.max(8, Math.floor(w))
-            while (t - E.ht >= 250) {
-                E.ht += 250
-                var mb = bitwave.paused ? 0 : st.rate
-                if (!dl) continue
-                Tr.push({ t: Math.max(0, E.dc - (t - E.ht)), sum: mb, n: 1 })
-                if (Tr.length > C) {
-                    var half = []
-                    for (i = 0; i + 1 < Tr.length; i += 2) {
-                        var u = Tr[i], v = Tr[i + 1], k = u.n + v.n
-                        half.push({ t: (u.t * u.n + v.t * v.n) / k, sum: u.sum + v.sum, n: k })
-                    }
-                    if (Tr.length % 2) half.push(Tr[Tr.length - 1])
-                    E.tr = Tr = half
-                }
-            }
-            E.P = ez(E.P, P, 250); E.Lw = ez(E.Lw, Lw, 300); E.Pd = ez(E.Pd, Pd, 250)
-            // The live tip: the speed right now, eased, so the line's front
-            // moves between samples instead of waiting for the next one.
-            E.cur = ez(E.cur, bitwave.paused ? 0 : st.rate, 300)
-            var N = Tr.length, mx = Math.max(1, E.cur)
-            for (i = 0; i < N; ++i) mx = Math.max(mx, Tr[i].sum / Tr[i].n)
-            E.mx = ez(E.mx, mx, 600)
-            // Settled: nothing arriving and nothing left to ease, so four
-            // frames a second draw the same picture.
-            st.calm = (bitwave.paused || st.rate <= 0) && t - st.bootT > 600
-                && Math.abs(E.P - P) < 0.002 && Math.abs(E.Lw - Lw) < 0.002 && Math.abs(E.Pd - Pd) < 0.002
-                && Math.abs(E.mx - mx) < 0.01 * mx
+            // The speed eased between the bridge's updates, sampled every
+            // 100 ms of wall time, so a slow frame rate (settled, or the
+            // window away) keeps the clock and the bars grow smoothly.
+            E.cur = ez(E.cur, bitwave.paused ? 0 : st.rate, 500)
+            var H = E.hs || (E.hs = [])
+            if (!E.ht || t - E.ht > 60000) E.ht = t - 100
+            while (t - E.ht >= 100) { E.ht += 100; H.push({ t: E.ht, v: E.cur }) }
+            while (H.length && H[0].t < t - st.span - st.slot) H.shift()
+            var top = Math.max(1, E.cur * 1.2)
+            for (i = 0; i < H.length; ++i) top = Math.max(top, H[i].v * 1.2)
+            E.mx = E.mx === undefined ? top : E.mx + (top - E.mx) * (1 - Math.exp(-dt / (top > E.mx ? 250 : 2500)))
+            // Settled: nothing arriving and nothing left on screen to scroll,
+            // so four frames a second draw the same (empty) picture.
+            var quiet = (bitwave.paused || st.rate <= 0) && E.cur < 0.05
+            for (i = 0; quiet && i < H.length; ++i) if (H[i].v >= 0.05) quiet = false
+            st.calm = quiet && t - st.bootT > 600
 
-            // The speed over the download clock, from the left edge (the
-            // batch's start) to its front, which keeps step with the download
-            // (eased the same) and reaches the right edge as its last bytes
-            // land. The clock is spread over that span, so a short album
-            // fills the button as fully as a long queue, and both stand
-            // still through the finish steps. While the batch has not moved
-            // yet (the first tracks still starting) it grows a pixel a sample.
-            var top = h - 3
-            var fx = x0 + w * E.P, lx = x0 + w * Math.min(E.P, E.Lw)
-            var R = Math.min(x0 + w, Math.max(x0 + w * E.Pd, x0 + Math.min(N, w * 0.12)))
-            var Tw = Math.max(1, E.dc)
-            var X = function (q) { return x0 + (R - x0) * Math.min(1, Tr[q].t / Tw) }
-            var Y = function (q) { return bot - top * (Tr[q].sum / Tr[q].n) / E.mx }
-            var yc = bot - top * E.cur / E.mx
-            if (N > 0) {
-                ctx.beginPath(); ctx.moveTo(x0, bot)
-                for (i = 0; i < N; ++i) ctx.lineTo(X(i), Y(i))
-                ctx.lineTo(R, yc); ctx.lineTo(R, bot); ctx.closePath()
-                ctx.fillStyle = rgba(st.areaAlpha * dim); ctx.fill()
-                ctx.beginPath(); ctx.moveTo(X(0), Y(0))
-                for (i = 1; i < N; ++i) ctx.lineTo(X(i), Y(i))
-                ctx.lineTo(R, yc)
-                ctx.strokeStyle = rgba(st.lineAlpha * dim, 0.15); ctx.lineWidth = 1; ctx.stroke()
+            // A bar per half second of the clock, its height the mean of its
+            // samples (the newest, still growing, takes the live speed too).
+            var ht = h - 4, bw = w * st.slot / st.span, b0 = Math.floor((t - st.span) / st.slot) * st.slot, k = 0
+            for (var bt = b0; bt < t; bt += st.slot) {
+                var sum = 0, n = 0
+                while (k < H.length && H[k].t < bt) ++k
+                for (var q = k; q < H.length && H[q].t < bt + st.slot; ++q) { sum += H[q].v; ++n }
+                if (bt + st.slot > t) { sum += E.cur; ++n }
+                if (!n || sum <= 0) continue
+                var bx = x0 + w - (t - bt) / st.span * w, by = bot - ht * Math.min(1, sum / n / E.mx)
+                ctx.fillStyle = rgba(0.22 * st.barAlpha * dim); ctx.fillRect(bx + 0.5, by, bw - 1.2, bot - by)
+                ctx.fillStyle = rgba(0.85 * st.barAlpha * dim); ctx.fillRect(bx + 0.5, by, bw - 1.2, 1)
             }
-            // The batch along the floor: landed bright, in flight pale.
-            ctx.fillStyle = rgba(0.1 * dim); ctx.fillRect(x0, bot - 1.5, w, 1.5)
-            ctx.fillStyle = ink(root.textHi, 0.75 * dim); ctx.fillRect(x0, bot - 1.5, lx - x0, 1.5)
-            ctx.fillStyle = ink(root.textHi, 0.3 * dim); ctx.fillRect(lx, bot - 1.5, fx - lx, 1.5)
-            // The dot on the speed line's live tip.
-            if (N > 0) { ctx.fillStyle = rgba(0.95 * dim, 0.4); ctx.fillRect(Math.min(R - 1, x0 + w - 2), yc - 1, 2, 2) }
-            // The download speed in the bottom left corner, its baseline far
-            // enough over the floor that the slash's tail and the glyphs'
-            // keyline (half its width below the baseline) end a clear pixel
-            // over the floor's line.
-            var spT = st.spdText, ty = bot - 1.5 - st.keyWidth / 2 - 2.5
-            say(ctx, spT || "-- Mb/s", x0 + 3, ty, st.wordPx, "left", rgba((spT ? 0.95 : 0.4) * dim, 0.35), dim)
+            // The oldest bars fade out at the left edge instead of being cut.
+            ctx.save(); ctx.globalCompositeOperation = "destination-out"
+            var f = ctx.createLinearGradient(x0, 0, x0 + 14, 0)
+            f.addColorStop(0, "rgba(0,0,0,1)"); f.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.fillStyle = f; ctx.fillRect(x0, y0, 14, h); ctx.restore()
         }
-        // Mono text with a dark keyline round each glyph, so it reads where
-        // it crosses the chart's line or fill.
-        function keyed(ctx, str, x, y, px, al, col, dim) {
-            ctx.font = "bold " + px + "px \"" + root.mono + "\""; ctx.textAlign = al; ctx.textBaseline = "alphabetic"
-            if (st.keyWidth > 0 && st.keyAlpha > 0) {
-                ctx.lineJoin = "round"; ctx.lineWidth = st.keyWidth; ctx.strokeStyle = ink(root.bg, st.keyAlpha * dim)
-                ctx.strokeText(str, x, y)
-            }
-            ctx.globalAlpha = st.wordAlpha; ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.globalAlpha = 1
+        // The accent at alpha a.
+        function rgba(a) {
+            var A = root.accent
+            return "rgba(" + Math.round(255 * A.r) + "," + Math.round(255 * A.g) + "," + Math.round(255 * A.b) + "," + Math.max(0, a) + ")"
         }
-        // The accent at alpha a, mixed c of the way to white.
-        function rgba(a, c) {
-            var k = c || 0, A = root.accent
-            return "rgba(" + Math.round(255 * (A.r + (1 - A.r) * k)) + "," + Math.round(255 * (A.g + (1 - A.g) * k)) + ","
-                + Math.round(255 * (A.b + (1 - A.b) * k)) + "," + Math.max(0, a) + ")"
-        }
-        function ink(c, a) { return "rgba(" + Math.round(c.r * 255) + "," + Math.round(c.g * 255) + "," + Math.round(c.b * 255) + "," + Math.max(0, a) + ")" }
         // The inside of the border, read off the button itself.
         function box() {
             if (st.btn) { var a = st.btn.mapToItem(st, 0, 0); return [a.x / st.s + 1.5, a.y / st.s + 1.5, st.btn.width - 3, st.btn.height - 3] }
@@ -12630,10 +12393,10 @@ ApplicationWindow {
         }
         // Full rate only while something moves. A queue that is paused, or
         // waiting with nothing arriving (offline, a NAS that went away), has
-        // a chart that has settled once its numbers have eased in, and four
-        // frames a second keep its history ticking. A speed or a pause wakes
-        // it at once, and a hidden window draws nothing (the clocks are wall
-        // time, so it picks up where it is).
+        // a chart that has settled once its last bars have scrolled away,
+        // and four frames a second keep its clock ticking. A speed or a
+        // pause wakes it at once, and a hidden window draws nothing (the
+        // clocks are wall time, so it picks up where it is).
         property bool calm: false
         readonly property bool busy: !calm
         readonly property bool paused: bitwave.paused
@@ -12648,9 +12411,16 @@ ApplicationWindow {
             ctx.scale(st.s, st.s)
             var B = box(), r = root.btnRad - 1.5
             ctx.beginPath(); ctx.roundedRect(B[0], B[1], B[2], B[3], r, r); ctx.clip()
-            ctx.globalCompositeOperation = "lighter"
             draw(ctx, Date.now(), bitwave.paused ? 0.5 : 1)
         }
+    }
+    // The QUEUE button's words over its chart: the header buttons' UI face,
+    // bold, tabular digits, outlined in the page's color so they read over
+    // the bars.
+    component QueueWord: Text {
+        textFormat: Text.PlainText
+        style: Text.Outline; styleColor: root.bg
+        font.family: root.uiFont; font.bold: true; font.features: { "tnum": 1 }
     }
 
     // The QUEUE button's count in 3x5 LED dots, rolling a row at a time
@@ -12874,7 +12644,7 @@ ApplicationWindow {
     component AlbumBlock: Column {
         id: ab
         property string albumId: ""
-        property string title: ""
+        property string title: I18n.t("")
         property string artistName: ""
         property string artistId: ""
         property string art: ""
@@ -13040,7 +12810,7 @@ ApplicationWindow {
                 }
                 DownloadButton {
                     id: abDl
-                    Layout.alignment: Qt.AlignVCenter; mediaId: albumId; collectionCheck: true; label: "Download album"
+                    Layout.alignment: Qt.AlignVCenter; mediaId: albumId; collectionCheck: true; label: I18n.t("Download album")
                     libAlbum: ({ artist: ab.artistName, title: ab.title, year: ab.year, tracks: ab.trackCount, duration_sec: ab.durationSec, explicitFlag: ab.explicit ? 1 : -1, lib: ab.libBaked, libStamp: ab.libStamp })
                     onTap: function(){ bitwave.downloadAlbum(albumId) }
                 }
@@ -13087,138 +12857,145 @@ ApplicationWindow {
             color: root.surface0
             border.color: root.border1
             radius: 10
-            Column {
+            // Built on the first expand, not with the row: a collapsed album
+            // carries its row only (3.8 ms a row to 2.2 ms, measured 2026-11-24).
+            Loader {
                 id: expandedCol
-                x: 16; y: 12; width: parent.width - 32; spacing: 12
-                Row {
-                    width: parent.width; spacing: 16
-                    Art { width: 116; height: 116; hoverFx: true; fxKind: "album"; fxId: albumId; url: art }
-                    Column {
-                        width: parent.width - 132 - abPanelMeta.width - 16; spacing: 6
-                        Text { text: I18n.t("ALBUM"); color: root.textDim; font.pixelSize: 11 }
-                        Text {
-                            textFormat: Text.PlainText; text: I18n.t(title)
-                            color: abPanelTitleMa.containsMouse ? "#ffffff" : root.textHi
-                            font.pixelSize: 21; font.bold: true; width: parent.width; elide: Text.ElideRight
-                            MouseArea {
-                                id: abPanelTitleMa
-                                anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
-                                width: Math.min(parent.width, parent.implicitWidth)
-                                enabled: !root.onAlbumPage(albumId)
-                                hoverEnabled: enabled
-                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                onClicked: root.openAlbumPage(albumId, "", title, art)
-                            }
-                        }
-                        ArtistLinks {
-                            width: parent.width
-                            px: 14
-                            artists: ab.leadArtists
-                            suffix: root.dateText(listedDate !== "" ? listedDate : releaseDate !== "" ? releaseDate : year) + (trackCount > 0 ? " · " + trackCount + " tracks" : "")
-                        }
-                        Row {
-                            spacing: 10; topPadding: 6
-                            // With the merge preference on the backend runs the
-                            // best-of-both scan behind this same button; no
-                            // separate action.
-                            DownloadButton {
-                                mediaId: albumId; label: "Download album"
-                                // null, not [], while the track list has not landed: an
-                                // empty list reads as a firm "not owned" and flashed
-                                // DOWNLOAD over an owned album until the tracks arrived.
-                                // Until then the button asks the store's remembered
-                                // members by album id (collectionCheck).
-                                collectionIds: ab.trackList.length > 0 ? ab.trackList.map(function(t){ return t.id }) : null
-                                collectionCheck: true
-                                libAlbum: ({ artist: ab.artistName, title: ab.title, year: ab.year, tracks: ab.trackCount, duration_sec: ab.durationSec, explicitFlag: ab.explicit ? 1 : -1, lib: ab.libBaked, libStamp: ab.libStamp })
-                                onTap: function(){ bitwave.downloadAlbum(albumId) }
-                            }
+                x: 16; y: 12; width: parent.width - 32
+                active: ab.expanded || ab.folding
+                sourceComponent: Column {
+                    spacing: 12
+                    Row {
+                        width: parent.width; spacing: 16
+                        Art { width: 116; height: 116; hoverFx: true; fxKind: "album"; fxId: albumId; url: art }
+                        Column {
+                            width: parent.width - 132 - abPanelMeta.width - 16; spacing: 6
+                            Text { text: I18n.t("ALBUM"); color: root.textDim; font.pixelSize: 11 }
                             Text {
-                                text: I18n.t("Copy link"); color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.copyShareUrl("album", albumId) }
-                            }
-                        }
-                    }
-                    // Quality + popularity stacked top-right, out of the action row.
-                    Column {
-                        id: abPanelMeta
-                        spacing: 8; topPadding: 4
-                        QualPick { anchors.right: parent.right; mediaId: ab.albumId; catalog: ab.quality; atmos: ab.atmos; mix: ab.qualMix }
-                        PopMeter { anchors.right: parent.right; value: popularity }
-                    }
-                }
-                Text {
-                    visible: !root.trackCache[albumId]
-                    text: I18n.t(root.trackCache[albumId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…")
-                    textFormat: Text.PlainText
-                    color: root.textLo; font.pixelSize: 13
-                }
-                Column {
-                    width: parent.width; spacing: 0
-                    // Select-all header
-                    RowLayout {
-                        visible: ab.trackList.length > 0
-                        width: parent.width; height: 40; spacing: 12
-                        Check { Layout.alignment: Qt.AlignVCenter; checked: ab.allSelected; onToggled: ab.toggleAll() }
-                        Text { text: I18n.t("Select all"); color: root.textLo; font.pixelSize: 13 }
-                        Text { textFormat: Text.PlainText; text: I18n.t("· " + ab.selCount + " of " + ab.trackList.length + " selected"); color: root.textDim; font.pixelSize: 12 }
-                        Item { Layout.fillWidth: true }
-                        Rectangle {
-                            Layout.alignment: Qt.AlignVCenter
-                            opacity: ab.selCount > 0 ? 1 : 0.4
-                            // Sized like DownloadButton so it matches DOWNLOAD ALBUM above.
-                            radius: root.btnRad; color: root.accentCont; border.color: root.accentDim; border.width: 1
-                            implicitHeight: dsRow.implicitHeight + root.btnPadV * 2; implicitWidth: dsRow.implicitWidth + root.btnPadH * 2
-                            Row { id: dsRow; anchors.centerIn: parent; spacing: 7
-                                Ico { name: "arrow-down"; color: root.accent; size: 14; bold: 10; anchors.verticalCenter: parent.verticalCenter }
-                                Text { text: I18n.t("DOWNLOAD SELECTED"); color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
-                            }
-                            MouseArea { anchors.fill: parent; enabled: ab.selCount > 0; cursorShape: ab.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: ab.downloadSelected() }
-                        }
-                    }
-                    // Tracks
-                    Repeater {
-                        model: ab.trackList
-                        delegate: Rectangle {
-                            required property var modelData
-                            width: parent.width; height: 40; color: "transparent"
-                            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: root.divider }
-                            RowLayout {
-                                anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4; spacing: 12
-                                Check { Layout.alignment: Qt.AlignVCenter; checked: ab.sel[modelData.id] === true; onToggled: ab.setSel(modelData.id, !(ab.sel[modelData.id] === true)) }
-                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.num); color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 16; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
-                                TrackPreview { kind: "track"; pid: modelData.id; Layout.alignment: Qt.AlignVCenter }
-                                Text {
-                                    objectName: "trackTitle"
-                                    textFormat: Text.PlainText; text: modelData.title; color: root.textHi; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
-                                    // The explicit mark rides inside the title's
-                                    // tail, as on TrackRow, so an inline expand
-                                    // tells a clean twin apart too.
-                                    rightPadding: modelData.explicit === true ? abExp.width + 6 : 0
-                                    ExplicitMark {
-                                        id: abExp
-                                        visible: modelData.explicit === true
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        x: Math.min(parent.contentWidth + 6, parent.width - parent.rightPadding + 6)
-                                    }
+                                textFormat: Text.PlainText; text: I18n.t(title)
+                                color: abPanelTitleMa.containsMouse ? "#ffffff" : root.textHi
+                                font.pixelSize: 21; font.bold: true; width: parent.width; elide: Text.ElideRight
+                                MouseArea {
+                                    id: abPanelTitleMa
+                                    anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
+                                    width: Math.min(parent.width, parent.implicitWidth)
+                                    enabled: !root.onAlbumPage(albumId)
+                                    hoverEnabled: enabled
+                                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    onClicked: root.openAlbumPage(albumId, "", title, art)
                                 }
-                                PopMeter { value: modelData.popularity }
-                                Text { textFormat: Text.PlainText; text: I18n.t(modelData.duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
-                                DownIcon {
-                                    mediaId: modelData.id
-                                    // The panel knows the release these rows
-                                    // belong to, so a match here can be PROVEN
-                                    // (green) rather than hedged by title alone.
-                                    // The row names the release itself (and
-                                    // arrives dressed, see _dress_panel_rows);
-                                    // the block's own strings stand in for a
-                                    // row that does not.
-                                    libTrack: ({ artist: modelData.artist || ab.artistName, title: modelData.title,
-                                                 album: modelData.album || ab.title, year: modelData.year || ab.year,
-                                                 duration_sec: modelData.duration_sec || 0,
-                                                 explicitFlag: modelData.explicit === true ? 1 : modelData.explicit === false ? 0 : -1,
-                                                 lib: modelData.lib, libStamp: modelData.libStamp })
-                                    onTap: function(){ bitwave.downloadTrack(modelData.id) }
+                            }
+                            ArtistLinks {
+                                width: parent.width
+                                px: 14
+                                artists: ab.leadArtists
+                                suffix: root.dateText(listedDate !== "" ? listedDate : releaseDate !== "" ? releaseDate : year) + (trackCount > 0 ? " · " + trackCount + " tracks" : "")
+                            }
+                            Row {
+                                spacing: 10; topPadding: 6
+                                // With the merge preference on the backend runs the
+                                // best-of-both scan behind this same button; no
+                                // separate action.
+                                DownloadButton {
+                                    mediaId: albumId; label: I18n.t("Download album")
+                                    // null, not [], while the track list has not landed: an
+                                    // empty list reads as a firm "not owned" and flashed
+                                    // DOWNLOAD over an owned album until the tracks arrived.
+                                    // Until then the button asks the store's remembered
+                                    // members by album id (collectionCheck).
+                                    collectionIds: ab.trackList.length > 0 ? ab.trackList.map(function(t){ return t.id }) : null
+                                    collectionCheck: true
+                                    libAlbum: ({ artist: ab.artistName, title: ab.title, year: ab.year, tracks: ab.trackCount, duration_sec: ab.durationSec, explicitFlag: ab.explicit ? 1 : -1, lib: ab.libBaked, libStamp: ab.libStamp })
+                                    onTap: function(){ bitwave.downloadAlbum(albumId) }
+                                }
+                                Text {
+                                    text: I18n.t("Copy link"); color: root.textLo; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.copyShareUrl("album", albumId) }
+                                }
+                            }
+                        }
+                        // Quality + popularity stacked top-right, out of the action row.
+                        Column {
+                            id: abPanelMeta
+                            spacing: 8; topPadding: 4
+                            QualPick { anchors.right: parent.right; mediaId: ab.albumId; catalog: ab.quality; atmos: ab.atmos; mix: ab.qualMix }
+                            PopMeter { anchors.right: parent.right; value: popularity }
+                        }
+                    }
+                    Text {
+                        visible: !root.trackCache[albumId]
+                        text: I18n.t(root.trackCache[albumId] === null ? "No tracks to show, collapse and expand to try again" : "Loading tracks…")
+                        textFormat: Text.PlainText
+                        color: root.textLo; font.pixelSize: 13
+                    }
+                    Column {
+                        width: parent.width; spacing: 0
+                        // Select-all header
+                        RowLayout {
+                            visible: ab.trackList.length > 0
+                            width: parent.width; height: 40; spacing: 12
+                            Check { Layout.alignment: Qt.AlignVCenter; checked: ab.allSelected; onToggled: ab.toggleAll() }
+                            Text { text: I18n.t("Select all"); color: root.textLo; font.pixelSize: 13 }
+                            Text { textFormat: Text.PlainText; text: I18n.t("· ") + ab.selCount + " of " + ab.trackList.length + " selected"; color: root.textDim; font.pixelSize: 12 }
+                            Item { Layout.fillWidth: true }
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                opacity: ab.selCount > 0 ? 1 : 0.4
+                                // Sized like DownloadButton so it matches DOWNLOAD ALBUM above.
+                                radius: root.btnRad; color: dsMa.containsMouse && ab.selCount > 0 ? Qt.lighter(root.accentCont, 1.35) : root.accentCont; border.color: root.accentDim; border.width: 1
+                                Behavior on color { ColorAnimation { duration: 110 } }
+                                implicitHeight: dsRow.implicitHeight + root.btnPadV * 2; implicitWidth: dsRow.implicitWidth + root.btnPadH * 2
+                                Row { id: dsRow; anchors.centerIn: parent; spacing: 7
+                                    Ico { name: "arrow-down"; color: root.accent; size: 14; bold: 10; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { text: I18n.t("DOWNLOAD SELECTED"); color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
+                                }
+                                MouseArea { id: dsMa; anchors.fill: parent; hoverEnabled: true; enabled: ab.selCount > 0; cursorShape: ab.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: ab.downloadSelected() }
+                            }
+                        }
+                        // Tracks
+                        Repeater {
+                            model: ab.trackList
+                            delegate: Rectangle {
+                                required property var modelData
+                                width: parent.width; height: 40; color: "transparent"
+                                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: root.divider }
+                                RowLayout {
+                                    anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4; spacing: 12
+                                    Check { Layout.alignment: Qt.AlignVCenter; checked: ab.sel[modelData.id] === true; onToggled: ab.setSel(modelData.id, !(ab.sel[modelData.id] === true)) }
+                                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.num); color: root.textDim; font.family: root.mono; font.pixelSize: 15; font.bold: true; Layout.preferredWidth: 16; Layout.leftMargin: -4; horizontalAlignment: Text.AlignLeft }
+                                    TrackPreview { kind: "track"; pid: modelData.id; Layout.alignment: Qt.AlignVCenter }
+                                    Text {
+                                        objectName: "trackTitle"
+                                        textFormat: Text.PlainText; text: modelData.title; color: root.textHi; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true
+                                        // The explicit mark rides inside the title's
+                                        // tail, as on TrackRow, so an inline expand
+                                        // tells a clean twin apart too.
+                                        rightPadding: modelData.explicit === true ? abExp.width + 6 : 0
+                                        ExplicitMark {
+                                            id: abExp
+                                            visible: modelData.explicit === true
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            x: Math.min(parent.contentWidth + 6, parent.width - parent.rightPadding + 6)
+                                        }
+                                    }
+                                    PopMeter { value: modelData.popularity }
+                                    Text { textFormat: Text.PlainText; text: I18n.t(modelData.duration); color: root.textLo; font.family: root.mono; font.pixelSize: 12; Layout.preferredWidth: 42 }
+                                    DownIcon {
+                                        mediaId: modelData.id
+                                        // The panel knows the release these rows
+                                        // belong to, so a match here can be PROVEN
+                                        // (green) rather than hedged by title alone.
+                                        // The row names the release itself (and
+                                        // arrives dressed, see _dress_panel_rows);
+                                        // the block's own strings stand in for a
+                                        // row that does not.
+                                        libTrack: ({ artist: modelData.artist || ab.artistName, title: modelData.title,
+                                                     album: modelData.album || ab.title, year: modelData.year || ab.year,
+                                                     duration_sec: modelData.duration_sec || 0,
+                                                     explicitFlag: modelData.explicit === true ? 1 : modelData.explicit === false ? 0 : -1,
+                                                     lib: modelData.lib, libStamp: modelData.libStamp })
+                                        onTap: function(){ bitwave.downloadTrack(modelData.id) }
+                                    }
                                 }
                             }
                         }
@@ -13237,7 +13014,7 @@ ApplicationWindow {
     component PlaylistBlock: Column {
         id: pb
         property string plId: ""
-        property string title: ""
+        property string title: I18n.t("")
         property string creator: ""
         property string art: ""
         property int trackCount: 0
@@ -13345,7 +13122,7 @@ ApplicationWindow {
                     }
                     Text { textFormat: Text.PlainText; text: I18n.t(pb.subLabel); color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
                 }
-                DownloadButton { Layout.alignment: Qt.AlignVCenter; mediaId: plId; collectionCheck: true; label: "Download playlist"; onTap: function(){ bitwave.downloadPlaylist(plId) } }
+                DownloadButton { Layout.alignment: Qt.AlignVCenter; mediaId: plId; collectionCheck: true; label: I18n.t("Download playlist"); onTap: function(){ bitwave.downloadPlaylist(plId) } }
             }
             MouseArea { id: pbRowMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; z: -1; onClicked: toggle() }
         }
@@ -13392,7 +13169,7 @@ ApplicationWindow {
                         Row {
                             spacing: 10; topPadding: 6
                             DownloadButton {
-                                mediaId: plId; label: "Download playlist"; collectionCheck: true
+                                mediaId: plId; label: I18n.t("Download playlist"); collectionCheck: true
                                 onTap: function(){ bitwave.downloadPlaylist(plId) }
                             }
                             Text {
@@ -13422,13 +13199,14 @@ ApplicationWindow {
                             Layout.alignment: Qt.AlignVCenter
                             opacity: pb.selCount > 0 ? 1 : 0.4
                             // Sized like DownloadButton so it matches DOWNLOAD PLAYLIST above.
-                            radius: root.btnRad; color: root.accentCont; border.color: root.accentDim; border.width: 1
+                            radius: root.btnRad; color: pbDsMa.containsMouse && pb.selCount > 0 ? Qt.lighter(root.accentCont, 1.35) : root.accentCont; border.color: root.accentDim; border.width: 1
+                            Behavior on color { ColorAnimation { duration: 110 } }
                             implicitHeight: pbDsRow.implicitHeight + root.btnPadV * 2; implicitWidth: pbDsRow.implicitWidth + root.btnPadH * 2
                             Row { id: pbDsRow; anchors.centerIn: parent; spacing: 7
                                 Ico { name: "arrow-down"; color: root.accent; size: 14; bold: 10; anchors.verticalCenter: parent.verticalCenter }
                                 Text { text: I18n.t("DOWNLOAD SELECTED"); color: root.accent; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: root.btnTrack; anchors.verticalCenter: parent.verticalCenter }
                             }
-                            MouseArea { anchors.fill: parent; enabled: pb.selCount > 0; cursorShape: pb.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: pb.downloadSelected() }
+                            MouseArea { id: pbDsMa; anchors.fill: parent; hoverEnabled: true; enabled: pb.selCount > 0; cursorShape: pb.selCount > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: pb.downloadSelected() }
                         }
                     }
                     // Tracks (playlist order; a video entry previews and
@@ -13754,7 +13532,7 @@ ApplicationWindow {
         id: trow
         property string tId: ""
         property string kind: "track"   // "video" rows play/download as videos
-        property string title: ""
+        property string title: I18n.t("")
         property string artistName: ""
         property string artistId: ""
         property string album: ""
@@ -13953,7 +13731,7 @@ ApplicationWindow {
                     radius: 7; color: favoriteMouse.containsMouse ? root.surface3 : "transparent"
                     border.color: favoriteMouse.containsMouse ? root.outline : "transparent"
                     opacity: root.favoriteTrackPending[trow.tId] ? 0.35 : 1
-                    Text { anchors.centerIn: parent; text: "♥"; color: root.accent; font.pixelSize: 21 }
+                    Text { anchors.centerIn: parent; text: I18n.t("♥"); color: root.accent; font.pixelSize: 21 }
                     MouseArea {
                         id: favoriteMouse; anchors.fill: parent; hoverEnabled: true
                         enabled: !root.favoriteTrackPending[trow.tId]
@@ -14260,7 +14038,7 @@ ApplicationWindow {
             PreviewBar { width: parent.width; pid: aId }
             DownloadButton {
                 width: parent.width
-                mediaId: aId; label: "Download artist"
+                mediaId: aId; label: I18n.t("Download artist")
                 // What the strip on the cover already says, said again by the
                 // control that would act on it: a catalog you partly hold
                 // is not a fresh grab.
@@ -14991,7 +14769,7 @@ ApplicationWindow {
     // a count). accent = something still to come.
     component RelChip: Rectangle {
         id: rch
-        property string text: ""
+        property string text: I18n.t("")
         property bool accent: false
         property bool danger: false   // red: a release TIDAL does not carry
         radius: 3; color: "transparent"; border.width: 1
@@ -15446,7 +15224,7 @@ ApplicationWindow {
                 DownloadButton {
                     anchors.right: parent.right
                     anchors.top: rvThumb.bottom; anchors.topMargin: 10
-                    mediaId: "" + (rc.card.id || ""); ownedCheck: true; label: "Download"; noun: "video"
+                    mediaId: "" + (rc.card.id || ""); ownedCheck: true; label: I18n.t("Download"); noun: "video"
                     onTap: function(){ bitwave.downloadVideo("" + (rc.card.id || "")) }
                 }
             }
@@ -15936,7 +15714,7 @@ ApplicationWindow {
                         bare: true
                         width: parent.width; height: implicitHeight
                         kind: ac.kind; pid: ac.card.id || ""
-                        label: "Preview " + acArt.kindLabel
+                        label: I18n.t("Preview ") + acArt.kindLabel
                     }
                     // Live download: the full dot-matrix progress bar / done / retry
                     DownloadButton {
@@ -15951,7 +15729,7 @@ ApplicationWindow {
                         // outranks the owned rollup, so the rollup's result could
                         // never render. Computing it per card was pure cost.
                         collectionCheck: false
-                        label: "Download " + acArt.kindLabel
+                        label: I18n.t("Download ") + acArt.kindLabel
                         // The percentage carves in while the CARD is hovered,
                         // not just the pill: the pill rose for the card's hover
                         // in the first place, and a pointer anywhere on the art
@@ -16287,6 +16065,13 @@ ApplicationWindow {
         readonly property int rowBandH: 10 * 62
         readonly property real rowAnchorY: pendingRestoreY >= 0
             ? pendingRestoreY : Math.floor(contentY / rowBandH) * rowBandH
+        // Whether something at y `top` of the content column, h tall, is
+        // within a screen of the view (same banding, see artistView.rowNear:
+        // what is farther is not drawn).
+        function rowNear(top, h) {
+            var t = (col ? col.y : 0) + top
+            return t + h > rowAnchorY - height && t < rowAnchorY + rowBandH + 2 * height
+        }
         // Arm the hold-in-place across an in-place content swap. Runs for a
         // hidden pane too: a landing revalidating behind an open page still
         // collapses its column, and the clamp does not care about
@@ -16866,7 +16651,7 @@ ApplicationWindow {
 
     component BrowseTile: Rectangle {
         id: bt
-        property string title: ""
+        property string title: I18n.t("")
         property string path: ""
         property int idx: 0
         // The scroll pane this tile sits in, for the in-view test below;
@@ -17135,7 +16920,7 @@ ApplicationWindow {
                 id: catBtn
                 bare: true
                 mediaId: bt.catId
-                label: "Download all"
+                label: I18n.t("Download all")
                 // Retry after a failed rollup re-queues from the cached list.
                 onTap: function(){ bitwave.downloadPlaylistCategory(bt.path) }
             }
@@ -17214,6 +16999,168 @@ ApplicationWindow {
         }
     }
 
+    // One Download history entry (a queued album, playlist, mix, track or
+    // video that saved something), in the album row's look. It is a log: the
+    // panel lists what that run did with each track, not TIDAL's track list.
+    component HistoryRow: Column {
+        id: hr
+        property string entryId: ""
+        property string kind: ""
+        property string mediaId: ""
+        property string name: ""
+        property string artistName: ""
+        property string art: ""
+        property string status: ""
+        property string landed: ""
+        property string mixJson: "[]"
+        property string date: ""
+        property string timeText: ""
+        property int saved: 0
+        property int total: 0
+        property string tracksJson: "[]"
+        property bool expanded: false
+        onEntryIdChanged: expanded = false   // a recycled delegate starts folded
+        readonly property bool canExpand: tracksJson !== "[]" && (total > 1 || kind === "album" || kind === "playlist" || kind === "mix")
+        readonly property var trackList: expanded ? JSON.parse(tracksJson || "[]") : []
+        readonly property string kindWord: kind === "album" ? "Album" : kind === "playlist" ? "Playlist"
+            : kind === "mix" ? "Mix" : kind === "video" ? "Video" : "Titel"
+        spacing: 6
+
+        Rectangle {
+            width: parent.width; height: 64; radius: 10
+            color: hrMa.containsMouse && hr.canExpand ? root.surface2 : root.surface
+            border.color: hr.expanded ? root.outline : root.border1
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 14; spacing: 12
+                Text {
+                    text: I18n.t("›"); rotation: hr.expanded ? 90 : 0; opacity: hr.canExpand ? 1 : 0
+                    color: hr.expanded ? root.accent : root.textDim; font.pixelSize: 16
+                    Layout.preferredWidth: 12; horizontalAlignment: Text.AlignHCenter
+                    Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                }
+                Art { width: root.albumRowArt; height: root.albumRowArt; url: hr.art }
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 2
+                    Text {
+                        textFormat: Text.PlainText; text: hr.name
+                        color: hrTitleMa.containsMouse ? "#ffffff" : root.textHi
+                        font.pixelSize: 14; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true
+                        // An album entry's title opens the album page.
+                        MouseArea {
+                            id: hrTitleMa
+                            anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
+                            width: Math.min(parent.width, parent.implicitWidth)
+                            enabled: hr.kind === "album" && hr.mediaId !== ""
+                            hoverEnabled: enabled
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: root.openAlbumPage(hr.mediaId, "", hr.name, hr.art)
+                        }
+                    }
+                    Text {
+                        textFormat: Text.PlainText; Layout.fillWidth: true; elide: Text.ElideRight
+                        color: root.textLo; font.pixelSize: 12
+                        text: [hr.artistName, hr.kindWord, (root.historyDateText(hr.date) + " " + hr.timeText).trim(),
+                               hr.total > 1 ? hr.saved + " von " + hr.total + " gespeichert" : ""]
+                              .filter(function(x) { return x !== "" }).join(" · ")
+                    }
+                }
+                QualTag {
+                    Layout.alignment: Qt.AlignVCenter
+                    visible: hr.landed !== "" || hr.mixJson !== "[]"
+                    q: hr.landed; mix: JSON.parse(hr.mixJson || "[]")
+                }
+            }
+            MouseArea {
+                id: hrMa; anchors.fill: parent; z: -1
+                hoverEnabled: true; enabled: hr.canExpand; cursorShape: Qt.PointingHandCursor
+                onClicked: hr.expanded = !hr.expanded
+            }
+        }
+        // The run's own log, one line per track.
+        Rectangle {
+            visible: hr.expanded
+            width: parent.width; height: visible ? hrTracks.height + 16 : 0
+            radius: 10; color: root.surface0; border.color: root.border1
+            ListView {
+                id: hrTracks
+                objectName: "historyTracks"
+                x: 16; y: 8; width: parent.width - 32
+                height: Math.min(count * 36, 360)
+                model: hr.trackList
+                clip: true; boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: BitWaveScrollBar {}
+                delegate: Rectangle {
+                        required property var modelData
+                        width: hrTracks.width; height: 36; color: "transparent"
+                        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: root.divider }
+                        RowLayout {
+                            anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4; spacing: 12
+                            Text { textFormat: Text.PlainText; text: I18n.t(modelData.num); color: root.textDim; font.family: root.mono; font.pixelSize: 13; font.bold: true; Layout.preferredWidth: 24 }
+                            Text { textFormat: Text.PlainText; text: modelData.title; color: root.textHi; font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
+                            QualTag { visible: modelData.status === "done" && (modelData.quality || "") !== ""; q: modelData.quality || "" }
+                            // When this track's file landed (older entries have none).
+                            Text {
+                                textFormat: Text.PlainText; visible: text !== ""
+                                text: modelData.savedDate ? root.historyDateText(modelData.savedDate) + " " + modelData.savedTime : ""
+                                color: root.textDim; font.family: root.mono; font.pixelSize: 12
+                            }
+                            Text {
+                                textFormat: Text.PlainText; text: root.historyTrackWord(modelData.status)
+                                color: modelData.status === "done" ? root.accent : root.textLo
+                                font.pixelSize: 12; Layout.preferredWidth: 96; horizontalAlignment: Text.AlignRight
+                            }
+                        }
+                }
+            }
+        }
+    }
+    function historyDateText(day) {
+        var p = ("" + (day || "")).split("-")
+        return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : "" + day
+    }
+    function historyTrackWord(st) {
+        return st === "done" ? "Gespeichert" : st === "skipped" ? "Schon vorhanden"
+             : st === "unavailable" ? "Nicht auf TIDAL" : st === "failed" ? "Fehlgeschlagen" : "Nicht gespeichert"
+    }
+    // Download history: opened from the Queue drawer, shown as a hidden My
+    // Tidal category so it gets the pane's keep-alive, paging and Back.
+    property bool historyReady: false
+    // History lives in the My Tidal pane but belongs to the queue: the header
+    // lights QUEUE for it, not My Tidal, and the category chips stay away.
+    // The history page's own filter (the chips: "" is Home, all kinds) and
+    // order (newest first unless historyOldest).
+    property string historyKind: ""
+    property bool historyOldest: false
+    // The search box: every word must be in the entry's name, artist or a
+    // track title. Applied after a short pause in typing.
+    property string historyQuery: ""
+    Timer { id: historySearchDebounce; interval: 250; onTriggered: root.historyFilter(root.historyKind, root.historyOldest) }
+    function historySearch(text) {
+        if (text === historyQuery) return
+        historyQuery = text
+        // Emptied, the whole list is back at once; a word waits for the pause.
+        if (text.trim() === "") { historySearchDebounce.stop(); historyFilter(historyKind, historyOldest) }
+        else historySearchDebounce.restart()
+    }
+    // Whether the page has anything to sort or search: rows, or a search that
+    // hid them all (the box must stay to be emptied).
+    readonly property bool historyHasRows: libHistoryModel.count > 0 || historyQuery.trim() !== ""
+    function historyLoad(offset, limit) { bitwave.loadHistory(offset, historyKind, historyOldest, limit || 0, historyQuery.trim()) }
+    function historyFilter(kind, oldest) {
+        historyKind = kind; historyOldest = oldest
+        libPinRefill = false; libCatHasMore["history"] = false
+        libHistoryList.positionViewAtBeginning()
+        historyLoad(0)
+    }
+    readonly property bool historyShown: libraryOpen && libraryCategory === "history" && !artistOpen && !settingsOpen
+    property bool confirmHistoryClear: false
+    function openHistory() {
+        queueDrawer.close()
+        navPush(); markNav("history"); navOrigin = "history"
+        libraryOpen = true; releasesOpen = false; settingsOpen = false; artistOpen = false
+        loadLib("history")
+    }
+
     // ---- Models ---------------------------------------------------------
     ListModel { id: artistsModel }
     ListModel { id: albumsModel }
@@ -17233,6 +17180,7 @@ ApplicationWindow {
     ListModel { id: libPlaylistsModel }
     ListModel { id: libMixesModel }
     ListModel { id: libVideosModel }
+    ListModel { id: libHistoryModel }
     // Drilled-into playlist folder (issue #11). Its own model on purpose: a
     // background revalidate of the playlists tab clears the six lib models,
     // and must not wipe the folder the user is standing in.
@@ -17483,12 +17431,6 @@ ApplicationWindow {
     // How far the running rows' finish steps have come, 0 to 1 (the mean of
     // each row's queueItemFinish), for the QUEUE button's pour.
     property var queueFinish: ({})
-    // The batch's download speed for the QUEUE button's tag, "" while
-    // nothing streams.
-    function queueSpeedText() {
-        var m = bitwave.downloadMbps || 0
-        return m <= 0 ? "" : (m < 10 ? m.toFixed(1) : Math.round(m)) + " Mb/s"
-    }
     function queueFinishFraction() {
         var m = queueModel, lo = queueGroupStart("downloading")
         var hi = Math.min(m.count, lo + root.downloadingCount), sum = 0, n = 0
@@ -17816,7 +17758,8 @@ ApplicationWindow {
     function libModelFor(cat) {
         return cat === "albums" ? libAlbumsModel : cat === "tracks" ? libTracksModel
              : cat === "artists" ? libArtistsModel : cat === "playlists" ? libPlaylistsModel
-             : cat === "mixes" ? libMixesModel : cat === "videos" ? libVideosModel : null
+             : cat === "mixes" ? libMixesModel : cat === "videos" ? libVideosModel
+             : cat === "history" ? libHistoryModel : null
     }
     // The keep-alive view pane for a category (for scroll pinning across a
     // revalidate refill). The playlists pane pins its ROOT list; the drilled
@@ -17824,7 +17767,8 @@ ApplicationWindow {
     function libViewFor(cat) {
         return cat === "albums" ? libAlbumsList : cat === "tracks" ? libTracksList
              : cat === "artists" ? libArtistsGrid : cat === "playlists" ? libPlaylistsList
-             : cat === "mixes" ? libMixesList : cat === "videos" ? libVideosList : null
+             : cat === "mixes" ? libMixesList : cat === "videos" ? libVideosList
+             : cat === "history" ? libHistoryList : null
     }
     // ---- My Tidal sort (per category) --------------------------------------
     // Options adapt to the category; every category shares a "Recently added"
@@ -17884,13 +17828,19 @@ ApplicationWindow {
     function libAppend(cat, items) { var m = libModelFor(cat); if (m) { if (libIsMedia(cat)) appendMedia(m, items); else appendPlain(m, items) } }
     // Called as the active list scrolls; loads the next page well before the
     // bottom (~1.5 viewports early) so it feels endless.
+    property bool _libMorePending: false
     function libMaybeLoadMore(view, cat) {
-        if (cat !== root.libraryCategory || !root.libCatHasMore[cat] || root.libLoadingMore) return
+        if (cat !== root.libraryCategory || !root.libCatHasMore[cat] || root.libLoadingMore || root._libMorePending) return
         if (view.count === 0 || view.contentHeight <= 0) return
-        if (view.contentY - view.originY + view.height > view.contentHeight - view.height * 1.5) {
+        if (view.contentY - view.originY + view.height <= view.contentHeight - view.height * 1.5) return
+        root._libMorePending = true
+        Qt.callLater(function () {
+            root._libMorePending = false
+            if (cat !== root.libraryCategory || !root.libCatHasMore[cat] || root.libLoadingMore) return
             root.libLoadingMore = true
-            bitwave.loadMoreLibrary(cat)
-        }
+            if (cat === "history") root.historyLoad(view.count)
+            else bitwave.loadMoreLibrary(cat)
+        })
     }
 
     Connections {
@@ -17926,6 +17876,40 @@ ApplicationWindow {
                 v.pendingY = -1
                 v.positionViewAtBeginning()
             }
+        }
+        function onHistoryLoaded(items, more, offset) {
+            root.libCatHasMore["history"] = more
+            if (root.libraryCategory === "history") root.libLoadingMore = false
+            if (offset === 0) root.reconcileById(libHistoryModel, items, false)
+            else if (offset === libHistoryModel.count) {
+                // A row that settled since the last page shifted this one down:
+                // its first rows are already the list's last ones.
+                var have = {}
+                for (var i = Math.max(0, libHistoryModel.count - items.length); i < libHistoryModel.count; ++i) have[libHistoryModel.get(i).id] = true
+                root.appendPlain(libHistoryModel, items.filter(function(it) { return !have[it.id] }))
+            }
+            root.historyReady = true
+        }
+        // One entry was written, or ("") the list was cleared. A loaded list
+        // follows along whether or not it is on screen, one row at a time: a
+        // history of thousands of rows is never reread for one download.
+        function onHistoryChanged(id) {
+            if (!root.historyReady) return
+            if (id === "") { root.libCatHasMore["history"] = false; root.historyLoad(0) }
+            else bitwave.loadHistoryEntry(id, root.historyKind, root.historyQuery.trim())
+        }
+        // That entry as the filters see it ([] when it does not pass them).
+        function onHistoryEntry(id, rows) {
+            var m = libHistoryModel, at = -1
+            for (var i = 0; i < m.count; ++i) if (m.get(i).id === id) { at = i; break }
+            if (rows.length === 0) { if (at >= 0) m.remove(at); return }
+            var row = rows[0]
+            // Same time: rewritten in place (a late track). A new time is a
+            // row that settled again, which goes where the order puts it.
+            if (at >= 0 && m.get(at).finished_at === row.finished_at) { m.set(at, row); return }
+            if (at >= 0) m.remove(at)
+            if (!root.historyOldest) m.insert(0, row)
+            else if (!root.libCatHasMore["history"]) m.append(row)
         }
         function onLibraryMore(cat, items, more) {
             if (cat !== root.libraryCategory) return
@@ -18656,22 +18640,12 @@ ApplicationWindow {
             RowLayout {
                 id: headerRow
                 anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                height: 56; anchors.leftMargin: 22; anchors.rightMargin: 22; spacing: 12
-                Rectangle {
-                    id: headerMark
-                    implicitWidth: 38; implicitHeight: 38; radius: 8
-                    color: "#eef5fa"
-                    Image {
-                        anchors.fill: parent; anchors.margins: 2
-                        source: "bitwave-logo.png"
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                    }
-                }
+                height: 56; anchors.leftMargin: 22; anchors.rightMargin: 22; spacing: root.compactHeader ? 6 : 12
+                WaveMark { id: headerMark; eqPlayer: previewPlayer }
                 // Wordmark sized to fill the logo box height (sublabel removed).
                 Text {
                     text: I18n.t("BITWAVE"); color: root.textHi; font.bold: true; font.letterSpacing: 2.6
-                    font.pixelSize: 40
+                    font.pixelSize: root.compactHeader ? 24 : 40
                     Layout.alignment: Qt.AlignVCenter
                 }
                 Item { Layout.fillWidth: true }
@@ -18680,14 +18654,14 @@ ApplicationWindow {
                 // CRT tube-collapse animation. Labels are sentence case by design
                 // (Button Lab navCase verdict) while other buttons stay UPPERCASE.
                 NavTab {
-                    label: "Browse"
+                    label: I18n.t("Browse")
                     // Lit by origin, not by view flags: drilling into an artist
                     // or album keeps the tab you came from highlighted.
                     active: root.navOrigin === "browse" && !root.settingsOpen
                     onClicked: root.openBrowse()
                 }
                 NavTab {
-                    label: "Search"
+                    label: I18n.t("Search")
                     active: root.navOrigin === "search" && !root.settingsOpen
                     // First press returns to Search exactly as it was left
                     // (artist page, expanded album, scroll); a second press
@@ -18696,22 +18670,27 @@ ApplicationWindow {
                 }
                 NavTab {
                     objectName: "releasesTab"
-                    label: "Releases"
+                    fullLabel: I18n.t("Releases")
+                    label: root.compactHeader ? "NEU" : I18n.t("Releases")
                     active: root.navOrigin === "releases" && !root.settingsOpen
                     badge: root.releasesUnseen
                     onClicked: root.openReleases()
                 }
                 NavTab {
-                    label: "My Tidal"
+                    fullLabel: I18n.t("My Tidal")
+                    label: root.compactHeader ? "TIDAL" : I18n.t("My Tidal")
+                    visible: root.navMyTidal
                     active: root.navOrigin === "library" && !root.settingsOpen
                     onClicked: root.openLibrary()
                 }
                 NavTab {
-                    label: "Settings"
+                    fullLabel: I18n.t("Settings")
+                    label: root.compactHeader ? "EINST." : I18n.t("Settings")
                     active: root.settingsOpen
                     onClicked: { root.navPush(); root.markNav("settings"); root.settingsOpen = true; root.artistOpen = false; root.libraryOpen = false; root.releasesOpen = false }
                 }
-                QueueButton { onClicked: queueDrawer.open() }
+                // Lit on Download history and on a page opened from one of its rows.
+                QueueButton { active: root.navOrigin === "history" && !root.settingsOpen; onClicked: queueDrawer.open() }
                 // connection pill
                 Rectangle {
                     implicitHeight: 26; implicitWidth: connRow.implicitWidth + 22; radius: 13
@@ -18719,14 +18698,14 @@ ApplicationWindow {
                     RowLayout {
                         id: connRow; anchors.centerIn: parent; spacing: 7
                         Rectangle { width: 7; height: 7; radius: 3.5; color: root.signedIn ? root.green : root.textDim }
-                        Text { textFormat: Text.PlainText; text: I18n.t(root.signedIn ? "CONNECTED" : "OFFLINE"); color: root.signedIn ? root.green : root.textDim; font.pixelSize: 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: 1.1 }
+                        Text { textFormat: Text.PlainText; text: I18n.t(root.signedIn ? "CONNECTED" : "OFFLINE"); color: root.signedIn ? root.green : root.textDim; font.pixelSize: root.compactHeader ? 9 : 11; font.family: root.uiFont; font.bold: true; font.letterSpacing: 1.1 }
                     }
                 }
                 // sign out, uppercase, red on hover
                 Text {
                     visible: root.signedIn; text: I18n.t("SIGN OUT")
                     color: soMa.containsMouse ? root.red : root.textDim
-                    font.pixelSize: 12; font.letterSpacing: 0.85
+                    font.pixelSize: root.compactHeader ? 10 : 12; font.letterSpacing: 0.85
                     MouseArea { id: soMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.logout() }
                 }
             }
@@ -18945,7 +18924,7 @@ ApplicationWindow {
                         }
                         SpecBtn {
                             objectName: "searchHiResFilter"
-                            label: "Hi-Res only"; primary: root.searchHiResOnly
+                            label: I18n.t("Hi-Res only"); primary: root.searchHiResOnly
                             onClicked: {
                                 root.searchHiResOnly = !root.searchHiResOnly
                                 bitwave.setBitWavePref("search_hires_only", root.searchHiResOnly)
@@ -19097,14 +19076,14 @@ ApplicationWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             implicitWidth: bLandRetryTxt.implicitWidth + root.btnPadH * 2
                             implicitHeight: bLandRetryTxt.implicitHeight + root.btnPadV * 2
-                            radius: root.btnRad; color: "transparent"; border.color: root.accentDim
+                            radius: root.btnRad; color: bLandRetryTxtMa.containsMouse ? Qt.alpha(root.accentCont, 0.7) : "transparent"; border.color: root.accentDim
                             Text {
                                 id: bLandRetryTxt; anchors.centerIn: parent; text: I18n.t("RETRY")
                                 color: root.accent; font.family: root.uiFont; font.pixelSize: 12
                                 font.bold: true; font.letterSpacing: root.btnTrack
                             }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: bLandRetryTxtMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: { root.browseLoading = true; root.browseError = false; bitwave.loadBrowse() }
                             }
                         }
@@ -19203,8 +19182,16 @@ ApplicationWindow {
                             asynchronous: root._browseAsyncBuild || late
                             // Invisible while the veil is up, but still laid out.
                             opacity: root.browseBuilding ? 0 : 1
+                            // A shelf more than a screen from the view is not
+                            // drawn (its item is hidden, the Loader keeps the
+                            // height). Never during the launch: the warm paints
+                            // every shelf once, on purpose.
+                            readonly property bool near: root.bootContentShown < 1 || browseLanding.rowNear(y, height)
                             // A late section joined no count (see browseSecSlots).
-                            onLoaded: if (!late) root._browseBuildTick()
+                            onLoaded: {
+                                if (!late) root._browseBuildTick()
+                                item.visible = Qt.binding(function() { return bsecLd.near })
+                            }
                             sourceComponent: BrowseSection {
                                 sec: root.browseSections[bsecLd.slot] || root._browseSecHeld.prev[bsecLd.slot]
                                 secIndex: bsecLd.slot
@@ -19529,7 +19516,7 @@ ApplicationWindow {
                                     DownloadButton {
                                         visible: !!browseItemHeader.hd && browseItemHeader.hd.kind === "playlist"
                                         mediaId: browseItemHeader.hd ? ("albums:" + (browseItemHeader.hd.id || "")) : ""
-                                        label: "Download full albums"
+                                        label: I18n.t("Download full albums")
                                         noun: "albums"
                                         onTap: function() {
                                             if (browseItemHeader.hd)
@@ -19564,14 +19551,14 @@ ApplicationWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             implicitWidth: bDrillRetryTxt.implicitWidth + root.btnPadH * 2
                             implicitHeight: bDrillRetryTxt.implicitHeight + root.btnPadV * 2
-                            radius: root.btnRad; color: "transparent"; border.color: root.accentDim
+                            radius: root.btnRad; color: bDrillRetryTxtMa.containsMouse ? Qt.alpha(root.accentCont, 0.7) : "transparent"; border.color: root.accentDim
                             Text {
                                 id: bDrillRetryTxt; anchors.centerIn: parent; text: I18n.t("RETRY")
                                 color: root.accent; font.family: root.uiFont; font.pixelSize: 12
                                 font.bold: true; font.letterSpacing: root.btnTrack
                             }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: bDrillRetryTxtMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: root.retryBrowsePage()
                             }
                         }
@@ -19715,7 +19702,7 @@ ApplicationWindow {
                 // a pointer, not a move. A one-item Repeater rather than a
                 // lone Loader so each search rebuilds the row, like every
                 // section row.
-                SectionHeader { id: topHead; opacity: root.searchReveal; visible: root.filterType === "all" && root.searchTopVisible; label: "TOP RESULT" }
+                SectionHeader { id: topHead; opacity: root.searchReveal; visible: root.filterType === "all" && root.searchTopVisible; label: I18n.t("TOP RESULT") }
                 Repeater {
                     id: searchTopRep
                     model: root.searchTopVisible ? [root.searchTop] : []
@@ -19761,7 +19748,7 @@ ApplicationWindow {
                 }
 
                 // ARTISTS
-                SectionHeader { id: artistsHead; opacity: root.searchReveal; visible: root.sectionVisible("artists", artistsModel.count); label: "ARTISTS"; count: artistsModel.count }
+                SectionHeader { id: artistsHead; opacity: root.searchReveal; visible: root.sectionVisible("artists", artistsModel.count); label: I18n.t("ARTISTS"); count: artistsModel.count }
                 // Collapsed default (the mixed All view): a horizontal strip of
                 // fixed-width cards that scrolls left/right, like the browse
                 // shelves. A window resize reveals more or fewer cards but never
@@ -19880,7 +19867,7 @@ ApplicationWindow {
                 }
 
                 // ALBUMS
-                SectionHeader { id: albumsHead; opacity: root.searchReveal; visible: root.sectionVisible("albums", albumsModel.count); label: "ALBUMS"; count: albumsModel.count }
+                SectionHeader { id: albumsHead; opacity: root.searchReveal; visible: root.sectionVisible("albums", albumsModel.count); label: I18n.t("ALBUMS"); count: albumsModel.count }
                 Repeater {
                     // Named so a scenario can ask whether a refresh KEPT these
                     // delegates or rebuilt them: that is the whole difference
@@ -19925,7 +19912,7 @@ ApplicationWindow {
                 SearchSectionMore { section: "albums"; sectionTop: albumsHead; count: albumsModel.count; expanded: root.searchAlbumsExpanded }
 
                 // TRACKS
-                SectionHeader { id: tracksHead; opacity: root.searchReveal; visible: root.sectionVisible("tracks", tracksModel.count); label: "TRACKS"; count: tracksModel.count }
+                SectionHeader { id: tracksHead; opacity: root.searchReveal; visible: root.sectionVisible("tracks", tracksModel.count); label: I18n.t("TRACKS"); count: tracksModel.count }
                 Repeater {
                     id: tracksRep
                     model: tracksModel
@@ -19947,7 +19934,7 @@ ApplicationWindow {
                 SearchSectionMore { section: "tracks"; sectionTop: tracksHead; count: tracksModel.count; expanded: root.searchTracksExpanded }
 
                 // VIDEOS
-                SectionHeader { id: videosHead; opacity: root.searchReveal; visible: root.sectionVisible("videos", videosModel.count); label: "VIDEOS"; count: videosModel.count }
+                SectionHeader { id: videosHead; opacity: root.searchReveal; visible: root.sectionVisible("videos", videosModel.count); label: I18n.t("VIDEOS"); count: videosModel.count }
                 // Art-first video results: 16:9 thumbnails at grid size, with
                 // the title, artist, release date and a full download button
                 // reading underneath. Cells are sized from the section width,
@@ -19991,7 +19978,7 @@ ApplicationWindow {
                 SearchSectionMore { section: "videos"; sectionTop: videosHead; count: videosModel.count; expanded: root.searchVideosExpanded; cap: videoGrid.cap }
 
                 // PLAYLISTS
-                SectionHeader { id: playlistsHead; opacity: root.searchReveal; visible: root.sectionVisible("playlists", playlistsModel.count); label: "PLAYLISTS"; count: playlistsModel.count }
+                SectionHeader { id: playlistsHead; opacity: root.searchReveal; visible: root.sectionVisible("playlists", playlistsModel.count); label: I18n.t("PLAYLISTS"); count: playlistsModel.count }
                 Repeater {
                     id: playlistsRep
                     model: playlistsModel
@@ -20017,7 +20004,7 @@ ApplicationWindow {
                 SearchSectionMore { section: "playlists"; sectionTop: playlistsHead; count: playlistsModel.count; expanded: root.searchPlaylistsExpanded }
 
                 // MIXES
-                SectionHeader { id: mixesHead; opacity: root.searchReveal; visible: root.sectionVisible("mixes", mixesModel.count); label: "MIXES"; count: mixesModel.count }
+                SectionHeader { id: mixesHead; opacity: root.searchReveal; visible: root.sectionVisible("mixes", mixesModel.count); label: I18n.t("MIXES"); count: mixesModel.count }
                 Repeater {
                     id: mixesRep
                     model: mixesModel
@@ -20043,7 +20030,7 @@ ApplicationWindow {
                                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
                                 Text { textFormat: Text.PlainText; text: I18n.t(model.subtitle ? model.subtitle : "Mix"); color: root.textLo; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
                             }
-                            DownloadButton { mediaId: model.id; collectionCheck: true; label: "Download mix"; onTap: function(){ bitwave.downloadMix(model.id) } }
+                            DownloadButton { mediaId: model.id; collectionCheck: true; label: I18n.t("Download mix"); onTap: function(){ bitwave.downloadMix(model.id) } }
                         }
                         }
                     }
@@ -20084,6 +20071,23 @@ ApplicationWindow {
                     ? Math.max(0, pendingRestoreY + height - realContentH) : 0
                 readonly property real realContentH: artistCol.height + 32
                 contentWidth: width; contentHeight: realContentH + restorePad
+                // Rows more than a screen away from the view are not drawn.
+                // Qt draws every item of a page however far off screen, and
+                // a row tilting at an edge re-uploaded the geometry of the
+                // WHOLE page with it: an 80-album artist delivered ~80 of 120
+                // frames a second while scrolling (2026-11-24), ~115 with the
+                // far rows hidden. Each row Loader hides its ITEM (never
+                // itself: the column would close up) once it has loaded, so
+                // a row is born visible and its cover fetch starts as before.
+                // Stepped in bands like BrowseScroll.rowAnchorY, so a scroll
+                // re-tests the rows once per band, not once per frame.
+                readonly property int rowBandH: 10 * 62
+                readonly property real rowAnchorY: Math.floor(contentY / rowBandH) * rowBandH
+                // top: the row's y in artistCol.
+                function rowNear(top, h) {
+                    var t = artistCol.y + top
+                    return t + h > rowAnchorY - height && t < rowAnchorY + rowBandH + 2 * height
+                }
                 ScrollBar.vertical: BitWaveScrollBar {}
                 boundsBehavior: Flickable.StopAtBounds
                 // A fresh artist page starts at the top (it used to inherit the
@@ -20180,12 +20184,12 @@ ApplicationWindow {
                                 width: Math.min(implicitWidth, artistCol.width - 170 - anlGo.width - 10)
                                 textFormat: Text.PlainText; elide: Text.ElideRight
                                 color: root.textLo; font.pixelSize: 13
-                                text: "In deiner Mediathek befindet sich ein anderer Künstler namens „" + (root.artistData.name || "") + "“."
+                                text: I18n.t("In deiner Mediathek befindet sich ein anderer Künstler namens „") + (root.artistData.name || "") + "“."
                             }
                             SpecBtn {
                                 id: anlGo
                                 objectName: "artistNamesakeGo"
-                                compact: true; label: "ZUM KÜNSTLER"
+                                compact: true; label: I18n.t("ZUM KÜNSTLER")
                                 onClicked: bitwave.loadArtist(root.artistNamesakeId)
                             }
                         }
@@ -20194,7 +20198,7 @@ ApplicationWindow {
                             DownloadButton {
                                 objectName: "artistDlBtn"
                                 mediaId: root.artistData.id || ""
-                                label: "Download discography"
+                                label: I18n.t("Download discography")
                                 // The badge directly above says what is held;
                                 // this says what a click would add to.
                                 libArtist: root.artistData.name || ""
@@ -20296,7 +20300,7 @@ ApplicationWindow {
                                                 id: ampAlb
                                                 x: 44; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 52
                                                 textFormat: Text.PlainText; elide: Text.ElideRight
-                                                text: "" + (modelData.title || "") + (modelData.year ? "  " + modelData.year : "")
+                                                text: I18n.t("") + (modelData.title || "") + (modelData.year ? "  " + modelData.year : "")
                                                 color: root.textLo; font.pixelSize: 12
                                             }
                                         }
@@ -20305,7 +20309,7 @@ ApplicationWindow {
                                         visible: artistMovePanel.total > Math.min(6, artistMovePanel.held.length) && artistMovePanel.held.length > 0
                                         height: 40; verticalAlignment: Text.AlignVCenter
                                         textFormat: Text.PlainText
-                                        text: "+ " + (artistMovePanel.total - Math.min(6, artistMovePanel.held.length)) + " weitere"
+                                        text: I18n.t("+ ") + (artistMovePanel.total - Math.min(6, artistMovePanel.held.length)) + " weitere"
                                         color: root.textDim; font.pixelSize: 12
                                     }
                                 }
@@ -20418,7 +20422,7 @@ ApplicationWindow {
                 SectionHeader {
                     id: topTracksHead
                     visible: artistTracksModel.count > 0
-                    label: "TOP TRACKS"; count: artistTracksModel.count
+                    label: I18n.t("TOP TRACKS"); count: artistTracksModel.count
                     collapsible: true; collapsed: root.artistTracksCollapsed
                     onToggled: root.toggleArtistSection("tracks")
                 }
@@ -20445,7 +20449,8 @@ ApplicationWindow {
                         visible: shown
                         width: artistCol.width; height: 62
                         asynchronous: index < root._artistSyncFromTracks || index >= root._artistSyncTracks
-                        onLoaded: root._artistRowLanded("tracks")
+                        readonly property bool near: artistView.rowNear(y, height)
+                        onLoaded: { root._artistRowLanded("tracks"); item.visible = Qt.binding(function() { return near }) }
                         sourceComponent: TrackRow {
                             tId: model.id; title: model.title; artistName: model.artist; artistId: ""
                             album: model.album; art: model.art; year: model.year; date: model.date; duration: model.duration; durationSec: model.duration_sec || 0; quality: model.quality; atmos: model.atmos === true; popularity: model.popularity
@@ -20466,7 +20471,7 @@ ApplicationWindow {
                 SectionHeader {
                     id: artistAlbumsHead
                     visible: artistAlbumsModel.count > 0
-                    label: "ALBUMS"; count: artistAlbumsModel.count
+                    label: I18n.t("ALBUMS"); count: artistAlbumsModel.count
                     collapsible: true; collapsed: root.artistAlbumsCollapsed
                     onToggled: root.toggleArtistSection("albums")
                 }
@@ -20483,7 +20488,8 @@ ApplicationWindow {
                         // panel still grows the row.
                         height: item ? item.implicitHeight : 64
                         asynchronous: index < root._artistSyncFromAlbums || index >= root._artistSyncAlbums
-                        onLoaded: root._artistRowLanded("albums")
+                        readonly property bool near: artistView.rowNear(y, height)
+                        onLoaded: { root._artistRowLanded("albums"); item.visible = Qt.binding(function() { return near }) }
                         sourceComponent: AlbumBlock {
                             albumId: model.id; title: model.title; artistName: model.artist; artistId: ""
                             art: model.art; year: model.year; releaseDate: model.date; listedDate: model.listed || ""; trackCount: model.tracks; durationSec: model.duration_sec || 0; quality: model.quality; atmos: model.atmos === true; popularity: model.popularity
@@ -20503,7 +20509,7 @@ ApplicationWindow {
                 SectionHeader {
                     id: artistEpsHead
                     visible: artistEpModel.count > 0
-                    label: "EPS & SINGLES"; count: artistEpModel.count
+                    label: I18n.t("EPS & SINGLES"); count: artistEpModel.count
                     collapsible: true; collapsed: root.artistEpsCollapsed
                     onToggled: root.toggleArtistSection("eps")
                 }
@@ -20517,7 +20523,8 @@ ApplicationWindow {
                         width: artistCol.width
                         height: item ? item.implicitHeight : 64
                         asynchronous: index < root._artistSyncFromEps || index >= root._artistSyncEps
-                        onLoaded: root._artistRowLanded("eps")
+                        readonly property bool near: artistView.rowNear(y, height)
+                        onLoaded: { root._artistRowLanded("eps"); item.visible = Qt.binding(function() { return near }) }
                         sourceComponent: AlbumBlock {
                             albumId: model.id; title: model.title; artistName: model.artist; artistId: ""
                             art: model.art; year: model.year; releaseDate: model.date; listedDate: model.listed || ""; trackCount: model.tracks; durationSec: model.duration_sec || 0; quality: model.quality; atmos: model.atmos === true; popularity: model.popularity
@@ -20542,7 +20549,7 @@ ApplicationWindow {
                 SectionHeader {
                     id: artistVideosHead
                     visible: artistVideosModel.count > 0
-                    label: "VIDEOS"; count: artistVideosModel.count
+                    label: I18n.t("VIDEOS"); count: artistVideosModel.count
                     collapsible: true; collapsed: root.artistVideosCollapsed
                     onToggled: root.toggleArtistSection("videos")
                     // Videos-only download-all (chosen in the videos_dl_lab):
@@ -20555,7 +20562,7 @@ ApplicationWindow {
                     trailing: Component {
                         DownloadButton {
                             mediaId: "vids:" + root.artistData.id
-                            label: "All videos"
+                            label: I18n.t("All videos")
                             onTap: function(){ bitwave.downloadArtistVideos(root.artistData.id) }
                         }
                     }
@@ -20577,7 +20584,8 @@ ApplicationWindow {
                             width: artistVideoGrid.cellW
                             height: Math.round(artistVideoGrid.cellW * 9 / 16) + 54
                             asynchronous: index < root._artistSyncFromVideos || index >= root._artistSyncVideos
-                            onLoaded: root._artistRowLanded("videos")
+                            readonly property bool near: artistView.rowNear(artistVideoGrid.y + y, height)
+                            onLoaded: { root._artistRowLanded("videos"); item.visible = Qt.binding(function() { return near }) }
                             sourceComponent: VideoCell {
                                 width: artistVideoGrid.cellW
                                 vid: model.id; vcTitle: model.title; vcArtist: model.artist
@@ -20605,7 +20613,7 @@ ApplicationWindow {
                     id: artistApartHead
                     objectName: "artistApartHead"
                     visible: artistApartModel.count > 0
-                    label: "Andere Künstler namens „" + (root.artistData.name || "") + "“"
+                    label: I18n.t("Andere Künstler namens „") + (root.artistData.name || "") + "“"
                     count: artistApartModel.count
                     collapsible: true; collapsed: !root.artistApartOpen
                     onToggled: root.artistApartOpen = !root.artistApartOpen
@@ -20617,7 +20625,7 @@ ApplicationWindow {
                     width: artistCol.width
                     textFormat: Text.PlainText; wrapMode: Text.WordWrap
                     color: root.textLo; font.pixelSize: 13
-                    text: "Diese Veröffentlichungen teilen sich das TIDAL-Profil, sind aber dem Künstler in deiner Mediathek nicht zugeordnet. Sie erscheinen nicht in Veröffentlichungen oder Benachrichtigungen und werden nicht automatisch heruntergeladen."
+                    text: I18n.t("Diese Veröffentlichungen teilen sich das TIDAL-Profil, sind aber dem Künstler in deiner Mediathek nicht zugeordnet. Sie erscheinen nicht in Veröffentlichungen oder Benachrichtigungen und werden nicht automatisch heruntergeladen.")
                 }
                 Repeater {
                     id: artistApartRep
@@ -20721,7 +20729,8 @@ ApplicationWindow {
                     }
                 }
                 Rectangle { width: 1; height: 22; color: root.border1; Layout.alignment: Qt.AlignVCenter }
-                // A definite-width Flow inside a fillWidth Item (see libTabsFlow).
+                // A definite-width Flow inside a fillWidth Item: a Flow with
+                // Layout.fillWidth directly hits a stale-width loop and wraps.
                 // The page's chips on the left, its search box at the right
                 // end (relSearch), which opens into the room the chips leave.
                 Item {
@@ -20962,7 +20971,7 @@ ApplicationWindow {
                     objectName: "releasesChecking"
                     // Only signed in: the sweep does not run otherwise.
                     visible: root.signedIn && root.releasesUnchecked > 0; accent: true
-                    text: "CHECKING " + Math.max(0, root.releasesFollowed - root.releasesUnchecked) + "/" + root.releasesFollowed
+                    text: I18n.t("CHECKING ") + Math.max(0, root.releasesFollowed - root.releasesUnchecked) + "/" + root.releasesFollowed
                     Layout.alignment: Qt.AlignVCenter
                 }
                 // Every follow checked again now (albums, EPs, singles and
@@ -20980,7 +20989,7 @@ ApplicationWindow {
                 SpecBtn {
                     objectName: "releasesFollowBtn"
                     visible: root.signedIn
-                    compact: true; label: "FOLLOW ARTIST"
+                    compact: true; label: I18n.t("FOLLOW ARTIST")
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: followDialog.show()
                 }
@@ -20988,7 +20997,7 @@ ApplicationWindow {
                 SpecBtn {
                     objectName: "releasesImportBtn"
                     visible: root.signedIn && root.libraryOn && root.releasesView === "manage"
-                    compact: true; label: "IMPORT LIBRARY"
+                    compact: true; label: I18n.t("IMPORT LIBRARY")
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: importDialog.show()
                 }
@@ -21003,7 +21012,7 @@ ApplicationWindow {
                 SpecBtn {
                     objectName: "releasesViewBtn"
                     visible: root.releasesView === "excluded"
-                    compact: true; label: "BACK"
+                    compact: true; label: I18n.t("BACK")
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: root.releasesSetView("manage")
                 }
@@ -21049,7 +21058,7 @@ ApplicationWindow {
                     }
                     SpecBtn {
                         objectName: "relImportLineLater"
-                        compact: true; label: "NOT NOW"
+                        compact: true; label: I18n.t("NOT NOW")
                         onClicked: bitwave.dismissArtistImportNotice()
                     }
                 }
@@ -21238,7 +21247,7 @@ ApplicationWindow {
                                     // count so the two read as one line.
                                     Item {
                                         objectName: "releasesSection"
-                                        readonly property string label: relItem.label
+                                        readonly property string label: I18n.t(relItem.label)
                                         readonly property int count: relItem.cnt
                                         visible: relItem.rowKind === "head"
                                         x: Math.max(0, (relItem.width - relFeedList.fitW) / 2)
@@ -21304,7 +21313,7 @@ ApplicationWindow {
                                             visible: relItem.uid === "h:new"
                                             anchors.right: parent.right
                                             y: Math.round(relHeadCount.y + relHeadCount.baselineOffset - relHeadCountFm.xHeight / 2 - height / 2)
-                                            label: "MARK AS SEEN"; primary: true; compact: true
+                                            label: I18n.t("MARK AS SEEN"); primary: true; compact: true
                                             onClicked: root.releasesMarkAllSeen()
                                         }
                                         FontMetrics { id: relHeadCountFm; font: relHeadCount.font }
@@ -21488,13 +21497,13 @@ ApplicationWindow {
                         spacing: 10
                         SpecBtn {
                             objectName: "releasesEmptyFollowBtn"
-                            primary: true; label: "FOLLOW ARTIST"
+                            primary: true; label: I18n.t("FOLLOW ARTIST")
                             onClicked: followDialog.show()
                         }
                         SpecBtn {
                             objectName: "releasesEmptyImportBtn"
                             visible: root.libraryOn
-                            label: "IMPORT LIBRARY"
+                            label: I18n.t("IMPORT LIBRARY")
                             onClicked: importDialog.show()
                         }
                     }
@@ -21588,7 +21597,7 @@ ApplicationWindow {
                                 objectName: "unfollowBtn"
                                 visible: raHover.hovered
                                 anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 8
-                                compact: true; danger: true; label: "UNFOLLOW"
+                                compact: true; danger: true; label: I18n.t("UNFOLLOW")
                                 onClicked: bitwave.unfollowArtist(raCell.uid)
                             }
                         }
@@ -21702,7 +21711,7 @@ ApplicationWindow {
                                         }
                                     }
                                     Text {
-                                        textFormat: Text.PlainText; text: "" + (sbTile.modelData.title || "")
+                                        textFormat: Text.PlainText; text: I18n.t("") + (sbTile.modelData.title || "")
                                         color: root.textLo; font.pixelSize: 11; elide: Text.ElideRight; width: parent.width
                                     }
                                     Text {
@@ -21727,7 +21736,7 @@ ApplicationWindow {
                                 objectName: "unfollowBtn"
                                 visible: sbHover.hovered
                                 anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 8
-                                compact: true; danger: true; label: "UNFOLLOW"
+                                compact: true; danger: true; label: I18n.t("UNFOLLOW")
                                 onClicked: bitwave.unfollowArtist(sbRow.uid)
                             }
                         }
@@ -21775,10 +21784,10 @@ ApplicationWindow {
                     readonly property real xAct: xDate + wDate + gap
                     header: Rectangle {
                         width: relFollowLedger.width; height: 40; z: 3; color: root.bg
-                        RelColHead { x: relFollowLedger.xArtist; text: "ARTIST" + (on ? "  ▲" : ""); sortKey: "name" }
-                        RelColHead { x: relFollowLedger.xAlbums + relFollowLedger.wNum - width; text: "ALBUMS" }
-                        RelColHead { x: relFollowLedger.xSongs + relFollowLedger.wNum - width; text: "SONGS" }
-                        RelColHead { visible: relFollowLedger.showLatest; x: relFollowLedger.xLatest; text: "LATEST RELEASE" + (on ? "  ▼" : ""); sortKey: "recent" }
+                        RelColHead { x: relFollowLedger.xArtist; text: I18n.t("ARTIST") + (on ? "  ▲" : ""); sortKey: "name" }
+                        RelColHead { x: relFollowLedger.xAlbums + relFollowLedger.wNum - width; text: I18n.t("ALBUMS") }
+                        RelColHead { x: relFollowLedger.xSongs + relFollowLedger.wNum - width; text: I18n.t("SONGS") }
+                        RelColHead { visible: relFollowLedger.showLatest; x: relFollowLedger.xLatest; text: I18n.t("LATEST RELEASE") + (on ? "  ▼" : ""); sortKey: "recent" }
                         // With the latest release given way, its date heads
                         // the column and sorts in its place.
                         RelColHead {
@@ -21788,7 +21797,7 @@ ApplicationWindow {
                         }
                         // Each timeline is the artist's own span, so the head
                         // names what it shows rather than a shared scale.
-                        RelColHead { visible: relFollowLedger.showAct; x: relFollowLedger.xAct; text: "EVERY RELEASE, FIRST TO LATEST" }
+                        RelColHead { visible: relFollowLedger.showAct; x: relFollowLedger.xAct; text: I18n.t("EVERY RELEASE, FIRST TO LATEST") }
                         Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.border1 }
                     }
                     delegate: Item {
@@ -21842,7 +21851,7 @@ ApplicationWindow {
                                     objectName: "unfollowBtn"
                                     visible: lgHover.hovered
                                     x: lgName.width + 10; anchors.verticalCenter: lgName.verticalCenter
-                                    compact: true; danger: true; label: "UNFOLLOW"
+                                    compact: true; danger: true; label: I18n.t("UNFOLLOW")
                                     onClicked: bitwave.unfollowArtist(lgRow.uid)
                                 }
                             }
@@ -21996,7 +22005,7 @@ ApplicationWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 6
                                 Text {
-                                    textFormat: Text.PlainText; text: "" + (rxCell.row.name || "")
+                                    textFormat: Text.PlainText; text: I18n.t("") + (rxCell.row.name || "")
                                     color: root.textHi; font.pixelSize: 15; font.bold: true
                                     elide: Text.ElideRight; width: parent.width
                                 }
@@ -22008,16 +22017,16 @@ ApplicationWindow {
                                 }
                                 Row {
                                     spacing: 6
-                                    RelChip { text: "" + (rxCell.row.span || ""); visible: text !== "" }
+                                    RelChip { text: I18n.t("") + (rxCell.row.span || ""); visible: text !== "" }
                                     RelChip { text: root.relCount(rxCell.row.tracks || 0, "TRACK", "TRACKS") }
-                                    RelChip { text: "" + (rxCell.row.best || ""); visible: text !== "" }
+                                    RelChip { text: I18n.t("") + (rxCell.row.best || ""); visible: text !== "" }
                                 }
                             }
                             SpecBtn {
                                 id: rxFollow
                                 objectName: "excludedFollowBtn"
                                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                                compact: true; primary: true; label: "FOLLOW"
+                                compact: true; primary: true; label: I18n.t("FOLLOW")
                                 onClicked: importDialog.startNames(["" + (rxCell.row.name || "")], true)
                             }
                         }
@@ -22086,7 +22095,7 @@ ApplicationWindow {
                                         width: parent.width; spacing: 5
                                         RelCovers { width: parent.width; height: width; covers: seTile.row.covers || [] }
                                         Text {
-                                            textFormat: Text.PlainText; text: "" + (seTile.row.name || "")
+                                            textFormat: Text.PlainText; text: I18n.t("") + (seTile.row.name || "")
                                             color: root.textHi; font.pixelSize: 13; font.bold: true
                                             elide: Text.ElideRight; width: parent.width
                                         }
@@ -22107,7 +22116,7 @@ ApplicationWindow {
                                         objectName: "excludedFollowBtn"
                                         visible: seHover.hovered
                                         anchors.top: parent.top; anchors.right: parent.right; anchors.margins: 8
-                                        compact: true; primary: true; label: "FOLLOW"
+                                        compact: true; primary: true; label: I18n.t("FOLLOW")
                                         onClicked: importDialog.startNames(["" + (seTile.row.name || "")], true)
                                     }
                                 }
@@ -22149,10 +22158,10 @@ ApplicationWindow {
                             Item {
                                 required property int index
                                 x: index * relExcludedLedger.cellWidth; width: relExcludedLedger.cw; height: parent.height
-                                RelColHead { x: relExcludedLedger.xArtist; text: "ARTIST" }
-                                RelColHead { x: relExcludedLedger.xHeld; text: "IN YOUR LIBRARY" }
-                                RelColHead { x: relExcludedLedger.xTracks + relExcludedLedger.wNum - width; text: "TRACKS" }
-                                RelColHead { x: relExcludedLedger.xQ; text: "BEST COPY" }
+                                RelColHead { x: relExcludedLedger.xArtist; text: I18n.t("ARTIST") }
+                                RelColHead { x: relExcludedLedger.xHeld; text: I18n.t("IN YOUR LIBRARY") }
+                                RelColHead { x: relExcludedLedger.xTracks + relExcludedLedger.wNum - width; text: I18n.t("TRACKS") }
+                                RelColHead { x: relExcludedLedger.xQ; text: I18n.t("BEST COPY") }
                                 Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.border1 }
                             }
                         }
@@ -22176,7 +22185,7 @@ ApplicationWindow {
                                 x: relExcludedLedger.xArtist; width: relExcludedLedger.wArtist; anchors.verticalCenter: parent.verticalCenter
                                 spacing: 3
                                 Text {
-                                    textFormat: Text.PlainText; text: "" + (lxRow.row.name || "")
+                                    textFormat: Text.PlainText; text: I18n.t("") + (lxRow.row.name || "")
                                     color: root.textHi; font.pixelSize: 14; font.bold: true
                                     elide: Text.ElideRight; width: parent.width
                                 }
@@ -22197,7 +22206,7 @@ ApplicationWindow {
                                         width: lxRow.held.length === 1 || relExcludedLedger.chipFit === 1 ? relExcludedLedger.wHeld : relExcludedLedger.chipW
                                         spacing: 4
                                         Text {
-                                            textFormat: Text.PlainText; text: "" + (lxChip.modelData.title || "")
+                                            textFormat: Text.PlainText; text: I18n.t("") + (lxChip.modelData.title || "")
                                             color: root.textLo; font.pixelSize: 13; elide: Text.ElideRight; width: parent.width
                                         }
                                         Text {
@@ -22222,12 +22231,12 @@ ApplicationWindow {
                             }
                             RelChip {
                                 x: relExcludedLedger.xQ; anchors.verticalCenter: parent.verticalCenter
-                                text: "" + (lxRow.row.best || ""); visible: text !== ""
+                                text: I18n.t("") + (lxRow.row.best || ""); visible: text !== ""
                             }
                             SpecBtn {
                                 objectName: "excludedFollowBtn"
                                 anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter
-                                compact: true; primary: true; label: "FOLLOW"
+                                compact: true; primary: true; label: I18n.t("FOLLOW")
                                 onClicked: importDialog.startNames(["" + (lxRow.row.name || "")], true)
                             }
                             Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 1; color: root.divider }
@@ -22393,14 +22402,14 @@ ApplicationWindow {
                                             anchors.verticalCenter: parent.verticalCenter
                                             spacing: 5
                                             Text {
-                                                textFormat: Text.PlainText; text: "" + (tipRow.modelData.title || "")
+                                                textFormat: Text.PlainText; text: I18n.t("") + (tipRow.modelData.title || "")
                                                 color: root.textHi; font.pixelSize: 13; font.bold: true
                                                 elide: Text.ElideRight; width: parent.width
                                             }
                                             Row {
                                                 spacing: 6
                                                 RelChip { visible: root.relTipGroups.length < 2; text: ("" + (tipRow.modelData.rtype || "album")).toUpperCase() }
-                                                RelChip { objectName: "relTipMbChip"; visible: tipRow.mb; danger: true; text: "NOT ON TIDAL" }
+                                                RelChip { objectName: "relTipMbChip"; visible: tipRow.mb; danger: true; text: I18n.t("NOT ON TIDAL") }
                                                 RelChip {
                                                     visible: (tipRow.modelData.tracks || 0) > 0
                                                     text: root.relCount(tipRow.modelData.tracks || 0, "TRACK", "TRACKS")
@@ -22496,40 +22505,71 @@ ApplicationWindow {
             // right, all one row (like Settings). No separate back header (you
             // arrive here from the nav) and no separate sort row underneath.
             RowLayout {
+                id: libHeaderRow
                 Layout.fillWidth: true; Layout.leftMargin: 22; Layout.rightMargin: 22; Layout.topMargin: 2
                 spacing: 14
                 Text {
-                    textFormat: Text.PlainText; text: I18n.t("My Tidal"); color: root.textHi
+                    id: libTitleText
+                    textFormat: Text.PlainText; text: root.libraryCategory === "history" ? (root.width < 1120 ? "Verlauf" : "Download-Verlauf") : I18n.t("My Tidal"); color: root.textHi
                     font.pixelSize: 18; font.bold: true; Layout.alignment: Qt.AlignVCenter
                 }
-                // Wrap the tab strip in a plain Item that carries Layout.fillWidth,
-                // and flow against a DEFINITE width (parent.width). A Flow with
-                // Layout.fillWidth directly hits a stale-width feedback loop and
-                // wraps spuriously on narrower (but still valid) window sizes,
-                // leaving a dead band under the tabs. This is the pattern the other
-                // Flows in this file use.
+                // The chips are one Row: they never wrap to a second line.
+                // The slot takes whatever the row leaves (implicit width 0,
+                // so the chips never feed back into it); where that is less
+                // than the chips need, they go tight (no dot, less padding).
                 Item {
+                    objectName: "libTabsSlot"
+                    // A history search opened in a narrow window takes this
+                    // room until it closes (see historySearchBox).
+                    visible: !historySearchBox.overChips
                     Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter
                     implicitHeight: libTabsFlow.implicitHeight
-                    Flow {
+                    clip: true   // last resort only: tight chips fit at the window's minimum width
+                    Row {
                         id: libTabsFlow
                         objectName: "libTabsFlow"
-                        width: parent.width; spacing: 8
+                        spacing: root.width < 1120 ? 4 : 8
+                        // The width the chips need on one line, full size and
+                        // tight. Asked of each chip's own `shown`, never
+                        // `visible`, which also reads false while the whole
+                        // strip is hidden.
+                        function lineWidth(tight) {
+                            var w = 0, n = 0
+                            for (var i = 0; i < children.length; ++i) {
+                                var c = children[i]
+                                if (c.shown === true) { w += tight ? c.tightWidth : c.fullWidth; n++ }
+                            }
+                            return w + Math.max(0, n - 1) * spacing
+                        }
+                        readonly property real oneLine: lineWidth(false)
+                        readonly property real tightLine: lineWidth(true)
+                        readonly property bool tight: parent.width < oneLine
+                        // On the history page the chips filter the list by kind
+                        // (Home shows every kind). An artist download logs as
+                        // its albums, so Artists has nothing to show there.
+                        readonly property bool forHistory: root.libraryCategory === "history"
                         Repeater {
-                            model: [["home", "Home"], ["albums", "Albums"], ["tracks", "Tracks"], ["artists", "Artists"], ["playlists", "Playlists"], ["mixes", "Mixes"], ["videos", "Videos"]]
+                            model: [["home", "Home", ""], ["albums", "Albums", "album"], ["tracks", "Tracks", "track"], ["artists", "Artists", "artist"], ["playlists", "Playlists", "playlist"], ["mixes", "Mixes", "mix"], ["videos", "Videos", "video"]]
                             delegate: Rectangle {
                                 id: lchip
                                 required property var modelData
-                                readonly property bool on: root.libraryCategory === modelData[0]
-                                radius: 8; implicitHeight: 30; implicitWidth: lcRow.implicitWidth + 26
+                                readonly property bool shown: !(libTabsFlow.forHistory && modelData[0] === "artists")
+                                visible: shown
+                                readonly property bool on: libTabsFlow.forHistory ? root.historyKind === modelData[2] : root.libraryCategory === modelData[0]
+                                readonly property real fullWidth: lcText.implicitWidth + 13 + 26
+                                readonly property real tightWidth: lcText.implicitWidth + (root.width < 1120 ? 12 : 16)
+                                radius: 8; implicitHeight: 30; implicitWidth: libTabsFlow.tight ? tightWidth : fullWidth
                                 color: on ? root.accentCont : "transparent"
                                 border.color: on ? root.accentDim : root.border1
                                 Row {
-                                    id: lcRow; anchors.centerIn: parent; spacing: 7
-                                    Rectangle { width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: lchip.on ? root.accent : root.textDim }
-                                    Text { textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: I18n.t(lchip.modelData[1]); color: lchip.on ? root.accent : root.textLo; font.pixelSize: 13 }
+                                    anchors.centerIn: parent; spacing: 7
+                                    Rectangle { visible: !libTabsFlow.tight; width: 6; height: 6; radius: 3; anchors.verticalCenter: parent.verticalCenter; color: lchip.on ? root.accent : root.textDim }
+                                    Text { id: lcText; textFormat: Text.PlainText; anchors.verticalCenter: parent.verticalCenter; text: libTabsFlow.forHistory && lchip.modelData[0] === "home" ? "Alle" : I18n.t(lchip.modelData[1]); color: lchip.on ? root.accent : root.textLo; font.pixelSize: root.width < 1120 ? 11 : 13 }
                                 }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.loadLib(lchip.modelData[0]) }
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: libTabsFlow.forHistory ? root.historyFilter(lchip.modelData[2], root.historyOldest) : root.loadLib(lchip.modelData[0])
+                                }
                             }
                         }
                     }
@@ -22545,7 +22585,7 @@ ApplicationWindow {
                         id: favTracksBtn
                         objectName: "favTracksBtn"
                         mediaId: "fav:tracks"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favTracksPending = true; bitwave.resolveFavoriteTracks() }
                     }
                     FolderBadge {
@@ -22565,7 +22605,7 @@ ApplicationWindow {
                         id: favAlbumsBtn
                         objectName: "favAlbumsBtn"
                         mediaId: "fav:albums"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favAlbumsPending = true; bitwave.resolveFavoriteAlbums() }
                     }
                     FolderBadge {
@@ -22585,7 +22625,7 @@ ApplicationWindow {
                         id: favArtistsBtn
                         objectName: "favArtistsBtn"
                         mediaId: "fav:artists"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favArtistsPending = true; bitwave.resolveFavoriteArtists() }
                     }
                     FolderBadge {
@@ -22604,7 +22644,7 @@ ApplicationWindow {
                         id: favPlaylistsBtn
                         objectName: "favPlaylistsBtn"
                         mediaId: "fav:playlists"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favPlaylistsPending = true; bitwave.resolveFavoritePlaylists() }
                     }
                     FolderBadge {
@@ -22623,7 +22663,7 @@ ApplicationWindow {
                         id: favMixesBtn
                         objectName: "favMixesBtn"
                         mediaId: "fav:mixes"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favMixesPending = true; bitwave.resolveFavoriteMixes() }
                     }
                     FolderBadge {
@@ -22642,7 +22682,7 @@ ApplicationWindow {
                         id: favVideosBtn
                         objectName: "favVideosBtn"
                         mediaId: "fav:videos"
-                        label: "Download all"
+                        label: I18n.t("Download all")
                         onTap: function(){ root.favVideosPending = true; bitwave.resolveFavoriteVideos() }
                     }
                     FolderBadge {
@@ -22650,6 +22690,87 @@ ApplicationWindow {
                         anchors.top: favVideosBtn.top; anchors.topMargin: -9
                         folderId: favVideosBtn.mediaId
                         st: favVideosBtn.st
+                    }
+                }
+                // History page only: finds entries by name, artist or track
+                // title. Dressed like the sort box beside it.
+                Rectangle {
+                    id: historySearchBox
+                    objectName: "historySearchBox"
+                    visible: root.libraryCategory === "history" && root.historyHasRows
+                    Layout.alignment: Qt.AlignVCenter
+                    // The chips never wrap to make room for this box. Where
+                    // the row cannot hold both, it folds to its magnifier and
+                    // takes the chips' room only while it is being typed in.
+                    // Left with a search in it, it folds back with the
+                    // magnifier lit, so the chips can filter what was found.
+                    readonly property real fullWidth: 170
+                    readonly property real room: libHeaderRow.width - libTitleText.implicitWidth - libSortBox.implicitWidth
+                                                 - historyClearSlot.implicitWidth - 4 * libHeaderRow.spacing
+                    readonly property bool narrow: room < libTabsFlow.tightLine + fullWidth
+                    property bool asked: false
+                    readonly property bool open: asked || historySearchField.activeFocus
+                    readonly property bool holds: historySearchField.text !== ""
+                    readonly property bool folded: narrow && !open
+                    readonly property bool overChips: visible && narrow && open
+                    Layout.fillWidth: overChips
+                    implicitHeight: 40; implicitWidth: folded ? 40 : fullWidth; radius: 8
+                    color: root.surface2
+                    border.color: historySearchField.activeFocus ? root.accent
+                                : historySearchFoldMa.containsMouse || (folded && holds) ? root.accentDim : root.outline
+                    Ico {
+                        name: "search"; size: 15
+                        color: historySearchField.activeFocus || historySearchFoldMa.containsMouse
+                               || (historySearchBox.folded && historySearchBox.holds) ? root.accent : root.textLo
+                        x: 12.5; anchors.verticalCenter: parent.verticalCenter
+                    }
+                    MouseArea {
+                        id: historySearchFoldMa
+                        objectName: "historySearchFold"
+                        anchors.fill: parent; visible: historySearchBox.folded
+                        hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        Accessible.role: Accessible.Button
+                        Accessible.name: historySearchBox.holds ? "Search download history, a search is on" : "Search download history"
+                        onClicked: { historySearchBox.asked = true; historySearchField.forceActiveFocus() }
+                    }
+                    TextField {
+                        id: historySearchField
+                        objectName: "historySearchField"
+                        visible: !historySearchBox.folded
+                        onActiveFocusChanged: if (!activeFocus) historySearchBox.asked = false
+                        anchors.left: parent.left; anchors.leftMargin: 36
+                        anchors.right: historySearchClear.visible ? historySearchClear.left : parent.right
+                        anchors.rightMargin: historySearchClear.visible ? 2 : 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        leftPadding: 0; rightPadding: 0; topPadding: 0; bottomPadding: 0
+                        background: Rectangle { color: "transparent" }
+                        color: root.textHi
+                        placeholderTextColor: root.textLo
+                        font.pixelSize: 14; selectByMouse: true
+                        placeholderText: I18n.t("Search history…")
+                        Accessible.name: "Search download history"
+                        onTextChanged: root.historySearch(text)
+                        // Enter applies now rather than after the pause.
+                        onAccepted: { historySearchDebounce.stop(); root.historyFilter(root.historyKind, root.historyOldest) }
+                        Keys.onEscapePressed: { text = ""; focus = false }
+                        // Cleared from elsewhere (CLEAR HISTORY): show it.
+                        readonly property string needle: root.historyQuery
+                        onNeedleChanged: if (text !== needle) text = needle
+                    }
+                    Item {
+                        id: historySearchClear
+                        visible: !historySearchBox.folded && historySearchField.text !== ""
+                        anchors.right: parent.right; width: 30; height: parent.height
+                        Ico {
+                            name: "close"; size: 11
+                            color: historySearchClearMa.containsMouse ? root.textHi : root.textLo
+                            anchors.centerIn: parent
+                        }
+                        MouseArea {
+                            id: historySearchClearMa
+                            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: { historySearchField.text = ""; historySearchField.forceActiveFocus() }
+                        }
                     }
                 }
                 // Sort (mirrors the Search sort); hidden on the Recent strip,
@@ -22661,19 +22782,26 @@ ApplicationWindow {
                     // keep the same position on every tab. Toggling `visible`
                     // here dropped ~40px and shifted the whole pane vertically
                     // when switching to or from Home.
-                    opacity: root.libraryCategory === "home" ? 0 : 1
-                    enabled: root.libraryCategory !== "home"
+                    // On the history page it picks newest or oldest first.
+                    readonly property bool forHistory: root.libraryCategory === "history"
+                    // An empty history has nothing to order: hidden the same way.
+                    readonly property bool shown: root.libraryCategory !== "home" && !(forHistory && libHistoryModel.count === 0)
+                    opacity: shown ? 1 : 0
+                    enabled: shown
                     Layout.alignment: Qt.AlignVCenter
+                    // Narrower on history (two short choices), so the search
+                    // box fits beside it without wrapping the chips.
                     implicitHeight: 40; implicitWidth: 160
-                    model: root.libSortLabels(root.libraryCategory)
+                    model: forHistory ? ["Most recent", "Oldest first"] : root.libSortLabels(root.libraryCategory)
                     // A Binding element (not an inline currentIndex) so the value
                     // survives the control's own imperative write on selection.
                     Binding {
                         target: libSortBox; property: "currentIndex"
-                        value: root.libSortCurrentIndex(root.libraryCategory)
+                        value: libSortBox.forHistory ? (root.historyOldest ? 1 : 0) : root.libSortCurrentIndex(root.libraryCategory)
                         restoreMode: Binding.RestoreBindingOrValue
                     }
                     onActivated: {
+                        if (forHistory) { root.historyFilter(root.historyKind, currentIndex === 1); return }
                         var opts = root.libSortOptions(root.libraryCategory)
                         root.libApplySort(root.libraryCategory, opts[currentIndex][1], root.libSortGet(root.libraryCategory).asc)
                     }
@@ -22709,6 +22837,9 @@ ApplicationWindow {
                 Rectangle {
                     // Reserve its space on Home too, matching libSortBox above,
                     // so the header height and tab positions never shift.
+                    // Out of the row on the history page, where CLEAR HISTORY
+                    // takes the trailing edge (its 40px slot keeps the height).
+                    visible: root.libraryCategory !== "history"
                     opacity: root.libraryCategory === "home" ? 0 : 1
                     enabled: root.libraryCategory !== "home"
                     Layout.alignment: Qt.AlignVCenter
@@ -22722,6 +22853,23 @@ ApplicationWindow {
                     MouseArea {
                         anchors.fill: parent; cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: { var g = root.libSortGet(root.libraryCategory); root.libApplySort(root.libraryCategory, g.key, !g.asc) }
+                    }
+                }
+                // History page only: empties the list (confirmed first). Sits in a
+                // 40px slot like the sort controls it replaces, so the header
+                // keeps its height.
+                Item {
+                    id: historyClearSlot
+                    visible: root.libraryCategory === "history"
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitHeight: 40; implicitWidth: historyClearBtn.implicitWidth
+                    SpecBtn {
+                        id: historyClearBtn
+                        objectName: "historyClearBtn"
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: libHistoryModel.count > 0
+                        danger: true; label: root.width < 1120 ? "LEEREN" : I18n.t("CLEAR HISTORY")
+                        onClicked: root.confirmHistoryClear = true
                     }
                 }
             }
@@ -22743,6 +22891,29 @@ ApplicationWindow {
                         explicit: model.explicit === true
                         libBaked: model.lib; libStamp: model.libStamp
                     }
+                }
+                LibList {
+                    id: libHistoryList
+                    objectName: "libHistoryList"
+                    cat: "history"; model: libHistoryModel
+                    delegate: HistoryRow {
+                        required property var model
+                        width: ListView.view.width
+                        entryId: model.id; kind: model.kind || ""; mediaId: model.media_id || ""
+                        name: model.name || ""; artistName: model.artist || ""; art: model.art || ""
+                        status: model.status || ""; landed: model.landed || ""; mixJson: model.mix || "[]"
+                        date: model.date || ""; timeText: model.time || ""; saved: model.saved || 0; total: model.total || 0
+                        tracksJson: model.tracksJson || "[]"
+                    }
+                }
+                Text {
+                    id: historyEmpty
+                    objectName: "historyEmpty"
+                    visible: root.libraryCategory === "history" && root.historyReady && libHistoryModel.count === 0
+                    anchors.horizontalCenter: parent.horizontalCenter; y: 40
+                    textFormat: Text.PlainText; text: root.historyQuery.trim() !== "" ? "Keine passenden Einträge im Verlauf gefunden."
+                        : root.historyKind === "" ? "Ab jetzt abgeschlossene Downloads erscheinen hier." : "Noch keine Downloads dieses Typs im Verlauf."
+                    color: root.textLo; font.pixelSize: 14
                 }
                 LibList {
                     id: libTracksList
@@ -23127,7 +23298,7 @@ ApplicationWindow {
                                 Text { textFormat: Text.PlainText; text: model.title; color: root.textHi; font.pixelSize: 15; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
                                 Text { textFormat: Text.PlainText; text: I18n.t(model.subtitle ? model.subtitle : "Mix"); color: root.textLo; font.pixelSize: 12 }
                             }
-                            DownloadButton { mediaId: model.id; collectionCheck: true; label: "Download mix"; onTap: function(){ bitwave.downloadMix(model.id) } }
+                            DownloadButton { mediaId: model.id; collectionCheck: true; label: I18n.t("Download mix"); onTap: function(){ bitwave.downloadMix(model.id) } }
                         }
                     }
                 }
@@ -23467,7 +23638,7 @@ ApplicationWindow {
                             readonly property real chipRoom: 34
                             // Mono: one glyph's advance times the characters,
                             // so fitting never re-measures text in a binding.
-                            TextMetrics { id: npArtTm; font.family: root.mono; font.pixelSize: 11; text: "M" }
+                            TextMetrics { id: npArtTm; font.family: root.mono; font.pixelSize: 11; text: I18n.t("M") }
                             readonly property int shown: {
                                 if (n <= 1) return n
                                 var used = 0, k = 0
@@ -23534,7 +23705,7 @@ ApplicationWindow {
                 Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 20; width: stopMetrics.width
-                    TextMetrics { id: stopMetrics; font.family: root.mono; font.pixelSize: 11; font.bold: true; text: "[stop]" }
+                    TextMetrics { id: stopMetrics; font.family: root.mono; font.pixelSize: 11; font.bold: true; text: I18n.t("[stop]") }
                     Text {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
                         textFormat: Text.PlainText
@@ -23585,7 +23756,7 @@ ApplicationWindow {
                 var dep = nowPlaying.x + statusBar.width + root.height + npArtist.x + npInfo.x + npMore.x + npMore.width
                 return npMore.mapToItem(nowOverlay, npMore.width, 0)
             }
-            TextMetrics { id: nowCardTm; font.family: root.mono; font.pixelSize: 11; text: "M" }
+            TextMetrics { id: nowCardTm; font.family: root.mono; font.pixelSize: 11; text: I18n.t("M") }
             readonly property int maxChars: {
                 var m = 0, l = nowCard.folded
                 for (var i = 0; i < l.length; i++) m = Math.max(m, ("" + l[i].name).length)
@@ -23856,7 +24027,7 @@ ApplicationWindow {
                     // Or a scan in flight: it has no row yet, and this is
                     // the only control that ends it.
                     visible: root.activeQueueCount > 0 || bitwave.scanning
-                    danger: true; label: "STOP"
+                    danger: true; label: I18n.t("STOP")
                     onClicked: bitwave.stopAll()
                 }
                 // Shut the drawer. Clicking the page behind it already does
@@ -23929,7 +24100,7 @@ ApplicationWindow {
                         // (issue #18; Stopped joined it in issue #27). Each header
                         // retries its own section only.
                         SpecBtn {
-                            compact: true; primary: true; label: "RETRY ALL"
+                            compact: true; primary: true; label: I18n.t("RETRY ALL")
                             visible: secItem.section === "failed" || secItem.section === "stopped"
                             Layout.alignment: Qt.AlignVCenter
                             onClicked: {
@@ -23951,7 +24122,7 @@ ApplicationWindow {
                             // for, which is the danger red the exit prompt uses.
                             primary: secItem.section === "completed"
                             danger: secItem.section !== "completed"
-                            label: "CLEAR"
+                            label: I18n.t("CLEAR")
                             visible: secItem.section !== "downloading"
                             Layout.alignment: Qt.AlignVCenter
                             onClicked: {
@@ -24339,6 +24510,7 @@ ApplicationWindow {
                                     anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
                                     height: 15
                                     sourceComponent: DotMatrix {
+                                    id: qmx
                                     objectName: "queueRowMatrix"
                                     anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
                                     rows: 4; dot: 3; gap: 1; maxCols: 0
@@ -24351,7 +24523,40 @@ ApplicationWindow {
                                     // rounds 2-4, 2026-08-17).
                                     edgeFadeW: 28; edgeSoft: 0.15
                                     pulse: qrow.st === "running"
-                                    pct: qrow.st === "done" ? 100 : model.progress
+                                    // The row hears its progress in steps (a
+                                    // collection's twice a second, off the
+                                    // track poll), and drawn as told the bar
+                                    // sat still and then lit a column and a
+                                    // half at once. A rise is filled LINEARLY
+                                    // over a little more than one poll, so the
+                                    // blocks light one by one at an even pace,
+                                    // and a long leap (owned tracks skipped in
+                                    // a burst) gets 22ms a point, 1.5s at most,
+                                    // like the download buttons (dlHolderComp).
+                                    // The leap is the REPORT's size, not the
+                                    // bar's distance behind: measured off the
+                                    // bar, a fast download's lag fed its own
+                                    // ramp and FINISHING began half filled.
+                                    // A fall, the first reading, a row that is
+                                    // no longer running (`pulse` is exactly
+                                    // that; a done bar reads full before it
+                                    // fades) and hover motion off all snap.
+                                    readonly property real told: qrow.st === "done" ? 100 : model.progress
+                                    property real heard: 0
+                                    property int glideMs: 0
+                                    function hear() {
+                                        var leap = Math.max(0, told - heard)
+                                        heard = told
+                                        glideMs = (root.hoverMotion && pulse && told > pct) ? Math.min(1500, 600 + leap * 22) : 0
+                                        pct = told
+                                    }
+                                    onToldChanged: hear()
+                                    onPulseChanged: hear()
+                                    Component.onCompleted: { heard = told; pct = told }
+                                    Behavior on pct {
+                                        enabled: qmx.glideMs > 0
+                                        NumberAnimation { duration: qmx.glideMs; easing.type: Easing.Linear }
+                                    }
                                     // 100% but still running = the final steps (merge,
                                     // tag) are in flight: twinkle, don't freeze.
                                     finishing: qrow.st === "running" && model.progress >= 99.9
@@ -24437,13 +24642,13 @@ ApplicationWindow {
                                     SpecBtn {
                                         objectName: "qLedgerAll"
                                         compact: true; primary: !qrow.missingOnly
-                                        label: "ALL · " + qrow.ledgerLen
+                                        label: I18n.t("ALL · ") + qrow.ledgerLen
                                         onClicked: { qrow.showMissing(false); qLedger.positionViewAtBeginning() }
                                     }
                                     SpecBtn {
                                         objectName: "qLedgerMissing"
                                         compact: true; danger: qrow.missingOnly
-                                        label: "MISSING · " + qrow.ledgerMissing.length
+                                        label: I18n.t("MISSING · ") + qrow.ledgerMissing.length
                                         onClicked: { qrow.showMissing(true); qLedger.positionViewAtBeginning() }
                                     }
                                     Item { Layout.fillWidth: true }
@@ -24863,6 +25068,13 @@ ApplicationWindow {
                     label: root.queueExportLabel(-1, "MISSING REPORT")
                     onClicked: bitwave.exportMissingTracks(-1)
                 }
+                // Everything BitWave has saved, on its own page.
+                SpecBtn {
+                    id: queueHistoryBtn
+                    objectName: "queueHistoryBtn"
+                    label: I18n.t("HISTORY")
+                    onClicked: root.openHistory()
+                }
                 // Pushes the button to the trailing edge, under the section
                 // headers' own controls, so the three CLEARs line up vertically.
                 Item { Layout.fillWidth: true }
@@ -24870,7 +25082,7 @@ ApplicationWindow {
                 // width is for modal CTAs, an inline button that stretches is
                 // just a wide empty box.
                 SpecBtn {
-                    danger: true; label: "CLEAR ALL"
+                    danger: true; label: I18n.t("CLEAR ALL")
                     onClicked: bitwave.clearQueue()
                 }
             }
@@ -25275,12 +25487,8 @@ ApplicationWindow {
                     color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
                     text: I18n.t("BitWave doesn't have a folder to save downloads to yet. Pick where your music should go, then start the download again.")
                 }
-                SpecBtn { Layout.alignment: Qt.AlignHCenter; primary: true; label: "OPEN DOWNLOAD SETTINGS"; onClicked: { root.folderGateBlocking = false; root.openDownloadSetting() } }
-                Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    textFormat: Text.PlainText; text: I18n.t("Not now"); color: root.textLo; font.pixelSize: 13
-                    MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: root.folderGateBlocking = false }
-                }
+                SpecBtn { Layout.alignment: Qt.AlignHCenter; primary: true; label: I18n.t("OPEN DOWNLOAD SETTINGS"); onClicked: { root.folderGateBlocking = false; root.openDownloadSetting() } }
+                SpecBtn { Layout.alignment: Qt.AlignHCenter; label: I18n.t("NOT NOW"); onClicked: root.folderGateBlocking = false }
             }
         }
     }
@@ -25317,8 +25525,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
-                    SpecBtn { primary: true; label: "CHOOSE A NEW LOCATION"; onClicked: { root.folderNudge = false; bitwave.dismissDownloadFolderNudge(); root.openDownloadSetting() } }
-                    SpecBtn { label: "KEEP THE DEFAULT LOCATION"; onClicked: { root.folderNudge = false; bitwave.keepDownloadFolder() } }
+                    SpecBtn { primary: true; label: I18n.t("CHOOSE A NEW LOCATION"); onClicked: { root.folderNudge = false; bitwave.dismissDownloadFolderNudge(); root.openDownloadSetting() } }
+                    SpecBtn { label: I18n.t("KEEP THE DEFAULT LOCATION"); onClicked: { root.folderNudge = false; bitwave.keepDownloadFolder() } }
                 }
             }
         }
@@ -25392,7 +25600,7 @@ ApplicationWindow {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
                     SpecBtn {
-                        primary: true; label: "DOWNLOAD ALL"
+                        primary: true; label: I18n.t("DOWNLOAD ALL")
                         onClicked: {
                             var p = root.catDlPrompt
                             var mute = cdSkip.checked
@@ -25408,7 +25616,42 @@ ApplicationWindow {
                             else bitwave.downloadPlaylistCategory(p.path)
                         }
                     }
-                    SpecBtn { label: "CANCEL"; onClicked: root.catDlDismiss() }
+                    SpecBtn { label: I18n.t("CANCEL"); onClicked: root.catDlDismiss() }
+                }
+            }
+        }
+    }
+
+    // CLEAR HISTORY on the Download history page: the list only, never a file.
+    Rectangle {
+        id: historyClearGate
+        objectName: "historyClearGate"
+        anchors.fill: parent
+        visible: root.confirmHistoryClear
+        color: "#cc06070e"
+        MouseArea { anchors.fill: parent; onClicked: root.confirmHistoryClear = false }   // click-away cancels
+        Rectangle {
+            anchors.centerIn: parent; width: 460
+            implicitHeight: hcCol.implicitHeight + 40
+            radius: 14; color: root.surface2; border.color: root.outline
+            MouseArea { anchors.fill: parent }   // a click on the card must not dismiss
+            ColumnLayout {
+                id: hcCol; anchors.centerIn: parent; width: parent.width - 40; spacing: 14
+                Text { textFormat: Text.PlainText; Layout.fillWidth: true; color: root.textHi; font.pixelSize: 18; font.bold: true; wrapMode: Text.WordWrap; text: I18n.t("Clear your download history?") }
+                Text {
+                    textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
+                    color: root.textLo; font.pixelSize: 13; lineHeight: 1.3
+                    text: I18n.t("This clears the list only. Your files stay where they are.")
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
+                    SpecBtn {
+                        id: historyClearConfirm
+                        objectName: "historyClearConfirm"
+                        primary: true; label: I18n.t("CLEAR HISTORY")
+                        onClicked: { root.confirmHistoryClear = false; root.historyQuery = ""; bitwave.clearHistory() }
+                    }
+                    SpecBtn { label: I18n.t("CANCEL"); onClicked: root.confirmHistoryClear = false }
                 }
             }
         }
@@ -25440,14 +25683,14 @@ ApplicationWindow {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
                     SpecBtn {
-                        primary: true; label: "RESET SETTINGS"
+                        primary: true; label: I18n.t("RESET SETTINGS")
                         onClicked: {
                             root.confirmSettingsReset = false
                             bitwave.resetSettingsDefaults()
                             settingsPage.externalReset()
                         }
                     }
-                    SpecBtn { label: "CANCEL"; onClicked: root.confirmSettingsReset = false }
+                    SpecBtn { label: I18n.t("CANCEL"); onClicked: root.confirmSettingsReset = false }
                 }
             }
         }
@@ -25505,7 +25748,7 @@ ApplicationWindow {
                             else bitwave.flacCheckFix()
                         }
                     }
-                    SpecBtn { label: "CANCEL"; onClicked: root.confirmFlacFix = false }
+                    SpecBtn { label: I18n.t("CANCEL"); onClicked: root.confirmFlacFix = false }
                 }
             }
         }
@@ -25537,14 +25780,14 @@ ApplicationWindow {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
                     SpecBtn {
-                        danger: true; label: "ERASE EVERYTHING AND CLOSE"
+                        danger: true; label: I18n.t("ERASE EVERYTHING AND CLOSE")
                         onClicked: {
                             root.confirmFactoryReset = false
                             bitwave.factoryReset()
                             Qt.quit()
                         }
                     }
-                    SpecBtn { label: "CANCEL"; onClicked: root.confirmFactoryReset = false }
+                    SpecBtn { label: I18n.t("CANCEL"); onClicked: root.confirmFactoryReset = false }
                 }
             }
         }
@@ -25586,8 +25829,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
-                    SpecBtn { primary: true; label: "TRY AGAIN"; onClicked: { root.folderUnreachable = false; bitwave.retryDownloadFolder() } }
-                    SpecBtn { label: "CHOOSE A NEW LOCATION"; onClicked: { root.folderUnreachable = false; bitwave.dismissDownloadFolderNudge(); root.openDownloadSetting() } }
+                    SpecBtn { primary: true; label: I18n.t("TRY AGAIN"); onClicked: { root.folderUnreachable = false; bitwave.retryDownloadFolder() } }
+                    SpecBtn { label: I18n.t("CHOOSE A NEW LOCATION"); onClicked: { root.folderUnreachable = false; bitwave.dismissDownloadFolderNudge(); root.openDownloadSetting() } }
                 }
             }
         }
@@ -25700,13 +25943,13 @@ ApplicationWindow {
                 GateCard {
                     visible: appFfmpeg.stateKey === "missing" && !appFfmpeg.busy
                     highlight: true
-                    title: "Install a managed copy"; chip: "RECOMMENDED"
+                    title: I18n.t("Install a managed copy"); chip: "RECOMMENDED"
                     desc: "Private to BitWave, updated in one click from Settings."
                     onClicked: appFfmpeg.install()
                 }
                 GateCard {
                     visible: appFfmpeg.stateKey === "missing" && !appFfmpeg.busy
-                    title: "Set it up myself later"
+                    title: I18n.t("Set it up myself later")
                     desc: "Point BitWave at your own FFmpeg from Settings."
                     onClicked: { setupSettings.ffmpegSetupDone = true; ffmpegGate.sessionSnoozed = true }
                 }
@@ -25734,14 +25977,14 @@ ApplicationWindow {
                 GateCard {
                     visible: appFfmpeg.stateKey === "path" && !appFfmpeg.busy
                     highlight: true
-                    title: "Keep my system FFmpeg"
+                    title: I18n.t("Keep my system FFmpeg")
                     chip: appFfmpeg.status.version ? "DETECTED · " + appFfmpeg.status.version : "DETECTED"
                     desc: appFfmpeg.status.path ? "Use the copy already installed at " + appFfmpeg.status.path + "." : "Use the copy already installed on this system."
                     onClicked: { setupSettings.ffmpegSetupDone = true; ffmpegGate.sessionSnoozed = true }
                 }
                 GateCard {
                     visible: appFfmpeg.stateKey === "path" && !appFfmpeg.busy
-                    title: "Switch to a managed copy"
+                    title: I18n.t("Switch to a managed copy")
                     desc: "Private to BitWave, one-click updates from Settings."
                     onClicked: appFfmpeg.install()
                 }
@@ -25750,7 +25993,7 @@ ApplicationWindow {
                 SpecBtn {
                     Layout.alignment: Qt.AlignHCenter
                     visible: appFfmpeg.busy
-                    label: "CANCEL"; danger: true
+                    label: I18n.t("CANCEL"); danger: true
                     onClicked: appFfmpeg.cancel()
                 }
 
@@ -25758,7 +26001,7 @@ ApplicationWindow {
                 SpecBtn {
                     Layout.alignment: Qt.AlignHCenter; primary: true
                     visible: appFfmpeg.stateKey === "managed" && !appFfmpeg.busy
-                    label: "CONTINUE"
+                    label: I18n.t("CONTINUE")
                     onClicked: { setupSettings.ffmpegSetupDone = true; ffmpegGate.sessionSnoozed = true }
                 }
 
@@ -26053,8 +26296,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
-                    SpecBtn { primary: true; label: "SET UP FFMPEG"; onClicked: { root.ffmpegBlocked = false; bitwave.dismissDownloadFolderNudge(); root.openFfmpegSetting() } }
-                    SpecBtn { label: "CONTINUE ANYWAY"; onClicked: { root.ffmpegBlocked = false; bitwave.bypassFfmpegGate() } }
+                    SpecBtn { primary: true; label: I18n.t("SET UP FFMPEG"); onClicked: { root.ffmpegBlocked = false; bitwave.dismissDownloadFolderNudge(); root.openFfmpegSetting() } }
+                    SpecBtn { label: I18n.t("CONTINUE ANYWAY"); onClicked: { root.ffmpegBlocked = false; bitwave.bypassFfmpegGate() } }
                 }
             }
         }
@@ -26193,7 +26436,7 @@ ApplicationWindow {
                 }
                 SpecBtn {
                     Layout.alignment: Qt.AlignHCenter; primary: true
-                    label: "ACKNOWLEDGE & AGREE"
+                    label: I18n.t("ACKNOWLEDGE & AGREE")
                     enabled: ackChk.checked
                     opacity: ackChk.checked ? 1 : 0.4
                     // freshSetup: the opt-in prompt that follows this gate reads
@@ -26370,7 +26613,7 @@ ApplicationWindow {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
                     SpecBtn {
-                        primary: true; label: "SHOW IN FOLDER"
+                        primary: true; label: I18n.t("SHOW IN FOLDER")
                         visible: libraryClaimGate.folder !== ""
                         onClicked: libraryClaimGate.reveal()
                     }
@@ -26467,8 +26710,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
-                    SpecBtn { primary: true; label: "TURN ON UPDATE CHECKS"; onClicked: updateOptInGate.answer(true) }
-                    SpecBtn { label: "NOT NOW"; onClicked: updateOptInGate.answer(false) }
+                    SpecBtn { primary: true; label: I18n.t("TURN ON UPDATE CHECKS"); onClicked: updateOptInGate.answer(true) }
+                    SpecBtn { label: I18n.t("NOT NOW"); onClicked: updateOptInGate.answer(false) }
                 }
             }
         }
@@ -26549,8 +26792,8 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 4; spacing: 12
-                    SpecBtn { primary: true; label: "TAKE ME TO THE FIX"; onClicked: flacNoticeGate.answer(true) }
-                    SpecBtn { label: "GOT IT"; onClicked: flacNoticeGate.answer(false) }
+                    SpecBtn { primary: true; label: I18n.t("TAKE ME TO THE FIX"); onClicked: flacNoticeGate.answer(true) }
+                    SpecBtn { label: I18n.t("GOT IT"); onClicked: flacNoticeGate.answer(false) }
                 }
             }
         }
@@ -26704,7 +26947,7 @@ ApplicationWindow {
                 }
                 SpecBtn {
                     Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2
-                    label: "DONE"
+                    label: I18n.t("DONE")
                     onClicked: followDialog.close()
                 }
             }
@@ -26881,7 +27124,7 @@ ApplicationWindow {
         function build(matched, fuzzy, unmatched) {
             var out = [], p = ({})
             if (matched.length) {
-                out.push({ kind: "head", key: "h:m", label: "FOUND ON TIDAL", n: matched.length, all: true })
+                out.push({ kind: "head", key: "h:m", label: I18n.t("FOUND ON TIDAL"), n: matched.length, all: true })
                 for (var i = 0; i < matched.length; i++) {
                     var m = matched[i]
                     out.push({ kind: "match", key: "" + m.norm, name: "" + m.name, albums: m.albums || 0,
@@ -26891,13 +27134,13 @@ ApplicationWindow {
                 }
             }
             if (fuzzy.length) {
-                out.push({ kind: "head", key: "h:f", label: "PICK THE RIGHT ONE", n: fuzzy.length, all: false })
+                out.push({ kind: "head", key: "h:f", label: I18n.t("PICK THE RIGHT ONE"), n: fuzzy.length, all: false })
                 for (var j = 0; j < fuzzy.length; j++)
                     out.push({ kind: "fuzzy", key: "" + fuzzy[j].norm, name: "" + fuzzy[j].name,
                                albums: fuzzy[j].albums || 0, candidates: fuzzy[j].candidates || [] })
             }
             if (unmatched.length) {
-                out.push({ kind: "head", key: "h:u", label: "NOT FOUND", n: unmatched.length, all: false })
+                out.push({ kind: "head", key: "h:u", label: I18n.t("NOT FOUND"), n: unmatched.length, all: false })
                 for (var k = 0; k < unmatched.length; k++)
                     out.push({ kind: "none", key: "" + unmatched[k].norm, name: "" + unmatched[k].name,
                                albums: unmatched[k].albums || 0 })
@@ -27128,7 +27371,7 @@ ApplicationWindow {
                                 }
                                 SpecBtn {
                                     objectName: "importDismissBtn"
-                                    compact: true; label: "NOT THESE"
+                                    compact: true; label: I18n.t("NOT THESE")
                                     onClicked: importDialog.drop(idRow.rowData.key)
                                 }
                             }
@@ -27188,12 +27431,12 @@ ApplicationWindow {
                             }
                             SpecBtn {
                                 objectName: "importSearchBtn"
-                                compact: true; label: "SEARCH"
+                                compact: true; label: I18n.t("SEARCH")
                                 onClicked: importDialog.park(idRow.rowData.name || "")
                             }
                             SpecBtn {
                                 objectName: "importForgetBtn"
-                                compact: true; label: "FORGET"
+                                compact: true; label: I18n.t("FORGET")
                                 onClicked: importDialog.drop(idRow.rowData.key)
                             }
                         }
@@ -27204,7 +27447,7 @@ ApplicationWindow {
                     SpecBtn {
                         visible: importDialog.stage === "start" && importDialog.trayCount > 0
                         objectName: "importTrayBtn"
-                        label: "LOOK AT THEM"
+                        label: I18n.t("LOOK AT THEM")
                         onClicked: importDialog.reviewTray()
                     }
                     SpecBtn {
@@ -27216,7 +27459,7 @@ ApplicationWindow {
                     SpecBtn {
                         visible: importDialog.stage === "start"
                         objectName: "importStartBtn"
-                        primary: true; label: "START"
+                        primary: true; label: I18n.t("START")
                         onClicked: importDialog.start()
                     }
                     SpecBtn {
@@ -27224,7 +27467,7 @@ ApplicationWindow {
                         objectName: "importConfirmBtn"
                         primary: true; enabled: importDialog.pickCount > 0
                         opacity: enabled ? 1 : 0.4
-                        label: "FOLLOW " + importDialog.pickCount + (importDialog.pickCount === 1 ? " ARTIST" : " ARTISTS")
+                        label: I18n.t("FOLLOW ") + importDialog.pickCount + (importDialog.pickCount === 1 ? " ARTIST" : " ARTISTS")
                         onClicked: importDialog.confirm()
                     }
                 }
@@ -27301,14 +27544,14 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: 4; spacing: 12
                     SpecBtn {
-                        primary: true; label: "KEEP DOWNLOADING"
+                        primary: true; label: I18n.t("KEEP DOWNLOADING")
                         onClicked: {
                             if (exitSkip.checked) setupSettings.exitWarnMuted = true
                             exitGate.open = false
                         }
                     }
                     SpecBtn {
-                        danger: true; label: "EXIT ANYWAY"
+                        danger: true; label: I18n.t("EXIT ANYWAY")
                         onClicked: {
                             if (exitSkip.checked) setupSettings.exitWarnMuted = true
                             exitGate.confirmed = true

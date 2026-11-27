@@ -7,4 +7,4 @@ The interface uses the engine's configuration, download and helper modules.
 # (:mod:`bitwave.bitwave_ui.updater`) compares against the latest GitHub release
 # tag. tests/test_package_version.py checks the normalized pyproject.toml version.
 # Bump both (and tag a matching ``vX.Y.Z`` release) on every shipped build.
-__version__ = "0.2.8"
+__version__ = "0.2.9"

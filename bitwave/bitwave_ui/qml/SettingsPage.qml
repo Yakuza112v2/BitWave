@@ -913,6 +913,23 @@ Item {
 
     // ---- Controls -------------------------------------------------------
 
+    // A button frame that lifts on hover, same recipe as Main.qml SpecBtn:
+    // filled ones lighten, outlined ones (fill transparent) take a wash.
+    // soft = secondary: faint green edge that firms up on hover.
+    component LiftRect: Rectangle {
+        property color fill: "transparent"
+        property color edge: "transparent"
+        property color wash: page.accentCont
+        property bool soft: false
+        property bool live: true
+        readonly property bool hov: liftHover.hovered && live
+        color: !hov ? fill : fill.a === 0 ? Qt.alpha(wash, 0.7) : Qt.lighter(fill, 1.35)
+        border.color: soft ? (hov ? page.accentDim : Qt.alpha(page.accentDim, 0.55)) : edge
+        Behavior on color { ColorAnimation { duration: 110 } }
+        Behavior on border.color { ColorAnimation { duration: 110 } }
+        HoverHandler { id: liftHover }
+    }
+
     // A key switch: the cap slides over engraved ON / OFF legends and its
     // LED lights. Pure visual: the enclosing tile's (or row's) MouseArea
     // drives `checked` via page.val/page.setv.
@@ -964,7 +981,7 @@ Item {
     // adds (a hint, a nested key) go under the help.
     component TileBody: Item {
         id: tb
-        property string title: ""
+        property string title: I18n.t("")
         property string help: ""
         property bool helpShown: help !== ""
         property bool checked: false
@@ -1102,7 +1119,7 @@ Item {
     component SCheck: Item {
         id: ck
         property bool on: false
-        property string label: ""
+        property string label: I18n.t("")
         property real k: ck.on ? 1 : 0
         Behavior on k { NumberAnimation { duration: page.keyMs; easing.type: Easing.OutCubic } }
         // Circle 13 + gap 7 + label + 14 of padding (from the label's own width,
@@ -1144,6 +1161,7 @@ Item {
         property var options: []
         property int currentIndex: 0
         property bool ladder: false
+        property bool stacked: false
         signal picked(int index)
         activeFocusOnTab: true
         function stepPick(by) {
@@ -1159,21 +1177,22 @@ Item {
             return false
         }
         readonly property Item curItem: chRep.count > 0 && currentIndex >= 0 && currentIndex < chRep.count ? chRep.itemAt(currentIndex) : null
-        implicitWidth: chRow.implicitWidth + 4
-        implicitHeight: twoLine ? 42 : 30
+        implicitWidth: stacked ? 270 : chRow.implicitWidth + 4
+        implicitHeight: stacked ? Math.max(1,options.length) * (twoLine ? 38 : 26) + 4 : (twoLine ? 42 : 30)
         radius: 8; color: page.surface0
         border.color: activeFocus ? page.accentDim : page.outline
         Rectangle {
             visible: ch.curItem !== null
-            y: 2; height: parent.height - 4; radius: 6
+            y: ch.curItem ? ch.curItem.y + 2 : 2; height: ch.curItem ? ch.curItem.height : parent.height - 4; radius: 6
             x: ch.curItem ? ch.curItem.x + 2 : 2
             width: ch.curItem ? ch.curItem.width : 0
             color: page.accentCont; border.color: page.accentDim
             Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
             Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         }
-        Row {
+        Grid {
             id: chRow
+            columns: ch.stacked ? 1 : Math.max(1,ch.options.length)
             x: 2; y: 2; height: parent.height - 4
             Repeater {
                 id: chRep
@@ -1184,7 +1203,7 @@ Item {
                     required property int index
                     readonly property bool sel: index === ch.currentIndex
                     readonly property int lit: Math.max(1, Math.round((index + 1) / Math.max(1, ch.options.length) * 4))
-                    width: chCol.width + (ch.ladder ? 42 : 24); height: parent.height
+                    width: ch.stacked ? ch.width - 4 : chCol.width + (ch.ladder ? 42 : 24); height: ch.twoLine ? 38 : 26
                     Row {
                         visible: ch.ladder
                         x: 11; anchors.verticalCenter: parent.verticalCenter; spacing: 2
@@ -1337,7 +1356,7 @@ Item {
     component FlagTile: Rectangle {
         id: ftile
         property string keyName: ""
-        property string label: ""
+        property string label: I18n.t("")
         property string help: ""
         property bool checked: false
         // A third of the row is narrower, so the help gets one more line
@@ -1797,8 +1816,8 @@ Item {
             }
             Row {
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; spacing: 10
-                Rectangle {
-                    width: cancelTxt.width + page.btnPadH * 2; height: cancelTxt.height + page.btnPadV * 2; radius: page.btnRad; color: "transparent"; border.color: "transparent"
+                LiftRect {
+                    width: cancelTxt.width + page.btnPadH * 2; height: cancelTxt.height + page.btnPadV * 2; radius: page.btnRad; soft: true; live: page.dirty
                     // Nothing typed, nothing to throw away: reads as inert
                     // rather than as a way out of the page.
                     opacity: page.dirty ? 1 : 0.4
@@ -1809,14 +1828,14 @@ Item {
                         onClicked: page.discardEdits()
                     }
                 }
-                Rectangle {
+                LiftRect {
                     id: saveBtn; objectName: "settingsSave"
                     // A red field holds the whole save, so nothing the engine
                     // would refuse can reach the config in the first place.
                     readonly property bool canSave: page.dirty && !page.hasInvalidEdits()
                     width: saveTxt.width + page.btnPadH * 2; height: saveTxt.height + page.btnPadV * 2; radius: page.btnRad
-                    color: page.accentCont; opacity: canSave ? 1 : 0.4
-                    border.color: page.accentDim; border.width: 1
+                    fill: page.accentCont; edge: page.accentDim; live: canSave; opacity: canSave ? 1 : 0.4
+                    border.width: 1
                     Text { id: saveTxt; anchors.centerIn: parent; text: I18n.t("SAVE CHANGES"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                     MouseArea {
                         anchors.fill: parent; enabled: saveBtn.canSave
@@ -1981,11 +2000,11 @@ Item {
 
                         // MISSING, one prominent install action (centered), as in
                         // the setup pop-up.
-                        Rectangle {
+                        LiftRect {
                             visible: page.ff.stateKey === "missing" && !page.ff.busy
                             Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2; Layout.preferredHeight: ffInstTxt.implicitHeight + page.btnPadV * 2
                             implicitWidth: ffInstTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad
-                            color: page.accentCont; border.width: 1; border.color: page.accentDim
+                            fill: page.accentCont; border.width: 1; edge: page.accentDim
                             Text { id: ffInstTxt; anchors.centerIn: parent; text: I18n.t("INSTALL FFMPEG"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.install() }
                         }
@@ -2039,11 +2058,11 @@ Item {
                                         color: page.textDim; font.pixelSize: 12; wrapMode: Text.WordWrap; lineHeight: 1.3; Layout.fillWidth: true
                                     }
                                 }
-                                Rectangle {
+                                LiftRect {
                                     Layout.alignment: Qt.AlignVCenter
                                     implicitWidth: ffMgdTxt.implicitWidth + page.btnPadH * 2; implicitHeight: ffMgdTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     // Same primary-button look as the app's filled download buttons.
-                                    color: page.accentCont; border.width: 1; border.color: page.accentDim
+                                    fill: page.accentCont; border.width: 1; edge: page.accentDim
                                     // "SWITCH TO MANAGED", not "INSTALL": FFmpeg is already
                                     // on the system here, this changes who provides it,
                                     // and "install" reads like something is missing.
@@ -2054,10 +2073,10 @@ Item {
                         }
 
                         // BUSY, cancel (centered).
-                        Rectangle {
+                        LiftRect {
                             visible: page.ff.busy
                             Layout.alignment: Qt.AlignHCenter; Layout.topMargin: 2; Layout.preferredHeight: ffCanTxt.implicitHeight + page.btnPadV * 2
-                            implicitWidth: ffCanTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad; color: "transparent"; border.color: page.red
+                            implicitWidth: ffCanTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad; wash: page.redCont; edge: page.red
                             Text { id: ffCanTxt; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.cancel() }
                         }
@@ -2151,14 +2170,14 @@ Item {
 
                             RowLayout {
                                 Layout.topMargin: 2; spacing: 10
-                                Rectangle {
+                                LiftRect {
                                     id: ffPrimary
                                     readonly property string label: page.ff.busy ? "Updating…"
                                         : page.ff.updateAvailable ? "Update"
                                         : (page.ff.checking ? "Checking…" : "Check for updates")
                                     implicitWidth: ffPrimTxt.implicitWidth + page.btnPadH * 2; implicitHeight: ffPrimTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     opacity: (page.ff.busy || page.ff.checking) ? 0.6 : 1.0
-                                    color: page.accentCont; border.color: page.accentDim
+                                    fill: page.accentCont; edge: page.accentDim; live: !page.ff.busy && !page.ff.checking
                                     Text {
                                         textFormat: Text.PlainText
                                         id: ffPrimTxt; anchors.centerIn: parent; text: I18n.t(ffPrimary.label.toUpperCase())
@@ -2171,18 +2190,18 @@ Item {
                                         onClicked: { if (page.ff.updateAvailable) page.ff.install(); else page.ff.checkUpdates() }
                                     }
                                 }
-                                Rectangle {
+                                LiftRect {
                                     visible: !page.ff.busy
                                     implicitWidth: ffRemTxt.implicitWidth + page.btnPadH * 2; implicitHeight: ffRemTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                    color: page.redCont; border.color: Qt.alpha(page.red, 0.55)
+                                    fill: page.redCont; edge: Qt.alpha(page.red, 0.55)
                                     Text { id: ffRemTxt; anchors.centerIn: parent; text: I18n.t("REMOVE"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.remove() }
                                 }
                                 // Cancel while busy
-                                Rectangle {
+                                LiftRect {
                                     visible: page.ff.busy
                                     implicitWidth: ffCanTxt2.implicitWidth + page.btnPadH * 2; implicitHeight: ffCanTxt2.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                    color: "transparent"; border.color: page.red
+                                    wash: page.redCont; edge: page.red
                                     Text { id: ffCanTxt2; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: page.ff.cancel() }
                                 }
@@ -2340,7 +2359,7 @@ Item {
                             RowLayout {
                                 Layout.topMargin: 2; spacing: 10
 
-                                Rectangle {
+                                LiftRect {
                                     id: auPrimary
                                     readonly property bool restartMode: page.auDone
                                     readonly property bool updateMode: page.auUpdate && auCard.canInstall && !page.auDone
@@ -2359,12 +2378,12 @@ Item {
                                     visible: label !== ""
                                     implicitWidth: auPrimTxt.implicitWidth + page.btnPadH * 2; implicitHeight: auPrimTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     opacity: (page.auBusy || page.auChecking) ? 0.6 : 1.0
-                                    color: auPrimary.accent ? page.accentCont : "transparent"
-                                    border.color: auPrimary.accent ? page.accentDim : page.outline
+                                    fill: auPrimary.accent ? page.accentCont : "transparent"
+                                    edge: page.accentDim; soft: !auPrimary.accent; live: !page.auBusy && !page.auChecking
                                     Text {
                                         textFormat: Text.PlainText
-                                        id: auPrimTxt; anchors.centerIn: parent; text: I18n.t(auPrimary.label.toUpperCase())
-                                        color: auPrimary.accent ? page.accent : page.textLo
+                                        id: auPrimTxt; anchors.centerIn: parent; text: auPrimary.label.toUpperCase()
+                                        color: page.accent
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
                                     MouseArea {
@@ -2380,10 +2399,10 @@ Item {
                                 }
 
                                 // Cancel while busy
-                                Rectangle {
+                                LiftRect {
                                     visible: page.auBusy
                                     implicitWidth: auCanTxt.implicitWidth + page.btnPadH * 2; implicitHeight: auCanTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                    color: "transparent"; border.color: page.red
+                                    wash: page.redCont; edge: page.red
                                     Text { id: auCanTxt; anchors.centerIn: parent; text: I18n.t("CANCEL"); color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.cancelAppUpdate() }
                                 }
@@ -2526,19 +2545,19 @@ Item {
                                     implicitHeight: flacSegW.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad
                                     color: !flacCard.chosen ? page.accentCont : "transparent"
-                                    border.color: !flacCard.chosen ? page.accentDim : page.outline
-                                    Text { id: flacSegW; anchors.centerIn: parent; text: I18n.t("BITWAVE LIBRARY"); color: !flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
-                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.flacCheckSetSource("bitwave") }
+                                    border.color: !flacCard.chosen ? page.accentDim : (flacSegWMa.containsMouse ? page.accentDim : page.outline)
+                                    Text { id: flacSegW; anchors.centerIn: parent; text: I18n.t("BITWAVE LIBRARY"); color: !flacCard.chosen || flacSegWMa.containsMouse ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    MouseArea { id: flacSegWMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.flacCheckSetSource("bitwave") }
                                 }
                                 Rectangle {
                                     implicitWidth: flacSegF.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacSegF.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad
                                     color: flacCard.chosen ? page.accentCont : "transparent"
-                                    border.color: flacCard.chosen ? page.accentDim : page.outline
-                                    Text { id: flacSegF; anchors.centerIn: parent; text: I18n.t("CUSTOM LOCATION"); color: flacCard.chosen ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    border.color: flacCard.chosen || flacSegFMa.containsMouse ? page.accentDim : page.outline
+                                    Text { id: flacSegF; anchors.centerIn: parent; text: I18n.t("CUSTOM LOCATION"); color: flacCard.chosen || flacSegFMa.containsMouse ? page.accent : page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea {
-                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                        id: flacSegFMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                         // No folder picked yet: go straight to the dialog,
                                         // which selects this source when it returns one.
                                         onClicked: {
@@ -2564,11 +2583,11 @@ Item {
                                     }
                                 }
                                 // BROWSE as on every other folder field (SAVE CHANGES vocabulary).
-                                Rectangle {
+                                LiftRect {
                                     visible: flacCard.chosen
                                     implicitWidth: flacBrwTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacBrwTxt.implicitHeight + page.btnPadV * 2
-                                    radius: page.btnRad; color: page.accentCont; border.color: page.accentDim
+                                    radius: page.btnRad; fill: page.accentCont; edge: page.accentDim
                                     Text { id: flacBrwTxt; anchors.centerIn: parent; text: I18n.t("Browse path").toUpperCase(); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea {
                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -2583,17 +2602,18 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true; Layout.topMargin: 2; Layout.bottomMargin: 2; spacing: 10
                                 // SCAN, or CANCEL while a run is on.
-                                Rectangle {
+                                LiftRect {
                                     implicitWidth: flacScanTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacScanTxt.implicitHeight + page.btnPadV * 2
                                     radius: page.btnRad
-                                    color: flacCard.running ? "transparent" : page.accentCont
-                                    border.color: flacCard.running ? page.outline : page.accentDim
+                                    // CANCEL takes the red outline every other busy-state CANCEL here wears.
+                                    fill: flacCard.running ? "transparent" : page.accentCont
+                                    edge: flacCard.running ? page.red : page.accentDim; wash: flacCard.running ? page.redCont : page.accentCont
                                     Text {
                                         id: flacScanTxt; anchors.centerIn: parent
                                         textFormat: Text.PlainText
                                         text: I18n.t(flacCard.running ? "CANCEL" : "SCAN")
-                                        color: flacCard.running ? page.textLo : page.accent
+                                        color: flacCard.running ? page.red : page.accent
                                         font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                     }
                                     MouseArea {
@@ -2607,21 +2627,21 @@ Item {
                                 // VIEW REPORTS: the reports folder, newest report selected,
                                 // whenever one exists (a run in progress included). It
                                 // sits beside SCAN so FIX appearing never moves it.
-                                Rectangle {
+                                LiftRect {
                                     objectName: "flacReportsBtn"
                                     visible: flacCard.st.reports === true
                                     implicitWidth: flacRepTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacRepTxt.implicitHeight + page.btnPadV * 2
-                                    radius: page.btnRad; color: "transparent"; border.color: page.outline
-                                    Text { id: flacRepTxt; anchors.centerIn: parent; text: I18n.t("VIEW REPORTS"); color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    radius: page.btnRad; soft: true
+                                    Text { id: flacRepTxt; anchors.centerIn: parent; text: I18n.t("VIEW REPORTS"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.flacCheckRevealReports() }
                                 }
                                 // FIX N FILES: only after a scan found files without a signature.
-                                Rectangle {
+                                LiftRect {
                                     visible: flacCard.fixable > 0
                                     implicitWidth: flacFixTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacFixTxt.implicitHeight + page.btnPadV * 2
-                                    radius: page.btnRad; color: page.goldCont; border.color: Qt.alpha(page.gold, 0.6)
+                                    radius: page.btnRad; fill: page.goldCont; edge: Qt.alpha(page.gold, 0.6)
                                     Text {
                                         id: flacFixTxt; anchors.centerIn: parent
                                         textFormat: Text.PlainText
@@ -2637,12 +2657,12 @@ Item {
                                 // RESUME LAST FIX: a fix stopped before it finished. Asks
                                 // through Main.qml's gate like FIX; the backend then scans
                                 // the same folders again and writes what is still missing.
-                                Rectangle {
+                                LiftRect {
                                     objectName: "flacResumeBtn"
                                     visible: page.flacResumable()
                                     implicitWidth: flacResTxt.implicitWidth + page.btnPadH * 2
                                     implicitHeight: flacResTxt.implicitHeight + page.btnPadV * 2
-                                    radius: page.btnRad; color: page.goldCont; border.color: Qt.alpha(page.gold, 0.6)
+                                    radius: page.btnRad; fill: page.goldCont; edge: Qt.alpha(page.gold, 0.6)
                                     Text {
                                         id: flacResTxt; anchors.centerIn: parent
                                         text: I18n.t("RESUME LAST FIX")
@@ -2728,11 +2748,12 @@ Item {
                         width: parent ? parent.width : 0
                         radius: 10; color: page.surface; border.color: page.border1
                         implicitHeight: rstRow.implicitHeight + 20
-                        RowLayout {
+                        GridLayout {
                             id: rstRow
+                            columns: page.width < 1200 ? 1 : 3
                             anchors.left: parent.left; anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 14; anchors.rightMargin: 14; spacing: 12
+                            anchors.leftMargin: 14; anchors.rightMargin: 14; columnSpacing: 12; rowSpacing: 10
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 2
                                 Text { text: I18n.t("Start over"); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium }
@@ -2742,11 +2763,11 @@ Item {
                                     color: page.textDim; font.pixelSize: 12
                                 }
                             }
-                            Rectangle {
+                            LiftRect {
                                 implicitWidth: rstDefTxt.implicitWidth + page.btnPadH * 2
                                 implicitHeight: rstDefTxt.implicitHeight + page.btnPadV * 2
                                 radius: page.btnRad; Layout.alignment: Qt.AlignVCenter
-                                color: page.accentCont; border.color: page.accentDim
+                                fill: page.accentCont; edge: page.accentDim
                                 Text {
                                     id: rstDefTxt; anchors.centerIn: parent
                                     text: I18n.t("RESET ALL SETTINGS"); color: page.accent
@@ -2757,11 +2778,11 @@ Item {
                                     onClicked: page.resetSettingsRequested()
                                 }
                             }
-                            Rectangle {
+                            LiftRect {
                                 implicitWidth: rstAppTxt.implicitWidth + page.btnPadH * 2
                                 implicitHeight: rstAppTxt.implicitHeight + page.btnPadV * 2
                                 radius: page.btnRad; Layout.alignment: Qt.AlignVCenter
-                                color: page.redCont; border.color: Qt.alpha(page.red, 0.55)
+                                fill: page.redCont; edge: Qt.alpha(page.red, 0.55)
                                 Text {
                                     id: rstAppTxt; anchors.centerIn: parent
                                     text: I18n.t("RESET APPLICATION"); color: page.red
@@ -2785,17 +2806,22 @@ Item {
                     Item {
                     id: dgCard
                     width: parent ? parent.width : 0
-                    implicitHeight: Math.max(dgLeftCol.implicitHeight + 24, dgRightCol.implicitHeight + 24, 108)
+                    readonly property bool singleColumn: width < 780
+                    implicitHeight: singleColumn ? dgLeftCol.implicitHeight + dgRightCol.implicitHeight + 58 : Math.max(dgLeftCol.implicitHeight + 24, dgRightCol.implicitHeight + 24, 108)
 
                     readonly property var dfVerbose: page.fieldByKey("verbose_diagnostics")
                     readonly property var dfRedact: page.fieldByKey("diagnostics_redact_content")
                     readonly property bool vbOn: dfVerbose ? page.val(dfVerbose) === true : false
+                    readonly property var dfHw: page.fieldByKey("diagnostics_hide_hardware")
+                    readonly property bool hwOn: dfHw ? page.val(dfHw) === true : false
                     readonly property bool rdOn: dfRedact ? page.val(dfRedact) === true : false
 
                     // ---- Left tile: status, export action ------------------
                     Rectangle {
-                        anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
-                        width: (parent.width - 10) / 2
+                        id: dgLeft
+                        anchors.left: parent.left; anchors.top: parent.top
+                        width: dgCard.singleColumn ? parent.width : (parent.width - 10) / 2
+                        height: dgCard.singleColumn ? dgLeftCol.implicitHeight + 24 : parent.height
                         radius: 10; color: page.surface; border.color: page.border1
                         ColumnLayout {
                             id: dgLeftCol
@@ -2818,11 +2844,11 @@ Item {
                             }
                             RowLayout {
                                 Layout.topMargin: 2; spacing: 10
-                                Rectangle {
+                                LiftRect {
                                     id: dgPrimary
                                     implicitWidth: dgPrimTxt.implicitWidth + page.btnPadH * 2; implicitHeight: dgPrimTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
                                     opacity: page.diagBusy ? 0.6 : 1.0
-                                    color: page.accentCont; border.color: page.accentDim
+                                    fill: page.accentCont; edge: page.accentDim; live: !page.diagBusy
                                     Text {
                                         textFormat: Text.PlainText
                                         id: dgPrimTxt; anchors.centerIn: parent
@@ -2851,11 +2877,11 @@ Item {
                                         }
                                     }
                                 }
-                                Rectangle {
+                                LiftRect {
                                     visible: page.diagPath !== "" && !page.diagBusy
                                     implicitWidth: dgShowTxt.implicitWidth + page.btnPadH * 2; implicitHeight: dgShowTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                    color: "transparent"; border.color: page.outline
-                                    Text { id: dgShowTxt; anchors.centerIn: parent; text: I18n.t("SHOW FILE"); color: page.textLo; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
+                                    soft: true
+                                    Text { id: dgShowTxt; anchors.centerIn: parent; text: I18n.t("SHOW FILE"); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: bitwave.revealDiagnostics(page.diagPath) }
                                 }
                                 Text {
@@ -2875,8 +2901,10 @@ Item {
                     // ---- Right tile: verbose + redact-content switches (words
                     // left, switch right, as everywhere on the page) ----------
                     Rectangle {
-                        anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
-                        width: (parent.width - 10) / 2
+                        id: dgRight
+                        anchors.right: parent.right; anchors.top: dgCard.singleColumn ? dgLeft.bottom : parent.top; anchors.bottom: parent.bottom
+                        anchors.topMargin: dgCard.singleColumn ? 10 : 0
+                        width: dgCard.singleColumn ? parent.width : (parent.width - 10) / 2
                         radius: 10; color: page.surface; border.color: page.border1
                         ColumnLayout {
                             id: dgRightCol
@@ -2888,7 +2916,7 @@ Item {
                                     Layout.fillWidth: true; Layout.alignment: Qt.AlignTop; spacing: 3
                                     Text { textFormat: Text.PlainText; text: I18n.t(dgCard.dfVerbose ? dgCard.dfVerbose.label : ""); color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
                                     Text {
-                                        text: I18n.t("Logs detailed activity to help diagnose slowdowns, freezes and crashes. Turn on, reproduce the problem, then export.")
+                                        text: "Protokolliert zusätzlich CPU-Auslastung sowie langsame und geschätzt ausgelassene Frames zur Untersuchung von Verzögerungen, Hängern und Abstürzen. Einschalten, das Problem nachstellen und anschließend den Bericht exportieren."
                                         color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
                                         wrapMode: Text.WordWrap; maximumLineCount: 4; elide: Text.ElideRight; Layout.fillWidth: true
                                     }
@@ -2932,6 +2960,31 @@ Item {
                                             var v = !dgCard.rdOn
                                             page.setLive("diagnostics_redact_content", v)
                                             bitwave.setBitWavePref("diagnostics_redact_content", v)
+                                            page.needsRefresh = true
+                                        }
+                                    }
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true; spacing: 13
+                                ColumnLayout {
+                                    Layout.fillWidth: true; Layout.alignment: Qt.AlignTop; spacing: 3
+                                    Text { textFormat: Text.PlainText; text: dgCard.dfHw ? dgCard.dfHw.label : ""; color: page.textHi; font.pixelSize: 14; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true; Layout.topMargin: page.tileTitleNudge }
+                                    Text {
+                                        text: I18n.t("Reports list your processor, graphics card, memory and display. This leaves them out, which can make slowdowns harder to track down.")
+                                        color: page.textDim; font.pixelSize: 12; lineHeight: 1.15
+                                        wrapMode: Text.WordWrap; maximumLineCount: 4; elide: Text.ElideRight; Layout.fillWidth: true
+                                    }
+                                }
+                                SToggle {
+                                    Layout.alignment: Qt.AlignTop
+                                    checked: dgCard.hwOn
+                                    MouseArea {
+                                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            var v = !dgCard.hwOn
+                                            page.setLive("diagnostics_hide_hardware", v)
+                                            bitwave.setBitWavePref("diagnostics_hide_hardware", v)
                                             page.needsRefresh = true
                                         }
                                     }
@@ -3278,11 +3331,11 @@ Item {
                                                     // Staged, not saved: the values land in the boxes
                                                     // below and SAVE CHANGES lights up, so the table can
                                                     // still be tweaked (or canceled) before it is real.
-                                                    Rectangle {
+                                                    LiftRect {
                                                         implicitWidth: offUseTxt.implicitWidth + page.btnPadH * 2
                                                         implicitHeight: offUseTxt.implicitHeight + page.btnPadV * 2
                                                         radius: page.btnRad
-                                                        color: page.accentCont; border.color: page.accentDim
+                                                        fill: page.accentCont; edge: page.accentDim
                                                         Text {
                                                             id: offUseTxt; anchors.centerIn: parent; text: I18n.t("USE THESE")
                                                             color: page.accent; font.pixelSize: 13; font.family: page.uiFont
@@ -3296,14 +3349,14 @@ Item {
                                                             }
                                                         }
                                                     }
-                                                    Rectangle {
+                                                    LiftRect {
                                                         implicitWidth: offKeepTxt.implicitWidth + page.btnPadH * 2
                                                         implicitHeight: offKeepTxt.implicitHeight + page.btnPadV * 2
                                                         radius: page.btnRad
-                                                        color: "transparent"; border.color: page.outline
+                                                        soft: true
                                                         Text {
                                                             id: offKeepTxt; anchors.centerIn: parent; text: I18n.t("KEEP REMOVING THEM")
-                                                            color: page.textDim; font.pixelSize: 13; font.family: page.uiFont
+                                                            color: page.accent; font.pixelSize: 13; font.family: page.uiFont
                                                             font.bold: true; font.letterSpacing: page.btnTrack
                                                         }
                                                         MouseArea {
@@ -3317,14 +3370,14 @@ Item {
                                                             }
                                                         }
                                                     }
-                                                    Rectangle {
+                                                    LiftRect {
                                                         implicitWidth: offOwnTxt.implicitWidth + page.btnPadH * 2
                                                         implicitHeight: offOwnTxt.implicitHeight + page.btnPadV * 2
                                                         radius: page.btnRad
-                                                        color: "transparent"; border.color: page.outline
+                                                        soft: true
                                                         Text {
                                                             id: offOwnTxt; anchors.centerIn: parent; text: I18n.t("SET MY OWN")
-                                                            color: page.textDim; font.pixelSize: 13; font.family: page.uiFont
+                                                            color: page.accent; font.pixelSize: 13; font.family: page.uiFont
                                                             font.bold: true; font.letterSpacing: page.btnTrack
                                                         }
                                                         MouseArea {
@@ -3651,6 +3704,7 @@ Item {
                                             }
                                             SChoice {
                                                 id: inlineChoice
+                                                stacked: modelData.key === "logo_eq" && page.width < 1200
                                                 visible: modelData.type === "enum"; Layout.alignment: Qt.AlignVCenter
                                                 options: modelData.type === "enum" ? modelData.options : []
                                                 currentIndex: modelData.type === "enum" ? page.enumIndex(modelData.options, page.val(modelData)) : 0
@@ -3977,12 +4031,12 @@ Item {
                                                     text: libraryCol.folderE
                                                     onEdited: function(t){ page.setv("library_folder", t) }
                                                 }
-                                                Rectangle {
+                                                LiftRect {
                                                     visible: libraryCol.separate
                                                     // Green so it reads as the next step; once a folder is
                                                     // chosen it calms down but stays green (still clickable).
                                                     implicitWidth: brwTxt.implicitWidth + page.btnPadH * 2; implicitHeight: brwTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                                    color: page.accentCont; border.color: page.accent
+                                                    fill: page.accentCont; edge: page.accent
                                                     opacity: libraryCol.folderE !== "" ? 0.6 : 1
                                                     Behavior on opacity { NumberAnimation { duration: 160 } }
                                                     Layout.row: libFolderRow.roomy ? 0 : 1; Layout.column: 3
@@ -4003,7 +4057,7 @@ Item {
                                                     visible: !libraryCol.separate || !libFolderRow.roomy; Layout.fillWidth: true
                                                     Layout.row: 0; Layout.column: libFolderRow.roomy ? 4 : 2
                                                 }
-                                                Rectangle {
+                                                LiftRect {
                                                     id: scanBtn
                                                     Layout.row: 0; Layout.column: libFolderRow.roomy ? 5 : 3
                                                     // Green while it can act and while a scan runs (a scan in
@@ -4011,8 +4065,8 @@ Item {
                                                     // gray only while it waits on SAVE CHANGES or a folder.
                                                     readonly property bool lit: libraryCol.scannable || libraryCol.scanning
                                                     implicitWidth: startTxt.implicitWidth + page.btnPadH * 2; implicitHeight: startTxt.implicitHeight + page.btnPadV * 2; radius: page.btnRad
-                                                    color: lit ? page.accentCont : page.surface2
-                                                    border.color: lit ? page.accent : page.border1
+                                                    fill: lit ? page.accentCont : page.surface2
+                                                    edge: lit ? page.accent : page.border1; live: lit
                                                     opacity: lit ? 1 : 0.55
                                                     clip: true
                                                     // While scanning, a soft band of light crosses the button
@@ -4209,7 +4263,7 @@ Item {
                                                     rowHelpLines: libFlagFlow.helpLines
                                                     keyName: "library_bulk_skip"
                                                     checked: libraryCol.bulkE
-                                                    label: "Skip what you already have"
+                                                    label: I18n.t("Skip what you already have")
                                                     help: "Discographies, albums and playlists leave out the copies the scan matched."
                                                 }
                                                 FlagTile {
@@ -4219,7 +4273,7 @@ Item {
                                                     rowHelpLines: libFlagFlow.helpLines
                                                     keyName: "library_mb_arbiter"
                                                     checked: libraryCol.mbE
-                                                    label: "Ask MusicBrainz when unsure"
+                                                    label: I18n.t("Ask MusicBrainz when unsure")
                                                     help: "Sends artist and album titles to musicbrainz.org for matches the scan cannot prove on its own."
                                                 }
                                                 FlagTile {
@@ -4229,7 +4283,7 @@ Item {
                                                     rowHelpLines: libFlagFlow.helpLines
                                                     keyName: "library_mb_lookup"
                                                     checked: libraryCol.lookupE
-                                                    label: "Look up your artists on MusicBrainz"
+                                                    label: I18n.t("Look up your artists on MusicBrainz")
                                                     help: "Sends your library's artist names to musicbrainz.org and keeps their genres, tags and albums."
                                                 }
                                                 FlagTile {
@@ -4239,7 +4293,7 @@ Item {
                                                     rowHelpLines: libFlagFlow.helpLines
                                                     keyName: "releases_auto_import"
                                                     checked: libraryCol.followE
-                                                    label: "Follow your artists"
+                                                    label: I18n.t("Follow your artists")
                                                     help: "Follows your library's artists in Releases as the scan finds them on TIDAL. Close names wait on the Releases tab."
                                                 }
                                             }
@@ -4282,15 +4336,15 @@ Item {
                                                           + " fewer than " + page.libraryMinTracksLive + " tracks.")
                                                     color: page.textLo; font.pixelSize: 12
                                                 }
-                                                // The Browse… button's clothes: this page has no SpecBtn.
-                                                Rectangle {
+                                                // Unfollowing is the red recipe, as everywhere else.
+                                                LiftRect {
                                                     objectName: "libFloorUnfollow"
-                                                    Layout.preferredHeight: 32; implicitWidth: libFloorTxt.width + 24; radius: 8
-                                                    color: page.surface2; border.color: page.border1
+                                                    implicitHeight: libFloorTxt.implicitHeight + page.btnPadV * 2; implicitWidth: libFloorTxt.implicitWidth + page.btnPadH * 2; radius: page.btnRad
+                                                    fill: page.redCont; edge: Qt.alpha(page.red, 0.55)
                                                     Text {
                                                         id: libFloorTxt; anchors.centerIn: parent; textFormat: Text.PlainText
-                                                        text: I18n.t("UNFOLLOW " + (page.libraryFloorExcess === 1 ? "IT" : "THEM"))
-                                                        color: page.textLo; font.family: page.mono; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1.2
+                                                        text: I18n.t("UNFOLLOW ") + (page.libraryFloorExcess === 1 ? "IT" : "THEM")
+                                                        color: page.red; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack
                                                     }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
@@ -4366,7 +4420,7 @@ Item {
                                                     text: page.val(modelData)
                                                     onEdited: function(t){ page.setv(modelData.key, t) }
                                                 }
-                                                Rectangle {
+                                                LiftRect {
                                                     id: browseBtn
                                                     visible: modelData.browse !== ""
                                                     // SAVE CHANGES button vocabulary: accent-container fill,
@@ -4377,8 +4431,8 @@ Item {
                                                     // access), so the button must always look clickable.
                                                     width: browseTxt.width + page.btnPadH * 2; height: browseTxt.height + page.btnPadV * 2; radius: page.btnRad
                                                     anchors.verticalCenter: parent.verticalCenter
-                                                    color: page.accentCont
-                                                    border.color: page.accentDim; border.width: 1
+                                                    fill: page.accentCont
+                                                    edge: page.accentDim; border.width: 1
                                                     Text { id: browseTxt; anchors.centerIn: parent; text: I18n.t("Browse path").toUpperCase(); color: page.accent; font.pixelSize: 13; font.family: page.uiFont; font.bold: true; font.letterSpacing: page.btnTrack }
                                                     MouseArea {
                                                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
